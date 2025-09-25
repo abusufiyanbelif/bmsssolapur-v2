@@ -1,5 +1,3 @@
-
-
 /**
  * @fileOverview A service to seed the database with initial data.
  */
@@ -280,9 +278,8 @@ const seedUsers = async (users: Omit<User, 'id' | 'createdAt'>[]): Promise<strin
 const seedOrganization = async (): Promise<string> => {
     const existingOrg = await getCurrentOrganization();
     if (existingOrg) {
-        // If it exists, update it with the default footer content just in case it's missing
-        await updateDoc(doc(db, 'organizations', existingOrg.id), { footer: defaultFooterContent });
-        return "Organization profile updated with default footer.";
+        await updateDoc(doc(db, 'organizations', existingOrg.id), { ...organizationToSeed, updatedAt: serverTimestamp() });
+        return "Organization profile updated with seed data.";
     }
     await createOrganization(organizationToSeed);
     return "Organization profile created successfully.";
@@ -300,7 +297,7 @@ const seedGeneralLeads = async (adminUser: User): Promise<string[]> => {
     const verifier: Verifier = {
         verifierId: moosaShaikh.id!,
         verifierName: moosaShaikh.name,
-        verifiedAt: Timestamp.now(),
+        verifiedAt: Timestamp.now() as any,
         notes: "Verified as part of historical data import."
     };
 
@@ -328,7 +325,7 @@ const seedGeneralLeads = async (adminUser: User): Promise<string[]> => {
             isLoan: leadInfo.isLoan || false,
             caseDetails: leadInfo.details,
             caseVerification: 'Verified', verifiers: [verifier],
-            dateCreated: Timestamp.now(), adminAddedBy: { id: adminUser.id!, name: adminUser.name },
+            dateCreated: Timestamp.now() as any, adminAddedBy: { id: adminUser.id!, name: adminUser.name },
             source: 'Seeded'
         };
 
@@ -340,8 +337,8 @@ const seedGeneralLeads = async (adminUser: User): Promise<string[]> => {
              const newDonation = await createDonation({
                 donorId: randomDonor.id!, donorName: randomDonor.name, amount: leadInfo.amount,
                 type: leadInfo.donationType as any, purpose: leadInfo.purpose as any, status: 'Allocated', isAnonymous: false,
-                donationDate: Timestamp.fromDate(randomDonationDate), 
-                verifiedAt: Timestamp.fromDate(verifiedDate),
+                donationDate: Timestamp.fromDate(randomDonationDate) as any, 
+                verifiedAt: Timestamp.fromDate(verifiedDate) as any,
                 leadId: newLeadData.id!, source: 'Seeded'
             }, adminUser.id!, adminUser.name, adminUser.email);
             
@@ -355,11 +352,11 @@ const seedGeneralLeads = async (adminUser: User): Promise<string[]> => {
                 transactionId: `SEED_TXN_${newLeadData.id}`
             };
             
-            newLeadData.donations = [{ donationId: newDonation.id!, amount: leadInfo.amount, allocatedAt: Timestamp.now() as any, allocatedByUserId: adminUser.id, allocatedByUserName: adminUser.name }];
+            newLeadData.donations = [{ donationId: newDonation.id!, amount: leadInfo.amount, allocatedAt: Timestamp.now() as any, allocatedByUserId: adminUser.id!, allocatedByUserName: adminUser.name }];
             newLeadData.fundTransfers = [newTransfer];
         }
         
-        await createLead(newLeadData, {id: adminUser.id!, name: adminUser.name});
+        await createLead(newLeadData, {id: adminUser.id!, name: adminUser.name} as User);
         leadResults.push(`General Lead for ${beneficiary.name} created.`);
     }
     return leadResults;
@@ -367,43 +364,32 @@ const seedGeneralLeads = async (adminUser: User): Promise<string[]> => {
 
 const seedCampaignAndData = async (campaignData: Omit<Campaign, 'id' | 'createdAt' | 'updatedAt'>, userData: Omit<User, 'id' | 'createdAt'>[], leadsData: any[]): Promise<string[]> => {
     let results: string[] = [];
+    const adminUser = await getUserByUserId("abusufiyan.belif");
+    if (!adminUser) throw new Error("Required admin user 'abusufiyan.belif' for seeding not found.");
 
-    // Seed users first
     await seedUsers(userData);
 
-    // Check if campaign exists
-    const campaignId = campaignData.name.toLowerCase().replace(/\s+/g, '-');
+    const campaignId = campaignData.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
     const existingCampaign = await getCampaign(campaignId);
-
-    if (existingCampaign) {
-        results.push(`Campaign "${campaignData.name}" skipped.`);
-        return results;
-    }
 
     const campaignRef = doc(db, 'campaigns', campaignId);
     const batch = writeBatch(db);
-    batch.set(campaignRef, { ...campaignData, id: campaignRef.id, createdAt: Timestamp.now(), updatedAt: Timestamp.now(), source: 'Seeded' });
-    results.push(`Campaign "${campaignData.name}" created.`);
 
-    const verifierAdmin = await getUserByUserId("abusufiyan.belif");
-    const moosaShaikh = await getUserByPhone("8421708907");
-    if (!verifierAdmin || !moosaShaikh) throw new Error("Required admin users for seeding not found.");
+    if (existingCampaign) {
+        batch.update(campaignRef, { ...campaignData, updatedAt: serverTimestamp() });
+        results.push(`Campaign "${campaignData.name}" updated.`);
+    } else {
+        batch.set(campaignRef, { ...campaignData, id: campaignRef.id, createdAt: Timestamp.now(), updatedAt: Timestamp.now(), source: 'Seeded' });
+        results.push(`Campaign "${campaignData.name}" created.`);
+    }
 
-    const historicalVerifier: Verifier = {
-        verifierId: moosaShaikh.id!,
-        verifierName: moosaShaikh.name,
+    const verifierToUse: Verifier = {
+        verifierId: adminUser.id,
+        verifierName: adminUser.name,
         verifiedAt: Timestamp.now() as any,
         notes: "Verified as part of historical data import."
     };
-    
-     const currentVerifier: Verifier = {
-        verifierId: verifierAdmin.id!,
-        verifierName: verifierAdmin.name,
-        verifiedAt: Timestamp.now() as any,
-        notes: "Verified as part of campaign data import."
-    };
 
-    const verifierToUse = campaignData.status === 'Completed' ? historicalVerifier : currentVerifier;
     const allDonors = (await getAllUsers()).filter(u => u.roles.includes('Donor') && u.name !== 'Anonymous Donor');
     if (allDonors.length === 0) throw new Error("No donor users found for campaign seeding.");
 
@@ -412,61 +398,45 @@ const seedCampaignAndData = async (campaignData: Omit<Campaign, 'id' | 'createdA
         if (!beneficiary) continue;
 
         const leadId = `${campaignRef.id}_${beneficiary.userKey}`;
-        const existingLead = await getDoc(doc(db, 'leads', leadId));
-        if (existingLead.exists()) {
-            results.push(`Lead for ${beneficiary.name} in ${campaignData.name} skipped.`);
-            continue;
-        }
-        
         const leadRef = doc(db, 'leads', leadId);
-        let leadAction: LeadAction = 'Pending';
-        if(campaignData.status === 'Upcoming') {
-            leadAction = 'Pending';
-        } else if (leadInfo.isFunded) {
-            leadAction = 'Closed';
-        } else {
-            leadAction = 'Publish';
-        }
+        
+        const caseAction: LeadAction = campaignData.status === 'Completed' ? 'Closed'
+                                      : campaignData.status === 'Active' ? 'Publish'
+                                      : 'Pending';
 
         const newLead: Partial<Lead> = {
-            id: leadRef.id, name: beneficiary.name, beneficiaryId: beneficiary.id!,
+            id: leadRef.id, name: beneficiary.name, beneficiaryId: beneficiary.id,
             campaignId: campaignRef.id, campaignName: campaignData.name,
             purpose: leadInfo.purpose, category: leadInfo.category, donationType: leadInfo.donationType,
             helpRequested: leadInfo.amount, helpGiven: leadInfo.isFunded ? leadInfo.amount : 0,
-            caseAction: leadAction, isLoan: leadInfo.isLoan || false,
+            caseAction: caseAction, isLoan: leadInfo.isLoan || false,
             caseDetails: leadInfo.details, caseVerification: 'Verified', verifiers: [verifierToUse],
-            dateCreated: Timestamp.now(), adminAddedBy: { id: verifierAdmin.id, name: verifierAdmin.name },
+            dateCreated: Timestamp.now() as any, adminAddedBy: { id: adminUser.id, name: adminUser.name },
             source: 'Seeded'
         };
 
         if (leadInfo.isFunded) {
-            const randomDonationDate = getRandomDate(new Date('2021-01-01'), new Date('2025-12-31'));
-            const verifiedDate = new Date(randomDonationDate.getTime() + 86400000); // 1 day later
-            
+            const randomDonor = allDonors[Math.floor(Math.random() * allDonors.length)];
             const newDonation = await createDonation({
-                donorId: allDonors[0].id!, donorName: allDonors[0].name, amount: leadInfo.amount,
+                donorId: randomDonor.id!, donorName: randomDonor.name, amount: leadInfo.amount,
                 type: leadInfo.donationType, purpose: leadInfo.purpose, status: 'Allocated', isAnonymous: false,
-                donationDate: Timestamp.fromDate(randomDonationDate), 
-                verifiedAt: Timestamp.fromDate(verifiedDate),
+                donationDate: Timestamp.now() as any, verifiedAt: Timestamp.now() as any,
                 campaignId: campaignRef.id, leadId: leadRef.id, source: 'Seeded'
-            }, verifierAdmin.id!, verifierAdmin.name, verifierAdmin.email);
+            }, adminUser.id!, adminUser.name, adminUser.email);
             
             const newTransfer: FundTransfer = {
-                transferredByUserId: verifierAdmin.id!,
-                transferredByUserName: verifierAdmin.name,
-                amount: leadInfo.amount,
-                transferredAt: Timestamp.now() as any,
+                transferredByUserId: adminUser.id!, transferredByUserName: adminUser.name,
+                amount: leadInfo.amount, transferredAt: Timestamp.now() as any,
                 proofUrl: 'https://placehold.co/600x400.png?text=seeded-transfer-proof',
-                notes: 'Dummy transfer for seeded closed lead.',
-                transactionId: `SEED_TXN_${leadRef.id}`
+                notes: 'Dummy transfer for seeded closed lead.', transactionId: `SEED_TXN_${leadRef.id}`
             };
             
-            newLead.donations = [{ donationId: newDonation.id!, amount: leadInfo.amount, allocatedAt: Timestamp.now() as any, allocatedByUserId: verifierAdmin.id, allocatedByUserName: verifierAdmin.name }];
+            newLead.donations = [{ donationId: newDonation.id!, amount: leadInfo.amount, allocatedAt: Timestamp.now() as any, allocatedByUserId: adminUser.id!, allocatedByUserName: adminUser.name }];
             newLead.fundTransfers = [newTransfer];
         }
         
         batch.set(leadRef, newLead);
-        results.push(`Lead for ${beneficiary.name} in ${campaignData.name} created.`);
+        results.push(`Lead for ${beneficiary.name} in ${campaignData.name} created/updated.`);
     }
 
     await batch.commit();
@@ -503,14 +473,14 @@ const seedRamadan2025ReliefData = async (adminUser: User): Promise<string[]> => 
         const beneficiary = await getUserByPhone(data.phone);
         if (!beneficiary) continue;
 
-        const leadId = `${campaign.id}_${beneficiary.userKey}`;
+        const leadId = `${campaign.id}_${beneficiary.userKey}_Relief`;
         const newLead: Partial<Lead> = {
-            id: leadId, name: beneficiary.name, beneficiaryId: beneficiary.id!,
+            id: leadId, name: beneficiary.name, beneficiaryId: beneficiary.id,
             campaignId: campaign.id, campaignName: campaign.name,
             purpose: 'Relief Fund', category: data.category,
             helpRequested: data.amount, helpGiven: data.amount, caseAction: 'Closed',
-            caseVerification: 'Verified', verifiers: [{ verifierId: adminUser.id, verifierName: adminUser.name, verifiedAt: Timestamp.now(), notes: "Seeded" }],
-            dateCreated: Timestamp.now(), adminAddedBy: { id: adminUser.id, name: adminUser.name }, source: 'Seeded'
+            caseVerification: 'Verified', verifiers: [{ verifierId: adminUser.id, verifierName: adminUser.name, verifiedAt: Timestamp.now() as any, notes: "Seeded" }],
+            dateCreated: Timestamp.now() as any, adminAddedBy: { id: adminUser.id, name: adminUser.name }, source: 'Seeded'
         };
         const leadRef = doc(db, 'leads', leadId);
         batch.set(leadRef, newLead);
@@ -528,7 +498,7 @@ const seedRamadan2025ReliefData = async (adminUser: User): Promise<string[]> => 
         await createDonation({
             donorId: donor.id!, donorName: donor.name, amount: amount,
             type: 'Zakat', purpose: 'Relief Fund', status: 'Verified',
-            donationDate: Timestamp.now(), campaignId: campaign.id, source: 'Seeded'
+            donationDate: Timestamp.now() as any, campaignId: campaign.id, source: 'Seeded'
         }, adminUser.id!, adminUser.name, adminUser.email);
     }
     results.push('Seeded 20 Zakat donations for Relief Fund.');
@@ -748,7 +718,6 @@ export const erasePaymentGateways = async (): Promise<SeedResult> => {
 
 export const eraseSampleData = async (): Promise<SeedResult> => {
     const details: string[] = [];
-    const batch = writeBatch(db);
     
     // Find all seeded data
     const seededUsersQuery = query(collection(db, USERS_COLLECTION), where("source", "==", "Seeded"));
@@ -756,29 +725,31 @@ export const eraseSampleData = async (): Promise<SeedResult> => {
     const seededDonationsQuery = query(collection(db, 'donations'), where("source", "==", "Seeded"));
     const seededCampaignsQuery = query(collection(db, 'campaigns'), where("source", "==", "Seeded"));
     
-    const [users, leads, donations, campaigns] = await Promise.all([
+    const [usersSnapshot, leadsSnapshot, donationsSnapshot, campaignsSnapshot] = await Promise.all([
         getDocs(seededUsersQuery),
         getDocs(seededLeadsQuery),
         getDocs(seededDonationsQuery),
         getDocs(seededCampaignsQuery),
     ]);
 
-    users.docs.forEach(doc => {
-        // Prevent deleting the main admin users if they were seeded
-        if (doc.id !== 'ADMIN_USER_ID' && doc.data().phone !== '7887646583') {
+    const batch = writeBatch(db);
+
+    usersSnapshot.docs.forEach(doc => {
+        // Safeguard: Do not delete the main admin users
+        if (doc.id !== 'ADMIN_USER_ID' && doc.data().userId !== 'abusufiyan.belif') {
            batch.delete(doc.ref);
         }
     });
-    details.push(`Deleted ${users.size} seeded users.`);
+    details.push(`Deleted ${usersSnapshot.size} seeded users (excluding core admins).`);
     
-    leads.docs.forEach(doc => batch.delete(doc.ref));
-    details.push(`Deleted ${leads.size} seeded leads.`);
+    leadsSnapshot.docs.forEach(doc => batch.delete(doc.ref));
+    details.push(`Deleted ${leadsSnapshot.size} seeded leads.`);
     
-    donations.docs.forEach(doc => batch.delete(doc.ref));
-    details.push(`Deleted ${donations.size} seeded donations.`);
+    donationsSnapshot.docs.forEach(doc => batch.delete(doc.ref));
+    details.push(`Deleted ${donationsSnapshot.size} seeded donations.`);
 
-    campaigns.docs.forEach(doc => batch.delete(doc.ref));
-    details.push(`Deleted ${campaigns.size} seeded campaigns.`);
+    campaignsSnapshot.docs.forEach(doc => batch.delete(doc.ref));
+    details.push(`Deleted ${campaignsSnapshot.size} seeded campaigns.`);
 
     await batch.commit();
 
@@ -787,4 +758,3 @@ export const eraseSampleData = async (): Promise<SeedResult> => {
         details: details,
     };
 };
-
