@@ -132,7 +132,7 @@ export const getPublicStats = async (): Promise<PublicStats | null> => {
 };
 
 /**
- * Updates a public-facing campaign document. If a campaign is not 'Active',
+ * Updates a public-facing campaign document. If a campaign is not 'Active' or 'Upcoming',
  * it deletes the public doc.
  * @param campaign - The full campaign object with calculated stats.
  * @param forceDelete - If true, will delete the public doc regardless of status.
@@ -144,7 +144,9 @@ export const updatePublicCampaign = async (
     const adminDb = getAdminDb();
     const publicCampaignRef = adminDb.collection(PUBLIC_CAMPAIGNS_COLLECTION).doc(campaign.id!);
 
-    if (forceDelete || campaign.status !== 'Active') {
+    const isPublic = ['Active', 'Upcoming'].includes(campaign.status);
+
+    if (forceDelete || !isPublic) {
         await publicCampaignRef.delete().catch(() => {});
         return;
     }
