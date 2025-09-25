@@ -1,4 +1,3 @@
-
 // src/app/admin/campaigns/add/campaign-form.tsx
 
 "use client";
@@ -168,7 +167,7 @@ export function CampaignForm({ leads, donations, completedCampaigns }: CampaignF
     } else {
       toast({
         variant: "destructive",
-        title: "Error",
+        title: "Error Creating Campaign",
         description: result.error || "An unknown error occurred.",
       });
     }

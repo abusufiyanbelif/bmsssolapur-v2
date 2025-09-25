@@ -1,4 +1,3 @@
-
 // src/app/admin/campaigns/add/actions.ts
 
 "use server";
@@ -32,12 +31,10 @@ export async function handleCreateCampaign(formData: FormData): Promise<FormStat
         imageUrl = await uploadFile(imageFile, uploadPath);
     }
     
-    // Corrected Logic: If status is 'Completed', it's a historical record.
     const isHistorical = status === 'Completed';
     const collectedAmount = isHistorical ? parseFloat(formData.get("collectedAmount") as string) : 0;
 
-    // Create the campaign first
-    const newCampaign = await createCampaign({
+    const newCampaignData = {
         id: campaignId,
         name: name,
         description: formData.get('description') as string,
@@ -50,7 +47,11 @@ export async function handleCreateCampaign(formData: FormData): Promise<FormStat
         linkedCompletedCampaignIds: formData.getAll('linkedCompletedCampaignIds') as string[] || [],
         collectedAmount: collectedAmount,
         isHistoricalRecord: isHistorical,
-    });
+        source: 'Manual Entry'
+    };
+
+    // Create the campaign first
+    const newCampaign = await createCampaign(newCampaignData);
     
     const linkedLeadIds = formData.getAll('linkedLeadIds') as string[];
     const linkedDonationIds = formData.getAll('linkedDonationIds') as string[];

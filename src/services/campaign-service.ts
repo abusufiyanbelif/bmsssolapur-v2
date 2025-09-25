@@ -1,4 +1,3 @@
-
 /**
  * @fileOverview Campaign service for interacting with Firestore.
  */
@@ -30,9 +29,9 @@ const CAMPAIGNS_COLLECTION = 'campaigns';
  * @param campaignData - The data for the new campaign.
  * @returns The newly created campaign object.
  */
-export const createCampaign = async (campaignData: Omit<Campaign, 'createdAt' | 'updatedAt'>): Promise<Campaign> => {
+export const createCampaign = async (campaignData: Partial<Omit<Campaign, 'id' | 'createdAt' | 'updatedAt'>>): Promise<Campaign> => {
   try {
-    const campaignId = campaignData.id || campaignData.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+    const campaignId = campaignData.id || campaignData.name!.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
     const campaignRef = doc(db, CAMPAIGNS_COLLECTION, campaignId);
     
     const newCampaignData = {
@@ -50,6 +49,7 @@ export const createCampaign = async (campaignData: Omit<Campaign, 'createdAt' | 
     if (!data) {
         throw new Error('Failed to create campaign, document not found after creation.');
     }
+    
     const finalCampaign = { 
         ...data,
         id: newDoc.id,
