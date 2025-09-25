@@ -1,4 +1,3 @@
-
 // src/app/admin/campaigns/add/actions.ts
 
 "use server";
@@ -101,7 +100,7 @@ export async function handleCreateCampaign(formData: FormData): Promise<FormStat
     // Return the clean, specific error message from the service
     return {
       success: false,
-      error: `Failed to create campaign: ${error}`,
+      error: error,
     };
   }
 }

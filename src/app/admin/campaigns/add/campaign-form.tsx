@@ -56,7 +56,7 @@ const formSchema = z.object({
   linkedCompletedCampaignIds: z.array(z.string()).optional(),
 }).refine(data => {
     if (data.status === 'Completed') {
-        return !!data.collectedAmount && data.collectedAmount > 0;
+        return data.collectedAmount !== undefined && data.collectedAmount > 0;
     }
     return true;
 }, {
@@ -169,7 +169,7 @@ export function CampaignForm({ leads, donations, completedCampaigns }: CampaignF
       toast({
         variant: "destructive",
         title: "Error Creating Campaign",
-        description: result.error || "An unknown error occurred.",
+        description: result.error,
       });
     }
   }

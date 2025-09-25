@@ -13,7 +13,9 @@ import {
   getDocs,
   Timestamp,
   serverTimestamp,
-  orderBy
+  orderBy,
+  where,
+  limit
 } from 'firebase/firestore';
 import { db } from './firebase';
 import type { Campaign, CampaignStatus, Lead } from './types';
@@ -32,6 +34,14 @@ const CAMPAIGNS_COLLECTION = 'campaigns';
 export const createCampaign = async (campaignData: Partial<Omit<Campaign, 'id' | 'createdAt' | 'updatedAt'>>): Promise<Campaign> => {
   try {
     const campaignId = campaignData.id || campaignData.name!.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+    
+    // Check for duplicates before writing
+    const q = query(collection(db, CAMPAIGNS_COLLECTION), where("name", "==", campaignData.name), limit(1));
+    const querySnapshot = await getDocs(q);
+    if (!querySnapshot.empty) {
+      throw new Error(`A campaign with the name "${campaignData.name}" already exists.`);
+    }
+
     const campaignRef = doc(db, CAMPAIGNS_COLLECTION, campaignId);
     
     const newCampaignData = {
@@ -63,7 +73,11 @@ export const createCampaign = async (campaignData: Partial<Omit<Campaign, 'id' |
 
   } catch (error) {
     console.error('Error creating campaign: ', error);
-    throw new Error('Failed to create campaign.');
+    if (error instanceof Error) {
+        // Re-throw the specific error to be caught by the server action
+        throw error;
+    }
+    throw new Error('An unknown error occurred while creating the campaign.');
   }
 };
 
