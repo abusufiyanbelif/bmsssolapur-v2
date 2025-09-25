@@ -63,8 +63,8 @@ const formSchema = z.object({
   linkedCompletedCampaignIds: z.array(z.string()).optional(),
 }).superRefine((data, ctx) => {
     if (data.status === 'Completed') {
-        if (!data.collectedAmount || data.collectedAmount <= 0) {
-          ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Amount Collected is required and must be greater than 0 for 'Completed' campaigns.", path: ["collectedAmount"] });
+        if (data.collectedAmount === undefined || data.collectedAmount < 0) {
+          ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Amount Collected is required and must not be negative for 'Completed' campaigns.", path: ["collectedAmount"] });
         }
     }
     if (data.goalCalculationMethod === 'manual' && (!data.goal || data.goal <= 0)) {
@@ -336,22 +336,20 @@ export function CampaignForm({ leads, donations, completedCampaigns, users }: Ca
             />
         </div>
         
-        {campaignStatus === 'Completed' && (
-            <FormField
-                control={form.control}
-                name="collectedAmount"
-                render={({ field }) => (
-                    <FormItem>
-                        <FormLabel>Amount Collected</FormLabel>
-                        <FormControl>
-                            <Input type="number" {...field} />
-                        </FormControl>
-                        <FormDescription>Enter the total amount that was collected for this past campaign.</FormDescription>
-                        <FormMessage />
-                    </FormItem>
-                )}
-            />
-        )}
+        <FormField
+            control={form.control}
+            name="collectedAmount"
+            render={({ field }) => (
+                <FormItem>
+                    <FormLabel>Amount Collected</FormLabel>
+                    <FormControl>
+                        <Input type="number" {...field} />
+                    </FormControl>
+                    <FormDescription>For historical campaigns, enter the total collected. For new campaigns, this can be used to record offline donations received before launch.</FormDescription>
+                    <FormMessage />
+                </FormItem>
+            )}
+        />
         <FormField
             control={form.control}
             name="dates"

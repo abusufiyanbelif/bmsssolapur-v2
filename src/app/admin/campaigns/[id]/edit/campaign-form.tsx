@@ -63,8 +63,8 @@ const formSchema = z.object({
   linkedBeneficiaryIds: z.array(z.string()).optional(),
 }).superRefine((data, ctx) => {
     if (data.status === 'Completed') {
-        if (!data.collectedAmount || data.collectedAmount <= 0) {
-          ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Amount Collected is required for 'Completed' campaigns.", path: ["collectedAmount"] });
+        if (data.collectedAmount === undefined || data.collectedAmount < 0) {
+          ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Amount Collected is required and must not be negative for 'Completed' campaigns.", path: ["collectedAmount"] });
         }
     }
     if (data.goalCalculationMethod === 'manual' && (!data.goal || data.goal <= 0)) {
@@ -373,22 +373,20 @@ export function CampaignForm({ campaign, completedCampaigns, unassignedLeads, be
                         />
                     </div>
                     
-                    {campaignStatus === 'Completed' && (
-                         <FormField
-                            control={form.control}
-                            name="collectedAmount"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Amount Collected</FormLabel>
-                                    <FormControl>
-                                        <Input type="number" {...field} />
-                                    </FormControl>
-                                    <FormDescription>Enter the total amount that was collected for this past campaign.</FormDescription>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-                    )}
+                    <FormField
+                        control={form.control}
+                        name="collectedAmount"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Amount Collected</FormLabel>
+                                <FormControl>
+                                    <Input type="number" {...field} />
+                                </FormControl>
+                                <FormDescription>This can be used to record offline donations or manually set the final amount for historical campaigns.</FormDescription>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
 
                     <FormField
                         control={form.control}

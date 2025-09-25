@@ -66,16 +66,14 @@ export async function handleCreateCampaign(formData: FormData): Promise<FormStat
         imageUrl: imageUrl,
         acceptableDonationTypes: formData.getAll('acceptableDonationTypes') as DonationType[],
         linkedCompletedCampaignIds: formData.getAll('linkedCompletedCampaignIds') as string[] || [],
-        isHistoricalRecord: status === 'Completed', // Set based on status
         source: 'Manual Entry',
         fixedAmountPerBeneficiary: goalCalculationMethod === 'auto' ? fixedAmountPerBeneficiary : undefined,
         targetBeneficiaries: goalCalculationMethod === 'auto' ? targetBeneficiaries : undefined,
+        collectedAmount: parseFloat(formData.get("collectedAmount") as string) || 0,
     };
     
-    // Only include collectedAmount if the status is Completed
-    if (status === 'Completed') {
-        newCampaignData.collectedAmount = parseFloat(formData.get("collectedAmount") as string) || 0;
-    }
+    // Set isHistoricalRecord based on status.
+    newCampaignData.isHistoricalRecord = status === 'Completed';
 
     // Create the campaign first
     const newCampaign = await createCampaign(newCampaignData);
@@ -151,7 +149,7 @@ export async function handleCreateCampaign(formData: FormData): Promise<FormStat
     // Return the clean, specific error message from the service
     return {
       success: false,
-      error: error,
+      error: error.message,
     };
   }
 }

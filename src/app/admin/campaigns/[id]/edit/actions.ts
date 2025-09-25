@@ -60,12 +60,8 @@ export async function handleUpdateCampaign(campaignId: string, formData: FormDat
         targetBeneficiaries: goalCalculationMethod === 'auto' ? targetBeneficiaries : undefined,
         leads: linkedLeadIds,
         isHistoricalRecord: status === 'Completed', // Set based on status
+        collectedAmount: parseFloat(formData.get('collectedAmount') as string) || 0,
     };
-    
-    // Only include collectedAmount if the status is Completed
-    if (status === 'Completed') {
-        campaignUpdateData.collectedAmount = parseFloat(formData.get('collectedAmount') as string) || 0;
-    }
 
     await updateCampaign(campaignId, campaignUpdateData);
     
