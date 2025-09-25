@@ -9,6 +9,7 @@ import { useState } from "react";
 import { Loader2 } from "lucide-react";
 import { handleSeedAction, handleEraseAction } from "./actions";
 import { useRouter } from "next/navigation";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 
 type SeedStatus = 'idle' | 'loading' | 'success' | 'error';
 type SeedTask = 'initial' | 'coreTeam' | 'organization' | 'paymentGateways' | 'sampleData';
@@ -219,6 +220,39 @@ export default function SeedPage() {
                                 </Button>
                             </div>
                         </div>
+                        
+                        <Accordion type="single" collapsible>
+                            <AccordionItem value="item-1">
+                                <AccordionTrigger>View Details of What Will Be Created</AccordionTrigger>
+                                <AccordionContent>
+                                    <div className="text-sm text-muted-foreground space-y-4 pt-2">
+                                        <p>This action will seed a variety of data to showcase the app&apos;s features, including:</p>
+                                        <ul className="list-disc pl-5 space-y-2">
+                                            <li>
+                                                <strong>General Historical Leads:</strong> 5 closed cases for various purposes like medical, loans, and education.
+                                            </li>
+                                            <li>
+                                                <strong>Ramadan 2025 Campaign (Completed):</strong>
+                                                <ul className="list-circle pl-5 mt-1 space-y-1">
+                                                    <li>A ₹1,00,000 business loan lead for &quot;Salim Baig&quot;.</li>
+                                                    <li>A ₹60,000 medical lead for a surgical operation.</li>
+                                                    <li>10 leads for ₹4,000 ration kits.</li>
+                                                    <li>7 leads for a ₹50,000 relief effort (shelter, ration kits).</li>
+                                                    <li>20 dummy donors and their Zakat donations to cover the relief effort.</li>
+                                                </ul>
+                                            </li>
+                                            <li>
+                                                <strong>Winter Relief 2024 Campaign (Active):</strong> 2 open leads for winter kits.
+                                            </li>
+                                             <li>
+                                                <strong>Ramadan 2026 Campaign (Upcoming):</strong> 2 leads for future ration kits.
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </AccordionContent>
+                            </AccordionItem>
+                        </Accordion>
+                        
                         <ResultAlert seedStatus={statuses.sampleData} eraseStatus={eraseStatuses.sampleData} result={results.sampleData} />
                     </div>
                 </CardContent>
