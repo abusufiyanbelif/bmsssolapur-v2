@@ -62,7 +62,6 @@ export const createLead = async (leadData: Partial<Omit<Lead, 'id' | 'createdAt'
 
     const leadRef = doc(db, LEADS_COLLECTION, customLeadId);
     
-    // Create a new lead object with all fields defined.
     const newLead: Lead = { 
         id: leadRef.id,
         name: leadData.name!,
@@ -107,14 +106,14 @@ export const createLead = async (leadData: Partial<Omit<Lead, 'id' | 'createdAt'
     };
     
     // Convert Dates to Timestamps for writing
-    const dataToWrite = {
-        ...newLead,
-        dateCreated: Timestamp.fromDate(newLead.dateCreated),
-        createdAt: Timestamp.fromDate(newLead.createdAt),
-        updatedAt: Timestamp.fromDate(newLead.updatedAt),
-        caseReportedDate: newLead.caseReportedDate ? Timestamp.fromDate(newLead.caseReportedDate) : undefined,
-        dueDate: newLead.dueDate ? Timestamp.fromDate(newLead.dueDate) : undefined,
-    };
+    const dataToWrite: any = { ...newLead };
+    
+    if (dataToWrite.dateCreated && dataToWrite.dateCreated.getTime) dataToWrite.dateCreated = Timestamp.fromDate(dataToWrite.dateCreated);
+    if (dataToWrite.createdAt && dataToWrite.createdAt.getTime) dataToWrite.createdAt = Timestamp.fromDate(dataToWrite.createdAt);
+    if (dataToWrite.updatedAt && dataToWrite.updatedAt.getTime) dataToWrite.updatedAt = Timestamp.fromDate(dataToWrite.updatedAt);
+    if (dataToWrite.caseReportedDate && dataToWrite.caseReportedDate.getTime) dataToWrite.caseReportedDate = Timestamp.fromDate(dataToWrite.caseReportedDate);
+    if (dataToWrite.dueDate && dataToWrite.dueDate.getTime) dataToWrite.dueDate = Timestamp.fromDate(dataToWrite.dueDate);
+
     
     // Remove undefined fields to prevent Firestore errors
     Object.keys(dataToWrite).forEach(key => {
@@ -125,7 +124,6 @@ export const createLead = async (leadData: Partial<Omit<Lead, 'id' | 'createdAt'
 
     await setDoc(leadRef, dataToWrite);
 
-    // Log the activity after successful creation
     await logActivity({
         userId: adminUser.id,
         userName: adminUser.name,
@@ -145,7 +143,6 @@ export const createLead = async (leadData: Partial<Omit<Lead, 'id' | 'createdAt'
   } catch (error) {
     console.error('Error creating lead in Firestore: ', error);
     if (error instanceof Error) {
-        // More descriptive error messages
         if (error.message.includes('UserKey')) {
             throw new Error(`Failed to create lead: ${error.message}. Possible fix: Go to the user's profile and ensure their 'User Key' field is populated, or contact a Super Admin.`);
         }
