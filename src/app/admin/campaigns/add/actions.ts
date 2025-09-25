@@ -40,6 +40,7 @@ export async function handleCreateCampaign(formData: FormData): Promise<FormStat
         status: formData.get('status') as CampaignStatus,
         imageUrl: imageUrl,
         acceptableDonationTypes: formData.getAll('acceptableDonationTypes') as DonationType[],
+        linkedCompletedCampaignIds: formData.getAll('linkedCompletedCampaignIds') as string[] || [],
     });
     
     const linkedLeadIds = formData.getAll('linkedLeadIds') as string[];

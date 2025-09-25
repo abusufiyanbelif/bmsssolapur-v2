@@ -26,7 +26,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useState, useRef } from "react";
 import { handleCreateCampaign } from "./actions";
 import { useRouter } from "next/navigation";
-import { CampaignStatus, DonationType, Lead, Donation } from "@/services/types";
+import { CampaignStatus, DonationType, Lead, Donation, Campaign } from "@/services/types";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
@@ -51,6 +51,7 @@ const formSchema = z.object({
   }),
   linkedLeadIds: z.array(z.string()).optional(),
   linkedDonationIds: z.array(z.string()).optional(),
+  linkedCompletedCampaignIds: z.array(z.string()).optional(),
 });
 
 type CampaignFormValues = z.infer<typeof formSchema>;
@@ -58,14 +59,16 @@ type CampaignFormValues = z.infer<typeof formSchema>;
 interface CampaignFormProps {
     leads: Lead[];
     donations: Donation[];
+    completedCampaigns: Campaign[];
 }
 
-export function CampaignForm({ leads, donations }: CampaignFormProps) {
+export function CampaignForm({ leads, donations, completedCampaigns }: CampaignFormProps) {
   const { toast } = useToast();
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [leadPopoverOpen, setLeadPopoverOpen] = useState(false);
   const [donationPopoverOpen, setDonationPopoverOpen] = useState(false);
+  const [completedCampaignPopoverOpen, setCompletedCampaignPopoverOpen] = useState(false);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
 
@@ -80,12 +83,14 @@ export function CampaignForm({ leads, donations }: CampaignFormProps) {
         acceptableDonationTypes: [],
         linkedLeadIds: [],
         linkedDonationIds: [],
+        linkedCompletedCampaignIds: [],
     },
   });
   
   const { watch, setValue } = form;
   const linkedLeadIds = watch('linkedLeadIds') || [];
   const linkedDonationIds = watch('linkedDonationIds') || [];
+  const linkedCompletedCampaignIds = watch('linkedCompletedCampaignIds') || [];
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -109,6 +114,7 @@ export function CampaignForm({ leads, donations }: CampaignFormProps) {
         acceptableDonationTypes: [],
         linkedLeadIds: [],
         linkedDonationIds: [],
+        linkedCompletedCampaignIds: [],
     });
     setImagePreview(null);
     if (imageInputRef.current) {
@@ -128,6 +134,7 @@ export function CampaignForm({ leads, donations }: CampaignFormProps) {
     values.acceptableDonationTypes.forEach(dt => formData.append('acceptableDonationTypes', dt));
     values.linkedLeadIds?.forEach(id => formData.append('linkedLeadIds', id));
     values.linkedDonationIds?.forEach(id => formData.append('linkedDonationIds', id));
+    values.linkedCompletedCampaignIds?.forEach(id => formData.append('linkedCompletedCampaignIds', id));
     if (values.image) {
       formData.append('image', values.image);
     }
@@ -474,6 +481,73 @@ export function CampaignForm({ leads, donations }: CampaignFormProps) {
             )}
         />
 
+        <FormField
+            control={form.control}
+            name="linkedCompletedCampaignIds"
+            render={({ field }) => (
+                <FormItem className="flex flex-col">
+                <FormLabel>Link Past Successes (Optional)</FormLabel>
+                <Popover open={completedCampaignPopoverOpen} onOpenChange={setCompletedCampaignPopoverOpen}>
+                    <PopoverTrigger asChild>
+                    <FormControl>
+                        <Button
+                        variant="outline"
+                        role="combobox"
+                        className={cn("w-full justify-between", linkedCompletedCampaignIds.length === 0 && "text-muted-foreground")}
+                        >
+                        {linkedCompletedCampaignIds.length > 0 ? `${linkedCompletedCampaignIds.length} campaign(s) selected` : "Select completed campaigns..."}
+                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                        </Button>
+                    </FormControl>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+                    <Command>
+                        <CommandInput placeholder="Search campaign..." />
+                        <CommandList>
+                        <CommandEmpty>No completed campaigns found.</CommandEmpty>
+                        <CommandGroup>
+                            {completedCampaigns.map((campaign) => (
+                            <CommandItem
+                                value={campaign.name}
+                                key={campaign.id}
+                                onSelect={() => {
+                                    const isSelected = linkedCompletedCampaignIds.includes(campaign.id!);
+                                    if (isSelected) {
+                                        setValue('linkedCompletedCampaignIds', linkedCompletedCampaignIds.filter(id => id !== campaign.id!));
+                                    } else {
+                                        setValue('linkedCompletedCampaignIds', [...linkedCompletedCampaignIds, campaign.id!]);
+                                    }
+                                }}
+                            >
+                                <Check className={cn("mr-2 h-4 w-4", linkedCompletedCampaignIds.includes(campaign.id!) ? "opacity-100" : "opacity-0")} />
+                                <span>{campaign.name} (Goal: ₹{campaign.goal})</span>
+                            </CommandItem>
+                            ))}
+                        </CommandGroup>
+                        </CommandList>
+                    </Command>
+                    </PopoverContent>
+                </Popover>
+                 {linkedCompletedCampaignIds.length > 0 && (
+                    <div className="pt-2 flex flex-wrap gap-2">
+                        {linkedCompletedCampaignIds.map(id => {
+                            const campaign = completedCampaigns.find(c => c.id === id);
+                            return (
+                                <Badge key={id} variant="secondary">
+                                    {campaign?.name}
+                                    <button onClick={() => setValue('linkedCompletedCampaignIds', linkedCompletedCampaignIds.filter(cid => cid !== id))} className="ml-1 rounded-full p-0.5 hover:bg-muted-foreground/20">
+                                        <XCircle className="h-3 w-3" />
+                                    </button>
+                                </Badge>
+                            );
+                        })}
+                    </div>
+                 )}
+                 <FormDescription>Link to similar, successfully completed campaigns to motivate donors.</FormDescription>
+                <FormMessage />
+                </FormItem>
+            )}
+        />
 
         <div className="flex gap-4">
             <Button type="submit" disabled={isSubmitting}>
