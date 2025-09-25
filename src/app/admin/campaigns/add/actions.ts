@@ -1,3 +1,4 @@
+
 // src/app/admin/campaigns/add/actions.ts
 
 "use server";
@@ -22,7 +23,9 @@ export async function handleCreateCampaign(formData: FormData): Promise<FormStat
     const name = formData.get('name') as string;
     const campaignId = name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
     let imageUrl: string | undefined;
-    const isHistoricalRecord = formData.get("isHistoricalRecord") === 'on';
+    
+    const status = formData.get('status') as CampaignStatus;
+    const isHistoricalRecord = status === 'Completed';
 
     const imageFile = formData.get('image') as File | null;
     if (imageFile && imageFile.size > 0) {
@@ -30,10 +33,8 @@ export async function handleCreateCampaign(formData: FormData): Promise<FormStat
         imageUrl = await uploadFile(imageFile, uploadPath);
     }
     
-    // Logic refinement: If it's a historical record, its status MUST be 'Completed'.
-    // The collected amount is what the user enters.
+    // If it's a historical record (status is 'Completed'), its collected amount is what the user enters.
     // If it's a new campaign, the collected amount starts at 0.
-    const status = isHistoricalRecord ? 'Completed' : (formData.get('status') as CampaignStatus);
     const collectedAmount = isHistoricalRecord ? parseFloat(formData.get("collectedAmount") as string) : 0;
 
     // Create the campaign first

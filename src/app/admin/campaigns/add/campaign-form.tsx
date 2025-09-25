@@ -1,3 +1,4 @@
+
 // src/app/admin/campaigns/add/campaign-form.tsx
 
 "use client";
@@ -49,18 +50,17 @@ const formSchema = z.object({
   acceptableDonationTypes: z.array(z.string()).refine((value) => value.some((item) => item), {
     message: "You have to select at least one donation type.",
   }),
-  isHistoricalRecord: z.boolean().default(false),
   collectedAmount: z.coerce.number().optional(),
   linkedLeadIds: z.array(z.string()).optional(),
   linkedDonationIds: z.array(z.string()).optional(),
   linkedCompletedCampaignIds: z.array(z.string()).optional(),
 }).refine(data => {
-    if (data.isHistoricalRecord) {
+    if (data.status === 'Completed') {
         return !!data.collectedAmount && data.collectedAmount > 0;
     }
     return true;
 }, {
-    message: "Collected amount is required for historical records and must be greater than 0.",
+    message: "Amount Collected is required and must be greater than 0 for 'Completed' campaigns.",
     path: ["collectedAmount"],
 });
 
@@ -92,7 +92,6 @@ export function CampaignForm({ leads, donations, completedCampaigns }: CampaignF
         image: null,
         status: "Upcoming",
         acceptableDonationTypes: [],
-        isHistoricalRecord: false,
         collectedAmount: 0,
         linkedLeadIds: [],
         linkedDonationIds: [],
@@ -104,7 +103,7 @@ export function CampaignForm({ leads, donations, completedCampaigns }: CampaignF
   const linkedLeadIds = watch('linkedLeadIds') || [];
   const linkedDonationIds = watch('linkedDonationIds') || [];
   const linkedCompletedCampaignIds = watch('linkedCompletedCampaignIds') || [];
-  const isHistoricalRecord = watch('isHistoricalRecord');
+  const campaignStatus = watch('status');
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -126,7 +125,6 @@ export function CampaignForm({ leads, donations, completedCampaigns }: CampaignF
         status: "Upcoming",
         dates: undefined,
         acceptableDonationTypes: [],
-        isHistoricalRecord: false,
         collectedAmount: 0,
         linkedLeadIds: [],
         linkedDonationIds: [],
@@ -154,9 +152,8 @@ export function CampaignForm({ leads, donations, completedCampaigns }: CampaignF
     if (values.image) {
       formData.append('image', values.image);
     }
-    if (values.isHistoricalRecord) {
-        formData.append('isHistoricalRecord', 'on');
-        formData.append('collectedAmount', String(values.collectedAmount || 0));
+    if (values.status === 'Completed' && values.collectedAmount) {
+        formData.append('collectedAmount', String(values.collectedAmount));
     }
 
     const result = await handleCreateCampaign(formData);
@@ -267,28 +264,14 @@ export function CampaignForm({ leads, donations, completedCampaigns }: CampaignF
                 )}
             />
         </div>
-        <FormField
-            control={form.control}
-            name="isHistoricalRecord"
-            render={({ field }) => (
-                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4 bg-amber-500/10">
-                    <div className="space-y-0.5">
-                        <FormLabel className="text-base">This is a historical campaign record</FormLabel>
-                        <FormDescription>Enable this to enter data for a campaign that has already been completed.</FormDescription>
-                    </div>
-                    <FormControl>
-                        <Checkbox checked={field.value} onCheckedChange={field.onChange} />
-                    </FormControl>
-                </FormItem>
-            )}
-        />
-        {isHistoricalRecord && (
+        
+        {campaignStatus === 'Completed' && (
             <FormField
                 control={form.control}
                 name="collectedAmount"
                 render={({ field }) => (
                     <FormItem>
-                        <FormLabel>Amount Collected (for historical records)</FormLabel>
+                        <FormLabel>Amount Collected (for completed campaigns)</FormLabel>
                         <FormControl>
                             <Input type="number" {...field} />
                         </FormControl>
