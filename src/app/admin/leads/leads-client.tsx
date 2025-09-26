@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState, useEffect, useMemo, Suspense, Fragment } from "react";
@@ -509,6 +510,7 @@ Referral Phone:
                             aria-label="Select all on current page"
                         />
                     </TableHead>
+                    <TableHead>Sr. No.</TableHead>
                     <TableHead>
                         <Button variant="ghost" onClick={() => handleSort('name')}>
                             Beneficiary {renderSortIcon('name')}
@@ -546,7 +548,7 @@ Referral Phone:
                 </TableRow>
             </TableHeader>
             <TableBody>
-                {paginatedLeads.map((lead) => {
+                {paginatedLeads.map((lead, index) => {
                     const verifConfig = verificationStatusConfig[lead.caseVerification] || defaultVerificationConfig;
                     const StatusIcon = statusIcons[lead.caseStatus];
                     return (
@@ -562,6 +564,7 @@ Referral Phone:
                                     aria-label="Select row"
                                 />
                             </TableCell>
+                            <TableCell>{(currentPage - 1) * itemsPerPage + index + 1}</TableCell>
                             <TableCell>
                                 <Link href={`/admin/leads/${lead.id}`} className="font-medium hover:underline text-primary">{lead.name}</Link>
                                  <div className="font-mono text-xs text-muted-foreground">{lead.id}</div>

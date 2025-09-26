@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState, useEffect, useMemo, Suspense, Fragment } from "react";
@@ -326,6 +327,7 @@ export function DonationsPageClient({ initialDonations, initialUsers, initialLea
                             aria-label="Select all on current page"
                         />
                     </TableCell>
+                    <TableHead>Sr. No.</TableHead>
                     <TableHead className="w-12"></TableHead>
                     <TableHead>
                         <Button variant="ghost" onClick={() => handleSort('id')}>
@@ -382,6 +384,7 @@ export function DonationsPageClient({ initialDonations, initialUsers, initialLea
                                 aria-label="Select row"
                             />
                         </TableCell>
+                        <TableCell>{(currentPage - 1) * itemsPerPage + index + 1}</TableCell>
                         <TableCell>
                             {hasAllocations && (
                                 <Button variant="ghost" size="icon" onClick={() => toggleRow(donation.id!)} className="h-8 w-8">
@@ -476,7 +479,7 @@ export function DonationsPageClient({ initialDonations, initialUsers, initialLea
                     </TableRow>
                      {isExpanded && hasAllocations && (
                         <TableRow className="bg-muted/50 hover:bg-muted/50">
-                            <TableCell colSpan={10} className="p-0">
+                            <TableCell colSpan={11} className="p-0">
                                 <div className="p-4">
                                     <h4 className="font-semibold text-sm mb-2">Allocation Details</h4>
                                     <Table>

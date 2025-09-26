@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState, useEffect, useMemo, Suspense } from "react";
@@ -217,6 +218,7 @@ export function AllTransfersPageClient({ initialTransfers, error: initialError }
                             aria-label="Select all on current page"
                         />
                     </TableHead>
+                    <TableHead>Sr. No.</TableHead>
                     <TableHead>
                         <Button variant="ghost" onClick={() => handleSort('transferredAt')}>
                             Date {renderSortIcon('transferredAt')}
@@ -256,6 +258,7 @@ export function AllTransfersPageClient({ initialTransfers, error: initialError }
                                     aria-label="Select row"
                                 />
                             </TableCell>
+                            <TableCell>{(currentPage - 1) * itemsPerPage + index + 1}</TableCell>
                             <TableCell>{format(transfer.transferredAt, "dd MMM yyyy, p")}</TableCell>
                             <TableCell>
                                 <Link href={`/admin/leads/${transfer.leadId}`} className="hover:underline text-primary font-medium">
@@ -446,9 +449,9 @@ export function AllTransfersPageClient({ initialTransfers, error: initialError }
         <div className="flex items-center justify-between">
             <h2 className="text-3xl font-bold tracking-tight font-headline text-primary">All Fund Transfers</h2>
             <Button asChild>
-                <Link href="/admin/transfers/add">
+                <Link href="/admin/leads">
                     <PlusCircle className="mr-2 h-4 w-4" />
-                    Add New Transfer
+                    Record New Transfer
                 </Link>
             </Button>
         </div>
