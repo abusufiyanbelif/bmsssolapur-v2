@@ -901,5 +901,3 @@ export function DonationsPageClient({ initialDonations, initialUsers, initialLea
     </div>
   )
 }
-
-    

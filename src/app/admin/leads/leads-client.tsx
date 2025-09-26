@@ -567,7 +567,7 @@ Referral Phone:
                             <TableCell>{(currentPage - 1) * itemsPerPage + index + 1}</TableCell>
                             <TableCell>
                                 <Link href={`/admin/leads/${lead.id}`} className="font-medium hover:underline text-primary">{lead.name}</Link>
-                                 <div className="font-mono text-xs text-muted-foreground">{lead.id}</div>
+                                 <div className="text-xs text-muted-foreground">{lead.source || 'Manual Entry'}</div>
                             </TableCell>
                             <TableCell>
                                  <DropdownMenu>
@@ -961,5 +961,3 @@ Referral Phone:
     </div>
   )
 }
-
-    

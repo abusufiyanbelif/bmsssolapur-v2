@@ -117,6 +117,7 @@ const organizationToSeed: Omit<Organization, 'id' | 'createdAt' | 'updatedAt'> =
     upiId: "maaz9145@okhdfcbank",
     qrCodeUrl: "https://firebasestorage.googleapis.com/v0/b/baitul-mal-connect.appspot.com/o/app-assets%2FOrg_Temp_Maaz_QR_Code-Crop.jpg?alt=media&token=75638219-c638-4e12-870f-1538d6139c87",
     footer: defaultFooterContent,
+    source: 'Seeded',
 };
 
 
