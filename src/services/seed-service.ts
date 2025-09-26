@@ -8,7 +8,7 @@ import { createUser, User, UserRole, getUserByEmail, getUserByPhone, getAllUsers
 import { createOrganization, Organization, getCurrentOrganization, OrganizationFooter } from './organization-service';
 import { seedInitialQuotes as seedQuotesService } from './quotes-service';
 import { db } from './firebase';
-import { collection, getDocs, query, where, Timestamp, setDoc, doc, writeBatch, orderBy, getCountFromServer, limit, updateDoc, serverTimestamp, getDoc, deleteDoc } from 'firebase/firestore';
+import { collection, getDocs, query, where, Timestamp, setDoc, doc, writeBatch, orderBy, getCountFromServer, limit, updateDoc, serverTimestamp, getDoc, deleteDoc, arrayUnion } from 'firebase/firestore';
 import type { Lead, Verifier, LeadDonationAllocation, Donation, Campaign, FundTransfer, LeadAction, AppSettings } from './types';
 import { createLead, getLead } from './lead-service';
 import { createCampaign, getCampaign } from './campaign-service';
@@ -305,7 +305,7 @@ const seedGeneralLeads = async (adminUser: User): Promise<string[]> => {
             purpose: leadInfo.purpose as any, category: leadInfo.category, donationType: leadInfo.donationType as any,
             helpRequested: leadInfo.amount, helpGiven: leadInfo.isFunded ? leadInfo.amount : 0,
             caseAction: caseAction,
-            caseStatus: 'Closed',
+            caseStatus: caseAction === 'Closed' ? 'Closed' : 'Open',
             isLoan: leadInfo.isLoan || false,
             caseDetails: leadInfo.details,
             caseVerification: 'Verified', verifiers: [verifier],
