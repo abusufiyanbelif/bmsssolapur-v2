@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { LogIn, LogOut, Menu, Users as UsersIcon, User, Home, Loader2, Bell, AlertTriangle, FileCheck, HandHeart, Megaphone, ArrowRightLeft, Shield, FileUp, HandCoins } from "lucide-react";
 import { RoleSwitcherDialog } from "./role-switcher-dialog";
-import { useState, useEffect, Children, cloneElement, isValidElement } from "react";
+import { useState, useEffect, Children, cloneElement, isValidElement, useCallback } from "react";
 import { Footer } from "./footer";
 import { logActivity } from "@/services/activity-log-service";
 import Link from "next/link";
@@ -111,68 +111,69 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     
     const [user, setUser] = useState<UserType & { isLoggedIn: boolean; activeRole: string; initials: string; avatar: string; } | null>(null);
     
-    useEffect(() => {
-        const initializeSession = async () => {
-            const [permissionResult, orgData] = await Promise.all([
-                performPermissionCheck(),
-                getCurrentOrganization()
-            ]);
+    const initializeSession = useCallback(async () => {
+        const [permissionResult, orgData] = await Promise.all([
+            performPermissionCheck(),
+            getCurrentOrganization()
+        ]);
 
-            setOrganization(orgData);
+        setOrganization(orgData);
 
-            if (!permissionResult.success && permissionResult.error) {
-                setPermissionError(permissionResult.error);
-                setIsSessionReady(true);
-                return;
-            }
+        if (!permissionResult.success && permissionResult.error) {
+            setPermissionError(permissionResult.error);
+            setIsSessionReady(true);
+            return;
+        }
 
-            const storedUserId = localStorage.getItem('userId');
-            const shouldShowRoleSwitcher = localStorage.getItem('showRoleSwitcher') === 'true';
+        const storedUserId = localStorage.getItem('userId');
+        const shouldShowRoleSwitcher = localStorage.getItem('showRoleSwitcher') === 'true';
 
-            if (storedUserId) {
-                let fetchedUser = await getUser(storedUserId);
+        if (storedUserId) {
+            let fetchedUser = await getUser(storedUserId);
 
-                if (fetchedUser) {
-                    const savedRole = localStorage.getItem('activeRole');
-                    const activeRole = (savedRole && fetchedUser.roles.includes(savedRole as any)) ? savedRole : fetchedUser.roles[0];
-                    
-                    if (localStorage.getItem('activeRole') !== activeRole) {
-                        localStorage.setItem('activeRole', activeRole);
-                    }
-                    
-                    const userData = {
-                        ...fetchedUser,
-                        isLoggedIn: true,
-                        activeRole: activeRole,
-                        initials: fetchedUser.name.split(' ').map(n => n[0]).join('').substring(0,2).toUpperCase(),
-                        avatar: `https://placehold.co/100x100.png?text=${fetchedUser.name.split(' ').map(n => n[0]).join('').substring(0,2).toUpperCase()}`
-                    };
-                    setUser(userData);
-                    
-                    // Always fetch admin notifications if user has any admin role
-                    if (fetchedUser.roles.some(r => ['Admin', 'Super Admin', 'Finance Admin'].includes(r))) {
-                        const [allLeads, allDonations] = await Promise.all([
-                            getAllLeads(),
-                            getAllDonations()
-                        ]);
-                        setPendingLeads(allLeads.filter(l => l.caseVerification === 'Pending'));
-                        setReadyToPublishLeads(allLeads.filter(l => l.caseAction === 'Ready For Help'));
-                        setPendingDonations(allDonations.filter(d => d.status === 'Pending verification' || d.status === 'Pending'));
-                    }
+            if (fetchedUser) {
+                const savedRole = localStorage.getItem('activeRole');
+                const activeRole = (savedRole && fetchedUser.roles.includes(savedRole as any)) ? savedRole : fetchedUser.roles[0];
+                
+                if (localStorage.getItem('activeRole') !== activeRole) {
+                    localStorage.setItem('activeRole', activeRole);
+                }
+                
+                const userData = {
+                    ...fetchedUser,
+                    isLoggedIn: true,
+                    activeRole: activeRole,
+                    initials: fetchedUser.name.split(' ').map(n => n[0]).join('').substring(0,2).toUpperCase(),
+                    avatar: `https://placehold.co/100x100.png?text=${fetchedUser.name.split(' ').map(n => n[0]).join('').substring(0,2).toUpperCase()}`
+                };
+                setUser(userData);
+                
+                if (fetchedUser.roles.some(r => ['Admin', 'Super Admin', 'Finance Admin'].includes(r))) {
+                    const [allLeads, allDonations] = await Promise.all([
+                        getAllLeads(),
+                        getAllDonations()
+                    ]);
+                    setPendingLeads(allLeads.filter(l => l.caseVerification === 'Pending'));
+                    setReadyToPublishLeads(allLeads.filter(l => l.caseAction === 'Ready For Help'));
+                    setPendingDonations(allDonations.filter(d => d.status === 'Pending verification' || d.status === 'Pending'));
+                }
 
-                    if (shouldShowRoleSwitcher && fetchedUser.roles.length > 1) {
-                        setIsRoleSwitcherOpen(true);
-                        localStorage.removeItem('showRoleSwitcher'); 
-                    }
-                } else {
-                    handleLogout(false); // Don't redirect if user is just invalid
+                if (shouldShowRoleSwitcher && fetchedUser.roles.length > 1) {
+                    setIsRoleSwitcherOpen(true);
+                    localStorage.removeItem('showRoleSwitcher'); 
                 }
             } else {
-                setUser(guestUser);
+                handleLogout(false);
             }
-            setIsSessionReady(true);
-        };
+        } else {
+            setUser(guestUser);
+        }
+        setIsSessionReady(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
+
+    useEffect(() => {
         const handleLoginSuccess = () => {
             setIsSessionReady(false); // Force re-initialization
             initializeSession();
@@ -180,14 +181,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
         window.addEventListener('loginSuccess', handleLoginSuccess);
 
-        // Call the initialization function
         initializeSession();
 
         return () => {
             window.removeEventListener('loginSuccess', handleLoginSuccess);
         };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []); 
+    }, [initializeSession]);
 
 
     const handleRoleChange = (newRole: string) => {
@@ -209,10 +208,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         }
         
         if(redirectUrl) {
-            // If we have a pending redirect, go there after the switch
             window.location.href = redirectUrl;
         } else {
-            // Otherwise, go to the standard home/dashboard for that role
             window.location.href = '/home';
         }
     };
@@ -266,7 +263,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
     const childrenWithProps = Children.map(children, child => {
         if (isValidElement(child)) {
-            // Pass organization data to all direct children of AppShell
             return cloneElement(child as React.ReactElement<any>, { user, activeRole: user?.activeRole, organization });
         }
         return child;
