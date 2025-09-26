@@ -1,4 +1,3 @@
-
 // src/app/admin/donations/actions.ts
 "use server";
 
@@ -16,12 +15,9 @@ export async function handleDeleteDonation(donationId: string, adminUserId: stri
         const adminUser = await getUser(adminUserId);
         if (!adminUser) return { success: false, error: "Admin user not found for logging." };
         
-        const donationToDelete = await getDonation(donationId);
-        if (donationToDelete?.status === 'Allocated' || donationToDelete?.status === 'Partially Allocated') {
-            return { success: false, error: "This donation cannot be deleted because it has already been allocated to one or more leads. Please review the lead's fund transfers first." };
-        }
-
+        // deleteDonationService now handles the logic and logging
         await deleteDonationService(donationId, adminUser);
+
         revalidatePath("/admin/donations");
         revalidatePath("/admin");
         revalidatePath("/");
@@ -29,7 +25,7 @@ export async function handleDeleteDonation(donationId: string, adminUserId: stri
     } catch (e) {
         const error = e instanceof Error ? e.message : "An unknown error occurred while deleting the donation.";
         console.error("Error deleting donation:", error);
-        return { success: false, error: `Failed to delete donation: ${error}` };
+        return { success: false, error: error };
     }
 }
 
@@ -41,13 +37,15 @@ export async function handleBulkDeleteDonations(donationIds: string[], adminUser
         const batch = writeBatch(db);
         const logPromises: Promise<void>[] = [];
         
+        // First, check all selected donations before initiating any deletions
         for (const id of donationIds) {
             const donation = await getDonation(id);
              if (donation?.status === 'Allocated' || donation?.status === 'Partially Allocated') {
-                throw new Error(`Donation "${donation.id}" from ${donation.donorName} cannot be deleted because it has been allocated. Please de-allocate funds first.`);
+                throw new Error(`Donation from ${donation.donorName} (ID: ...${id.slice(-6)}) cannot be deleted because it has already been allocated. Please review the allocations first.`);
             }
         }
-
+        
+        // If all checks pass, proceed with deletion
         for (const id of donationIds) {
             const donationDocRef = doc(db, "donations", id);
             batch.delete(donationDocRef);

@@ -2,40 +2,23 @@
 // src/app/admin/user-management/actions.ts
 "use server";
 
-import { deleteUser, updateUser } from "@/services/user-service";
+import { deleteUser as deleteUserService, updateUser } from "@/services/user-service";
 import { revalidatePath } from "next/cache";
 import { writeBatch, doc } from "firebase/firestore";
 import { db } from "@/services/firebase";
 import { logActivity } from "@/services/activity-log-service";
 import { getUser } from "@/services/user-service";
 
-export async function handleDeleteUser(userId: string) {
+export async function handleDeleteUser(userId: string, adminUserId: string) {
     try {
-        const userToDelete = await getUser(userId);
-        if (!userToDelete) {
-             throw new Error("User to delete not found.");
+        const adminUser = await getUser(adminUserId);
+        if (!adminUser) {
+             throw new Error("Admin user performing the action could not be found.");
         }
         
-        await deleteUser(userId);
+        // The core deletion logic (including cascading effects) is now in the service layer.
+        await deleteUserService(userId, adminUser);
         
-        // This is a placeholder for the admin user performing the action.
-        // In a real app, you would get this from the session.
-        const adminUser = await getUser("ADMIN_USER_ID"); // This will fail gracefully if not found
-        
-        if (adminUser) {
-             await logActivity({
-                userId: adminUser.id!,
-                userName: adminUser.name,
-                userEmail: adminUser.email,
-                role: 'Admin',
-                activity: 'User Deleted',
-                details: { 
-                    deletedUserId: userId, 
-                    deletedUserName: userToDelete.name,
-                },
-            });
-        }
-
         revalidatePath("/admin/user-management");
         revalidatePath("/admin/beneficiaries");
         revalidatePath("/admin/donors");
@@ -48,14 +31,18 @@ export async function handleDeleteUser(userId: string) {
     }
 }
 
-export async function handleBulkDeleteUsers(userIds: string[]) {
+export async function handleBulkDeleteUsers(userIds: string[], adminUserId: string) {
     try {
-        const batch = writeBatch(db);
-        for (const id of userIds) {
-            const userDocRef = doc(db, "users", id);
-            batch.delete(userDocRef);
+        const adminUser = await getUser(adminUserId);
+        if (!adminUser) {
+             throw new Error("Admin user performing the action could not be found.");
         }
-        await batch.commit();
+        
+        // Using the service layer to handle each deletion properly
+        for (const userId of userIds) {
+            await deleteUserService(userId, adminUser, true); // Pass a flag to indicate bulk operation
+        }
+
         revalidatePath("/admin/user-management");
         revalidatePath("/admin/beneficiaries");
         revalidatePath("/admin/donors");

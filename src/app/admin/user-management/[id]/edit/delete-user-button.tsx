@@ -7,6 +7,7 @@ import { DeleteConfirmationDialog } from "@/components/delete-confirmation-dialo
 import { handleDeleteUser } from "../../actions";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
 
 interface DeleteUserButtonProps {
     userId: string;
@@ -16,6 +17,12 @@ interface DeleteUserButtonProps {
 export function DeleteUserButton({ userId, userName }: DeleteUserButtonProps) {
     const { toast } = useToast();
     const router = useRouter();
+    const [adminUserId, setAdminUserId] = useState<string | null>(null);
+
+    useEffect(() => {
+        const storedAdminId = localStorage.getItem('userId');
+        setAdminUserId(storedAdminId);
+    }, []);
 
     const onSuccess = () => {
         toast({
@@ -29,7 +36,12 @@ export function DeleteUserButton({ userId, userName }: DeleteUserButtonProps) {
         <DeleteConfirmationDialog
             itemType="user"
             itemName={userName}
-            onDelete={() => handleDeleteUser(userId)}
+            onDelete={async () => {
+                if (!adminUserId) {
+                    return { success: false, error: "Could not identify administrator." };
+                }
+                return await handleDeleteUser(userId, adminUserId);
+            }}
             onSuccess={onSuccess}
         >
             <Button variant="destructive" type="button">

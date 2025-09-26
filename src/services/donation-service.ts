@@ -128,7 +128,7 @@ export const getDonation = async (id: string): Promise<Donation | null> => {
   try {
     const donationDoc = await getDoc(doc(db, DONATIONS_COLLECTION, id));
     if (donationDoc.exists()) {
-      const data = doc.data();
+      const data = donationDoc.data();
       const allocations = (data.allocations || []).map((alloc: Allocation) => ({
         ...alloc,
         allocatedAt: (alloc.allocatedAt as Timestamp)?.toDate(),
@@ -225,6 +225,10 @@ export const deleteDonation = async (id: string, adminUser: Pick<User, 'id' | 'n
         const donationToDelete = await getDonation(id);
         if (!donationToDelete) throw new Error("Donation to delete not found.");
 
+        if (donationToDelete.status === 'Allocated' || donationToDelete.status === 'Partially Allocated') {
+            throw new Error("This donation cannot be deleted because it has already been allocated to one or more leads. Please review the lead's fund transfers first.");
+        }
+
         await deleteDoc(doc(db, DONATIONS_COLLECTION, id));
         
          await logActivity({
@@ -241,6 +245,9 @@ export const deleteDonation = async (id: string, adminUser: Pick<User, 'id' | 'n
         });
     } catch (error) {
         console.error("Error deleting donation: ", error);
+        if (error instanceof Error) {
+            throw error;
+        }
         throw new Error('Failed to delete donation.');
     }
 }
