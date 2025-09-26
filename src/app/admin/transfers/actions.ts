@@ -1,5 +1,6 @@
 
-'use server';
+
+"use server";
 
 import { doc, writeBatch, getDoc, increment } from "firebase/firestore";
 import { db } from "@/services/firebase";
@@ -70,3 +71,4 @@ export async function handleBulkDeleteTransfers(uniqueIds: string[]) {
         return { success: false, error: `Failed to delete transfers: ${error}` };
     }
 }
+
