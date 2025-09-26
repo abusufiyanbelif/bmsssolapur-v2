@@ -6,7 +6,7 @@ import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { getUser, getAllUsers } from "@/services/user-service";
 import { getDonationActivity } from "@/services/activity-log-service";
-import { LinkedLeads } from "../linked-leads";
+import { LinkedLeadsCard } from "../linked-leads-card";
 import { AuditTrail } from "../audit-trail";
 import { getAllLeads } from "@/services/lead-service";
 import { getAllCampaigns } from "@/services/campaign-service";
@@ -57,7 +57,7 @@ export default async function EditDonationPage({ params }: { params: { id: strin
                             />
                         </CardContent>
                     </Card>
-                    <LinkedLeads donation={donation} leads={allLeads} />
+                    <LinkedLeadsCard donation={donation} leads={allLeads} />
                 </div>
                  <div className="lg:col-span-1">
                     <AuditTrail activityLogs={activityLogs} />

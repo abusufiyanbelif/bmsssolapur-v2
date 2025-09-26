@@ -2,13 +2,14 @@
 "use server";
 
 import { deleteDonation as deleteDonationService, updateDonation, createDonation, handleUpdateDonationStatus as updateStatusService, getDonation, allocateDonationToLeads } from "@/services/donation-service";
-import { getUser } from "@/services/user-service";
+import { getUser, updateUser as updateUserService } from "@/services/user-service";
 import { revalidatePath } from "next/cache";
-import { writeBatch, doc, Timestamp, arrayUnion } from "firebase/firestore";
+import { writeBatch, doc, Timestamp, arrayUnion, increment, serverTimestamp, arrayRemove } from "firebase/firestore";
 import { db } from "@/services/firebase";
-import { DonationStatus } from "@/services/types";
+import { DonationStatus, Lead } from "@/services/types";
 import { logActivity } from "@/services/activity-log-service";
 import { uploadFile } from "@/services/storage-service";
+import { getLead, updateLead } from "@/services/lead-service";
 
 export async function handleDeleteDonation(donationId: string, adminUserId: string) {
     try {
@@ -188,5 +189,68 @@ export async function handleUploadDonationProof(
         const error = e instanceof Error ? e.message : "An unknown error occurred during file upload.";
         console.error("Error uploading donation proof:", error);
         return { success: false, error: `Failed to upload proof: ${error}` };
+    }
+}
+
+export async function handleRemoveAllocation(
+    donationId: string, 
+    leadId: string, 
+    amountToRemove: number,
+    allocatedAt: Date,
+    adminUserId: string
+): Promise<{ success: boolean; error?: string }> {
+    try {
+        const adminUser = await getUser(adminUserId);
+        if (!adminUser) return { success: false, error: "Admin user not found." };
+
+        const batch = writeBatch(db);
+
+        // 1. Get current states
+        const donation = await getDonation(donationId);
+        const lead = await getLead(leadId);
+        if (!donation || !lead) return { success: false, error: "Donation or Lead not found." };
+
+        // 2. Remove allocation from Donation
+        const donationRef = doc(db, 'donations', donationId);
+        const allocationToRemoveFromDonation = (donation.allocations || []).find(
+            alloc => alloc.leadId === leadId && alloc.amount === amountToRemove && alloc.allocatedAt.getTime() === allocatedAt.getTime()
+        );
+        if (allocationToRemoveFromDonation) {
+            batch.update(donationRef, { allocations: arrayRemove(allocationToRemoveFromDonation) });
+        }
+
+        // 3. Remove allocation from Lead
+        const leadRef = doc(db, 'leads', leadId);
+        const allocationToRemoveFromLead = (lead.donations || []).find(
+            alloc => alloc.donationId === donationId && alloc.amount === amountToRemove && alloc.allocatedAt.getTime() === allocatedAt.getTime()
+        );
+        if (allocationToRemoveFromLead) {
+            batch.update(leadRef, { donations: arrayRemove(allocationToRemoveFromLead) });
+        }
+
+        // 4. Decrement helpGiven on Lead
+        batch.update(leadRef, { helpGiven: increment(-amountToRemove) });
+
+        // 5. Update donation status if it's no longer fully allocated
+        const newTotalAllocated = (donation.allocations || []).reduce((sum, alloc) => sum + alloc.amount, 0) - amountToRemove;
+        let newDonationStatus = donation.status;
+        if (newTotalAllocated < donation.amount) {
+            newDonationStatus = newTotalAllocated > 0 ? 'Partially Allocated' : 'Verified';
+        }
+        batch.update(donationRef, { status: newDonationStatus });
+
+        await batch.commit();
+
+        revalidatePath(`/admin/donations/${donationId}/edit`);
+        revalidatePath(`/admin/leads/${leadId}`);
+        revalidatePath('/admin/donations');
+        revalidatePath('/admin/leads');
+        revalidatePath('/admin');
+        
+        return { success: true };
+    } catch (e) {
+        const error = e instanceof Error ? e.message : "An unknown error occurred.";
+        console.error("Error removing allocation:", error);
+        return { success: false, error };
     }
 }
