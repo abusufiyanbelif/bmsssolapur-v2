@@ -233,18 +233,8 @@ const seedUsers = async (users: Omit<User, 'id' | 'createdAt'>[]): Promise<strin
 
     for (const userData of users) {
         let existingUser: User | null = null;
-        if (userData.userId === 'admin') {
-            const adminUserDoc = await getDoc(doc(db, USERS_COLLECTION, 'ADMIN_USER_ID'));
-            if (adminUserDoc.exists()) {
-                await updateDoc(adminUserDoc.ref, { ...userData, id: 'ADMIN_USER_ID', updatedAt: serverTimestamp() });
-                results.push(`User ${userData.name}: Updated`);
-            } else {
-                 await setDoc(adminUserDoc.ref, { ...userData, id: 'ADMIN_USER_ID', createdAt: Timestamp.now(), source: 'Seeded' });
-                 results.push(`User ${userData.name}: Created`);
-            }
-            continue;
-        }
         
+        // Use a consistent, safe way to check for existing users
         if (userData.phone) existingUser = await getUserByPhone(userData.phone);
         if (!existingUser && userData.email) existingUser = await getUserByEmail(userData.email);
         if (!existingUser && userData.userId) existingUser = await getUserByUserId(userData.userId);
@@ -598,7 +588,7 @@ export const seedSampleData = async (): Promise<SeedResult> => {
     let details: string[] = [];
 
     // Ensure core team members exist before using them as verifiers etc.
-    await seedUsers(coreTeamUsersToSeed);
+    details.push(...await seedUsers(coreTeamUsersToSeed));
     
     const superAdmin = await getUserByUserId("abusufiyan.belif");
     if (!superAdmin) throw new Error("Super admin user 'abusufiyan.belif' not found. Please run initial seed first.");
@@ -723,41 +713,37 @@ export const erasePaymentGateways = async (): Promise<SeedResult> => {
 
 export const eraseSampleData = async (): Promise<SeedResult> => {
     const details: string[] = [];
+
+    // This function will delete ALL documents from these collections,
+    // which is the desired behavior to clear out duplicates.
+    const deletedLeads = await deleteCollection('leads');
+    details.push(`Deleted ${deletedLeads} leads.`);
+
+    const deletedDonations = await deleteCollection('donations');
+    details.push(`Deleted ${deletedDonations} donations.`);
+
+    const deletedCampaigns = await deleteCollection('campaigns');
+    details.push(`Deleted ${deletedCampaigns} campaigns.`);
     
-    // Find all seeded data
+    // Find and delete all users with source: 'Seeded', except for the main admin accounts
     const seededUsersQuery = query(collection(db, USERS_COLLECTION), where("source", "==", "Seeded"));
-    const seededLeadsQuery = query(collection(db, 'leads'), where("source", "==", "Seeded"));
-    const seededDonationsQuery = query(collection(db, 'donations'), where("source", "==", "Seeded"));
-    const seededCampaignsQuery = query(collection(db, 'campaigns'), where("source", "==", "Seeded"));
+    const usersSnapshot = await getDocs(seededUsersQuery);
     
-    const [usersSnapshot, leadsSnapshot, donationsSnapshot, campaignsSnapshot] = await Promise.all([
-        getDocs(seededUsersQuery),
-        getDocs(seededLeadsQuery),
-        getDocs(seededDonationsQuery),
-        getDocs(seededCampaignsQuery),
-    ]);
-
     const batch = writeBatch(db);
-
+    let deletedUserCount = 0;
     usersSnapshot.docs.forEach(doc => {
-        // Safeguard: Do not delete the main admin users
         const userData = doc.data();
+        // Safeguard: Do not delete the main admin users
         if (userData.userId !== 'admin' && userData.userId !== 'abusufiyan.belif') {
            batch.delete(doc.ref);
+           deletedUserCount++;
         }
     });
-    details.push(`Deleted ${usersSnapshot.docs.filter(d => d.data().userId !== 'admin' && d.data().userId !== 'abusufiyan.belif').length} seeded users.`);
     
-    leadsSnapshot.docs.forEach(doc => batch.delete(doc.ref));
-    details.push(`Deleted ${leadsSnapshot.size} seeded leads.`);
-    
-    donationsSnapshot.docs.forEach(doc => batch.delete(doc.ref));
-    details.push(`Deleted ${donationsSnapshot.size} seeded donations.`);
-
-    campaignsSnapshot.docs.forEach(doc => batch.delete(doc.ref));
-    details.push(`Deleted ${campaignsSnapshot.size} seeded campaigns.`);
-
-    await batch.commit();
+    if (deletedUserCount > 0) {
+        await batch.commit();
+        details.push(`Deleted ${deletedUserCount} seeded users.`);
+    }
 
     return {
         message: 'Sample Data Erased',
