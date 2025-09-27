@@ -453,15 +453,18 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation, set
         if (value !== undefined && value !== null) {
                 newAutoFilledFields.add(key);
                 if (key === 'amount') {
-                setValue('totalTransactionAmount', value as number, { shouldDirty: true });
+                    setValue('totalTransactionAmount', value as number, { shouldDirty: true });
                 } else if (key === 'date' && typeof value === 'string') {
-                setValue('donationDate', new Date(value), { shouldDirty: true });
+                    const parsedDate = new Date(value);
+                    if (!isNaN(parsedDate.getTime())) {
+                        setValue('donationDate', parsedDate, { shouldDirty: true });
+                    }
                 } else if (key === 'type' && donationTypes.includes(value as any)) {
-                setValue('type', value as any, { shouldDirty: true });
+                    setValue('type', value as any, { shouldDirty: true });
                 } else if (key === 'purpose' && donationPurposes.includes(value as any)) {
-                setValue('purpose', value as any, { shouldDirty: true });
+                    setValue('purpose', value as any, { shouldDirty: true });
                 } else {
-                setValue(key as any, value, { shouldDirty: true });
+                    setValue(key as any, value, { shouldDirty: true });
                 }
         }
     });
@@ -480,6 +483,7 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation, set
 
     if (donor) {
         setValue('donorId', donor.id, { shouldDirty: true });
+        setValue('donorType', 'existing');
         setSelectedDonor(donor);
         toast({ variant: "success", title: "Donor Found!", description: `Automatically selected existing donor: ${donor.name}` });
 
@@ -493,7 +497,7 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation, set
         }
 
     } else {
-        toast({ variant: "default", title: "New Donor", description: `No existing donor found. Please create one.` });
+        toast({ variant: "default", title: "New Donor", description: `No existing donor found. Switched to 'Create New' form.` });
         setValue('donorType', 'new');
     }
 
@@ -588,7 +592,9 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation, set
                                 <Button type="button" variant={field.value === 'existing' ? 'default' : 'outline'} className="w-full h-20 flex-col gap-2" onClick={() => field.onChange('existing')}><UserSearch className="h-6 w-6"/><span>Search Existing</span></Button>
                             </FormItem>
                             <FormItem className="flex items-center space-x-3 space-y-0">
-                                <Button type="button" variant={field.value === 'new' ? 'default' : 'outline'} className="w-full h-20 flex-col gap-2" onClick={() => field.onChange('new')}><UserRoundPlus className="h-6 w-6"/><span>Create New</span></Button>
+                                     <Button type="button" variant={field.value === 'new' ? 'default' : 'outline'} className="w-full h-20 flex-col gap-2" onClick={() => field.onChange('new')}>
+                                        <UserRoundPlus className="h-6 w-6"/><span>Create New</span>
+                                    </Button>
                             </FormItem>
                         </RadioGroup>
                         </FormControl>
