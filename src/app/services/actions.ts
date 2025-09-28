@@ -68,7 +68,7 @@ export async function testGeminiConnection(apiKey?: string): Promise<{success: b
         const testAi = apiKey ? genkit({ plugins: [googleAI({ apiKey })] }) : ai;
         
         await testAi.generate({
-            model: googleAI.model('gemini-1.5-flash-latest'),
+            model: googleAI.model('gemini-1.5-flash'),
             prompt: 'Test prompt',
             config: { temperature: 0 },
         });
