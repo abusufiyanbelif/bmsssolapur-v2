@@ -31,7 +31,7 @@ const extractDetailsFromTextFlow = ai.defineFlow(
   async (input) => {
     
     const llmResponse = await ai.generate({
-        model: googleAI.model('gemini-1.5-flash-latest'),
+        model: googleAI.model('gemini-1.5-flash-preview-0514'),
         prompt: `You are an expert financial assistant specializing in parsing text from payment receipts. Analyze the provided block of raw text, which was extracted via OCR from a payment screenshot. Your task is to carefully extract the following details. Be precise. If a field is not present in the text, omit it entirely from the output. The text might have OCR errors, so be robust in your parsing.
 
             **Primary Goal: Find UPI IDs. A UPI ID is any string containing an '@' symbol (e.g., username@okaxis).**

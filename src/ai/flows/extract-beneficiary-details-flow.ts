@@ -33,7 +33,7 @@ const extractBeneficiaryDetailsFromTextFlow = ai.defineFlow(
         : 'Your task is to analyze the provided OCR text and extract all relevant information into the specific fields defined in the output schema.';
 
     const llmResponse = await ai.generate({
-        model: googleAI.model('gemini-1.5-flash-latest'),
+        model: googleAI.model('gemini-1.5-flash-preview-0514'),
         prompt: `You are an expert in document analysis and data extraction, specializing in Indian identity documents. ${fieldsToFind}
 
             **--- EXTRACTION RULES ---**
