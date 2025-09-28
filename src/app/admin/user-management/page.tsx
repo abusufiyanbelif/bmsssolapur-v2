@@ -1,3 +1,4 @@
+
 // src/app/admin/user-management/page.tsx
 "use client";
 
@@ -50,6 +51,7 @@ export default function UserManagementPage() {
     const [currentUserId, setCurrentUserId] = useState<string | null>(null);
     const [popoverOpen, setPopoverOpen] = useState(false);
     const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
+    const [adminUserId, setAdminUserId] = useState<string | null>(null);
 
     // Input states
     const [nameInput, setNameInput] = useState('');
@@ -91,6 +93,7 @@ export default function UserManagementPage() {
         fetchUsers();
         const storedUserId = localStorage.getItem('userId');
         setCurrentUserId(storedUserId);
+        setAdminUserId(storedUserId);
     }, []);
     
     const onUserDeleted = () => {
@@ -236,7 +239,12 @@ export default function UserManagementPage() {
                     <DeleteConfirmationDialog
                         itemType="user"
                         itemName={user.name}
-                        onDelete={() => handleDeleteUser(user.id!)}
+                        onDelete={async () => {
+                           if (!adminUserId) {
+                                return { success: false, error: "Admin user ID not found." };
+                           }
+                           return await handleDeleteUser(user.id!, adminUserId);
+                        }}
                         onSuccess={onUserDeleted}
                     >
                          <DropdownMenuItem disabled={isProtectedUser} onSelect={(e) => e.preventDefault()} className="text-destructive focus:text-destructive">
@@ -517,7 +525,12 @@ export default function UserManagementPage() {
                          <DeleteConfirmationDialog
                             itemType={`${selectedUsers.length} user(s)`}
                             itemName="the selected items"
-                            onDelete={() => handleBulkDeleteUsers(selectedUsers)}
+                            onDelete={async () => {
+                                if (!adminUserId) {
+                                    return { success: false, error: "Admin user ID not found." };
+                                }
+                                return await handleBulkDeleteUsers(selectedUsers, adminUserId);
+                            }}
                             onSuccess={onBulkUsersDeleted}
                         >
                             <Button variant="destructive">
