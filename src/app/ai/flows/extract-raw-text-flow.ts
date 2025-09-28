@@ -1,4 +1,3 @@
-
 'use server';
 /**
  * @fileOverview A Genkit flow for extracting raw text from an image or PDF.
@@ -25,8 +24,6 @@ export const extractRawTextFlow = ai.defineFlow(
     
     const mediaParts = input.photoDataUris.map(uri => ({ media: { url: uri } }));
     
-    // For vision tasks, gemini-pro-vision is often a good specific choice,
-    // but the latest multimodal models can also handle it. We will use the standard fallback pattern.
     const modelCandidates = [
         googleAI.model('gemini-1.5-flash-latest'),
         googleAI.model('gemini-1.5-pro-latest'),

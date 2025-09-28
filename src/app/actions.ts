@@ -1,4 +1,3 @@
-
 'use server';
 
 import { getAdminDb } from '@/services/firebase-admin';
