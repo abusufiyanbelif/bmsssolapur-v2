@@ -17,9 +17,10 @@ export async function handleUpdateTheme(
     const primary = formData.get("primary") as string;
     const accent = formData.get("accent") as string;
     const background = formData.get("background") as string;
+    const foreground = formData.get("foreground") as string;
     const destructive = formData.get("destructive") as string;
     
-    if (!primary || !accent || !background || !destructive) {
+    if (!primary || !accent || !background || !foreground || !destructive) {
         return { success: false, error: "All color fields are required." };
     }
 
@@ -37,6 +38,7 @@ export async function handleUpdateTheme(
     cssContent = updateCssVariable(cssContent, '--primary', primary);
     cssContent = updateCssVariable(cssContent, '--accent', accent);
     cssContent = updateCssVariable(cssContent, '--background', background);
+    cssContent = updateCssVariable(cssContent, '--foreground', foreground);
     cssContent = updateCssVariable(cssContent, '--destructive', destructive);
     
     await fs.writeFile(cssFilePath, cssContent, 'utf8');

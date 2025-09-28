@@ -72,7 +72,7 @@ export const Letterhead = forwardRef<HTMLDivElement, LetterheadProps>(
         ].filter(Boolean).join(' | ');
 
         return (
-             <div ref={ref} className="p-12 bg-white text-black font-serif w-[210mm] h-[297mm] flex flex-col relative shadow-lg overflow-hidden">
+             <div ref={ref} className="p-12 bg-background text-foreground font-serif w-[210mm] h-[297mm] flex flex-col relative shadow-lg overflow-hidden">
                 {/* Watermark */}
                 {logoDataUri && (
                     <div className="absolute inset-0 flex items-center justify-center z-0">
@@ -84,7 +84,7 @@ export const Letterhead = forwardRef<HTMLDivElement, LetterheadProps>(
                     </div>
                 )}
                 <div ref={contentRef} className="relative z-10 flex flex-col flex-grow h-full">
-                     <header className="pb-4 border-b-2 border-gray-800">
+                     <header className="pb-4 border-b-2 border-foreground/50">
                         <table className="w-full">
                             <tbody>
                                 <tr>
@@ -100,22 +100,22 @@ export const Letterhead = forwardRef<HTMLDivElement, LetterheadProps>(
                                          )}
                                     </td>
                                     <td className="pl-4 align-top">
-                                        <h1 className="text-4xl font-bold font-headline" style={{...textStyle, color: '#16a34a'}}>
+                                        <h1 className="text-4xl font-bold font-headline text-primary" style={{...textStyle}}>
                                             {organizationDetails.titleLine1.toUpperCase()}
                                         </h1>
-                                        <h2 className="text-4xl font-bold font-headline" style={{...textStyle, color: '#FFC107'}}>
+                                        <h2 className="text-4xl font-bold font-headline text-accent" style={{...textStyle}}>
                                             {organizationDetails.titleLine2.toUpperCase()}
                                         </h2>
-                                        <h3 className="text-3xl font-bold font-headline" style={{...textStyle, color: '#16a34a'}}>
+                                        <h3 className="text-3xl font-bold font-headline text-primary" style={{...textStyle}}>
                                              {organizationDetails.titleLine3.toUpperCase()}
                                         </h3>
                                         {includeAddress && (
-                                            <p className="text-sm text-gray-600 mt-2" style={textStyle}>
+                                            <p className="text-sm text-muted-foreground mt-2" style={textStyle}>
                                                 Address: {isTemplate ? '' : `${organizationDetails.address}`}
                                             </p>
                                         )}
                                         {emailPhoneText && (
-                                            <p className="text-sm text-gray-600" style={textStyle}>
+                                            <p className="text-sm text-muted-foreground" style={textStyle}>
                                                 {emailPhoneText}
                                             </p>
                                         )}
@@ -125,7 +125,7 @@ export const Letterhead = forwardRef<HTMLDivElement, LetterheadProps>(
                         </table>
                     </header>
                     <ScrollArea className="flex-grow my-4">
-                        <main className="text-gray-800 text-base leading-normal whitespace-pre-wrap" style={textStyle}>
+                        <main className="text-foreground/80 text-base leading-normal whitespace-pre-wrap" style={textStyle}>
                            {includeDate && <p>Date: {isTemplate ? '' : format(content.date, 'dd MMM, yyyy')}</p>}
                            {includeRecipient && (
                                <div className="pt-8">
@@ -146,15 +146,15 @@ export const Letterhead = forwardRef<HTMLDivElement, LetterheadProps>(
                      <div className="mt-auto pt-4 text-right">
                         {includeClosing && (
                             <div className="space-y-1 mb-12">
-                                <p className="text-gray-800" style={textStyle}>Sincerely,</p>
-                                <p className="text-gray-800" style={textStyle}>{content.closingName}</p>
+                                <p className="text-foreground/80" style={textStyle}>Sincerely,</p>
+                                <p className="text-foreground/80" style={textStyle}>{content.closingName}</p>
                             </div>
                         )}
-                        <p className="text-gray-800 inline-block" style={textStyle}>_________________________</p>
-                        <p className="text-sm text-gray-600 pr-4" style={textStyle}>(Signature / Stamp)</p>
+                        <p className="text-foreground/80 inline-block" style={textStyle}>_________________________</p>
+                        <p className="text-sm text-muted-foreground pr-4" style={textStyle}>(Signature / Stamp)</p>
                     </div>
                     
-                    <footer className="mt-4 pt-4 border-t text-xs text-center text-gray-500" style={textStyle}>
+                    <footer className="mt-4 pt-4 border-t text-xs text-center text-muted-foreground" style={textStyle}>
                          {regPanText && (
                             <p>{regPanText}</p>
                          )}

@@ -24,6 +24,7 @@ const formSchema = z.object({
   primary: z.string().min(1, "Primary color is required."),
   accent: z.string().min(1, "Accent color is required."),
   background: z.string().min(1, "Background color is required."),
+  foreground: z.string().min(1, "Foreground (text) color is required."),
   destructive: z.string().min(1, "Destructive color is required."),
 });
 
@@ -34,6 +35,7 @@ interface ThemeFormProps {
         primary: string;
         accent: string;
         background: string;
+        foreground: string;
         destructive: string;
     };
 }
@@ -97,10 +99,12 @@ const colorToHsl = (color: string) => {
 }
 
 const themeSuggestions = [
-    { name: 'Forest Green (Default)', colors: { primary: '142.1 76.2% 36.3%', accent: '45 93.4% 47.5%', background: '0 0% 100%', destructive: '0 84.2% 60.2%' } },
-    { name: 'Ocean Blue', colors: { primary: '217.2 91.2% 59.8%', accent: '210 40% 96.1%', background: '0 0% 100%', destructive: '0 84.2% 60.2%' } },
-    { name: 'Sunset Orange', colors: { primary: '24.6 95% 53.1%', accent: '20.5 90.2% 48.2%', background: '0 0% 100%', destructive: '0 84.2% 60.2%' } },
-    { name: 'Royal Purple', colors: { primary: '262.1 83.3% 57.8%', accent: '221.2 83.2% 53.3%', background: '0 0% 100%', destructive: '0 84.2% 60.2%' } },
+    { name: 'Forest Green (Default)', colors: { primary: '142.1 76.2% 36.3%', accent: '45 93.4% 47.5%', background: '0 0% 100%', foreground: '224 71.4% 4.1%', destructive: '0 84.2% 60.2%' } },
+    { name: 'Ocean Blue', colors: { primary: '217.2 91.2% 59.8%', accent: '210 40% 96.1%', background: '0 0% 100%', foreground: '224 71.4% 4.1%', destructive: '0 84.2% 60.2%' } },
+    { name: 'Sunset Orange', colors: { primary: '24.6 95% 53.1%', accent: '20.5 90.2% 48.2%', background: '0 0% 100%', foreground: '20 14.3% 4.1%', destructive: '0 84.2% 60.2%' } },
+    { name: 'Royal Purple', colors: { primary: '262.1 83.3% 57.8%', accent: '221.2 83.2% 53.3%', background: '0 0% 100%', foreground: '224 71.4% 4.1%', destructive: '0 84.2% 60.2%' } },
+    { name: 'Charcoal & Gold', colors: { primary: '45 93.4% 47.5%', accent: '45 93.4% 47.5%', background: '20 14.3% 4.1%', foreground: '60 9.1% 97.8%', destructive: '0 72.2% 50.6%' } },
+    { name: 'Crimson Red', colors: { primary: '346.8 77.2% 49.8%', accent: '35.5 91.7% 54.9%', background: '0 0% 100%', foreground: '20 14.3% 4.1%', destructive: '0 84.2% 60.2%' } },
 ];
 
 
@@ -154,6 +158,7 @@ export function ThemeForm({ currentTheme }: ThemeFormProps) {
     setValue('primary', colors.primary, { shouldDirty: true });
     setValue('accent', colors.accent, { shouldDirty: true });
     setValue('background', colors.background, { shouldDirty: true });
+    setValue('foreground', colors.foreground, { shouldDirty: true });
     setValue('destructive', colors.destructive, { shouldDirty: true });
     setIsEditing(true); // Enable form editing when a theme is selected
   }
@@ -210,16 +215,17 @@ export function ThemeForm({ currentTheme }: ThemeFormProps) {
             </div>
             
             <fieldset disabled={!isEditing} className="space-y-8">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     <ColorInput name="primary" label="Primary Color" description="The main brand color (buttons, links)." />
                     <ColorInput name="accent" label="Accent Color" description="A secondary color for highlights." />
                     <ColorInput name="background" label="Background Color" description="The main page background." />
+                    <ColorInput name="foreground" label="Foreground Color" description="The main text color." />
                     <ColorInput name="destructive" label="Destructive Color" description="Color for delete or error actions." />
                 </div>
 
                 <div className="space-y-4 rounded-lg border p-6">
                     <h4 className="font-semibold flex items-center gap-2"><Droplets/> Theme Suggestions</h4>
-                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                     <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                         {themeSuggestions.map(theme => (
                             <Button key={theme.name} type="button" variant="outline" onClick={() => applyTheme(theme.colors)}>
                                 {theme.name}
@@ -231,6 +237,8 @@ export function ThemeForm({ currentTheme }: ThemeFormProps) {
                  <div className="space-y-4 rounded-lg border p-6">
                     <h4 className="font-semibold flex items-center gap-2"><Palette/>Live Preview</h4>
                     <div className="p-6 rounded-lg" style={{ backgroundColor: colorToHsl(watchedColors.background)}}>
+                         <h3 className="text-2xl font-bold mb-4" style={{ color: colorToHsl(watchedColors.foreground) }}>Preview Heading</h3>
+                        <p className="mb-6 text-sm" style={{ color: colorToHsl(watchedColors.foreground) }}>This is a sample paragraph to demonstrate the foreground (text) color on the selected background.</p>
                         <div className="grid grid-cols-2 gap-4">
                             <Button style={{ backgroundColor: colorToHsl(watchedColors.primary) }}>Primary Button</Button>
                             <Button style={{ backgroundColor: colorToHsl(watchedColors.accent) }}>Accent Button</Button>

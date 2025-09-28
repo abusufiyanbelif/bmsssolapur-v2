@@ -20,12 +20,13 @@ async function getCurrentTheme() {
             primary: getVariableValue('--primary'),
             accent: getVariableValue('--accent'),
             background: getVariableValue('--background'),
+            foreground: getVariableValue('--foreground'),
             destructive: getVariableValue('--destructive'),
         };
 
     } catch (error) {
         console.error("Could not read globals.css to get current theme", error);
-        return { primary: '', accent: '', background: '', destructive: '' };
+        return { primary: '', accent: '', background: '', foreground: '', destructive: '' };
     }
 }
 
