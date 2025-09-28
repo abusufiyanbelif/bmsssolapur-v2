@@ -1,5 +1,3 @@
-
-
 "use client";
 
 import Link from "next/link"
@@ -8,7 +6,7 @@ import {
     Home, Settings, Share2, ShieldCheck, UserCog, HandHeart, Users,
     FileCheck, FileText, Banknote, UserPlus, BookText,
     Wrench, Download, Eye, Megaphone, Info, LogIn, Server, BrainCircuit, FilePlus2,
-    Database, Building, Award, ChevronDown, Shield, KeySquare, Group, BookOpenCheck, ArrowRightLeft, LayoutDashboard, Workflow, UserSearch, CreditCard, BellRing, MessageSquare, Newspaper, ScanSearch, PlusCircle
+    Database, Building, Award, ChevronDown, Shield, KeySquare, Group, BookOpenCheck, ArrowRightLeft, LayoutDashboard, Workflow, UserSearch, CreditCard, BellRing, MessageSquare, Newspaper, ScanSearch, PlusCircle, Binary
 } from "lucide-react"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { cn } from "@/lib/utils"
@@ -173,9 +171,17 @@ const allNavItems: NavItem[] = [
             { href: "/admin/payment-gateways", label: "Payment Gateways", icon: CreditCard },
             { href: "/admin/settings/notifications", label: "Notification Settings", icon: BellRing },
             { href: "/admin/seed", label: "Seed Database", icon: Database },
-            { href: "/services", label: "Services Summary", icon: Server },
-            { href: "/dependencies", label: "Dependency Map", icon: Share2 },
-            { href: "/validator", label: "Configuration Validator", icon: ShieldCheck },
+            { 
+                label: "Diagnostics", 
+                icon: Wrench,
+                allowedRoles: ["Super Admin"],
+                subItems: [
+                    { href: "/services", label: "Services Summary", icon: Server },
+                    { href: "/dependencies", label: "Dependency Map", icon: Share2 },
+                    { href: "/validator", label: "Configuration Validator", icon: ShieldCheck },
+                    { href: "/admin/diagnostics/models", label: "Available AI Models", icon: Binary },
+                ]
+            },
             { href: "/personas", label: "AI Personas", icon: BrainCircuit },
         ]
     },
