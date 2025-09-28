@@ -144,7 +144,6 @@ interface AddLeadFormProps {
   campaigns: Campaign[];
   settings: AppSettings;
   prefilledRawText?: string;
-  isSubForm?: boolean;
 }
 
 type AvailabilityState = {
@@ -197,7 +196,7 @@ function AvailabilityFeedback({ state, fieldName, onSuggestionClick }: { state: 
     return null;
 }
 
-function AddLeadFormContent({ users, campaigns, settings, prefilledRawText, isSubForm = false }: AddLeadFormProps) {
+function AddLeadFormContent({ users, campaigns, settings, prefilledRawText }: AddLeadFormProps) {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [adminUser, setAdminUser] = useState<User | null>(null);
@@ -477,12 +476,10 @@ function AddLeadFormContent({ users, campaigns, settings, prefilledRawText, isSu
       const formKey = key as keyof AddLeadFormValues;
       const value = values[formKey] as any;
       if (value) {
-        if (Array.isArray(value)) {
-             if (key === 'otherDocuments') {
-                otherDocs.forEach(f => formData.append(key, f));
-            } else {
-                 value.forEach(v => formData.append(key, v));
-            }
+        if (key === 'otherDocuments') {
+            otherDocs.forEach(f => formData.append(key, f));
+        } else if (Array.isArray(value)) {
+            value.forEach(v => formData.append(key, v));
         } else if (value instanceof Date) {
           formData.append(key, value.toISOString());
         } else if (typeof value === 'boolean') {
@@ -542,6 +539,78 @@ function AddLeadFormContent({ users, campaigns, settings, prefilledRawText, isSu
     const newZoom = Math.max(0.5, Math.min(currentZoom - e.deltaY * 0.001, 5));
     target.style.transform = `scale(${newZoom})`;
   };
+  
+    const handleFetchUserData = async (isRefresh = false) => {
+        if (!rawText) return;
+        
+        const loadingSetter = isRefresh ? setIsRefreshingDetails : setIsAnalyzing;
+        loadingSetter(true);
+        
+        let missingFields: (keyof ExtractBeneficiaryDetailsOutput)[] = [];
+        if (isRefresh && extractedBeneficiaryDetails) {
+            missingFields = Object.keys(extractedBeneficiaryDetails).filter(key => !extractedBeneficiaryDetails[key as keyof ExtractBeneficiaryDetailsOutput]) as (keyof ExtractBeneficiaryDetailsOutput)[];
+        }
+
+        const result = await handleExtractLeadBeneficiaryDetailsFromText(rawText, missingFields.length > 0 ? missingFields : undefined);
+
+        if (result.success && result.details) {
+             if (isRefresh && extractedBeneficiaryDetails) {
+                // Merge new results with existing ones
+                const mergedDetails = { ...extractedBeneficiaryDetails, ...result.details };
+                setExtractedBeneficiaryDetails(mergedDetails);
+                toast({ variant: 'success', title: 'Refresh Complete', description: 'AI tried to find the missing details.' });
+            } else {
+                setExtractedBeneficiaryDetails(result.details);
+            }
+        } else {
+            toast({ variant: 'destructive', title: 'Analysis Failed', description: result.error });
+        }
+        loadingSetter(false);
+    };
+
+    const applyExtractedDetails = () => {
+        if (!extractedBeneficiaryDetails) return;
+        const details = extractedBeneficiaryDetails;
+        Object.entries(details).forEach(([key, value]) => {
+            if (value) {
+                switch(key) {
+                    case 'beneficiaryFullName': setValue('manualBeneficiaryName', value, { shouldDirty: true }); break;
+                    case 'beneficiaryFirstName': setValue('newBeneficiaryFirstName', value, { shouldDirty: true }); break;
+                    case 'beneficiaryMiddleName': setValue('newBeneficiaryMiddleName', value, { shouldDirty: true }); break;
+                    case 'beneficiaryLastName': setValue('newBeneficiaryLastName', value, { shouldDirty: true }); break;
+                    case 'fatherName': setValue('newBeneficiaryFatherName', value, { shouldDirty: true }); break;
+                    case 'beneficiaryPhone': setValue('newBeneficiaryPhone', value.replace(/\D/g, '').slice(-10), { shouldDirty: true, shouldValidate: true }); break;
+                    case 'aadhaarNumber': setValue('newBeneficiaryAadhaar', value.replace(/\D/g,''), { shouldDirty: true, shouldValidate: true }); break;
+                    case 'address': setValue('addressLine1', value, { shouldDirty: true }); break;
+                    case 'city': setValue('city', value, { shouldDirty: true }); break;
+                    case 'pincode': setValue('pincode', value, { shouldDirty: true }); break;
+                    case 'country': setValue('country', value, { shouldDirty: true }); break;
+                    case 'gender':
+                        const genderValue = value as 'Male' | 'Female' | 'Other';
+                        if (['Male', 'Female', 'Other'].includes(genderValue)) {
+                            setValue('gender', genderValue, { shouldDirty: true });
+                        }
+                        break;
+                }
+            }
+        });
+        toast({ variant: 'success', title: 'Auto-fill Complete', description: 'User details have been populated. Please review.' });
+        setExtractedBeneficiaryDetails(null);
+    }
+    
+    const dialogFields: { key: keyof ExtractBeneficiaryDetailsOutput; label: string }[] = [
+        { key: 'beneficiaryFullName', label: 'Full Name' },
+        { key: 'fatherName', label: "Father's Name" },
+        { key: 'dateOfBirth', label: 'Date of Birth' },
+        { key: 'gender', label: 'Gender' },
+        { key: 'beneficiaryPhone', label: 'Phone' },
+        { key: 'aadhaarNumber', label: 'Aadhaar Number' },
+        { key: 'address', label: 'Address' },
+        { key: 'city', label: 'City' },
+        { key: 'pincode', label: 'Pincode' },
+        { key: 'country', label: 'Country' },
+    ];
+
 
   return (
     <>
@@ -989,15 +1058,13 @@ function AddLeadFormContent({ users, campaigns, settings, prefilledRawText, isSu
                 
                 <div className="flex gap-4 pt-6 border-t">
                     <Button type="submit" disabled={isSubmitting}>
-                        {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <UserPlus className="mr-2 h-4 w-4" />}
+                        {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <PlusCircle className="mr-2 h-4 w-4" />}
                         {isSubmitting ? 'Creating...' : 'Create Lead'}
                     </Button>
-                    {!isSubForm && (
-                        <Button type="button" variant="outline" onClick={handleCancel} disabled={isSubmitting}>
-                            <XCircle className="mr-2 h-4 w-4" />
-                            Clear Form
-                        </Button>
-                    )}
+                    <Button type="button" variant="outline" onClick={handleCancel} disabled={isSubmitting}>
+                        <XCircle className="mr-2 h-4 w-4" />
+                        Clear Form
+                    </Button>
                 </div>
             </fieldset>
         </form>
@@ -1076,6 +1143,7 @@ function AddLeadFormContent({ users, campaigns, settings, prefilledRawText, isSu
 }
 
 export function AddLeadForm(props: AddLeadFormProps) {
+    const isSubForm = props.isSubForm;
     return (
         <Suspense fallback={<div>Loading form...</div>}>
             <AddLeadFormContent {...props} />
