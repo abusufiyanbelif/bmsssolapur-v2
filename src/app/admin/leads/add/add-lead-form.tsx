@@ -541,9 +541,9 @@ function AddLeadFormContent({ users, campaigns, settings, prefilledRawText, isSu
 
   const handleSelectAllDonationTypes = (checked: boolean) => {
     if (checked) {
-        form.setValue('acceptableDonationTypes', [...donationTypes]);
+        setValue('acceptableDonationTypes', [...donationTypes]);
     } else {
-        form.setValue('acceptableDonationTypes', []);
+        setValue('acceptableDonationTypes', []);
     }
   };
 
@@ -554,6 +554,67 @@ function AddLeadFormContent({ users, campaigns, settings, prefilledRawText, isSu
     const newZoom = Math.max(0.5, Math.min(currentZoom - e.deltaY * 0.001, 5));
     target.style.transform = `scale(${newZoom})`;
   };
+
+  const applyExtractedDetails = () => {
+        if (!extractedDetails) return;
+        const details = extractedDetails;
+        Object.entries(details).forEach(([key, value]) => {
+            if (value) {
+                switch(key) {
+                    case 'beneficiaryFullName': 
+                        // This logic is now handled by the fullName and parts useEffect
+                        setValue('fullName', value, { shouldDirty: true }); 
+                        break;
+                    case 'beneficiaryFirstName': setValue('firstName', value, { shouldDirty: true }); break;
+                    case 'beneficiaryMiddleName': setValue('middleName', value, { shouldDirty: true }); break;
+                    case 'beneficiaryLastName': setValue('lastName', value, { shouldDirty: true }); break;
+                    case 'fatherName': setValue('fatherName', value, { shouldDirty: true }); break;
+                    case 'beneficiaryPhone': setValue('phone', value.replace(/\D/g, '').slice(-10), { shouldDirty: true, shouldValidate: true }); break;
+                    case 'aadhaarNumber': setValue('aadhaarNumber', value.replace(/\D/g,''), { shouldDirty: true, shouldValidate: true }); break;
+                    case 'address': setValue('addressLine1', value, { shouldDirty: true }); break;
+                    case 'city': setValue('city', value, { shouldDirty: true }); break;
+                    case 'pincode': setValue('pincode', value, { shouldDirty: true }); break;
+                    case 'country': setValue('country', value, { shouldDirty: true }); break;
+                    case 'gender':
+                        const genderValue = value as 'Male' | 'Female' | 'Other';
+                        if (['Male', 'Female', 'Other'].includes(genderValue)) {
+                            setValue('gender', genderValue, { shouldDirty: true });
+                        }
+                        break;
+                }
+            }
+        });
+        toast({ variant: 'success', title: 'Auto-fill Complete', description: 'User details have been populated. Please review.' });
+        setExtractedDetails(null);
+    }
+  
+    const handleFetchUserData = async (isRefresh = false) => {
+        if (!rawText) return;
+        
+        const loadingSetter = isRefresh ? setIsRefreshingDetails : setIsAnalyzing;
+        loadingSetter(true);
+        
+        let missingFields: (keyof ExtractBeneficiaryDetailsOutput)[] = [];
+        if (isRefresh && extractedDetails) {
+            missingFields = Object.keys(extractedDetails).filter(key => !extractedDetails[key as keyof ExtractBeneficiaryDetailsOutput]) as (keyof ExtractBeneficiaryDetailsOutput)[];
+        }
+
+        const result = await handleExtractUserDetailsFromText(rawText, missingFields.length > 0 ? missingFields : undefined);
+
+        if (result.success && result.details) {
+             if (isRefresh && extractedDetails) {
+                // Merge new results with existing ones
+                const mergedDetails = { ...extractedDetails, ...result.details };
+                setExtractedDetails(mergedDetails);
+                toast({ variant: 'success', title: 'Refresh Complete', description: 'AI tried to find the missing details.' });
+            } else {
+                setExtractedDetails(result.details);
+            }
+        } else {
+            toast({ variant: 'destructive', title: 'Analysis Failed', description: result.error });
+        }
+        loadingSetter(false);
+    };
 
   return (
     <>
@@ -586,7 +647,7 @@ function AddLeadFormContent({ users, campaigns, settings, prefilledRawText, isSu
                         <FormLabel>
                             Link Beneficiary Later
                         </FormLabel>
-                        <FormDescription>Check this if you do not have the beneficiary's full details and want to create the lead with just a name.</FormDescription>
+                        <FormDescription>Check this if you do not have the beneficiary&apos;s full details and want to create the lead with just a name.</FormDescription>
                         </div>
                     </FormItem>
                     )}
@@ -802,7 +863,7 @@ function AddLeadFormContent({ users, campaigns, settings, prefilledRawText, isSu
                 )}
                  
                  <Accordion type="single" collapsible className="w-full">
-                    <AccordionItem value="item-1">
+                    <AccordionItem value="scan-docs">
                         <AccordionTrigger>
                             <div className="flex items-center gap-2 text-primary">
                                 <ScanSearch className="h-5 w-5" />
@@ -838,7 +899,7 @@ function AddLeadFormContent({ users, campaigns, settings, prefilledRawText, isSu
                                         <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                                             {otherDocs.map((file, index) => (
                                                 <div key={index} className="relative group p-2 border rounded-lg bg-background space-y-2">
-                                                    <div className="w-full h-32 overflow-hidden flex items-center justify-center">
+                                                    <div className="w-full h-32 overflow-auto flex items-center justify-center">
                                                             {file.type.startsWith('image/') ? (
                                                             <div className="relative w-full h-full" onWheel={handleWheel}>
                                                                 <Image
