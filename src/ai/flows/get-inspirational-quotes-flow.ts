@@ -1,5 +1,4 @@
 
-
 'use server';
 /**
  * @fileOverview A Genkit flow for fetching inspirational quotes.
@@ -33,23 +32,9 @@ const getInspirationalQuotesFlow = ai.defineFlow(
             ];
         }
         
-        const quranQuotes = allQuotes.filter(q => q.category === 'Quran');
-        const hadithQuotes = allQuotes.filter(q => q.category === 'Hadith');
-        const scholarQuotes = allQuotes.filter(q => q.category === 'Scholar');
-
-        const selectedQuotes: Quote[] = [];
-
-        if (quranQuotes.length > 0) {
-            selectedQuotes.push(quranQuotes[Math.floor(Math.random() * quranQuotes.length)]);
-        }
-        if (hadithQuotes.length > 0) {
-            selectedQuotes.push(hadithQuotes[Math.floor(Math.random() * hadithQuotes.length)]);
-        }
-        if (scholarQuotes.length > 0) {
-            selectedQuotes.push(scholarQuotes[Math.floor(Math.random() * scholarQuotes.length)]);
-        }
-
-        return selectedQuotes;
+        // Shuffle and return the requested number of quotes
+        const shuffled = allQuotes.sort(() => 0.5 - Math.random());
+        return shuffled.slice(0, count);
     }
 );
 
