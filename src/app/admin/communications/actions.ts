@@ -1,5 +1,4 @@
 
-
 'use server';
 
 import { getLead } from "@/services/lead-service";
