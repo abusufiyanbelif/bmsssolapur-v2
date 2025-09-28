@@ -30,7 +30,7 @@ const extractLeadDetailsFromTextFlow = ai.defineFlow(
   async (input) => {
     
     const llmResponse = await ai.generate({
-        model: googleAI.model('gemini-1.5-flash-latest'),
+        model: googleAI.model('gemini-pro'),
         prompt: `You are an expert data entry assistant for a charity organization. Analyze the provided block of text, which may come from various documents like ID cards, medical bills, PDFs, or handwritten notes. Your task is to carefully extract structured details from the text. Be precise. If you cannot find a valid value for a field, you MUST omit the field entirely from your JSON output. Do not output fields with "null" or "N/A" as their value.
 
             **IMPORTANT CONTEXT (MUST BE USED FOR STORY/HEADLINE):**
@@ -57,12 +57,12 @@ const extractLeadDetailsFromTextFlow = ai.defineFlow(
             -   **Full Name**: Find the beneficiary's full name.
             -   **Name Parsing**: Split the full name into 'beneficiaryFirstName', 'beneficiaryMiddleName', and 'beneficiaryLastName'. The first word is the first name, the last is the last name, and anything in between is the middle name.
             -   **Father's Name**: Look for "S/O" or "C/O" labels first. If not found, and the beneficiary has a middle name, you can assume the middle name is the father's name for the 'fatherName' field.
-            -   **Date of Birth & Gender**: Extract from "DOB", "Date of Birth", "जन्म तारीख", "Gender", or "पुरुष / MALE" labels.
+            -   **Date of Birth & Gender**: Extract from "DOB", "Date of Birth", "जन्म तारीख", "Gender", or "पुरुष / MALE" labels. **The 'dateOfBirth' MUST be formatted as a full ISO 8601 string (YYYY-MM-DDTHH:mm:ss.sssZ).**
             -   **Address & Phone**: Extract the full address block and any 10-digit mobile number.
             -   **Aadhaar Number**: You MUST find the 12-digit number (often grouped in 4s).
 
             **4. General Document Parsing:**
-            - **Amount & Dates**: Look for any monetary values (for 'amount'), 'caseReportedDate' or 'dueDate'. Format dates as YYYY-MM-DD.
+            - **Amount & Dates**: Look for any monetary values (for 'amount'). Extract dates for 'caseReportedDate' or 'dueDate'. **All extracted dates MUST be formatted as a full ISO 8601 string (YYYY-MM-DDTHH:mm:ss.sssZ).**
             
             **--- FIELDS TO EXTRACT (Populate as many as possible) ---**
             

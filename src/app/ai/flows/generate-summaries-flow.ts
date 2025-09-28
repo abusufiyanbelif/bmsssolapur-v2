@@ -28,7 +28,7 @@ const generateSummariesFlow = ai.defineFlow(
   async (input) => {
     
     const llmResponse = await ai.generate({
-        model: googleAI.model('gemini-1.5-flash-latest'),
+        model: googleAI.model('gemini-pro'),
         prompt: `You are an expert copywriter for a charity organization. You specialize in creating short, compelling case summaries to encourage donations.
 
         Analyze the provided block of text, which was extracted from a document like a medical report, bill, or application letter.
@@ -54,5 +54,3 @@ const generateSummariesFlow = ai.defineFlow(
     return output;
   }
 );
-
-    

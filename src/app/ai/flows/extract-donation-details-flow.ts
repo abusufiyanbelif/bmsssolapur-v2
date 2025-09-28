@@ -31,7 +31,7 @@ const extractDetailsFromTextFlow = ai.defineFlow(
   async (input) => {
     
     const llmResponse = await ai.generate({
-        model: googleAI.model('gemini-1.5-flash-latest'),
+        model: googleAI.model('gemini-pro'),
         prompt: `You are an expert financial assistant specializing in parsing text from payment receipts. Analyze the provided block of raw text, which was extracted via OCR from a payment screenshot. Your task is to carefully extract the following details. Be precise. If a field is not present in the text, omit it entirely from the output. The text might have OCR errors, so be robust in your parsing.
 
             **Primary Goal: Find UPI IDs. A UPI ID is any string containing an '@' symbol (e.g., username@okaxis).**
@@ -75,7 +75,7 @@ const extractDetailsFromTextFlow = ai.defineFlow(
             - googlePayTransactionId: The Google Pay specific transaction ID.
             - phonePeTransactionId: The PhonePe specific transaction ID.
             - paytmUpiReferenceNo: The Paytm specific UPI Reference No.
-            - date: The date of the transaction (Format: YYYY-MM-DD).
+            - date: The date of the transaction. **You MUST format this date as a full ISO 8601 string (YYYY-MM-DDTHH:mm:ss.sssZ).**
             - time: The time of the transaction (e.g., "11:48 am").
             - type: The category of donation if mentioned (e.g., Zakat, Sadaqah). Check the notes/remarks for this.
             - purpose: The specific purpose of the donation if mentioned (e.g., Education, Hospital). Check the notes/remarks for this.
@@ -116,5 +116,3 @@ const extractDetailsFromTextFlow = ai.defineFlow(
     return output;
   }
 );
-
-    

@@ -33,7 +33,7 @@ const extractBeneficiaryDetailsFromTextFlow = ai.defineFlow(
         : 'Your task is to analyze the provided OCR text and extract all relevant information into the specific fields defined in the output schema.';
 
     const llmResponse = await ai.generate({
-        model: googleAI.model('gemini-1.5-flash-latest'),
+        model: googleAI.model('gemini-pro'),
         prompt: `You are an expert in document analysis and data extraction, specializing in Indian identity documents. ${fieldsToFind}
 
             **--- EXTRACTION RULES ---**
@@ -43,7 +43,7 @@ const extractBeneficiaryDetailsFromTextFlow = ai.defineFlow(
             2.  **Address:** If an address is present, extract the full address as a single string. Also, identify and extract the country, state, city, and pincode into their dedicated fields. **If the country is not explicitly mentioned, assume it is 'India'.**
 
             3.  **Labeled Data:** For other fields, identify the labels (keys) and their corresponding values. In many documents, a key and value are separated by a colon (:). For example, "DOB: 29/09/2006". Make sure to capture the value correctly.
-                - Look for "DOB" or "जन्म तारीख" to find the 'dateOfBirth'.
+                - Look for "DOB" or "जन्म तारीख" to find the 'dateOfBirth'. **You MUST format this date as a full ISO 8601 string (YYYY-MM-DDTHH:mm:ss.sssZ).**
                 - Look for "Gender" or "पुरुष / MALE" or "মহিলা / FEMALE" to find the 'gender'.
                 - Look for a 10-digit mobile number for the 'beneficiaryPhone'.
             

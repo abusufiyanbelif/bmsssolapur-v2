@@ -83,7 +83,7 @@ export async function generateAppealMessage(
         const ctaLink = `${appBaseUrl}/public-leads`;
 
         const llmResponse = await ai.generate({
-            model: googleAI.model('gemini-1.5-flash'),
+            model: googleAI.model('gemini-pro'),
             prompt: `
                 You are a helpful assistant for a charity organization. Your task is to craft a complete and compelling WhatsApp appeal message.
                 
