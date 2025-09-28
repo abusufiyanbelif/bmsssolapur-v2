@@ -17,8 +17,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { handleUpdateTheme } from "./actions";
-import { useState, useMemo } from "react";
-import { Loader2, Save, X, Edit, Palette } from "lucide-react";
+import { useState } from "react";
+import { Loader2, Save, X, Edit, Palette, Droplets } from "lucide-react";
 
 const formSchema = z.object({
   primary: z.string().min(1, "Primary color is required."),
@@ -38,11 +38,70 @@ interface ThemeFormProps {
     };
 }
 
+// --- COLOR CONVERSION HELPERS ---
+const hslStringToHex = (hslStr: string): string => {
+  if (!hslStr) return '#000000';
+  const [h, s, l] = hslStr.split(' ').map(parseFloat);
+  const s_norm = s / 100;
+  const l_norm = l / 100;
+  const c = (1 - Math.abs(2 * l_norm - 1)) * s_norm;
+  const x = c * (1 - Math.abs(((h / 60) % 2) - 1));
+  const m = l_norm - c / 2;
+  let r = 0, g = 0, b = 0;
+  if (0 <= h && h < 60) { [r, g, b] = [c, x, 0]; }
+  else if (60 <= h && h < 120) { [r, g, b] = [x, c, 0]; }
+  else if (120 <= h && h < 180) { [r, g, b] = [0, c, x]; }
+  else if (180 <= h && h < 240) { [r, g, b] = [0, x, c]; }
+  else if (240 <= h && h < 300) { [r, g, b] = [x, 0, c]; }
+  else if (300 <= h && h < 360) { [r, g, b] = [c, 0, x]; }
+  r = Math.round((r + m) * 255);
+  g = Math.round((g + m) * 255);
+  b = Math.round((b + m) * 255);
+  return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
+};
+
+const hexToHslString = (hex: string): string => {
+  let r = 0, g = 0, b = 0;
+  if (hex.length === 4) {
+    r = parseInt(hex[1] + hex[1], 16);
+    g = parseInt(hex[2] + hex[2], 16);
+    b = parseInt(hex[3] + hex[3], 16);
+  } else if (hex.length === 7) {
+    r = parseInt(hex.substring(1, 3), 16);
+    g = parseInt(hex.substring(3, 5), 16);
+    b = parseInt(hex.substring(5, 7), 16);
+  }
+  r /= 255; g /= 255; b /= 255;
+  const max = Math.max(r, g, b), min = Math.min(r, g, b);
+  let h = 0, s = 0, l = (max + min) / 2;
+  if (max !== min) {
+    const d = max - min;
+    s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+    switch (max) {
+      case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+      case g: h = (b - r) / d + 2; break;
+      case b: h = (r - g) / d + 4; break;
+    }
+    h /= 6;
+  }
+  h = Math.round(h * 360);
+  s = Math.round(s * 100);
+  l = Math.round(l * 100);
+  return `${h} ${s}% ${l}%`;
+};
+
 const colorToHsl = (color: string) => {
-    if (!color.startsWith('hsl')) return color;
-    const [h, s, l] = color.replace(/hsl\(|\)/g, '').split(' ').map(c => c.trim().replace('%',''));
-    return `hsl(${h}, ${s}%, ${l}%)`;
+    if (!color) return '';
+    if (color.startsWith('hsl')) return color;
+    return `hsl(${color})`;
 }
+
+const themeSuggestions = [
+    { name: 'Forest Green (Default)', colors: { primary: '142.1 76.2% 36.3%', accent: '45 93.4% 47.5%', background: '0 0% 100%', destructive: '0 84.2% 60.2%' } },
+    { name: 'Ocean Blue', colors: { primary: '217.2 91.2% 59.8%', accent: '210 40% 96.1%', background: '0 0% 100%', destructive: '0 84.2% 60.2%' } },
+    { name: 'Sunset Orange', colors: { primary: '24.6 95% 53.1%', accent: '20.5 90.2% 48.2%', background: '0 0% 100%', destructive: '0 84.2% 60.2%' } },
+    { name: 'Royal Purple', colors: { primary: '262.1 83.3% 57.8%', accent: '221.2 83.2% 53.3%', background: '0 0% 100%', destructive: '0 84.2% 60.2%' } },
+];
 
 
 export function ThemeForm({ currentTheme }: ThemeFormProps) {
@@ -55,7 +114,7 @@ export function ThemeForm({ currentTheme }: ThemeFormProps) {
     defaultValues: currentTheme
   });
   
-  const { formState: { isDirty }, reset, watch } = form;
+  const { formState: { isDirty }, reset, watch, setValue } = form;
 
   const watchedColors = watch();
 
@@ -91,6 +150,43 @@ export function ThemeForm({ currentTheme }: ThemeFormProps) {
     setIsSubmitting(false);
   }
 
+  const applyTheme = (colors: FormValues) => {
+    setValue('primary', colors.primary, { shouldDirty: true });
+    setValue('accent', colors.accent, { shouldDirty: true });
+    setValue('background', colors.background, { shouldDirty: true });
+    setValue('destructive', colors.destructive, { shouldDirty: true });
+    setIsEditing(true); // Enable form editing when a theme is selected
+  }
+
+  const ColorInput = ({ name, label, description }: { name: keyof FormValues, label: string, description: string }) => {
+    const value = watch(name);
+    return (
+        <FormField
+            control={form.control}
+            name={name}
+            render={({ field }) => (
+                <FormItem>
+                    <FormLabel>{label}</FormLabel>
+                    <div className="flex items-center gap-2">
+                        <FormControl>
+                            <Input {...field} placeholder="e.g., 142.1 76.2% 36.3%" />
+                        </FormControl>
+                        <Input
+                            type="color"
+                            className="w-12 h-10 p-1"
+                            value={hslStringToHex(value)}
+                            onChange={(e) => field.onChange(hexToHslString(e.target.value))}
+                            disabled={!isEditing}
+                        />
+                    </div>
+                    <FormDescription>{description}</FormDescription>
+                    <FormMessage />
+                </FormItem>
+            )}
+        />
+    )
+  }
+
   return (
     <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
@@ -115,63 +211,23 @@ export function ThemeForm({ currentTheme }: ThemeFormProps) {
             
             <fieldset disabled={!isEditing} className="space-y-8">
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                    <FormField
-                        control={form.control}
-                        name="primary"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Primary Color</FormLabel>
-                                <FormControl>
-                                    <Input {...field} placeholder="e.g., 142.1 76.2% 36.3%" />
-                                </FormControl>
-                                <FormDescription>The main brand color (buttons, links). Provide HSL values without hsl().</FormDescription>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-                    <FormField
-                        control={form.control}
-                        name="accent"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Accent Color</FormLabel>
-                                <FormControl>
-                                    <Input {...field} placeholder="e.g., 45 93.4% 47.5%" />
-                                </FormControl>
-                                <FormDescription>A secondary color for highlights.</FormDescription>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-                    <FormField
-                        control={form.control}
-                        name="background"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Background Color</FormLabel>
-                                <FormControl>
-                                    <Input {...field} placeholder="e.g., 0 0% 100%" />
-                                </FormControl>
-                                <FormDescription>The main page background.</FormDescription>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-                    <FormField
-                        control={form.control}
-                        name="destructive"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Destructive Color</FormLabel>
-                                <FormControl>
-                                    <Input {...field} placeholder="e.g., 0 84.2% 60.2%" />
-                                </FormControl>
-                                <FormDescription>Color for delete or error actions.</FormDescription>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
+                    <ColorInput name="primary" label="Primary Color" description="The main brand color (buttons, links)." />
+                    <ColorInput name="accent" label="Accent Color" description="A secondary color for highlights." />
+                    <ColorInput name="background" label="Background Color" description="The main page background." />
+                    <ColorInput name="destructive" label="Destructive Color" description="Color for delete or error actions." />
                 </div>
+
+                <div className="space-y-4 rounded-lg border p-6">
+                    <h4 className="font-semibold flex items-center gap-2"><Droplets/> Theme Suggestions</h4>
+                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        {themeSuggestions.map(theme => (
+                            <Button key={theme.name} type="button" variant="outline" onClick={() => applyTheme(theme.colors)}>
+                                {theme.name}
+                            </Button>
+                        ))}
+                    </div>
+                </div>
+
                  <div className="space-y-4 rounded-lg border p-6">
                     <h4 className="font-semibold flex items-center gap-2"><Palette/>Live Preview</h4>
                     <div className="p-6 rounded-lg" style={{ backgroundColor: colorToHsl(watchedColors.background)}}>
