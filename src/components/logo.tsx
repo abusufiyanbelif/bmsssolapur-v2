@@ -41,6 +41,7 @@ export function Logo({ className, logoUrl: propLogoUrl }: LogoProps) {
         priority
         className="object-contain"
         data-ai-hint="logo"
+        onError={() => setLogoUrl("https://picsum.photos/seed/logo/128/128")}
       />
     </div>
   );
