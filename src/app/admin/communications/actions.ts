@@ -82,13 +82,14 @@ export async function generateAppealMessage(
         const ctaLink = `${appBaseUrl}/public-leads`;
 
         const modelCandidates = [
-            googleAI.model('gemini-1.5-flash'),
-            googleAI.model('gemini-pro'),
+            googleAI.model('gemini-1.5-flash-latest'),
+            googleAI.model('gemini-1.5-pro-latest'),
         ];
         let lastError: any;
 
         for (const model of modelCandidates) {
              try {
+                console.log(`🔄 Trying ${model.name} for generateAppealMessage...`);
                 const llmResponse = await ai.generate({
                     model: model,
                     prompt: `
@@ -123,10 +124,11 @@ export async function generateAppealMessage(
                     `,
                 });
                 
+                console.log(`✅ Success with ${model.name}`);
                 return { success: true, message: llmResponse.text }; // Success
             } catch (err) {
                  lastError = err;
-                console.warn(`Model ${model.name} failed for generateAppealMessage. Trying next model...`, err);
+                console.error(`❌ Error with ${model.name} for generateAppealMessage:`, err instanceof Error ? err.message : String(err));
             }
         }
         
