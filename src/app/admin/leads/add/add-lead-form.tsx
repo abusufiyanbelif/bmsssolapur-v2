@@ -31,7 +31,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { handleAddLead, handleExtractLeadDetailsFromText, handleExtractLeadBeneficiaryDetailsFromText, handleGenerateSummaries } from "./actions";
 import { useState, useEffect, useRef, useMemo, Suspense, useCallback } from "react";
-import { Loader2, UserPlus, Users, Info, CalendarIcon, AlertTriangle, ChevronsUpDown, Check, Banknote, X, Lock, Clipboard, Text, Bot, FileUp, ZoomIn, ZoomOut, FileIcon, ScanSearch, UserSearch, UserRoundPlus, XCircle, PlusCircle, Paperclip, RotateCw, RefreshCw as RefreshIcon, BookOpen, Sparkles, CreditCard, Fingerprint, MapPin, Trash2 } from "lucide-react";
+import { Loader2, UserPlus, Users, Info, CalendarIcon, AlertTriangle, ChevronsUpDown, Check, Banknote, X, Lock, Clipboard, Text, Bot, FileUp, ZoomIn, ZoomOut, FileIcon, ScanSearch, UserSearch, UserRoundPlus, XCircle, PlusCircle, Paperclip, RotateCw, RefreshCw as RefreshIcon, BookOpen, Sparkles, CreditCard, Fingerprint, MapPin, Trash2, CheckCircle } from "lucide-react";
 import type { User, LeadPurpose, Campaign, Lead, DonationType, LeadPriority, AppSettings, ExtractLeadDetailsOutput, ExtractBeneficiaryDetailsOutput, GenerateSummariesOutput } from "@/services/types";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
@@ -382,6 +382,32 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
     setIsCaseAnalyzing(false);
   };
   
+  const handleGetTextFromDocuments = async () => {
+    const filesToScan: File[] = getValues("otherDocuments") || [];
+    if (filesToScan.length === 0) {
+      toast({ variant: 'destructive', title: 'No Files', description: 'Please upload at least one document to scan.' });
+      return;
+    }
+
+    setIsCaseTextExtracting(true);
+    const formData = new FormData();
+    filesToScan.forEach(file => formData.append("files", file));
+
+    try {
+      const result = await getRawTextFromImage(formData);
+      if (result.success && result.rawText) {
+        setCaseRawText(result.rawText);
+        toast({ variant: 'success', title: 'Text Extracted', description: 'Raw text is available for auto-fill.' });
+      } else {
+        toast({ variant: 'destructive', title: 'Extraction Failed', description: result.error || 'Could not extract any text.' });
+      }
+    } catch (e) {
+      toast({ variant: 'destructive', title: 'Error', description: "An unexpected error occurred during text extraction." });
+    } finally {
+      setIsCaseTextExtracting(false);
+    }
+  };
+  
   const handleRefreshSummary = async () => {
     if (!caseRawText) {
         toast({ variant: 'destructive', title: 'No Text', description: 'Please scan documents first.' });
@@ -475,7 +501,7 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
       toast({ variant: "destructive", title: "Error Creating Lead", description: leadResult.error });
     }
 
-    setIsSubmitting(false);
+     setIsSubmitting(false);
   }
   
   const showEducationFields = selectedPurposeName === 'Education' && (selectedCategory === 'College Fees' || selectedCategory === 'School Fees');
@@ -549,25 +575,13 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
                     render={({ field }) => (
                     <FormItem className="space-y-3">
                         <FormControl>
-                        <RadioGroup
-                            onValueChange={(value) => {
-                                field.onChange(value as 'existing' | 'new');
-                                // Reset other fields when switching
-                                setValue('beneficiaryId', undefined);
-                            }}
-                            value={field.value}
-                            className="grid grid-cols-2 gap-4"
-                        >
+                        <RadioGroup onValueChange={(value) => { field.onChange(value as 'existing' | 'new'); setValue('beneficiaryId', undefined); }} value={field.value} className="grid grid-cols-2 gap-4">
                             <FormItem className="flex items-center space-x-3 space-y-0">
-                                    <Button type="button" variant={field.value === 'existing' ? 'default' : 'outline'} className="w-full h-20 flex-col gap-2" onClick={() => field.onChange('existing')}>
-                                        <UserSearch className="h-6 w-6"/>
-                                        <span>Search Existing</span>
-                                    </Button>
+                                    <Button type="button" variant={field.value === 'existing' ? 'default' : 'outline'} className="w-full h-20 flex-col gap-2" onClick={() => field.onChange('existing')}><UserSearch className="h-6 w-6"/><span>Search Existing</span></Button>
                             </FormItem>
                              <FormItem className="flex items-center space-x-3 space-y-0">
                                      <Button type="button" variant={field.value === 'new' ? 'default' : 'outline'} className="w-full h-20 flex-col gap-2" onClick={() => field.onChange('new')}>
-                                        <UserRoundPlus className="h-6 w-6"/>
-                                        <span>Create New</span>
+                                        <UserRoundPlus className="h-6 w-6"/><span>Create New</span>
                                     </Button>
                             </FormItem>
                         </RadioGroup>
@@ -785,9 +799,7 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
                                                     ref={otherDocsInputRef}
                                                     onChange={(e) => {
                                                         const newFiles = Array.from(e.target.files || []);
-                                                        const currentFiles = getValues('otherDocuments') || [];
-                                                        const updatedFiles = [...currentFiles, ...newFiles];
-                                                        field.onChange(updatedFiles);
+                                                        field.onChange(newFiles);
                                                     }}
                                                 />
                                             </FormControl>
@@ -797,7 +809,7 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
                                 />
                                 
                                 <div className="flex flex-col sm:flex-row gap-2">
-                                    <Button type="button" variant="outline" className="w-full" onClick={() => {}} disabled={isCaseTextExtracting}>
+                                    <Button type="button" variant="outline" className="w-full" onClick={handleGetTextFromDocuments} disabled={isCaseTextExtracting || (getValues('otherDocuments') || []).length === 0}>
                                         {isCaseTextExtracting ? <Loader2 className="h-4 w-4 animate-spin"/> : <Text className="mr-2 h-4 w-4" />}
                                         Get Case Details
                                     </Button>
@@ -999,7 +1011,7 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
   );
 }
 
-export function AddLeadForm(props: { settings: AppSettings, users: User[], campaigns: Campaign[] }) {
+export function AddLeadForm(props: AddLeadFormProps) {
     return (
         <Suspense fallback={<div>Loading form...</div>}>
             <AddLeadFormContent {...props} />

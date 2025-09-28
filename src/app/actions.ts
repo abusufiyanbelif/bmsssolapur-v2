@@ -1,11 +1,8 @@
+
 'use server';
 
 import { getAdminDb } from '@/services/firebase-admin';
 import { extractRawTextFlow } from '@/ai/flows/extract-raw-text-flow';
-import { googleAI } from '@genkit-ai/googleai';
-import { genkit } from 'genkit';
-import { getSafeGeminiModel } from '@/services/gemini-service';
-
 
 /**
  * Performs a lightweight, low-cost read operation against Firestore using the Admin SDK
