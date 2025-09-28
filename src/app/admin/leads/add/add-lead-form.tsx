@@ -215,6 +215,7 @@ function AddLeadFormContent({ users, campaigns, settings, prefilledRawText, isSu
   const [caseRawText, setCaseRawText] = useState<string>(prefilledRawText || '');
   
   const [extractedBeneficiaryDetails, setExtractedBeneficiaryDetails] = useState<ExtractBeneficiaryDetailsOutput | null>(null);
+  const [isAnalyzingId, setIsAnalyzingId] = useState(false);
   
   const otherDocsInputRef = useRef<HTMLInputElement>(null);
   const [otherDocs, setOtherDocs] = useState<File[]>([]);
@@ -525,20 +526,7 @@ function AddLeadFormContent({ users, campaigns, settings, prefilledRawText, isSu
   }, [selectedCategory, leadConfiguration]);
 
   const [isRefreshingDetails, setIsRefreshingDetails] = useState(false);
-
-  const dialogFields: { key: keyof ExtractBeneficiaryDetailsOutput; label: string }[] = [
-    { key: 'beneficiaryFullName', label: 'Full Name' },
-    { key: 'fatherName', label: "Father's Name" },
-    { key: 'dateOfBirth', label: 'Date of Birth' },
-    { key: 'gender', label: 'Gender' },
-    { key: 'beneficiaryPhone', label: 'Phone' },
-    { key: 'aadhaarNumber', label: 'Aadhaar Number' },
-    { key: 'address', label: 'Address' },
-    { key: 'city', label: 'City' },
-    { key: 'pincode', label: 'Pincode' },
-    { key: 'country', label: 'Country' },
-  ];
-
+  
   const handleSelectAllDonationTypes = (checked: boolean) => {
     if (checked) {
         setValue('acceptableDonationTypes', [...donationTypes]);
@@ -554,67 +542,6 @@ function AddLeadFormContent({ users, campaigns, settings, prefilledRawText, isSu
     const newZoom = Math.max(0.5, Math.min(currentZoom - e.deltaY * 0.001, 5));
     target.style.transform = `scale(${newZoom})`;
   };
-
-  const applyExtractedDetails = () => {
-        if (!extractedDetails) return;
-        const details = extractedDetails;
-        Object.entries(details).forEach(([key, value]) => {
-            if (value) {
-                switch(key) {
-                    case 'beneficiaryFullName': 
-                        // This logic is now handled by the fullName and parts useEffect
-                        setValue('fullName', value, { shouldDirty: true }); 
-                        break;
-                    case 'beneficiaryFirstName': setValue('firstName', value, { shouldDirty: true }); break;
-                    case 'beneficiaryMiddleName': setValue('middleName', value, { shouldDirty: true }); break;
-                    case 'beneficiaryLastName': setValue('lastName', value, { shouldDirty: true }); break;
-                    case 'fatherName': setValue('fatherName', value, { shouldDirty: true }); break;
-                    case 'beneficiaryPhone': setValue('phone', value.replace(/\D/g, '').slice(-10), { shouldDirty: true, shouldValidate: true }); break;
-                    case 'aadhaarNumber': setValue('aadhaarNumber', value.replace(/\D/g,''), { shouldDirty: true, shouldValidate: true }); break;
-                    case 'address': setValue('addressLine1', value, { shouldDirty: true }); break;
-                    case 'city': setValue('city', value, { shouldDirty: true }); break;
-                    case 'pincode': setValue('pincode', value, { shouldDirty: true }); break;
-                    case 'country': setValue('country', value, { shouldDirty: true }); break;
-                    case 'gender':
-                        const genderValue = value as 'Male' | 'Female' | 'Other';
-                        if (['Male', 'Female', 'Other'].includes(genderValue)) {
-                            setValue('gender', genderValue, { shouldDirty: true });
-                        }
-                        break;
-                }
-            }
-        });
-        toast({ variant: 'success', title: 'Auto-fill Complete', description: 'User details have been populated. Please review.' });
-        setExtractedDetails(null);
-    }
-  
-    const handleFetchUserData = async (isRefresh = false) => {
-        if (!rawText) return;
-        
-        const loadingSetter = isRefresh ? setIsRefreshingDetails : setIsAnalyzing;
-        loadingSetter(true);
-        
-        let missingFields: (keyof ExtractBeneficiaryDetailsOutput)[] = [];
-        if (isRefresh && extractedDetails) {
-            missingFields = Object.keys(extractedDetails).filter(key => !extractedDetails[key as keyof ExtractBeneficiaryDetailsOutput]) as (keyof ExtractBeneficiaryDetailsOutput)[];
-        }
-
-        const result = await handleExtractUserDetailsFromText(rawText, missingFields.length > 0 ? missingFields : undefined);
-
-        if (result.success && result.details) {
-             if (isRefresh && extractedDetails) {
-                // Merge new results with existing ones
-                const mergedDetails = { ...extractedDetails, ...result.details };
-                setExtractedDetails(mergedDetails);
-                toast({ variant: 'success', title: 'Refresh Complete', description: 'AI tried to find the missing details.' });
-            } else {
-                setExtractedDetails(result.details);
-            }
-        } else {
-            toast({ variant: 'destructive', title: 'Analysis Failed', description: result.error });
-        }
-        loadingSetter(false);
-    };
 
   return (
     <>
@@ -1106,7 +1033,7 @@ function AddLeadFormContent({ users, campaigns, settings, prefilledRawText, isSu
                 </AlertDialogFooter>
             </AlertDialogContent>
         </AlertDialog>
-        <AlertDialog open={!!extractedBeneficiaryDetails} onOpenChange={() => setExtractedDetails(null)}>
+        <AlertDialog open={!!extractedBeneficiaryDetails} onOpenChange={() => setExtractedBeneficiaryDetails(null)}>
             <AlertDialogContent>
                 <AlertDialogHeader>
                     <AlertDialogTitle className="flex items-center gap-2">
