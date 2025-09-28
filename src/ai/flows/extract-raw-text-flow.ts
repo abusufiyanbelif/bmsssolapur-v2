@@ -1,4 +1,3 @@
-
 'use server';
 /**
  * @fileOverview A Genkit flow for extracting raw text from an image or PDF.
@@ -26,13 +25,15 @@ export const extractRawTextFlow = ai.defineFlow(
     const mediaParts = input.photoDataUris.map(uri => ({ media: { url: uri } }));
     
     const modelCandidates = [
-        googleAI.model('gemini-pro-vision'),
+        googleAI.model('gemini-1.5-flash-latest'),
+        googleAI.model('gemini-1.5-pro-latest'),
     ];
     
     let lastError: any;
 
     for (const model of modelCandidates) {
         try {
+            console.log(`🔄 Trying ${model.name} for extractRawText...`);
             const llmResponse = await ai.generate({
                 model: model,
                 prompt: [
@@ -49,10 +50,11 @@ export const extractRawTextFlow = ai.defineFlow(
             if (!output?.rawText) {
               throw new Error("The AI model did not return any text. The document might be unreadable or contain no text.");
             }
+            console.log(`✅ Success with ${model.name}`);
             return output; // Success
         } catch (err) {
             lastError = err;
-            console.warn(`Model ${model.name} failed for extractRawText. Trying next model...`, err);
+            console.error(`❌ Error with ${model.name} for extractRawText:`, err instanceof Error ? err.message : String(err));
         }
     }
     

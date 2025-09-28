@@ -1,4 +1,3 @@
-
 'use server';
 /**
  * @fileOverview A Genkit flow for extracting structured beneficiary details from text.
@@ -33,14 +32,14 @@ const extractBeneficiaryDetailsFromTextFlow = ai.defineFlow(
         : 'Your task is to analyze the provided OCR text and extract all relevant information into the specific fields defined in the output schema.';
 
     const modelCandidates = [
-        googleAI.model('gemini-1.5-flash'),
-        googleAI.model('gemini-pro'),
+        googleAI.model('gemini-1.5-flash-latest'),
+        googleAI.model('gemini-1.5-pro-latest'),
     ];
-
     let lastError: any;
 
     for (const model of modelCandidates) {
         try {
+            console.log(`🔄 Trying ${model.name} for extractBeneficiaryDetails...`);
             const llmResponse = await ai.generate({
                 model: model,
                 prompt: `You are an expert in document analysis and data extraction, specializing in Indian identity documents. ${fieldsToFind}
@@ -75,10 +74,11 @@ const extractBeneficiaryDetailsFromTextFlow = ai.defineFlow(
             if (!output) {
               throw new Error("The AI model did not return any output from the text.");
             }
+            console.log(`✅ Success with ${model.name}`);
             return output; // Success, return the result
         } catch (err) {
             lastError = err;
-            console.warn(`Model ${model.name} failed for extractBeneficiaryDetails. Trying next model...`, err);
+            console.error(`❌ Error with ${model.name} for extractBeneficiaryDetails:`, err instanceof Error ? err.message : String(err));
         }
     }
     
