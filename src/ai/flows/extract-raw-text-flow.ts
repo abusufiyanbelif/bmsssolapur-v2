@@ -1,4 +1,3 @@
-
 'use server';
 /**
  * @fileOverview A Genkit flow for extracting raw text from an image or PDF.
@@ -26,7 +25,7 @@ export const extractRawTextFlow = ai.defineFlow(
     const mediaParts = input.photoDataUris.map(uri => ({ media: { url: uri } }));
     
     const llmResponse = await ai.generate({
-        model: googleAI.model('gemini-1.5-flash'),
+        model: googleAI.model('gemini-pro'),
         prompt: [
             { text: `You are an Optical Character Recognition (OCR) tool. You will be given one or more images or PDF documents (like medical reports, ID cards, or payment receipts). Extract all text from each document exactly as you see it. Maintain the original line breaks and formatting as best as possible. Do not summarize, analyze, or reformat the text. Just extract it. If there are multiple documents, separate the text from each one with '---'.` },
             ...mediaParts

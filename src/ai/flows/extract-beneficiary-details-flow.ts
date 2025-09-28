@@ -1,4 +1,3 @@
-
 'use server';
 /**
  * @fileOverview A Genkit flow for extracting structured beneficiary details from text.
@@ -33,7 +32,7 @@ const extractBeneficiaryDetailsFromTextFlow = ai.defineFlow(
         : 'Your task is to analyze the provided OCR text and extract all relevant information into the specific fields defined in the output schema.';
 
     const llmResponse = await ai.generate({
-        model: googleAI.model('gemini-1.5-flash'),
+        model: googleAI.model('gemini-pro'),
         prompt: `You are an expert in document analysis and data extraction, specializing in Indian identity documents. ${fieldsToFind}
 
             **--- EXTRACTION RULES ---**
