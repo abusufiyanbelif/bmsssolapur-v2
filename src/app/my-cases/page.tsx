@@ -27,7 +27,7 @@ const statusColors: Record<LeadAction, string> = {
     "Cancelled": "bg-gray-500/20 text-gray-700 border-gray-500/30",
 };
 
-type SortableColumn = 'createdAt' | 'helpRequested' | 'caseAction';
+type SortableColumn = 'dateCreated' | 'helpRequested' | 'caseAction';
 type SortDirection = 'asc' | 'desc';
 
 
@@ -39,7 +39,7 @@ export default function MyCasesPage() {
     const [settings, setSettings] = useState<AppSettings | null>(null);
 
     // Sorting state
-    const [sortColumn, setSortColumn] = useState<SortableColumn>('createdAt');
+    const [sortColumn, setSortColumn] = useState<SortableColumn>('dateCreated');
     const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
 
     // Pagination states
@@ -126,8 +126,8 @@ export default function MyCasesPage() {
                 <TableRow>
                     <TableHead>Sr. No.</TableHead>
                     <TableHead>
-                        <Button variant="ghost" onClick={() => handleSort('createdAt')}>
-                            Date Submitted {renderSortIcon('createdAt')}
+                        <Button variant="ghost" onClick={() => handleSort('dateCreated')}>
+                            Date Submitted {renderSortIcon('dateCreated')}
                         </Button>
                     </TableHead>
                     <TableHead>Purpose</TableHead>
