@@ -103,7 +103,7 @@ const defaultFooterContent: OrganizationFooter = {
 
 const organizationToSeed: Omit<Organization, 'id' | 'createdAt' | 'updatedAt'> = {
     name: "BAITULMAL SAMAJIK SANSTHA SOLAPUR",
-    logoUrl: "https://firebasestorage.googleapis.com/v0/b/baitul-mal-connect.appspot.com/o/app-assets%2Flogo-new.png?alt=media&token=c19733a0-f567-4335-8531-15b41951b6a7",
+    logoUrl: "https://picsum.photos/seed/logo/256/256",
     city: "Solapur",
     address: "123 Muslim Peth, Solapur, Maharashtra 413001",
     registrationNumber: "Solapur/0000373/2025",
@@ -115,7 +115,7 @@ const organizationToSeed: Omit<Organization, 'id' | 'createdAt' | 'updatedAt'> =
     bankAccountNumber: "012345678901",
     bankIfscCode: "BKID0000707",
     upiId: "maaz9145@okhdfcbank",
-    qrCodeUrl: "https://firebasestorage.googleapis.com/v0/b/baitul-mal-connect.appspot.com/o/app-assets%2FOrg_Temp_Maaz_QR_Code-Crop.jpg?alt=media&token=75638219-c638-4e12-870f-1538d6139c87",
+    qrCodeUrl: "https://picsum.photos/seed/qrcode/300/300",
     footer: defaultFooterContent,
     source: 'Seeded',
 };
