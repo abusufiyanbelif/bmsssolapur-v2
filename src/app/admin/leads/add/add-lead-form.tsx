@@ -144,6 +144,7 @@ interface AddLeadFormProps {
   campaigns: Campaign[];
   settings: AppSettings;
   prefilledRawText?: string;
+  isSubForm?: boolean;
 }
 
 type AvailabilityState = {
@@ -196,7 +197,7 @@ function AvailabilityFeedback({ state, fieldName, onSuggestionClick }: { state: 
     return null;
 }
 
-function AddLeadFormContent({ users, campaigns, settings, prefilledRawText }: AddLeadFormProps) {
+function AddLeadFormContent({ users, campaigns, settings, prefilledRawText, isSubForm = false }: AddLeadFormProps) {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [adminUser, setAdminUser] = useState<User | null>(null);
@@ -857,7 +858,14 @@ function AddLeadFormContent({ users, campaigns, settings, prefilledRawText }: Ad
                                                         <Button type="button" size="icon" variant="ghost" className="h-6 w-6" onClick={() => setZoomLevels(z => ({...z, [index]: (z[index] || 1) * 1.2}))}><ZoomIn className="h-4 w-4"/></Button>
                                                         <Button type="button" size="icon" variant="ghost" className="h-6 w-6" onClick={() => setZoomLevels(z => ({...z, [index]: Math.max(0.5, (z[index] || 1) / 1.2)}))}><ZoomOut className="h-4 w-4"/></Button>
                                                         <Button type="button" size="icon" variant="ghost" className="h-6 w-6" onClick={() => setRotation(r => r + 90)}><RotateCw className="h-4 w-4"/></Button>
-                                                        <Button type="button" size="icon" variant="ghost" className="h-6 w-6 text-destructive hover:bg-destructive/10" onClick={() => setOtherDocs(docs => docs.filter((_, i) => i !== index))}>
+                                                        <Button type="button" size="icon" variant="ghost" className="h-6 w-6 text-destructive hover:bg-destructive/10" onClick={() => {
+                                                            setOtherDocs(docs => docs.filter((_, i) => i !== index));
+                                                            setZoomLevels(prev => {
+                                                                const newLevels = {...prev};
+                                                                delete newLevels[index];
+                                                                return newLevels;
+                                                            });
+                                                        }}>
                                                             <XCircle className="h-4 w-4"/>
                                                         </Button>
                                                     </div>
