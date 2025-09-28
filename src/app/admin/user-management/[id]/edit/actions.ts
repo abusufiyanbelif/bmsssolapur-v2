@@ -71,7 +71,11 @@ export async function handleUpdateUser(
       country: formData.get("country") as string | undefined,
       pincode: formData.get("pincode") as string | undefined,
       occupation: formData.get("occupation") as string | undefined,
+      fatherOccupation: formData.get("fatherOccupation") as string | undefined,
+      motherOccupation: formData.get("motherOccupation") as string | undefined,
       familyMembers: formData.get("familyMembers") ? parseInt(formData.get("familyMembers") as string, 10) : undefined,
+      earningMembers: formData.get("earningMembers") ? parseInt(formData.get("earningMembers") as string, 10) : undefined,
+      totalFamilyIncome: formData.get("totalFamilyIncome") ? parseFloat(formData.get("totalFamilyIncome") as string) : undefined,
       isWidow: formData.get("isWidow") === 'on',
       panNumber: formData.get("panNumber") as string | undefined,
       aadhaarNumber: formData.get("aadhaarNumber") as string | undefined,
@@ -129,7 +133,11 @@ export async function handleUpdateUser(
         },
 
         occupation: rawFormData.occupation || '',
+        fatherOccupation: rawFormData.fatherOccupation || '',
+        motherOccupation: rawFormData.motherOccupation || '',
         familyMembers: rawFormData.familyMembers || 0,
+        earningMembers: rawFormData.earningMembers || 0,
+        totalFamilyIncome: rawFormData.totalFamilyIncome || 0,
         isWidow: rawFormData.isWidow,
 
         panNumber: rawFormData.panNumber || '',

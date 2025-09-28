@@ -60,8 +60,12 @@ export interface User {
   anonymousDonorId?: string; // e.g. DONOR01
   anonymousReferralId?: string; // e.g. REF01
   anonymousAdminId?: string; // e.g. ADM01
-  occupation?: string;
+  occupation?: string; // Now beneficiary's occupation
+  fatherOccupation?: string;
+  motherOccupation?: string;
   familyMembers?: number;
+  earningMembers?: number;
+  totalFamilyIncome?: number;
   isWidow?: boolean;
   secondaryPhone?: string; 
   aadhaarNumber?: string; 
@@ -559,4 +563,5 @@ export interface LetterContentOptions {
     body: string;
     closingName: string;
 }
+
 

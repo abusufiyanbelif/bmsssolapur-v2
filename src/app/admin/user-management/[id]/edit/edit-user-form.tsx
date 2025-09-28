@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -221,7 +222,11 @@ const formSchema = z.object({
   country: z.string().optional(),
   pincode: z.string().optional(),
   occupation: z.string().optional(),
+  fatherOccupation: z.string().optional(),
+  motherOccupation: z.string().optional(),
   familyMembers: z.coerce.number().optional(),
+  earningMembers: z.coerce.number().optional(),
+  totalFamilyIncome: z.coerce.number().optional(),
   isWidow: z.boolean().default(false),
   panNumber: z.string().optional(),
   aadhaarNumber: z.string().optional(),
@@ -277,7 +282,11 @@ export function EditUserForm({ user }: EditUserFormProps) {
       country: user.address?.country || 'India',
       pincode: user.address?.pincode || '',
       occupation: user.occupation || '',
+      fatherOccupation: user.fatherOccupation || '',
+      motherOccupation: user.motherOccupation || '',
       familyMembers: user.familyMembers || 0,
+      earningMembers: user.earningMembers || 0,
+      totalFamilyIncome: user.totalFamilyIncome || 0,
       isWidow: user.isWidow || false,
       panNumber: user.panNumber || '',
       aadhaarNumber: user.aadhaarNumber || '',
@@ -315,7 +324,11 @@ export function EditUserForm({ user }: EditUserFormProps) {
           country: user.address?.country || 'India',
           pincode: user.address?.pincode || '',
           occupation: user.occupation || '',
+          fatherOccupation: user.fatherOccupation || '',
+          motherOccupation: user.motherOccupation || '',
           familyMembers: user.familyMembers || 0,
+          earningMembers: user.earningMembers || 0,
+          totalFamilyIncome: user.totalFamilyIncome || 0,
           isWidow: user.isWidow || false,
           panNumber: user.panNumber || '',
           aadhaarNumber: user.aadhaarNumber || '',
@@ -619,35 +632,18 @@ export function EditUserForm({ user }: EditUserFormProps) {
                             />
                     </div>
 
-                    <h3 className="text-lg font-semibold border-b pb-2">Family & Occupation</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                        <FormField
-                            control={form.control}
-                            name="occupation"
-                            render={({ field }) => (
-                                <FormItem>
-                                <FormLabel>Occupation</FormLabel>
-                                <FormControl>
-                                    <Input placeholder="e.g., Daily wage worker, Unemployed" {...field} disabled={!isEditing} />
-                                </FormControl>
-                                <FormMessage />
-                                </FormItem>
-                            )}
-                            />
-                        <FormField
-                            control={form.control}
-                            name="familyMembers"
-                            render={({ field }) => (
-                                <FormItem>
-                                <FormLabel>Number of Family Members</FormLabel>
-                                <FormControl>
-                                    <Input type="number" placeholder="e.g., 5" {...field} disabled={!isEditing} />
-                                </FormControl>
-                                <FormMessage />
-                                </FormItem>
-                            )}
-                            />
+                    <h3 className="text-lg font-semibold border-b pb-2">Family &amp; Occupation</h3>
+                    <div className="space-y-6">
+                        <FormField control={form.control} name="occupation" render={({ field }) => (<FormItem><FormLabel>Beneficiary&apos;s Occupation</FormLabel><FormControl><Input placeholder="e.g., Daily wage worker, Unemployed" {...field} disabled={!isEditing} /></FormControl><FormMessage /></FormItem>)}/>
+                        <FormField control={form.control} name="fatherOccupation" render={({ field }) => (<FormItem><FormLabel>Father&apos;s Occupation</FormLabel><FormControl><Input placeholder="e.g., Shop owner, Retired" {...field} disabled={!isEditing} /></FormControl><FormMessage /></FormItem>)}/>
+                        <FormField control={form.control} name="motherOccupation" render={({ field }) => (<FormItem><FormLabel>Mother&apos;s Occupation</FormLabel><FormControl><Input placeholder="e.g., Homemaker, Teacher" {...field} disabled={!isEditing} /></FormControl><FormMessage /></FormItem>)}/>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            <FormField control={form.control} name="familyMembers" render={({ field }) => (<FormItem><FormLabel>Family Members</FormLabel><FormControl><Input type="number" placeholder="e.g., 5" {...field} disabled={!isEditing} /></FormControl><FormMessage /></FormItem>)}/>
+                            <FormField control={form.control} name="earningMembers" render={({ field }) => (<FormItem><FormLabel>Earning Members</FormLabel><FormControl><Input type="number" placeholder="e.g., 1" {...field} disabled={!isEditing} /></FormControl><FormMessage /></FormItem>)}/>
+                            <FormField control={form.control} name="totalFamilyIncome" render={({ field }) => (<FormItem><FormLabel>Total Family Income (Monthly)</FormLabel><FormControl><Input type="number" placeholder="e.g., 10000" {...field} disabled={!isEditing} /></FormControl><FormMessage /></FormItem>)}/>
+                        </div>
                     </div>
+
                     
                     <h3 className="text-lg font-semibold border-b pb-2">Account Settings & Roles</h3>
                     <FormField

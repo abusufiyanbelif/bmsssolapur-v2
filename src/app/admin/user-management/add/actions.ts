@@ -1,4 +1,5 @@
 
+
 'use server';
 
 import { createUser } from "@/services/user-service";
@@ -30,7 +31,7 @@ export async function handleAddUser(
       roles: formData.getAll("roles") as UserRole[],
       isAnonymousAsBeneficiary: formData.get("isAnonymousAsBeneficiary") === 'on',
       isAnonymousAsDonor: formData.get("isAnonymousAsDonor") === 'on',
-      gender: formData.get("gender") as 'Male' | 'Female' | 'Other',
+      gender: formData.get("gender") as 'Male' | 'Female' | 'Other' | undefined,
       beneficiaryType: formData.get("beneficiaryType") as 'Adult' | 'Old Age' | 'Kid' | 'Family' | 'Widow' | undefined,
       
       addressLine1: formData.get("addressLine1") as string | undefined,
@@ -40,6 +41,11 @@ export async function handleAddUser(
       pincode: formData.get("pincode") as string | undefined,
 
       occupation: formData.get("occupation") as string | undefined,
+      fatherOccupation: formData.get("fatherOccupation") as string | undefined,
+      motherOccupation: formData.get("motherOccupation") as string | undefined,
+      earningMembers: formData.get("earningMembers") ? parseInt(formData.get("earningMembers") as string, 10) : undefined,
+      totalFamilyIncome: formData.get("totalFamilyIncome") ? parseFloat(formData.get("totalFamilyIncome") as string) : undefined,
+
       familyMembers: formData.get("familyMembers") ? parseInt(formData.get("familyMembers") as string, 10) : undefined,
       isWidow: formData.get("isWidow") === 'on',
 
@@ -77,7 +83,7 @@ export async function handleAddUser(
         isActive: true,
         isAnonymousAsBeneficiary: rawFormData.isAnonymousAsBeneficiary,
         isAnonymousAsDonor: rawFormData.isAnonymousAsDonor,
-        gender: rawFormData.gender,
+        gender: rawFormData.gender!,
         beneficiaryType: rawFormData.beneficiaryType,
         address: {
             addressLine1: rawFormData.addressLine1 || '',
@@ -87,7 +93,11 @@ export async function handleAddUser(
             pincode: rawFormData.pincode || '',
         },
         occupation: rawFormData.occupation || '',
+        fatherOccupation: rawFormData.fatherOccupation || '',
+        motherOccupation: rawFormData.motherOccupation || '',
         familyMembers: rawFormData.familyMembers || 0,
+        earningMembers: rawFormData.earningMembers || 0,
+        totalFamilyIncome: rawFormData.totalFamilyIncome || 0,
         isWidow: rawFormData.isWidow,
         panNumber: rawFormData.panNumber || '',
         aadhaarNumber: rawFormData.aadhaarNumber || '',
