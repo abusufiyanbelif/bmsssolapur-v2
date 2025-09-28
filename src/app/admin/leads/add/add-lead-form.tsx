@@ -1,4 +1,3 @@
-
 // src/app/admin/leads/add/add-lead-form.tsx
 "use client";
 
@@ -143,6 +142,7 @@ interface AddLeadFormProps {
   users: User[];
   campaigns: Campaign[];
   settings: AppSettings;
+  prefilledRawText?: string;
 }
 
 type AvailabilityState = {
@@ -195,7 +195,7 @@ function AvailabilityFeedback({ state, fieldName, onSuggestionClick }: { state: 
     return null;
 }
 
-function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
+function AddLeadFormContent({ users, campaigns, settings, prefilledRawText }: AddLeadFormProps) {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [adminUser, setAdminUser] = useState<User | null>(null);
@@ -210,7 +210,7 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
   const [isCaseAnalyzing, setIsCaseAnalyzing] = useState(false);
   const [isRefreshingStory, setIsRefreshingStory] = useState(false);
   const [isRefreshingSummary, setIsRefreshingSummary] = useState(false);
-  const [caseRawText, setCaseRawText] = useState<string>('');
+  const [caseRawText, setCaseRawText] = useState<string>(prefilledRawText || '');
   
   const [extractedBeneficiaryDetails, setExtractedBeneficiaryDetails] = useState<ExtractBeneficiaryDetailsOutput | null>(null);
   
@@ -292,6 +292,7 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
   const linkBeneficiaryLater = watch("linkBeneficiaryLater");
   const hasReferral = watch("hasReferral");
   const isHistoricalRecord = watch("isHistoricalRecord");
+  const acceptableDonationTypes = watch("acceptableDonationTypes");
   
   const dynamicText = useMemo(() => {
     let documentLabel = "Relevant Documents";
@@ -527,6 +528,14 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
     { key: 'pincode', label: 'Pincode' },
     { key: 'country', label: 'Country' },
   ];
+
+  const handleSelectAllDonationTypes = (checked: boolean) => {
+    if (checked) {
+        form.setValue('acceptableDonationTypes', [...donationTypes]);
+    } else {
+        form.setValue('acceptableDonationTypes', []);
+    }
+  };
 
   return (
     <>
@@ -880,50 +889,57 @@ function AddLeadFormContent({ users, campaigns, settings }: AddLeadFormProps) {
                     )}
                 />
                  <FormField
-                  control={form.control}
-                  name="acceptableDonationTypes"
-                  render={() => (
-                    <FormItem className="space-y-3">
-                      <FormLabel className="text-base font-semibold">Acceptable Donation Types</FormLabel>
-                      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                        {donationTypes.map((type) => (
-                          <FormField
-                            key={type}
-                            control={form.control}
-                            name="acceptableDonationTypes"
-                            render={({ field }) => {
-                              return (
-                                <FormItem
-                                  key={type}
-                                  className="flex flex-row items-start space-x-3 space-y-0"
-                                >
-                                  <FormControl>
-                                    <Checkbox
-                                      checked={field.value?.includes(type)}
-                                      onCheckedChange={(checked) => {
-                                        return checked
-                                          ? field.onChange([...(field.value || []), type])
-                                          : field.onChange(
-                                              field.value?.filter(
-                                                (value) => value !== type
-                                              )
-                                            )
-                                      }}
-                                    />
-                                  </FormControl>
-                                  <FormLabel className="font-normal">
-                                    {type}
-                                  </FormLabel>
-                                </FormItem>
-                              )
-                            }}
-                          />
-                        ))}
-                      </div>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                    control={form.control}
+                    name="acceptableDonationTypes"
+                    render={() => (
+                        <FormItem className="space-y-3">
+                        <FormLabel className="text-base font-semibold">Acceptable Donation Types</FormLabel>
+                        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                            <div className="flex flex-row items-start space-x-3 space-y-0 font-bold text-primary">
+                                <Checkbox
+                                    checked={donationTypes.length === acceptableDonationTypes.length}
+                                    onCheckedChange={handleSelectAllDonationTypes}
+                                />
+                                <FormLabel className="font-bold">Any</FormLabel>
+                            </div>
+                            {donationTypes.map((type) => (
+                            <FormField
+                                key={type}
+                                control={form.control}
+                                name="acceptableDonationTypes"
+                                render={({ field }) => {
+                                return (
+                                    <FormItem
+                                    key={type}
+                                    className="flex flex-row items-start space-x-3 space-y-0"
+                                    >
+                                    <FormControl>
+                                        <Checkbox
+                                        checked={field.value?.includes(type)}
+                                        onCheckedChange={(checked) => {
+                                            return checked
+                                            ? field.onChange([...(field.value || []), type])
+                                            : field.onChange(
+                                                field.value?.filter(
+                                                    (value) => value !== type
+                                                )
+                                                )
+                                        }}
+                                        />
+                                    </FormControl>
+                                    <FormLabel className="font-normal">
+                                        {type}
+                                    </FormLabel>
+                                    </FormItem>
+                                )
+                                }}
+                            />
+                            ))}
+                        </div>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                    />
                 
                 <div className="flex gap-4 pt-6 border-t">
                     <Button type="submit" disabled={isSubmitting}>

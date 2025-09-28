@@ -46,7 +46,7 @@ const leadPriorities: LeadPriority[] = ['Urgent', 'High', 'Medium', 'Low'];
 const leadStatuses: LeadStatus[] = ["Open", "Pending", "Complete", "On Hold", "Cancelled", "Closed", "Partial"];
 const leadVerificationStatuses: LeadVerificationStatus[] = ["Pending", "Verified", "Rejected", "More Info Required", "Duplicate", "Other"];
 const leadActions: LeadAction[] = ["Pending", "Ready For Help", "Publish", "Partial", "Complete", "Closed", "On Hold", "Cancelled"];
-const donationTypes: Exclude<DonationType, 'Split'>[] = ['Zakat', 'Sadaqah', 'Fitr', 'Lillah', 'Kaffarah', 'Any'];
+const donationTypes: Exclude<DonationType, 'Split' | 'Any'>[] = ['Zakat', 'Sadaqah', 'Fitr', 'Lillah', 'Kaffarah', 'Interest'];
 
 const degreeOptions = ['SSC', 'HSC', 'B.A.', 'B.Com', 'B.Sc.', 'B.E.', 'MBBS', 'B.Pharm', 'D.Pharm', 'BUMS', 'BHMS', 'Other'];
 const schoolYearOptions = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X'];
@@ -180,6 +180,7 @@ export function EditLeadForm({ lead, campaigns, users }: EditLeadFormProps) {
   const selectedPurpose = watch("purpose");
   const selectedCategory = watch("category");
   const selectedDegree = watch("degree");
+  const acceptableDonationTypes = watch("acceptableDonationTypes");
   
   const handleCancel = () => {
     reset(); // Re-sets form to the initial default values from `lead`
@@ -230,6 +231,15 @@ export function EditLeadForm({ lead, campaigns, users }: EditLeadFormProps) {
   const showYearField = showEducationFields && selectedDegree && !['SSC'].includes(selectedDegree);
   const showSemesterField = showEducationFields && selectedDegree && !['SSC', 'HSC'].includes(selectedDegree);
   const yearOptions = selectedCategory === 'School Fees' ? schoolYearOptions : collegeYearOptions;
+  
+  const handleSelectAllDonationTypes = (checked: boolean) => {
+    if (checked) {
+        setValue('acceptableDonationTypes', [...donationTypes]);
+    } else {
+        setValue('acceptableDonationTypes', []);
+    }
+  };
+
 
   return (
      <Card>
@@ -487,6 +497,61 @@ export function EditLeadForm({ lead, campaigns, users }: EditLeadFormProps) {
                     </FormItem>
                 </div>
                 
+                 <FormField
+                    control={form.control}
+                    name="acceptableDonationTypes"
+                    render={() => (
+                        <FormItem className="space-y-3">
+                        <FormLabel className="text-base font-semibold">Acceptable Donation Types</FormLabel>
+                        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                            <div className="flex flex-row items-start space-x-3 space-y-0 font-bold text-primary">
+                                <Checkbox
+                                    checked={donationTypes.length === acceptableDonationTypes.length}
+                                    onCheckedChange={handleSelectAllDonationTypes}
+                                    disabled={!isEditing}
+                                />
+                                <FormLabel className="font-bold">Any</FormLabel>
+                            </div>
+                            {donationTypes.map((type) => (
+                            <FormField
+                                key={type}
+                                control={form.control}
+                                name="acceptableDonationTypes"
+                                render={({ field }) => {
+                                return (
+                                    <FormItem
+                                    key={type}
+                                    className="flex flex-row items-start space-x-3 space-y-0"
+                                    >
+                                    <FormControl>
+                                        <Checkbox
+                                        checked={field.value?.includes(type)}
+                                        onCheckedChange={(checked) => {
+                                            return checked
+                                            ? field.onChange([...(field.value || []), type])
+                                            : field.onChange(
+                                                field.value?.filter(
+                                                    (value) => value !== type
+                                                )
+                                                )
+                                        }}
+                                        disabled={!isEditing}
+                                        />
+                                    </FormControl>
+                                    <FormLabel className="font-normal">
+                                        {type}
+                                    </FormLabel>
+                                    </FormItem>
+                                )
+                                }}
+                            />
+                            ))}
+                        </div>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                    />
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                     <FormField
                         control={form.control}
