@@ -26,18 +26,15 @@ const formSchema = z.object({
   background: z.string().min(1, "Background color is required."),
   foreground: z.string().min(1, "Foreground (text) color is required."),
   destructive: z.string().min(1, "Destructive color is required."),
+  success: z.string().min(1, "Success color is required."),
+  warning: z.string().min(1, "Warning color is required."),
+  info: z.string().min(1, "Info color is required."),
 });
 
 type FormValues = z.infer<typeof formSchema>;
 
 interface ThemeFormProps {
-    currentTheme: {
-        primary: string;
-        accent: string;
-        background: string;
-        foreground: string;
-        destructive: string;
-    };
+    currentTheme: FormValues;
 }
 
 // --- COLOR CONVERSION HELPERS ---
@@ -99,12 +96,16 @@ const colorToHsl = (color: string) => {
 }
 
 const themeSuggestions = [
-    { name: 'Forest Green (Default)', colors: { primary: '142.1 76.2% 36.3%', accent: '45 93.4% 47.5%', background: '0 0% 100%', foreground: '224 71.4% 4.1%', destructive: '0 84.2% 60.2%' } },
-    { name: 'Ocean Blue', colors: { primary: '217.2 91.2% 59.8%', accent: '210 40% 96.1%', background: '0 0% 100%', foreground: '224 71.4% 4.1%', destructive: '0 84.2% 60.2%' } },
-    { name: 'Sunset Orange', colors: { primary: '24.6 95% 53.1%', accent: '20.5 90.2% 48.2%', background: '0 0% 100%', foreground: '20 14.3% 4.1%', destructive: '0 84.2% 60.2%' } },
-    { name: 'Royal Purple', colors: { primary: '262.1 83.3% 57.8%', accent: '221.2 83.2% 53.3%', background: '0 0% 100%', foreground: '224 71.4% 4.1%', destructive: '0 84.2% 60.2%' } },
-    { name: 'Charcoal & Gold', colors: { primary: '45 93.4% 47.5%', accent: '45 93.4% 47.5%', background: '20 14.3% 4.1%', foreground: '60 9.1% 97.8%', destructive: '0 72.2% 50.6%' } },
-    { name: 'Crimson Red', colors: { primary: '346.8 77.2% 49.8%', accent: '35.5 91.7% 54.9%', background: '0 0% 100%', foreground: '20 14.3% 4.1%', destructive: '0 84.2% 60.2%' } },
+    { name: 'Forest Green (Default)', colors: { primary: '142.1 76.2% 36.3%', accent: '45 93.4% 47.5%', background: '0 0% 100%', foreground: '224 71.4% 4.1%', destructive: '0 84.2% 60.2%', success: '142.1 76.2% 36.3%', warning: '38.8 92.3% 50.2%', info: '217.2 91.2% 59.8%' } },
+    { name: 'Ocean Blue', colors: { primary: '217.2 91.2% 59.8%', accent: '210 40% 96.1%', background: '0 0% 100%', foreground: '224 71.4% 4.1%', destructive: '0 84.2% 60.2%', success: '148.8 61.6% 41.6%', warning: '45 93.4% 47.5%', info: '217.2 91.2% 59.8%' } },
+    { name: 'Sunset Orange', colors: { primary: '24.6 95% 53.1%', accent: '20.5 90.2% 48.2%', background: '0 0% 100%', foreground: '20 14.3% 4.1%', destructive: '0 84.2% 60.2%', success: '133.3 54.3% 43.1%', warning: '38.8 92.3% 50.2%', info: '217.2 91.2% 59.8%' } },
+    { name: 'Royal Purple', colors: { primary: '262.1 83.3% 57.8%', accent: '221.2 83.2% 53.3%', background: '0 0% 100%', foreground: '224 71.4% 4.1%', destructive: '0 84.2% 60.2%', success: '148.8 61.6% 41.6%', warning: '45 93.4% 47.5%', info: '262.1 83.3% 57.8%' } },
+    { name: 'Charcoal & Gold', colors: { primary: '45 93.4% 47.5%', accent: '45 93.4% 47.5%', background: '20 14.3% 4.1%', foreground: '60 9.1% 97.8%', destructive: '0 72.2% 50.6%', success: '142.1 70.6% 35.3%', warning: '38.8 92.3% 50.2%', info: '217.2 91.2% 59.8%' } },
+    { name: 'Crimson Red', colors: { primary: '346.8 77.2% 49.8%', accent: '35.5 91.7% 54.9%', background: '0 0% 100%', foreground: '20 14.3% 4.1%', destructive: '0 84.2% 60.2%', success: '133.3 54.3% 43.1%', warning: '38.8 92.3% 50.2%', info: '217.2 91.2% 59.8%' } },
+    { name: 'Teal & Coral', colors: { primary: '173.5 80.5% 35.1%', accent: '0 84.2% 60.2%', background: '180 20% 98%', foreground: '174 24.3% 14.1%', destructive: '0 84.2% 60.2%', success: '142.1 76.2% 36.3%', warning: '38.8 92.3% 50.2%', info: '197.8 89.8% 48.6%' } },
+    { name: 'Slate & Lime (Dark)', colors: { primary: '83.7 87.5% 54.1%', accent: '83.7 87.5% 54.1%', background: '215 28% 17%', foreground: '210 40% 98%', destructive: '0 62.8% 30.6%', success: '142.1 70.6% 35.3%', warning: '45 93.4% 47.5%', info: '217.2 91.2% 59.8%' } },
+    { name: 'Espresso & Mint', colors: { primary: '150 54% 42%', accent: '30 20% 90%', background: '25 25% 15%', foreground: '30 20% 90%', destructive: '0 84.2% 60.2%', success: '142.1 76.2% 36.3%', warning: '38.8 92.3% 50.2%', info: '197.8 89.8% 48.6%' } },
+    { name: 'Lavender & Sage', colors: { primary: '255 47% 51%', accent: '120 22% 85%', background: '255 10% 97%', foreground: '255 10% 20%', destructive: '0 84.2% 60.2%', success: '142.1 76.2% 36.3%', warning: '38.8 92.3% 50.2%', info: '217.2 91.2% 59.8%' } },
 ];
 
 
@@ -160,7 +161,10 @@ export function ThemeForm({ currentTheme }: ThemeFormProps) {
     setValue('background', colors.background, { shouldDirty: true });
     setValue('foreground', colors.foreground, { shouldDirty: true });
     setValue('destructive', colors.destructive, { shouldDirty: true });
-    setIsEditing(true); // Enable form editing when a theme is selected
+    setValue('success', colors.success, { shouldDirty: true });
+    setValue('warning', colors.warning, { shouldDirty: true });
+    setValue('info', colors.info, { shouldDirty: true });
+    setIsEditing(true);
   }
 
   const ColorInput = ({ name, label, description }: { name: keyof FormValues, label: string, description: string }) => {
@@ -174,7 +178,7 @@ export function ThemeForm({ currentTheme }: ThemeFormProps) {
                     <FormLabel>{label}</FormLabel>
                     <div className="flex items-center gap-2">
                         <FormControl>
-                            <Input {...field} placeholder="e.g., 142.1 76.2% 36.3%" />
+                            <Input {...field} placeholder="e.g., 142.1 76.2% 36.3%" disabled={!isEditing} />
                         </FormControl>
                         <Input
                             type="color"
@@ -215,23 +219,26 @@ export function ThemeForm({ currentTheme }: ThemeFormProps) {
             </div>
             
             <fieldset disabled={!isEditing} className="space-y-8">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="space-y-4 rounded-lg border p-6">
+                    <h4 className="font-semibold flex items-center gap-2"><Droplets/> Theme Suggestions</h4>
+                     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                        {themeSuggestions.map(theme => (
+                            <Button key={theme.name} type="button" variant="outline" onClick={() => applyTheme(theme.colors as FormValues)}>
+                                {theme.name}
+                            </Button>
+                        ))}
+                    </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                     <ColorInput name="primary" label="Primary Color" description="The main brand color (buttons, links)." />
                     <ColorInput name="accent" label="Accent Color" description="A secondary color for highlights." />
                     <ColorInput name="background" label="Background Color" description="The main page background." />
                     <ColorInput name="foreground" label="Foreground Color" description="The main text color." />
                     <ColorInput name="destructive" label="Destructive Color" description="Color for delete or error actions." />
-                </div>
-
-                <div className="space-y-4 rounded-lg border p-6">
-                    <h4 className="font-semibold flex items-center gap-2"><Droplets/> Theme Suggestions</h4>
-                     <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                        {themeSuggestions.map(theme => (
-                            <Button key={theme.name} type="button" variant="outline" onClick={() => applyTheme(theme.colors)}>
-                                {theme.name}
-                            </Button>
-                        ))}
-                    </div>
+                    <ColorInput name="success" label="Success Color" description="Color for success states and notifications." />
+                    <ColorInput name="warning" label="Warning Color" description="Color for warnings and pending states." />
+                    <ColorInput name="info" label="Info Color" description="Color for informational alerts and highlights." />
                 </div>
 
                  <div className="space-y-4 rounded-lg border p-6">
@@ -240,9 +247,11 @@ export function ThemeForm({ currentTheme }: ThemeFormProps) {
                          <h3 className="text-2xl font-bold mb-4" style={{ color: colorToHsl(watchedColors.foreground) }}>Preview Heading</h3>
                         <p className="mb-6 text-sm" style={{ color: colorToHsl(watchedColors.foreground) }}>This is a sample paragraph to demonstrate the foreground (text) color on the selected background.</p>
                         <div className="grid grid-cols-2 gap-4">
-                            <Button style={{ backgroundColor: colorToHsl(watchedColors.primary) }}>Primary Button</Button>
-                            <Button style={{ backgroundColor: colorToHsl(watchedColors.accent) }}>Accent Button</Button>
-                            <Button variant="secondary">Secondary</Button>
+                            <Button style={{ backgroundColor: colorToHsl(watchedColors.primary), color: 'hsl(var(--primary-foreground))' }}>Primary Button</Button>
+                            <Button style={{ backgroundColor: colorToHsl(watchedColors.accent), color: 'hsl(var(--accent-foreground))' }}>Accent Button</Button>
+                            <Button style={{ backgroundColor: colorToHsl(watchedColors.success), color: 'hsl(var(--success-foreground))' }}>Success</Button>
+                            <Button style={{ backgroundColor: colorToHsl(watchedColors.warning), color: 'hsl(var(--warning-foreground))' }}>Warning</Button>
+                            <Button style={{ backgroundColor: colorToHsl(watchedColors.info), color: 'hsl(var(--info-foreground))' }}>Info</Button>
                             <Button variant="destructive" style={{ backgroundColor: colorToHsl(watchedColors.destructive) }}>Destructive</Button>
                         </div>
                     </div>

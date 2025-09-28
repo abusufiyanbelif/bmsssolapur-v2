@@ -19,8 +19,11 @@ export async function handleUpdateTheme(
     const background = formData.get("background") as string;
     const foreground = formData.get("foreground") as string;
     const destructive = formData.get("destructive") as string;
+    const success = formData.get("success") as string;
+    const warning = formData.get("warning") as string;
+    const info = formData.get("info") as string;
     
-    if (!primary || !accent || !background || !foreground || !destructive) {
+    if (!primary || !accent || !background || !foreground || !destructive || !success || !warning || !info) {
         return { success: false, error: "All color fields are required." };
     }
 
@@ -40,14 +43,12 @@ export async function handleUpdateTheme(
     cssContent = updateCssVariable(cssContent, '--background', background);
     cssContent = updateCssVariable(cssContent, '--foreground', foreground);
     cssContent = updateCssVariable(cssContent, '--destructive', destructive);
+    cssContent = updateCssVariable(cssContent, '--success', success);
+    cssContent = updateCssVariable(cssContent, '--warning', warning);
+    cssContent = updateCssVariable(cssContent, '--info', info);
     
     await fs.writeFile(cssFilePath, cssContent, 'utf8');
     
-    // Revalidating the path won't work for CSS files in Next.js development.
-    // The browser's cache needs to be busted, which typically requires a full page reload
-    // or more advanced cache-busting strategies. For this prototype, a manual refresh is okay.
-    // revalidatePath("/", "layout");
-
     return { success: true };
   } catch (e) {
     const error = e instanceof Error ? e.message : "An unknown error occurred.";

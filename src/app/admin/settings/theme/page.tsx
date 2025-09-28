@@ -22,11 +22,14 @@ async function getCurrentTheme() {
             background: getVariableValue('--background'),
             foreground: getVariableValue('--foreground'),
             destructive: getVariableValue('--destructive'),
+            success: getVariableValue('--success'),
+            warning: getVariableValue('--warning'),
+            info: getVariableValue('--info'),
         };
 
     } catch (error) {
         console.error("Could not read globals.css to get current theme", error);
-        return { primary: '', accent: '', background: '', foreground: '', destructive: '' };
+        return { primary: '', accent: '', background: '', foreground: '', destructive: '', success: '', warning: '', info: '' };
     }
 }
 
