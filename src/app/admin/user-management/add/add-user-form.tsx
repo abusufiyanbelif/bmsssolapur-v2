@@ -1,5 +1,4 @@
 
-
 // src/app/admin/user-management/add/add-user-form.tsx
 "use client";
 
@@ -209,6 +208,10 @@ function AddUserFormContent({ settings, isSubForm = false, prefilledData, onUser
 
   const aadhaarInputRef = useRef<HTMLInputElement>(null);
   const addressProofInputRef = useRef<HTMLInputElement>(null);
+  const [aadhaarFile, setAadhaarFile] = useState<File | null>(null);
+  const [aadhaarPreview, setAadhaarPreview] = useState<string | null>(null);
+  const [zoom, setZoom] = useState(1);
+  const [rotation, setRotation] = useState(0);
 
   
   const isAadhaarMandatory = settings?.userConfiguration?.Beneficiary?.isAadhaarMandatory || false;
@@ -362,13 +365,21 @@ function AddUserFormContent({ settings, isSubForm = false, prefilledData, onUser
     });
   }, [debouncedUpiIds, handleAvailabilityCheck]);
 
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setAadhaarFile(file);
+      setAadhaarPreview(URL.createObjectURL(file));
+      setValue('aadhaarCard', file);
+      setZoom(1);
+      setRotation(0);
+    }
+  };
+
 
   const handleGetTextFromDocuments = async () => {
-    const filesToScan: File[] = [];
-    const aadhaarFile = form.getValues("aadhaarCard");
-    const addressFile = form.getValues("addressProof");
-    if(aadhaarFile) filesToScan.push(aadhaarFile);
-    if(addressFile) filesToScan.push(addressFile);
+    const aadhaarCardFile = form.getValues("aadhaarCard");
+    const filesToScan = [aadhaarCardFile].filter(Boolean);
 
     if (filesToScan.length === 0) {
       toast({ variant: 'destructive', title: 'No Files', description: 'Please upload at least one document to scan.' });
@@ -539,14 +550,34 @@ function AddUserFormContent({ settings, isSubForm = false, prefilledData, onUser
                       <AccordionContent className="pt-4">
                           <div className="space-y-4 p-4 border rounded-lg bg-muted/50">
                               <p className="text-sm text-muted-foreground">Upload an Aadhaar card or other ID to auto-fill the user&apos;s details.</p>
-                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                  <FormField control={form.control} name="aadhaarCard" render={({ field }) => ( <FormItem><FormLabel>Aadhaar Card</FormLabel><FormControl><Input type="file" ref={aadhaarInputRef} onChange={(e) => field.onChange(e.target.files?.[0])} /></FormControl><FormMessage /></FormItem> )} />
-                                  <FormField control={form.control} name="addressProof" render={({ field }) => ( <FormItem><FormLabel>Address Proof</FormLabel><FormControl><Input type="file" ref={addressProofInputRef} onChange={(e) => field.onChange(e.target.files?.[0])} /></FormControl><FormMessage /></FormItem> )} />
+                              <div className="grid grid-cols-1 gap-4">
+                                  <FormField control={form.control} name="aadhaarCard" render={() => ( <FormItem><FormLabel>Aadhaar Card / ID Document</FormLabel><FormControl><Input type="file" ref={aadhaarInputRef} onChange={handleFileChange} /></FormControl><FormMessage /></FormItem> )} />
                               </div>
+
+                              {aadhaarPreview && (
+                                <div className="relative group p-2 border rounded-lg">
+                                    <div onWheel={handleWheel} className="relative w-full h-80 bg-gray-100 dark:bg-gray-800 rounded-md overflow-auto cursor-zoom-in flex items-center justify-center">
+                                        <Image
+                                            src={aadhaarPreview}
+                                            alt="ID Preview"
+                                            width={800 * zoom}
+                                            height={800 * zoom}
+                                            className="object-contain transition-transform duration-100"
+                                            style={{ transform: `scale(${zoom}) rotate(${rotation}deg)` }}
+                                        />
+                                    </div>
+                                    <div className="absolute top-2 right-2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity bg-background/80 p-1 rounded-md">
+                                        <Button type="button" size="icon" variant="ghost" className="h-7 w-7" onClick={() => setZoom(z => z * 1.2)}><ZoomIn className="h-4 w-4"/></Button>
+                                        <Button type="button" size="icon" variant="ghost" className="h-7 w-7" onClick={() => setZoom(z => Math.max(0.5, z / 1.2))}><ZoomOut className="h-4 w-4"/></Button>
+                                        <Button type="button" size="icon" variant="ghost" className="h-7 w-7" onClick={() => setRotation(r => r + 90)}><RotateCw className="h-4 w-4" /></Button>
+                                        <Button type="button" variant="destructive" size="icon" className="h-7 w-7" onClick={() => { setAadhaarFile(null); setAadhaarPreview(null); setRawText(null); setExtractedDetails(null); setZoom(1); setRotation(0); }}><X className="h-4 w-4"/></Button>
+                                    </div>
+                                </div>
+                              )}
                               <div className="flex flex-col sm:flex-row gap-2">
                                   <Button type="button" variant="outline" className="w-full" onClick={handleGetTextFromDocuments} disabled={isTextExtracting}>
                                       {isTextExtracting ? <Loader2 className="h-4 w-4 animate-spin"/> : <Text className="mr-2 h-4 w-4" />}
-                                      Get Text from Documents
+                                      Get Text from Document
                                   </Button>
                                   <Button type="button" className="w-full" onClick={() => handleFetchUserData()} disabled={!rawText || isAnalyzing}>
                                       {isAnalyzing ? <Loader2 className="h-4 w-4 animate-spin"/> : <Bot className="mr-2 h-4 w-4" />}

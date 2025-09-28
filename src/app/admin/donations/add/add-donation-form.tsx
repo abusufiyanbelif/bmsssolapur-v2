@@ -27,7 +27,7 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect, Suspense, useRef, useCallback } from "react";
-import { Loader2, Info, CalendarIcon, ChevronsUpDown, Check, X, ScanEye, TextSelect, XCircle, AlertTriangle, Bot, Text, ZoomIn, ZoomOut, FileIcon, UserPlus, UserSearch, ScanSearch, UserRoundPlus, Trash2 } from "lucide-react";
+import { Loader2, Info, CalendarIcon, ChevronsUpDown, Check, X, ScanEye, TextSelect, XCircle, AlertTriangle, Bot, Text, ZoomIn, ZoomOut, FileIcon, UserPlus, UserSearch, ScanSearch, UserRoundPlus, Trash2, RotateCw } from "lucide-react";
 import type { User, Donation, DonationType, DonationPurpose, PaymentMethod, Lead, Campaign, ExtractDonationDetailsOutput, ExtractBeneficiaryDetailsOutput, AppSettings } from "@/services/types";
 import { getUser, checkAvailability } from "@/services/user-service";
 import { useSearchParams, useRouter } from "next/navigation";
@@ -217,6 +217,7 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation, set
   const [file, setFile] = useState<File | null>(null);
   const [filePreview, setFilePreview] = useState<string | null>(null);
   const [zoom, setZoom] = useState(1);
+  const [rotation, setRotation] = useState(0);
 
   // Mismatch state
   const [showPhoneUpdate, setShowPhoneUpdate] = useState(false);
@@ -384,6 +385,7 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation, set
       setExtractedDetails(null);
       setAutoFilledFields(new Set());
       setZoom(1);
+      setRotation(0);
     } else {
       clearFile();
     }
@@ -396,6 +398,7 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation, set
     setRawText(null);
     setExtractedDetails(null);
     setAutoFilledFields(new Set());
+    setRotation(0);
     if(fileInputRef.current) {
         fileInputRef.current.value = "";
     }
@@ -535,9 +538,17 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation, set
                         </div>
                         {filePreview && (
                             <div className="relative group p-2 border rounded-lg">
-                                <div onWheel={handleWheel} className="relative w-full h-80 bg-gray-100 dark:bg-gray-800 rounded-md overflow-auto cursor-zoom-in">
+                                <div className="relative w-full h-80 bg-gray-100 dark:bg-gray-800 rounded-md overflow-auto cursor-zoom-in flex items-center justify-center">
                                      {file?.type.startsWith('image/') ? (
-                                        <Image src={filePreview} alt="Proof preview" width={800 * zoom} height={800 * zoom} className="object-contain transition-transform duration-100" style={{ transform: `scale(${zoom})` }} />
+                                        <Image 
+                                          src={filePreview} 
+                                          alt="Proof preview" 
+                                          width={800 * zoom}
+                                          height={800 * zoom}
+                                          className="object-contain transition-transform duration-100" 
+                                          style={{ transform: `scale(${zoom}) rotate(${rotation}deg)` }}
+                                          onWheel={handleWheel}
+                                        />
                                     ) : (
                                         <div className="flex flex-col items-center gap-2 text-muted-foreground p-4">
                                             <FileIcon className="h-16 w-16" />
@@ -548,6 +559,7 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation, set
                                 <div className="absolute top-2 right-2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity bg-background/80 p-1 rounded-md">
                                     <Button type="button" size="icon" variant="ghost" className="h-7 w-7" onClick={() => setZoom(z => z * 1.2)}><ZoomIn className="h-4 w-4"/></Button>
                                     <Button type="button" size="icon" variant="ghost" className="h-7 w-7" onClick={() => setZoom(z => Math.max(0.5, z / 1.2))}><ZoomOut className="h-4 w-4"/></Button>
+                                    <Button type="button" size="icon" variant="ghost" className="h-7 w-7" onClick={() => setRotation(r => r + 90)}><RotateCw className="h-4 w-4" /></Button>
                                     <Button type="button" variant="destructive" size="icon" className="h-7 w-7" onClick={clearFile}><X className="h-4 w-4"/></Button>
                                 </div>
                             </div>
@@ -591,7 +603,7 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation, set
                             <FormItem className="flex items-center space-x-3 space-y-0">
                                 <Button type="button" variant={field.value === 'existing' ? 'default' : 'outline'} className="w-full h-20 flex-col gap-2" onClick={() => field.onChange('existing')}><UserSearch className="h-6 w-6"/><span>Search Existing</span></Button>
                             </FormItem>
-                            <FormItem className="flex items-center space-x-3 space-y-0">
+                             <FormItem className="flex items-center space-x-3 space-y-0">
                                      <Button type="button" variant={field.value === 'new' ? 'default' : 'outline'} className="w-full h-20 flex-col gap-2" onClick={() => field.onChange('new')}>
                                         <UserRoundPlus className="h-6 w-6"/><span>Create New</span>
                                     </Button>

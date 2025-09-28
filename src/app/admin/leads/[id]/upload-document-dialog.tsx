@@ -16,10 +16,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useRef, useEffect } from "react";
-import { Loader2, Upload } from "lucide-react";
+import { Loader2, Upload, RotateCw } from "lucide-react";
 import { handleUploadVerificationDocument } from "./actions";
 import { useRouter } from "next/navigation";
 import { Progress } from "@/components/ui/progress"; // Import Progress component
+import Image from "next/image";
+import { FileIcon, ZoomIn, ZoomOut, XCircle } from "lucide-react";
 
 interface UploadDocumentDialogProps {
   leadId: string;
@@ -33,6 +35,10 @@ export function UploadDocumentDialog({ leadId }: UploadDocumentDialogProps) {
   const [open, setOpen] = useState(false);
   const [adminUserId, setAdminUserId] = useState<string | null>(null);
   const formRef = useRef<HTMLFormElement>(null);
+  const [file, setFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [zoom, setZoom] = useState(1);
+  const [rotation, setRotation] = useState(0);
 
   useEffect(() => {
       if (open) {
@@ -41,6 +47,16 @@ export function UploadDocumentDialog({ leadId }: UploadDocumentDialogProps) {
           setUploadProgress(0); // Reset progress on open
       }
   }, [open]);
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+      const selectedFile = e.target.files?.[0];
+      if (selectedFile) {
+          setFile(selectedFile);
+          setPreviewUrl(URL.createObjectURL(selectedFile));
+          setZoom(1);
+          setRotation(0);
+      }
+  };
   
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -54,11 +70,18 @@ export function UploadDocumentDialog({ leadId }: UploadDocumentDialogProps) {
         return;
     }
 
+    if (!file) {
+        toast({ variant: "destructive", title: "No File", description: "Please select a document to upload." });
+        return;
+    }
+
     setIsUploading(true);
     setUploadProgress(0);
 
     const formData = new FormData(event.currentTarget);
     formData.append("adminUserId", adminUserId);
+    formData.append("document", file);
+
     const result = await handleUploadVerificationDocument(leadId, formData, setUploadProgress);
 
     setIsUploading(false);
@@ -98,8 +121,35 @@ export function UploadDocumentDialog({ leadId }: UploadDocumentDialogProps) {
         <form ref={formRef} onSubmit={handleSubmit} className="space-y-4 py-4">
             <div className="grid w-full max-w-sm items-center gap-1.5">
                 <Label htmlFor="document">Document File</Label>
-                <Input id="document" name="document" type="file" required accept="image/*,application/pdf" disabled={isUploading} />
+                <Input id="document" name="document" type="file" required accept="image/*,application/pdf" disabled={isUploading} onChange={handleFileChange} />
             </div>
+            
+            {previewUrl && (
+                <div className="relative group p-2 border rounded-lg">
+                    <div className="relative w-full h-60 bg-gray-100 dark:bg-gray-800 rounded-md overflow-auto flex items-center justify-center">
+                        {file?.type.startsWith('image/') ? (
+                             <Image 
+                                src={previewUrl} 
+                                alt="Document Preview" 
+                                width={600 * zoom}
+                                height={600 * zoom}
+                                className="object-contain transition-transform duration-100"
+                                style={{ transform: `scale(${zoom}) rotate(${rotation}deg)` }}
+                             />
+                        ) : (
+                            <div className="flex flex-col items-center gap-2 text-muted-foreground">
+                                <FileIcon className="h-16 w-16" />
+                                <span className="text-sm font-semibold">{file?.name}</span>
+                            </div>
+                        )}
+                    </div>
+                    <div className="absolute top-1 right-1 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity bg-background/80 rounded-md">
+                        <Button type="button" size="icon" variant="ghost" className="h-6 w-6" onClick={() => setZoom(z => z * 1.2)}><ZoomIn className="h-4 w-4"/></Button>
+                        <Button type="button" size="icon" variant="ghost" className="h-6 w-6" onClick={() => setZoom(z => Math.max(0.5, z / 1.2))}><ZoomOut className="h-4 w-4"/></Button>
+                        <Button type="button" size="icon" variant="ghost" className="h-6 w-6" onClick={() => setRotation(r => r + 90)}><RotateCw className="h-4 w-4"/></Button>
+                    </div>
+                </div>
+            )}
 
              {isUploading && (
               <div className="space-y-2">
@@ -115,7 +165,7 @@ export function UploadDocumentDialog({ leadId }: UploadDocumentDialogProps) {
                         Cancel
                     </Button>
                 </DialogClose>
-                <Button type="submit" disabled={isUploading}>
+                <Button type="submit" disabled={isUploading || !file}>
                     {isUploading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Upload className="mr-2 h-4 w-4" />}
                     {isUploading ? 'Uploading...' : 'Upload'}
                 </Button>

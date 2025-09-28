@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import {
@@ -19,7 +18,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useRef, useEffect, useMemo } from "react";
 import { useForm } from "react-hook-form";
-import { Loader2, FileUp, ScanEye, AlertTriangle, FileText, TextSelect, Bot, Text, ZoomIn, ZoomOut, X } from "lucide-react";
+import { Loader2, FileUp, ScanEye, AlertTriangle, FileText, TextSelect, Bot, Text, ZoomIn, ZoomOut, X, RotateCw } from "lucide-react";
 import { handleFundTransfer } from "./actions";
 import { useRouter } from "next/navigation";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
@@ -53,6 +52,7 @@ export function AddTransferDialog({ leadId }: AddTransferDialogProps) {
   const [extractedDetails, setExtractedDetails] = useState<ExtractDonationDetailsOutput | null>(null);
   const [autoFilledFields, setAutoFilledFields] = useState<Set<string>>(new Set());
   const [zoom, setZoom] = useState(1);
+  const [rotation, setRotation] = useState(0);
   
   const form = useForm();
   const { setValue, register, handleSubmit, getValues, watch } = form;
@@ -106,6 +106,7 @@ export function AddTransferDialog({ leadId }: AddTransferDialogProps) {
      setExtractedDetails(null);
      setAutoFilledFields(new Set());
      setZoom(1);
+     setRotation(0);
   };
   
    const handleGetText = async () => {
@@ -163,6 +164,7 @@ export function AddTransferDialog({ leadId }: AddTransferDialogProps) {
         setExtractedDetails(null);
         setAutoFilledFields(new Set());
         setZoom(1);
+        setRotation(0);
       }
       setOpen(isOpen)
     }}>
@@ -211,21 +213,23 @@ export function AddTransferDialog({ leadId }: AddTransferDialogProps) {
                     <FormDescription>A screenshot or PDF receipt is required for online payments.</FormDescription>
                 </div>
                 {previewUrl && (
-                  <div className="relative group">
-                     <div onWheel={handleWheel} className="relative w-full h-60 bg-gray-100 dark:bg-gray-800 rounded-md overflow-auto cursor-zoom-in">
+                  <div className="relative group p-2 border rounded-lg">
+                     <div className="relative w-full h-60 bg-gray-100 dark:bg-gray-800 rounded-md overflow-auto flex items-center justify-center">
                           <Image 
                               src={previewUrl} 
                               alt="Proof preview" 
-                              width={800 * zoom}
-                              height={800 * zoom}
+                              width={600 * zoom}
+                              height={600 * zoom}
                               className="object-contain transition-transform duration-100"
-                              style={{ transform: `scale(${zoom})` }}
+                              style={{ transform: `scale(${zoom}) rotate(${rotation}deg)` }}
+                              onWheel={handleWheel}
                           />
                       </div>
                       <div className="absolute top-2 right-2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity bg-background/80 p-1 rounded-md">
                           <Button type="button" size="icon" variant="ghost" className="h-7 w-7" onClick={() => setZoom(z => z * 1.2)}><ZoomIn className="h-4 w-4"/></Button>
                           <Button type="button" size="icon" variant="ghost" className="h-7 w-7" onClick={() => setZoom(z => Math.max(0.5, z / 1.2))}><ZoomOut className="h-4 w-4"/></Button>
-                          <Button type="button" variant="destructive" size="icon" className="h-7 w-7" onClick={() => { setFile(null); setPreviewUrl(null); setRawText(null); setExtractedDetails(null); setAutoFilledFields(new Set()); setZoom(1); }}><X className="h-4 w-4"/></Button>
+                          <Button type="button" size="icon" variant="ghost" className="h-7 w-7" onClick={() => setRotation(r => r + 90)}><RotateCw className="h-4 w-4" /></Button>
+                          <Button type="button" variant="destructive" size="icon" className="h-7 w-7" onClick={() => { setFile(null); setPreviewUrl(null); setRawText(null); setExtractedDetails(null); setAutoFilledFields(new Set()); setZoom(1); setRotation(0); }}><X className="h-4 w-4"/></Button>
                       </div>
                   </div>
                 )}

@@ -26,13 +26,12 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { handleRequestHelp } from "./actions";
 import { useState, useEffect, useRef } from "react";
-import { Loader2, AlertCircle, CheckCircle, HandHeart, XCircle } from "lucide-react";
+import { Loader2, AlertCircle, CheckCircle, HandHeart, XCircle, FileIcon, ZoomIn, ZoomOut, RotateCw } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import {
   AlertDialog,
   AlertDialogAction,
-  AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
   AlertDialogFooter,
@@ -44,6 +43,7 @@ import Link from "next/link";
 import { getAppSettings } from "@/app/admin/settings/actions";
 import { Progress } from "@/components/ui/progress"; // Import Progress component
 import { Label } from "@/components/ui/label";
+import Image from "next/image";
 
 
 const leadCategories = ['Education Fees', 'Medical Bill', 'Ration Kit', 'Zakat', 'Sadaqah', 'Fitr'] as const;
@@ -68,6 +68,11 @@ export default function RequestHelpPage() {
   const [submittedLead, setSubmittedLead] = useState<Lead | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [settings, setSettings] = useState<AppSettings | null>(null);
+  
+  const [file, setFile] = useState<File | null>(null);
+  const [filePreview, setFilePreview] = useState<string | null>(null);
+  const [zoom, setZoom] = useState(1);
+  const [rotation, setRotation] = useState(0);
 
   useEffect(() => {
     const storedUserId = localStorage.getItem('userId');
@@ -90,6 +95,16 @@ export default function RequestHelpPage() {
       verificationDocument: undefined,
     },
   });
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const selectedFile = e.target.files?.[0] || null;
+    form.setValue('verificationDocument', selectedFile, { shouldValidate: true });
+    setFile(selectedFile);
+    if(filePreview) URL.revokeObjectURL(filePreview);
+    setFilePreview(selectedFile ? URL.createObjectURL(selectedFile) : null);
+    setZoom(1);
+    setRotation(0);
+  };
 
   async function onSubmit(values: RequestHelpFormValues) {
     if (!userId) {
@@ -138,6 +153,8 @@ export default function RequestHelpPage() {
         category: undefined,
         verificationDocument: undefined,
     });
+    setFile(null);
+    setFilePreview(null);
     if (fileInputRef.current) {
         fileInputRef.current.value = "";
     }
@@ -266,18 +283,18 @@ export default function RequestHelpPage() {
                                 type="file"
                                 ref={fileInputRef}
                                 accept="image/*,application/pdf"
-                                onChange={(e) => onChange(e.target.files ? e.target.files[0] : null)}
-                                {...rest}
+                                onChange={handleFileChange}
                                 className="pr-10"
                                 />
-                                {value && (
+                                {file && (
                                      <Button 
                                         type="button" 
                                         variant="ghost" 
                                         size="icon" 
                                         className="absolute top-1/2 right-1 -translate-y-1/2 h-7 w-7"
                                         onClick={() => {
-                                            onChange(null);
+                                            form.setValue('verificationDocument', null);
+                                            setFile(null);
                                             if (fileInputRef.current) fileInputRef.current.value = "";
                                         }}
                                     >
@@ -289,6 +306,32 @@ export default function RequestHelpPage() {
                         <FormDescription>
                             (Optional) Upload a supporting document (e.g., ID card, medical report, bill).
                         </FormDescription>
+                        {filePreview && (
+                            <div className="relative group p-2 border rounded-lg">
+                                <div className="relative w-full h-60 bg-gray-100 dark:bg-gray-800 rounded-md overflow-auto flex items-center justify-center">
+                                    {file?.type.startsWith('image/') ? (
+                                        <Image 
+                                            src={filePreview} 
+                                            alt="Proof preview" 
+                                            width={600 * zoom}
+                                            height={600 * zoom}
+                                            className="object-contain transition-transform duration-100"
+                                            style={{ transform: `scale(${zoom}) rotate(${rotation}deg)` }}
+                                        />
+                                    ) : (
+                                        <div className="flex flex-col items-center gap-2 text-muted-foreground">
+                                            <FileIcon className="h-16 w-16" />
+                                            <span className="text-sm font-semibold">{file?.name}</span>
+                                        </div>
+                                    )}
+                                </div>
+                                <div className="absolute top-1 right-1 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity bg-background/80 rounded-md">
+                                    <Button type="button" size="icon" variant="ghost" className="h-6 w-6" onClick={() => setZoom(z => z * 1.2)}><ZoomIn className="h-4 w-4"/></Button>
+                                    <Button type="button" size="icon" variant="ghost" className="h-6 w-6" onClick={() => setZoom(z => Math.max(0.5, z / 1.2))}><ZoomOut className="h-4 w-4"/></Button>
+                                    <Button type="button" size="icon" variant="ghost" className="h-6 w-6" onClick={() => setRotation(r => r + 90)}><RotateCw className="h-4 w-4"/></Button>
+                                </div>
+                            </div>
+                        )}
                         <FormMessage />
                         </FormItem>
                     )}

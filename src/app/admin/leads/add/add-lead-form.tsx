@@ -1,3 +1,4 @@
+
 // src/app/admin/leads/add/add-lead-form.tsx
 "use client";
 
@@ -215,6 +216,9 @@ function AddLeadFormContent({ users, campaigns, settings, prefilledRawText }: Ad
   const [extractedBeneficiaryDetails, setExtractedBeneficiaryDetails] = useState<ExtractBeneficiaryDetailsOutput | null>(null);
   
   const otherDocsInputRef = useRef<HTMLInputElement>(null);
+  const [otherDocs, setOtherDocs] = useState<File[]>([]);
+  const [zoomLevels, setZoomLevels] = useState<Record<number, number>>({});
+  const [rotation, setRotation] = useState(0);
 
   const leadConfiguration = settings.leadConfiguration || {};
   const approvalProcessDisabled = leadConfiguration.approvalProcessDisabled || false;
@@ -383,16 +387,21 @@ function AddLeadFormContent({ users, campaigns, settings, prefilledRawText }: Ad
     setIsCaseAnalyzing(false);
   };
   
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+        setOtherDocs(prev => [...prev, ...Array.from(e.target.files!)]);
+    }
+  };
+  
   const handleGetTextFromDocuments = async () => {
-    const filesToScan: File[] = getValues("otherDocuments") || [];
-    if (filesToScan.length === 0) {
+    if (otherDocs.length === 0) {
       toast({ variant: 'destructive', title: 'No Files', description: 'Please upload at least one document to scan.' });
       return;
     }
 
     setIsCaseTextExtracting(true);
     const formData = new FormData();
-    filesToScan.forEach(file => formData.append("files", file));
+    otherDocs.forEach(file => formData.append("otherDocuments", file));
 
     try {
       const result = await getRawTextFromImage(formData);
@@ -468,7 +477,7 @@ function AddLeadFormContent({ users, campaigns, settings, prefilledRawText }: Ad
       if (value) {
         if (Array.isArray(value)) {
              if (key === 'otherDocuments') {
-                value.forEach(f => { if(f instanceof File) formData.append(key, f) });
+                otherDocs.forEach(f => formData.append(key, f));
             } else {
                  value.forEach(v => formData.append(key, v));
             }
@@ -535,6 +544,14 @@ function AddLeadFormContent({ users, campaigns, settings, prefilledRawText }: Ad
     } else {
         form.setValue('acceptableDonationTypes', []);
     }
+  };
+
+  const handleWheel = (e: React.WheelEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    const target = e.currentTarget as HTMLImageElement;
+    const currentZoom = parseFloat(target.style.transform.replace('scale(', '').replace(')', '')) || 1;
+    const newZoom = Math.max(0.5, Math.min(currentZoom - e.deltaY * 0.001, 5));
+    target.style.transform = `scale(${newZoom})`;
   };
 
   return (
@@ -794,7 +811,7 @@ function AddLeadFormContent({ users, campaigns, settings, prefilledRawText }: Ad
                         <AccordionContent className="pt-4">
                              <div className="space-y-4 p-4 border rounded-lg bg-muted/50">
                                 <p className="text-sm text-muted-foreground">Upload case-specific documents like medical reports or fee receipts. The AI will scan them to help you fill out the case details, headline, and story.</p>
-                                <FormField
+                                 <FormField
                                     control={form.control}
                                     name="otherDocuments"
                                     render={({ field }) => (
@@ -806,19 +823,52 @@ function AddLeadFormContent({ users, campaigns, settings, prefilledRawText }: Ad
                                                     multiple
                                                     accept="image/*,application/pdf"
                                                     ref={otherDocsInputRef}
-                                                    onChange={(e) => {
-                                                        const newFiles = Array.from(e.target.files || []);
-                                                        field.onChange(newFiles);
-                                                    }}
+                                                    onChange={handleFileChange}
                                                 />
                                             </FormControl>
                                             <FormMessage />
                                         </FormItem>
                                     )}
                                 />
+
+                                {otherDocs.length > 0 && (
+                                     <div className="space-y-4">
+                                        <Label>File Previews</Label>
+                                        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                                            {otherDocs.map((file, index) => (
+                                                <div key={index} className="relative group p-2 border rounded-lg bg-background space-y-2">
+                                                    <div className="w-full h-32 overflow-hidden flex items-center justify-center">
+                                                            {file.type.startsWith('image/') ? (
+                                                            <div className="relative w-full h-full" onWheel={handleWheel}>
+                                                                <Image
+                                                                    src={URL.createObjectURL(file)}
+                                                                    alt={`Preview ${index + 1}`}
+                                                                    fill
+                                                                    className="object-contain transition-transform duration-300"
+                                                                     style={{ transform: `scale(${zoomLevels[index] || 1}) rotate(${rotation}deg)` }}
+                                                                />
+                                                            </div>
+                                                            ) : (
+                                                                <FileIcon className="w-16 h-16 text-muted-foreground" />
+                                                            )}
+                                                    </div>
+                                                    <p className="text-xs text-muted-foreground truncate">{file.name}</p>
+                                                    <div className="absolute top-1 right-1 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity bg-background/80 rounded-md">
+                                                        <Button type="button" size="icon" variant="ghost" className="h-6 w-6" onClick={() => setZoomLevels(z => ({...z, [index]: (z[index] || 1) * 1.2}))}><ZoomIn className="h-4 w-4"/></Button>
+                                                        <Button type="button" size="icon" variant="ghost" className="h-6 w-6" onClick={() => setZoomLevels(z => ({...z, [index]: Math.max(0.5, (z[index] || 1) / 1.2)}))}><ZoomOut className="h-4 w-4"/></Button>
+                                                        <Button type="button" size="icon" variant="ghost" className="h-6 w-6" onClick={() => setRotation(r => r + 90)}><RotateCw className="h-4 w-4"/></Button>
+                                                        <Button type="button" size="icon" variant="ghost" className="h-6 w-6 text-destructive hover:bg-destructive/10" onClick={() => setOtherDocs(docs => docs.filter((_, i) => i !== index))}>
+                                                            <XCircle className="h-4 w-4"/>
+                                                        </Button>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                     </div>
+                                )}
                                 
                                 <div className="flex flex-col sm:flex-row gap-2">
-                                    <Button type="button" variant="outline" className="w-full" onClick={handleGetTextFromDocuments} disabled={isCaseTextExtracting || (getValues('otherDocuments') || []).length === 0}>
+                                    <Button type="button" variant="outline" className="w-full" onClick={handleGetTextFromDocuments} disabled={isCaseTextExtracting || otherDocs.length === 0}>
                                         {isCaseTextExtracting ? <Loader2 className="h-4 w-4 animate-spin"/> : <Text className="mr-2 h-4 w-4" />}
                                         Get Case Details
                                     </Button>
@@ -895,7 +945,7 @@ function AddLeadFormContent({ users, campaigns, settings, prefilledRawText }: Ad
                         <FormItem className="space-y-3">
                         <FormLabel className="text-base font-semibold">Acceptable Donation Types</FormLabel>
                         <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                            <div className="flex flex-row items-start space-x-3 space-y-0 font-bold text-primary">
+                             <div className="flex flex-row items-start space-x-3 space-y-0 font-bold text-primary">
                                 <Checkbox
                                     checked={donationTypes.length === acceptableDonationTypes.length}
                                     onCheckedChange={handleSelectAllDonationTypes}
@@ -946,10 +996,12 @@ function AddLeadFormContent({ users, campaigns, settings, prefilledRawText }: Ad
                         {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <UserPlus className="mr-2 h-4 w-4" />}
                         {isSubmitting ? 'Creating...' : 'Create Lead'}
                     </Button>
-                    <Button type="button" variant="outline" onClick={handleCancel} disabled={isSubmitting}>
-                        <XCircle className="mr-2 h-4 w-4" />
-                        Clear Form
-                    </Button>
+                    {!isSubForm && (
+                        <Button type="button" variant="outline" onClick={handleCancel} disabled={isSubmitting}>
+                            <XCircle className="mr-2 h-4 w-4" />
+                            Clear Form
+                        </Button>
+                    )}
                 </div>
             </fieldset>
         </form>
@@ -985,7 +1037,7 @@ function AddLeadFormContent({ users, campaigns, settings, prefilledRawText }: Ad
                 </AlertDialogFooter>
             </AlertDialogContent>
         </AlertDialog>
-        <AlertDialog open={!!extractedBeneficiaryDetails} onOpenChange={() => setExtractedBeneficiaryDetails(null)}>
+        <AlertDialog open={!!extractedBeneficiaryDetails} onOpenChange={() => setExtractedDetails(null)}>
             <AlertDialogContent>
                 <AlertDialogHeader>
                     <AlertDialogTitle className="flex items-center gap-2">
@@ -1012,13 +1064,13 @@ function AddLeadFormContent({ users, campaigns, settings, prefilledRawText }: Ad
                     })}
                 </div>
                 <AlertDialogFooter>
-                     <Button variant="outline" onClick={() => {}} disabled={isRefreshingDetails}>
+                     <Button variant="outline" onClick={() => handleFetchUserData(true)} disabled={isRefreshingDetails}>
                         {isRefreshingDetails ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <RefreshIcon className="mr-2 h-4 w-4" />}
                         Refresh
                     </Button>
                     <div className='flex gap-2'>
                         <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction onClick={()=>{}}>Apply & Fill Form</AlertDialogAction>
+                        <AlertDialogAction onClick={applyExtractedDetails}>Apply & Fill Form</AlertDialogAction>
                     </div>
                 </AlertDialogFooter>
             </AlertDialogContent>
