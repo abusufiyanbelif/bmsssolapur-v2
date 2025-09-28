@@ -97,15 +97,29 @@ const colorToHsl = (color: string) => {
 
 const themeSuggestions = [
     { name: 'Forest Green (Default)', colors: { primary: '142.1 76.2% 36.3%', accent: '45 93.4% 47.5%', background: '0 0% 100%', foreground: '224 71.4% 4.1%', destructive: '0 84.2% 60.2%', success: '142.1 76.2% 36.3%', warning: '38.8 92.3% 50.2%', info: '217.2 91.2% 59.8%' } },
+    { name: 'Ramadan Green & Gold', colors: { primary: '142.1 76.2% 36.3%', accent: '47.9 95.8% 53.1%', background: '45 60% 98%', foreground: '142.1 25% 15%', destructive: '0 84.2% 60.2%', success: '142.1 76.2% 36.3%', warning: '38.8 92.3% 50.2%', info: '217.2 91.2% 59.8%' } },
     { name: 'Ocean Blue', colors: { primary: '217.2 91.2% 59.8%', accent: '210 40% 96.1%', background: '0 0% 100%', foreground: '224 71.4% 4.1%', destructive: '0 84.2% 60.2%', success: '148.8 61.6% 41.6%', warning: '45 93.4% 47.5%', info: '217.2 91.2% 59.8%' } },
+    { name: 'Eid Mubarak', colors: { primary: '210 40% 96.1%', accent: '217.2 91.2% 59.8%', background: '0 0% 100%', foreground: '224 71.4% 4.1%', destructive: '0 84.2% 60.2%', success: '148.8 61.6% 41.6%', warning: '45 93.4% 47.5%', info: '217.2 91.2% 59.8%' } },
     { name: 'Sunset Orange', colors: { primary: '24.6 95% 53.1%', accent: '20.5 90.2% 48.2%', background: '0 0% 100%', foreground: '20 14.3% 4.1%', destructive: '0 84.2% 60.2%', success: '133.3 54.3% 43.1%', warning: '38.8 92.3% 50.2%', info: '217.2 91.2% 59.8%' } },
     { name: 'Royal Purple', colors: { primary: '262.1 83.3% 57.8%', accent: '221.2 83.2% 53.3%', background: '0 0% 100%', foreground: '224 71.4% 4.1%', destructive: '0 84.2% 60.2%', success: '148.8 61.6% 41.6%', warning: '45 93.4% 47.5%', info: '262.1 83.3% 57.8%' } },
-    { name: 'Charcoal & Gold', colors: { primary: '45 93.4% 47.5%', accent: '45 93.4% 47.5%', background: '20 14.3% 4.1%', foreground: '60 9.1% 97.8%', destructive: '0 72.2% 50.6%', success: '142.1 70.6% 35.3%', warning: '38.8 92.3% 50.2%', info: '217.2 91.2% 59.8%' } },
-    { name: 'Crimson Red', colors: { primary: '346.8 77.2% 49.8%', accent: '35.5 91.7% 54.9%', background: '0 0% 100%', foreground: '20 14.3% 4.1%', destructive: '0 84.2% 60.2%', success: '133.3 54.3% 43.1%', warning: '38.8 92.3% 50.2%', info: '217.2 91.2% 59.8%' } },
     { name: 'Teal & Coral', colors: { primary: '173.5 80.5% 35.1%', accent: '0 84.2% 60.2%', background: '180 20% 98%', foreground: '174 24.3% 14.1%', destructive: '0 84.2% 60.2%', success: '142.1 76.2% 36.3%', warning: '38.8 92.3% 50.2%', info: '197.8 89.8% 48.6%' } },
-    { name: 'Slate & Lime (Dark)', colors: { primary: '83.7 87.5% 54.1%', accent: '83.7 87.5% 54.1%', background: '215 28% 17%', foreground: '210 40% 98%', destructive: '0 62.8% 30.6%', success: '142.1 70.6% 35.3%', warning: '45 93.4% 47.5%', info: '217.2 91.2% 59.8%' } },
-    { name: 'Espresso & Mint', colors: { primary: '150 54% 42%', accent: '30 20% 90%', background: '25 25% 15%', foreground: '30 20% 90%', destructive: '0 84.2% 60.2%', success: '142.1 76.2% 36.3%', warning: '38.8 92.3% 50.2%', info: '197.8 89.8% 48.6%' } },
+    { name: 'Minty Fresh', colors: { primary: '160 70% 40%', accent: '160 50% 90%', background: '0 0% 100%', foreground: '160 20% 10%', destructive: '0 84.2% 60.2%', success: '142.1 76.2% 36.3%', warning: '38.8 92.3% 50.2%', info: '217.2 91.2% 59.8%' } },
+    { name: 'Cherry Blossom', colors: { primary: '340 82% 52%', accent: '340 20% 92%', background: '0 0% 100%', foreground: '340 10% 20%', destructive: '0 84.2% 60.2%', success: '142.1 76.2% 36.3%', warning: '38.8 92.3% 50.2%', info: '217.2 91.2% 59.8%' } },
+    { name: 'Earth Tones', colors: { primary: '25 50% 35%', accent: '35 40% 80%', background: '35 20% 95%', foreground: '25 30% 15%', destructive: '0 84.2% 60.2%', success: '142.1 76.2% 36.3%', warning: '38.8 92.3% 50.2%', info: '217.2 91.2% 59.8%' } },
+    { name: 'Professional Navy', colors: { primary: '221.2 83.2% 53.3%', accent: '210 40% 96.1%', background: '0 0% 100%', foreground: '224 71.4% 4.1%', destructive: '0 84.2% 60.2%', success: '148.8 61.6% 41.6%', warning: '45 93.4% 47.5%', info: '217.2 91.2% 59.8%' } },
     { name: 'Lavender & Sage', colors: { primary: '255 47% 51%', accent: '120 22% 85%', background: '255 10% 97%', foreground: '255 10% 20%', destructive: '0 84.2% 60.2%', success: '142.1 76.2% 36.3%', warning: '38.8 92.3% 50.2%', info: '217.2 91.2% 59.8%' } },
+
+    // Dark Modes
+    { name: 'Midnight Ramadan (Dark)', colors: { primary: '47.9 95.8% 53.1%', accent: '142.1 70.6% 45.3%', background: '220 13% 18%', foreground: '210 40% 98%', destructive: '0 72.2% 50.6%', success: '142.1 70.6% 35.3%', warning: '45 93.4% 47.5%', info: '217.2 91.2% 59.8%' } },
+    { name: 'Slate & Lime (Dark)', colors: { primary: '83.7 87.5% 54.1%', accent: '83.7 87.5% 54.1%', background: '215 28% 17%', foreground: '210 40% 98%', destructive: '0 62.8% 30.6%', success: '142.1 70.6% 35.3%', warning: '45 93.4% 47.5%', info: '217.2 91.2% 59.8%' } },
+    { name: 'Charcoal & Gold (Dark)', colors: { primary: '45 93.4% 47.5%', accent: '45 93.4% 47.5%', background: '20 14.3% 4.1%', foreground: '60 9.1% 97.8%', destructive: '0 72.2% 50.6%', success: '142.1 70.6% 35.3%', warning: '38.8 92.3% 50.2%', info: '217.2 91.2% 59.8%' } },
+    { name: 'Crimson Night (Dark)', colors: { primary: '346.8 77.2% 49.8%', accent: '35.5 91.7% 54.9%', background: '20 14.3% 4.1%', foreground: '60 9.1% 97.8%', destructive: '0 62.8% 30.6%', success: '133.3 54.3% 43.1%', warning: '38.8 92.3% 50.2%', info: '217.2 91.2% 59.8%' } },
+    { name: 'Espresso & Mint (Dark)', colors: { primary: '150 54% 42%', accent: '30 20% 90%', background: '25 25% 15%', foreground: '30 20% 90%', destructive: '0 84.2% 60.2%', success: '142.1 76.2% 36.3%', warning: '38.8 92.3% 50.2%', info: '197.8 89.8% 48.6%' } },
+    { name: 'Cyberpunk (Dark)', colors: { primary: '312 100% 50%', accent: '182 100% 50%', background: '240 10% 4%', foreground: '210 40% 98%', destructive: '0 100% 50%', success: '120 100% 50%', warning: '60 100% 50%', info: '182 100% 50%' } },
+    { name: 'Deep Sea (Dark)', colors: { primary: '197.8 89.8% 48.6%', accent: '180 20% 98%', background: '210 30% 12%', foreground: '210 40% 98%', destructive: '0 84.2% 60.2%', success: '142.1 76.2% 36.3%', warning: '38.8 92.3% 50.2%', info: '197.8 89.8% 48.6%' } },
+    { name: 'Vampire (Dark)', colors: { primary: '0 100% 50%', accent: '0 0% 80%', background: '0 0% 5%', foreground: '0 0% 98%', destructive: '0 100% 50%', success: '120 100% 25%', warning: '60 100% 50%', info: '240 100% 50%' } },
+    { name: 'Matrix (Dark)', colors: { primary: '120 100% 50%', accent: '120 100% 80%', background: '0 0% 0%', foreground: '120 100% 50%', destructive: '0 100% 50%', success: '120 100% 50%', warning: '60 100% 50%', info: '180 100% 50%' } },
+    { name: 'Dracula (Dark)', colors: { primary: '271 91% 65%', accent: '50 100% 50%', background: '231 15% 18%', foreground: '60 30% 96%', destructive: '0 100% 67%', success: '129 70% 55%', warning: '50 100% 50%', info: '217 91% 60%' } },
 ];
 
 
@@ -261,3 +275,5 @@ export function ThemeForm({ currentTheme }: ThemeFormProps) {
     </Form>
   )
 }
+
+    
