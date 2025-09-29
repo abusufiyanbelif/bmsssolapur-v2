@@ -46,7 +46,11 @@ interface ThemeFormProps {
 // --- COLOR CONVERSION HELPERS ---
 const hslStringToHex = (hslStr: string): string => {
   if (!hslStr) return '#000000';
-  const [h, s, l] = hslStr.split(' ').map(parseFloat);
+  const parts = hslStr.split(' ');
+  const h = parseFloat(parts[0]);
+  const s = parseFloat(parts[1].replace('%',''));
+  const l = parseFloat(parts[2].replace('%',''));
+
   const s_norm = s / 100;
   const l_norm = l / 100;
   const c = (1 - Math.abs(2 * l_norm - 1)) * s_norm;
@@ -97,7 +101,14 @@ const hexToHslString = (hex: string): string => {
 
 const colorToHsl = (color: string) => {
     if (!color) return '';
+    // Check if it already has 'hsl(' prefix
     if (color.startsWith('hsl')) return color;
+    // Check for HSL with alpha, e.g., "221.2 83.2% 53.3% / 0.5"
+    const alphaMatch = color.match(/((\d{1,3}(\.\d+)?)\s(\d{1,3}(\.\d+)?%)\s(\d{1,3}(\.\d+)%))\s*\/\s*([\d.]+)/);
+    if (alphaMatch) {
+        return `hsl(${alphaMatch[1]} / ${alphaMatch[9]})`;
+    }
+    // Assume it's just the HSL values
     return `hsl(${color})`;
 }
 
@@ -193,7 +204,7 @@ export function ThemeForm({ currentTheme }: ThemeFormProps) {
                     <FormLabel>{label}</FormLabel>
                     <div className="flex items-center gap-2">
                         <FormControl>
-                            <Input {...field} placeholder="e.g., 142.1 76.2% 36.3%" disabled={!isEditing} />
+                            <Input {...field} placeholder="e.g., 142.1 76.2% 36.3% / 0.9" disabled={!isEditing} />
                         </FormControl>
                         <Input
                             type="color"
