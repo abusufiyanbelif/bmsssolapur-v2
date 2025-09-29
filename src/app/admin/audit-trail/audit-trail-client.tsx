@@ -315,5 +315,3 @@ export function AuditTrailClient({ initialLogs, error: initialError }: AuditTrai
     </div>
   )
 }
-
-    

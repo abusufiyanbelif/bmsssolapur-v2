@@ -180,7 +180,7 @@ export default function MyBeneficiariesPage() {
             <div className="flex items-center justify-between">
                 <h2 className="text-3xl font-bold tracking-tight font-headline text-primary">My Referrals</h2>
                 <Button asChild>
-                    <Link href="/referral/add-beneficiary">
+                    <Link href="/admin/user-management/add?role=Beneficiary">
                         <PlusCircle className="mr-2 h-4 w-4" /> Add Beneficiary
                     </Link>
                 </Button>
