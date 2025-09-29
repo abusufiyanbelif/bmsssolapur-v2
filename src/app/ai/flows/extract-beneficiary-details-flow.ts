@@ -13,6 +13,7 @@ import {
     ExtractBeneficiaryDetailsOutputSchema,
     ExtractBeneficiaryDetailsOutput,
 } from '@/ai/schemas';
+import { getSafeGeminiModel } from '@/services/gemini-service';
 
 export async function extractBeneficiaryDetails(input: ExtractBeneficiaryDetailsFromTextInput): Promise<ExtractBeneficiaryDetailsOutput> {
   return extractBeneficiaryDetailsFromTextFlow(input);
@@ -32,16 +33,16 @@ const extractBeneficiaryDetailsFromTextFlow = ai.defineFlow(
         : 'Your task is to analyze the provided OCR text and extract all relevant information into the specific fields defined in the output schema.';
 
     const modelCandidates = [
-        googleAI.model('gemini-1.5-flash-latest'),
-        googleAI.model('gemini-1.5-pro-latest'),
+        await getSafeGeminiModel('gemini-1.5-flash-latest'),
+        await getSafeGeminiModel('gemini-1.5-pro-latest')
     ];
     let lastError: any;
-
-    for (const model of modelCandidates) {
+    
+    for (const modelName of modelCandidates) {
         try {
-            console.log(`🔄 Trying ${model.name} for extractBeneficiaryDetails...`);
+            console.log(`🔄 Trying ${modelName} for extractBeneficiaryDetails...`);
             const llmResponse = await ai.generate({
-                model: model,
+                model: googleAI.model(modelName),
                 prompt: `You are an expert in document analysis and data extraction, specializing in Indian identity documents. ${fieldsToFind}
 
                     **--- EXTRACTION RULES ---**
@@ -74,11 +75,11 @@ const extractBeneficiaryDetailsFromTextFlow = ai.defineFlow(
             if (!output) {
               throw new Error("The AI model did not return any output from the text.");
             }
-            console.log(`✅ Success with ${model.name}`);
+            console.log(`✅ Success with ${modelName}`);
             return output; // Success, return the result
         } catch (err) {
             lastError = err;
-            console.error(`❌ Error with ${model.name} for extractBeneficiaryDetails:`, err instanceof Error ? err.message : String(err));
+            console.error(`❌ Error with ${modelName} for extractBeneficiaryDetails:`, err instanceof Error ? err.message : String(err));
         }
     }
     

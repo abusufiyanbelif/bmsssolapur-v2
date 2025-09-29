@@ -13,6 +13,7 @@ import {
     ExtractLeadDetailsOutputSchema,
     ExtractLeadDetailsOutput,
 } from '@/ai/schemas';
+import { getSafeGeminiModel } from '@/services/gemini-service';
 
 export async function extractLeadDetailsFromText(input: ExtractLeadDetailsFromTextInput): Promise<ExtractLeadDetailsOutput> {
   return extractLeadDetailsFromTextFlow(input);
@@ -26,17 +27,18 @@ const extractLeadDetailsFromTextFlow = ai.defineFlow(
     outputSchema: ExtractLeadDetailsOutputSchema,
   },
   async (input) => {
+    
     const modelCandidates = [
-        googleAI.model('gemini-1.5-flash-latest'),
-        googleAI.model('gemini-1.5-pro-latest'),
+        await getSafeGeminiModel('gemini-1.5-flash-latest'),
+        await getSafeGeminiModel('gemini-1.5-pro-latest')
     ];
     let lastError: any;
 
-    for (const model of modelCandidates) {
+    for (const modelName of modelCandidates) {
         try {
-            console.log(`🔄 Trying ${model.name} for extractLeadDetails...`);
+            console.log(`🔄 Trying ${modelName} for extractLeadDetails...`);
             const llmResponse = await ai.generate({
-                model: model,
+                model: googleAI.model(modelName),
                 prompt: `You are an expert data entry assistant for a charity organization. Analyze the provided block of text, which may come from various documents like ID cards, medical bills, PDFs, or handwritten notes. Your task is to carefully extract structured details from the text. Be precise. If you cannot find a valid value for a field, you MUST omit the field entirely from your JSON output. Do not output fields with "null" or "N/A" as their value.
 
                     **IMPORTANT CONTEXT (MUST BE USED FOR STORY/HEADLINE):**
@@ -93,11 +95,11 @@ const extractLeadDetailsFromTextFlow = ai.defineFlow(
             if (!output) {
               throw new Error("The AI model did not return any output from the text.");
             }
-            console.log(`✅ Success with ${model.name}`);
+            console.log(`✅ Success with ${modelName}`);
             return output; // Success
         } catch (err) {
             lastError = err;
-            console.error(`❌ Error with ${model.name} for extractLeadDetails:`, err instanceof Error ? err.message : String(err));
+            console.error(`❌ Error with ${modelName} for extractLeadDetails:`, err instanceof Error ? err.message : String(err));
         }
     }
 

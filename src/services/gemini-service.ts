@@ -15,7 +15,7 @@
  * @throws An error if no supported models can be found.
  */
 export async function getSafeGeminiModel(
-  preferred = "models/gemini-1.5-flash-latest"
+  preferred = "gemini-1.5-flash-latest"
 ): Promise<string> {
   try {
     const res = await fetch(
