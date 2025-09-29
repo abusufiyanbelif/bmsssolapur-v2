@@ -18,9 +18,13 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { handleUpdateTheme } from "./actions";
 import { useState } from "react";
-import { Loader2, Save, X, Edit, Palette, Droplets, Type, MessageSquare, Paintbrush } from "lucide-react";
+import { Loader2, Save, X, Edit, Palette, Droplets, Type, MessageSquare, Paintbrush, AlertCircle, InfoIcon, AlertTriangleIcon, CheckCircle } from "lucide-react";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { isEqual } from 'lodash';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Progress } from "@/components/ui/progress";
 
 const formSchema = z.object({
   primary: z.string().min(1, "Primary color is required."),
@@ -273,15 +277,59 @@ export function ThemeForm({ currentTheme }: ThemeFormProps) {
                  <div className="space-y-4 rounded-lg border p-6">
                     <h4 className="font-semibold flex items-center gap-2"><Palette/>Live Preview</h4>
                     <div className="p-6 rounded-lg" style={{ backgroundColor: colorToHsl(watchedColors.background)}}>
-                         <h3 className="text-2xl font-bold mb-4" style={{ color: colorToHsl(watchedColors.primary) }}>Preview Heading</h3>
-                        <p className="mb-6 text-sm" style={{ color: colorToHsl(watchedColors.foreground) }}>This is a sample paragraph to demonstrate the foreground (text) color on the selected background.</p>
-                        <div className="grid grid-cols-2 gap-4">
-                            <Button style={{ backgroundColor: colorToHsl(watchedColors.primary), color: 'hsl(var(--primary-foreground))' }}>Primary Button</Button>
-                            <Button style={{ backgroundColor: colorToHsl(watchedColors.accent), color: 'hsl(var(--accent-foreground))' }}>Accent Button</Button>
-                            <Button style={{ backgroundColor: colorToHsl(watchedColors.success), color: 'hsl(var(--success-foreground))' }}>Success</Button>
-                            <Button style={{ backgroundColor: colorToHsl(watchedColors.warning), color: 'hsl(var(--warning-foreground))' }}>Warning</Button>
-                            <Button style={{ backgroundColor: colorToHsl(watchedColors.info), color: 'hsl(var(--info-foreground))' }}>Info</Button>
-                            <Button variant="destructive" style={{ backgroundColor: colorToHsl(watchedColors.destructive) }}>Destructive</Button>
+                        <div className="max-w-md mx-auto space-y-6">
+                           <Card style={{ 
+                                backgroundColor: `hsl(var(--card))`, 
+                                color: `hsl(var(--card-foreground))`,
+                                borderColor: `hsl(var(--border))`
+                           }}>
+                               <CardHeader>
+                                   <CardTitle style={{ color: colorToHsl(watchedColors.primary)}}>Sample Card</CardTitle>
+                                   <CardDescription style={{color: 'hsl(var(--muted-foreground))'}}>This is how a card will look.</CardDescription>
+                               </CardHeader>
+                               <CardContent className="space-y-4">
+                                   <p style={{color: colorToHsl(watchedColors.foreground)}}>This is some sample body text inside the card to demonstrate the foreground color.</p>
+                                   <div className="flex gap-2">
+                                       <Badge>Default</Badge>
+                                       <Badge variant="secondary">Secondary</Badge>
+                                       <Badge variant="destructive" style={{backgroundColor: `hsl(${watchedColors.destructive})`, color: `hsl(var(--destructive-foreground))`}}>Destructive</Badge>
+                                       <Badge variant="outline">Outline</Badge>
+                                   </div>
+                                    <div>
+                                        <Progress value={60} style={{
+                                            backgroundColor: `hsl(var(--secondary))`,
+                                            // @ts-ignore
+                                            '--primary': watchedColors.primary
+                                        }} />
+                                    </div>
+                               </CardContent>
+                           </Card>
+                           
+                           <Alert style={{borderColor: `hsl(${watchedColors.success})`, color: colorToHsl(watchedColors.foreground)}}>
+                               <CheckCircle className="h-4 w-4" style={{color: colorToHsl(watchedColors.success)}} />
+                               <AlertTitle style={{color: colorToHsl(watchedColors.foreground)}}>Success Message</AlertTitle>
+                               <AlertDescription style={{color: `hsl(var(--muted-foreground))`}}>This is a success alert.</AlertDescription>
+                           </Alert>
+                           <Alert style={{borderColor: `hsl(${watchedColors.info})`, color: colorToHsl(watchedColors.foreground)}}>
+                               <InfoIcon className="h-4 w-4" style={{color: colorToHsl(watchedColors.info)}} />
+                               <AlertTitle style={{color: colorToHsl(watchedColors.foreground)}}>Informational Message</AlertTitle>
+                               <AlertDescription style={{color: `hsl(var(--muted-foreground))`}}>This is an info alert.</AlertDescription>
+                           </Alert>
+                             <Alert style={{borderColor: `hsl(${watchedColors.warning})`, color: colorToHsl(watchedColors.foreground)}}>
+                               <AlertTriangleIcon className="h-4 w-4" style={{color: colorToHsl(watchedColors.warning)}} />
+                               <AlertTitle style={{color: colorToHsl(watchedColors.foreground)}}>Warning Message</AlertTitle>
+                               <AlertDescription style={{color: `hsl(var(--muted-foreground))`}}>This is a warning alert.</AlertDescription>
+                           </Alert>
+                           <Alert variant="destructive" style={{borderColor: `hsl(${watchedColors.destructive})`, backgroundColor: `hsla(${watchedColors.destructive}, 0.1)`, color: `hsl(${watchedColors.destructive})` }}>
+                               <AlertCircle className="h-4 w-4" />
+                               <AlertTitle style={{color: `hsl(${watchedColors.destructive})`}}>Error Message</AlertTitle>
+                               <AlertDescription style={{color: `hsla(${watchedColors.destructive}, 0.8)`}}>This is a destructive alert.</AlertDescription>
+                           </Alert>
+
+                           <div className="grid grid-cols-2 gap-4">
+                                <Button style={{ backgroundColor: colorToHsl(watchedColors.primary), color: 'hsl(var(--primary-foreground))' }}>Primary Button</Button>
+                                <Button style={{ backgroundColor: colorToHsl(watchedColors.accent), color: 'hsl(var(--accent-foreground))' }}>Accent Button</Button>
+                           </div>
                         </div>
                     </div>
                 </div>
