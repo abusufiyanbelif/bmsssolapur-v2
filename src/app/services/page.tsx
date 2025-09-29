@@ -35,6 +35,7 @@ import { getAllDonations } from "@/services/donation-service";
 import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
 import { checkDatabaseConnection, testTwilioConnection, testNodemailerConnection, testGeminiConnection } from "./actions";
+import packageJson from '../../../package.json';
 
 
 type StatusTuple = { status: 'idle' | 'loading' | 'success' | 'error', message: string };
@@ -97,6 +98,7 @@ export default function ServicesPage() {
       icon: Fingerprint,
       metric: users.length.toLocaleString(),
       metricLabel: "Total Users",
+      version: `firebase v${packageJson.dependencies.firebase}`,
     },
     {
       name: "Firestore Database",
@@ -109,6 +111,7 @@ export default function ServicesPage() {
       ],
       action: () => handleTestConnection(checkDatabaseConnection, setDbStatus, "the database"),
       status: dbStatus,
+      version: `firebase v${packageJson.dependencies.firebase}`,
     },
     {
       name: "Gemini LLM",
@@ -118,6 +121,7 @@ export default function ServicesPage() {
       metricLabel: "Scanned Proofs",
       action: () => handleTestConnection(testGeminiConnection, setGeminiStatus, "Gemini"),
       status: geminiStatus,
+      version: `genkit v${packageJson.dependencies.genkit}`,
     },
      {
       name: "Firebase Hosting",
@@ -125,6 +129,7 @@ export default function ServicesPage() {
       icon: Server,
       metric: "Active",
       metricLabel: "Status",
+      version: `next v${packageJson.dependencies.next}`,
     },
     {
       name: "Twilio",
@@ -134,6 +139,7 @@ export default function ServicesPage() {
       metricLabel: "Status",
       action: () => handleTestConnection(testTwilioConnection, setTwilioStatus, "Twilio"),
       status: twilioStatus,
+      version: `twilio v${packageJson.dependencies.twilio}`,
     },
     {
       name: "Nodemailer",
@@ -143,6 +149,7 @@ export default function ServicesPage() {
       metricLabel: "Status",
       action: () => handleTestConnection(testNodemailerConnection, setNodemailerStatus, "Nodemailer"),
       status: nodemailerStatus,
+      version: `nodemailer v${packageJson.dependencies.nodemailer}`,
     },
   ];
 
@@ -165,28 +172,28 @@ export default function ServicesPage() {
                     <Component className="h-6 w-6 text-primary flex-shrink-0" />
                     <div>
                         <p className="font-semibold">Frontend Framework</p>
-                        <p className="text-muted-foreground">Next.js & React</p>
+                        <p className="text-muted-foreground">Next.js & React v{packageJson.dependencies.react}</p>
                     </div>
                 </div>
                 <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
                     <Palette className="h-6 w-6 text-primary flex-shrink-0" />
                     <div>
                         <p className="font-semibold">UI Components & Styling</p>
-                        <p className="text-muted-foreground">ShadCN UI & Tailwind CSS</p>
+                        <p className="text-muted-foreground">ShadCN UI & Tailwind CSS v{packageJson.devDependencies.tailwindcss}</p>
                     </div>
                 </div>
                 <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
                     <Bot className="h-6 w-6 text-primary flex-shrink-0" />
                     <div>
                         <p className="font-semibold">Generative AI</p>
-                        <p className="text-muted-foreground">Genkit & Google AI</p>
+                        <p className="text-muted-foreground">Genkit v{packageJson.dependencies.genkit} & Google AI</p>
                     </div>
                 </div>
                 <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
                     <Cloud className="h-6 w-6 text-primary flex-shrink-0" />
                     <div>
                         <p className="font-semibold">Backend Platform</p>
-                        <p className="text-muted-foreground">Firebase</p>
+                        <p className="text-muted-foreground">Firebase v{packageJson.dependencies.firebase}</p>
                     </div>
                 </div>
             </div>
@@ -205,9 +212,14 @@ export default function ServicesPage() {
           {services.map((service) => (
             <Card key={service.name} className="flex flex-col">
               <CardHeader>
-                <div className="flex items-center gap-4">
-                    <service.icon className="h-8 w-8 text-primary" />
-                    <CardTitle className="text-lg">{service.name}</CardTitle>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                      <service.icon className="h-8 w-8 text-primary" />
+                      <CardTitle className="text-lg">{service.name}</CardTitle>
+                  </div>
+                  {service.version && (
+                    <div className="text-xs font-mono text-muted-foreground">{service.version}</div>
+                  )}
                 </div>
               </CardHeader>
               <CardContent className="flex-grow space-y-4">
