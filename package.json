@@ -10,7 +10,10 @@
     "start": "next start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
-    "test:db": "tsx src/scripts/test-db.ts"
+    "test:db": "tsx src/scripts/test-db.ts",
+    "test:twilio": "tsx src/scripts/test-twilio.ts",
+    "test:nodemailer": "tsx src/scripts/test-nodemailer.ts",
+    "test:gemini": "tsx src/scripts/test-gemini.ts"
   },
   "dependencies": {
     "@genkit-ai/firebase": "^1.15.5",
