@@ -31,6 +31,7 @@ import {
   RefreshCw,
   ArrowUpCircle,
   Package,
+  CreditCard,
 } from "lucide-react";
 import { getAllUsers } from "@/services/user-service";
 import { getAllLeads } from "@/services/lead-service";
@@ -49,7 +50,7 @@ const initialStatus: StatusTuple = { status: 'idle', message: '' };
 type VersionStatus = 'checking' | 'uptodate' | 'stale' | 'error';
 
 
-const ServiceCard = ({ service }: { service: any }) => {
+const ServiceCard = ({ service, loading }: { service: any, loading: boolean }) => {
     const [status, setStatus] = useState<StatusTuple>(initialStatus);
     const [latestVersion, setLatestVersion] = useState<string | null>(null);
     const [versionStatus, setVersionStatus] = useState<VersionStatus>('checking');
@@ -288,6 +289,19 @@ export default function ServicesPage() {
       status: null,
       version: `nodemailer v${packageJson.dependencies.nodemailer}`,
     },
+     {
+      name: "Razorpay",
+      description: "An external payment gateway for processing online donations.",
+      icon: CreditCard,
+      metric: "Configured",
+      metricLabel: "Status",
+      action: async () => { 
+        const { testRazorpayConnection } = await import('@/app/admin/payment-gateways/actions');
+        return testRazorpayConnection();
+       },
+      status: null,
+      version: `razorpay v${packageJson.dependencies.razorpay}`,
+    },
   ];
 
   return (
@@ -330,7 +344,7 @@ export default function ServicesPage() {
                     <Cloud className="h-6 w-6 text-primary flex-shrink-0" />
                     <div>
                         <p className="font-semibold">Backend Platform</p>
-                        <p className="text-muted-foreground">Firebase v${packageJson.dependencies.firebase}</p>
+                        <p className="text-muted-foreground">Firebase v{packageJson.dependencies.firebase}</p>
                     </div>
                 </div>
             </div>

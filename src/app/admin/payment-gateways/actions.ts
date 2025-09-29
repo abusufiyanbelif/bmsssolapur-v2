@@ -62,7 +62,7 @@ export async function handleUpdateGatewaySettings(
   }
 }
 
-export async function handleTestGatewayConnection(gatewayName: keyof AppSettings['paymentGateway']): Promise<{success: boolean, error?: string}> {
+export async function testGatewayConnection(gatewayName: keyof AppSettings['paymentGateway']): Promise<{success: boolean, error?: string}> {
     try {
         if (gatewayName === 'razorpay') {
             await testRazorpayConnection();
