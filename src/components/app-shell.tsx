@@ -289,7 +289,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     const transfersNotificationCount = 0; // Placeholder for now
 
     const HeaderTitle = () => (
-        <Link href="/" className="flex items-center gap-2" title="Baitul Mal Samajik Sanstha (Solapur)">
+        <Link href="/" className="flex items-center gap-3" title="Baitul Mal Samajik Sanstha (Solapur)">
             <Logo className="h-14 w-14" logoUrl={organization?.logoUrl} />
              <div className="flex flex-col leading-tight">
                 <span className="font-bold font-headline text-primary text-sm">{organization?.footer?.organizationInfo.titleLine1 || 'Baitul Mal'}</span>

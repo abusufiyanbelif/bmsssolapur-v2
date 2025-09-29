@@ -18,7 +18,9 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { handleUpdateTheme } from "./actions";
 import { useState } from "react";
-import { Loader2, Save, X, Edit, Palette, Droplets } from "lucide-react";
+import { Loader2, Save, X, Edit, Palette, Droplets, Type, MessageSquare, Paintbrush } from "lucide-react";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { isEqual } from 'lodash';
 
 const formSchema = z.object({
   primary: z.string().min(1, "Primary color is required."),
@@ -170,18 +172,13 @@ export function ThemeForm({ currentTheme }: ThemeFormProps) {
   }
 
   const applyTheme = (colors: FormValues) => {
-    setValue('primary', colors.primary, { shouldDirty: true });
-    setValue('accent', colors.accent, { shouldDirty: true });
-    setValue('background', colors.background, { shouldDirty: true });
-    setValue('foreground', colors.foreground, { shouldDirty: true });
-    setValue('destructive', colors.destructive, { shouldDirty: true });
-    setValue('success', colors.success, { shouldDirty: true });
-    setValue('warning', colors.warning, { shouldDirty: true });
-    setValue('info', colors.info, { shouldDirty: true });
+    Object.entries(colors).forEach(([key, value]) => {
+      setValue(key as keyof FormValues, value, { shouldDirty: true });
+    });
     setIsEditing(true);
   }
 
-  const ColorInput = ({ name, label, description }: { name: keyof FormValues, label: string, description: string }) => {
+  const ColorInput = ({ name, label }: { name: keyof FormValues, label: string }) => {
     const value = watch(name);
     return (
         <FormField
@@ -202,7 +199,6 @@ export function ThemeForm({ currentTheme }: ThemeFormProps) {
                             disabled={!isEditing}
                         />
                     </div>
-                    <FormDescription>{description}</FormDescription>
                     <FormMessage />
                 </FormItem>
             )}
@@ -236,29 +232,48 @@ export function ThemeForm({ currentTheme }: ThemeFormProps) {
                 <div className="space-y-4 rounded-lg border p-6">
                     <h4 className="font-semibold flex items-center gap-2"><Droplets/> Theme Suggestions</h4>
                      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                        {themeSuggestions.map(theme => (
-                            <Button key={theme.name} type="button" variant="outline" onClick={() => applyTheme(theme.colors as FormValues)}>
-                                {theme.name}
-                            </Button>
-                        ))}
+                        {themeSuggestions.map(theme => {
+                            const isSelected = isEqual(theme.colors, watchedColors);
+                            return (
+                                <Button key={theme.name} type="button" variant={isSelected ? 'default' : 'outline'} onClick={() => applyTheme(theme.colors as FormValues)}>
+                                    {theme.name}
+                                </Button>
+                            )
+                        })}
                     </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                    <ColorInput name="primary" label="Primary Color" description="The main brand color (buttons, links)." />
-                    <ColorInput name="accent" label="Accent Color" description="A secondary color for highlights." />
-                    <ColorInput name="background" label="Background Color" description="The main page background." />
-                    <ColorInput name="foreground" label="Foreground Color" description="The main text color." />
-                    <ColorInput name="destructive" label="Destructive Color" description="Color for delete or error actions." />
-                    <ColorInput name="success" label="Success Color" description="Color for success states and notifications." />
-                    <ColorInput name="warning" label="Warning Color" description="Color for warnings and pending states." />
-                    <ColorInput name="info" label="Info Color" description="Color for informational alerts and highlights." />
-                </div>
+                <Accordion type="multiple" defaultValue={["branding", "text", "notifications"]} className="w-full space-y-4">
+                    <AccordionItem value="branding" className="border rounded-lg">
+                        <AccordionTrigger className="p-4"><h4 className="font-semibold flex items-center gap-2"><Paintbrush /> Branding & UI Colors</h4></AccordionTrigger>
+                        <AccordionContent className="p-6 pt-2 space-y-6">
+                            <ColorInput name="primary" label="Primary Color" />
+                            <ColorInput name="accent" label="Accent Color" />
+                        </AccordionContent>
+                    </AccordionItem>
+                     <AccordionItem value="text" className="border rounded-lg">
+                        <AccordionTrigger className="p-4"><h4 className="font-semibold flex items-center gap-2"><Type /> Text & Background Colors</h4></AccordionTrigger>
+                        <AccordionContent className="p-6 pt-2 space-y-6">
+                            <ColorInput name="background" label="Background Color" />
+                            <ColorInput name="foreground" label="Foreground (Text) Color" />
+                        </AccordionContent>
+                    </AccordionItem>
+                    <AccordionItem value="notifications" className="border rounded-lg">
+                        <AccordionTrigger className="p-4"><h4 className="font-semibold flex items-center gap-2"><MessageSquare /> Notification & Status Colors</h4></AccordionTrigger>
+                        <AccordionContent className="p-6 pt-2 grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <ColorInput name="success" label="Success Color" />
+                            <ColorInput name="warning" label="Warning Color" />
+                            <ColorInput name="info" label="Info Color" />
+                            <ColorInput name="destructive" label="Destructive/Error Color" />
+                        </AccordionContent>
+                    </AccordionItem>
+                </Accordion>
+                
 
                  <div className="space-y-4 rounded-lg border p-6">
                     <h4 className="font-semibold flex items-center gap-2"><Palette/>Live Preview</h4>
                     <div className="p-6 rounded-lg" style={{ backgroundColor: colorToHsl(watchedColors.background)}}>
-                         <h3 className="text-2xl font-bold mb-4" style={{ color: colorToHsl(watchedColors.foreground) }}>Preview Heading</h3>
+                         <h3 className="text-2xl font-bold mb-4" style={{ color: colorToHsl(watchedColors.primary) }}>Preview Heading</h3>
                         <p className="mb-6 text-sm" style={{ color: colorToHsl(watchedColors.foreground) }}>This is a sample paragraph to demonstrate the foreground (text) color on the selected background.</p>
                         <div className="grid grid-cols-2 gap-4">
                             <Button style={{ backgroundColor: colorToHsl(watchedColors.primary), color: 'hsl(var(--primary-foreground))' }}>Primary Button</Button>
@@ -275,5 +290,3 @@ export function ThemeForm({ currentTheme }: ThemeFormProps) {
     </Form>
   )
 }
-
-    
