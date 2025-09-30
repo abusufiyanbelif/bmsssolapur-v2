@@ -261,14 +261,14 @@ export function ThemeForm({ currentTheme }: ThemeFormProps) {
                 <Accordion type="multiple" defaultValue={["branding", "text", "notifications"]} className="w-full space-y-4">
                     <AccordionItem value="branding" className="border rounded-lg">
                         <AccordionTrigger className="p-4"><h4 className="font-semibold flex items-center gap-2"><Paintbrush /> Branding & UI Colors</h4></AccordionTrigger>
-                        <AccordionContent className="p-6 pt-2 space-y-6">
+                        <AccordionContent className="p-6 pt-2 grid grid-cols-1 md:grid-cols-2 gap-6">
                             <ColorInput name="primary" label="Primary Color" />
                             <ColorInput name="accent" label="Accent Color" />
                         </AccordionContent>
                     </AccordionItem>
                      <AccordionItem value="text" className="border rounded-lg">
                         <AccordionTrigger className="p-4"><h4 className="font-semibold flex items-center gap-2"><Type /> Text & Background Colors</h4></AccordionTrigger>
-                        <AccordionContent className="p-6 pt-2 space-y-6">
+                        <AccordionContent className="p-6 pt-2 grid grid-cols-1 md:grid-cols-2 gap-6">
                             <ColorInput name="background" label="Background Color" />
                             <ColorInput name="foreground" label="Foreground (Text) Color" />
                         </AccordionContent>
@@ -316,17 +316,17 @@ export function ThemeForm({ currentTheme }: ThemeFormProps) {
                                </CardContent>
                            </Card>
                            
-                           <Alert style={{borderColor: `hsl(${watchedColors.success})`, color: colorToHsl(watchedColors.foreground)}}>
+                           <Alert variant="success" style={{borderColor: `hsl(${watchedColors.success})`, color: colorToHsl(watchedColors.success)}}>
                                <CheckCircle className="h-4 w-4" style={{color: colorToHsl(watchedColors.success)}} />
                                <AlertTitle style={{color: colorToHsl(watchedColors.foreground)}}>Success Message</AlertTitle>
                                <AlertDescription style={{color: `hsl(var(--muted-foreground))`}}>This is a success alert.</AlertDescription>
                            </Alert>
-                           <Alert style={{borderColor: `hsl(${watchedColors.info})`, color: colorToHsl(watchedColors.foreground)}}>
+                           <Alert variant="info" style={{borderColor: `hsl(${watchedColors.info})`, color: colorToHsl(watchedColors.info)}}>
                                <InfoIcon className="h-4 w-4" style={{color: colorToHsl(watchedColors.info)}} />
                                <AlertTitle style={{color: colorToHsl(watchedColors.foreground)}}>Informational Message</AlertTitle>
                                <AlertDescription style={{color: `hsl(var(--muted-foreground))`}}>This is an info alert.</AlertDescription>
                            </Alert>
-                             <Alert style={{borderColor: `hsl(${watchedColors.warning})`, color: colorToHsl(watchedColors.foreground)}}>
+                             <Alert variant="warning" style={{borderColor: `hsl(${watchedColors.warning})`, color: colorToHsl(watchedColors.warning)}}>
                                <AlertTriangleIcon className="h-4 w-4" style={{color: colorToHsl(watchedColors.warning)}} />
                                <AlertTitle style={{color: colorToHsl(watchedColors.foreground)}}>Warning Message</AlertTitle>
                                <AlertDescription style={{color: `hsl(var(--muted-foreground))`}}>This is a warning alert.</AlertDescription>

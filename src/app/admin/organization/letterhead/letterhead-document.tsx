@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import { useRef, useState, useEffect } from "react";
@@ -134,7 +133,7 @@ Thank you for your time and consideration. We look forward to establishing a ban
       pdf.setFontSize(28);
       pdf.text(orgInfo.titleLine1.toUpperCase(), textX, 70);
       
-      pdf.setTextColor('#FFC107');
+      pdf.setTextColor('#FFC107'); // Accent Gold
       pdf.text(orgInfo.titleLine2.toUpperCase(), textX, 100);
 
       pdf.setTextColor('#16a34a');
