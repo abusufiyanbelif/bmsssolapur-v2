@@ -1,11 +1,11 @@
 
-
 import { getCurrentOrganization } from "@/app/admin/settings/actions";
 import { notFound } from "next/navigation";
 import { LetterheadDocument } from "@/app/admin/organization/letterhead/letterhead-document";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
 import { getImageAsBase64 } from "@/app/admin/organization/letterhead/actions";
+
 
 export default async function LetterheadPage() {
     const organization = await getCurrentOrganization();
@@ -24,7 +24,6 @@ export default async function LetterheadPage() {
         );
     }
     
-    // Fetch and convert the logo on the server before rendering the client component
     const logoDataUri = await getImageAsBase64(organization.logoUrl);
 
     return <LetterheadDocument organization={organization} logoDataUri={logoDataUri} />;

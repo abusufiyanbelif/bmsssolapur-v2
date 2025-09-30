@@ -5,6 +5,7 @@ import type { Lead } from "@/services/types";
 import { format } from "date-fns";
 import { ai } from "@/ai/genkit";
 import { googleAI } from "@genkit-ai/googleai";
+import { getSafeGeminiModel } from "@/services/gemini-service";
 
 interface ActionResult {
     success: boolean;
@@ -81,16 +82,16 @@ export async function generateAppealMessage(
         const ctaLink = `${appBaseUrl}/public-leads`;
 
         const modelCandidates = [
-            googleAI.model('gemini-1.5-flash-latest'),
-            googleAI.model('gemini-1.5-pro-latest'),
+            await getSafeGeminiModel('gemini-1.5-flash-latest'),
+            await getSafeGeminiModel('gemini-1.5-pro-latest'),
         ];
         let lastError: any;
 
-        for (const model of modelCandidates) {
+        for (const modelName of modelCandidates) {
              try {
-                console.log(`🔄 Trying ${model.name} for generateAppealMessage...`);
+                console.log(`🔄 Trying ${modelName} for generateAppealMessage...`);
                 const llmResponse = await ai.generate({
-                    model: model,
+                    model: googleAI.model(modelName),
                     prompt: `
                         You are a helpful assistant for a charity organization. Your task is to craft a complete and compelling WhatsApp appeal message.
                         
@@ -123,11 +124,11 @@ export async function generateAppealMessage(
                     `,
                 });
                 
-                console.log(`✅ Success with ${model.name}`);
+                console.log(`✅ Success with ${modelName}`);
                 return { success: true, message: llmResponse.text }; // Success
             } catch (err) {
                  lastError = err;
-                console.error(`❌ Error with ${model.name} for generateAppealMessage:`, err instanceof Error ? err.message : String(err));
+                console.error(`❌ Error with ${modelName} for generateAppealMessage:`, err instanceof Error ? err.message : String(err));
             }
         }
         

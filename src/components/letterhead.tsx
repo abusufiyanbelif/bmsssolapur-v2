@@ -3,9 +3,8 @@
 
 import React, { forwardRef } from 'react';
 import { format } from 'date-fns';
-import type { Organization } from '@/services/types';
+import type { Organization, LetterheadInclusionOptions, LetterContentOptions } from '@/services/types';
 import { ScrollArea } from './ui/scroll-area';
-import type { LetterheadInclusionOptions, LetterContentOptions } from '@/app/admin/organization/letterhead/letterhead-document';
 
 
 interface LetterheadProps {
