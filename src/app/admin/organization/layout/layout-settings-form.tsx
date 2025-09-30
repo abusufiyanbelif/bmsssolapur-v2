@@ -161,7 +161,7 @@ export function LayoutSettingsForm({ organization }: LayoutSettingsFormProps) {
             <fieldset disabled={!isEditing} className="space-y-8">
                 <Accordion type="multiple" defaultValue={["org-info", "contact-us", "key-contacts", "connect-with-us", "commitment", "copyright"]} className="w-full">
                     <AccordionItem value="org-info">
-                        <AccordionTrigger>Organization Info</AccordionTrigger>
+                        <AccordionTrigger className="text-lg font-semibold text-primary">Organization Info</AccordionTrigger>
                         <AccordionContent className="space-y-4 pt-4">
                             <FormField control={form.control} name="orgInfo.titleLine1" render={({ field }) => (<FormItem><FormLabel>Title Line 1</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
                             <FormField control={form.control} name="orgInfo.titleLine2" render={({ field }) => (<FormItem><FormLabel>Title Line 2</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
@@ -173,7 +173,7 @@ export function LayoutSettingsForm({ organization }: LayoutSettingsFormProps) {
                     </AccordionItem>
                     
                     <AccordionItem value="contact-us">
-                         <AccordionTrigger>Contact Us</AccordionTrigger>
+                         <AccordionTrigger className="text-lg font-semibold text-primary">Contact Us</AccordionTrigger>
                         <AccordionContent className="space-y-4 pt-4">
                             <FormField control={form.control} name="contactUs.title" render={({ field }) => (<FormItem><FormLabel>Section Title</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
                             <FormField control={form.control} name="contactUs.address" render={({ field }) => (<FormItem><FormLabel>Address</FormLabel><FormControl><Textarea {...field} /></FormControl><FormMessage /></FormItem>)} />
@@ -182,7 +182,7 @@ export function LayoutSettingsForm({ organization }: LayoutSettingsFormProps) {
                     </AccordionItem>
                     
                     <AccordionItem value="key-contacts">
-                         <AccordionTrigger>Key Contacts</AccordionTrigger>
+                         <AccordionTrigger className="text-lg font-semibold text-primary">Key Contacts</AccordionTrigger>
                         <AccordionContent className="space-y-4 pt-4">
                              <FormField control={form.control} name="keyContacts.title" render={({ field }) => (<FormItem><FormLabel>Section Title</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
                             {keyContactFields.map((field, index) => (
@@ -197,7 +197,7 @@ export function LayoutSettingsForm({ organization }: LayoutSettingsFormProps) {
                     </AccordionItem>
                     
                     <AccordionItem value="connect-with-us">
-                         <AccordionTrigger>Connect With Us</AccordionTrigger>
+                         <AccordionTrigger className="text-lg font-semibold text-primary">Connect With Us</AccordionTrigger>
                         <AccordionContent className="space-y-4 pt-4">
                             <FormField control={form.control} name="connectWithUs.title" render={({ field }) => (<FormItem><FormLabel>Section Title</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
                             {socialLinkFields.map((field, index) => (
@@ -212,7 +212,7 @@ export function LayoutSettingsForm({ organization }: LayoutSettingsFormProps) {
                     </AccordionItem>
                     
                      <AccordionItem value="commitment">
-                         <AccordionTrigger>Our Commitment</AccordionTrigger>
+                         <AccordionTrigger className="text-lg font-semibold text-primary">Our Commitment</AccordionTrigger>
                         <AccordionContent className="space-y-4 pt-4">
                             <FormField control={form.control} name="ourCommitment.title" render={({ field }) => (<FormItem><FormLabel>Section Title</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
                             <FormField control={form.control} name="ourCommitment.text" render={({ field }) => (<FormItem><FormLabel>Text</FormLabel><FormControl><Textarea {...field} /></FormControl><FormMessage /></FormItem>)} />
@@ -222,7 +222,7 @@ export function LayoutSettingsForm({ organization }: LayoutSettingsFormProps) {
                     </AccordionItem>
                     
                     <AccordionItem value="copyright">
-                         <AccordionTrigger>Copyright Notice</AccordionTrigger>
+                         <AccordionTrigger className="text-lg font-semibold text-primary">Copyright Notice</AccordionTrigger>
                         <AccordionContent className="space-y-4 pt-4">
                              <FormField control={form.control} name="copyright.text" render={({ field }) => (<FormItem><FormLabel>Copyright Text</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
                         </AccordionContent>

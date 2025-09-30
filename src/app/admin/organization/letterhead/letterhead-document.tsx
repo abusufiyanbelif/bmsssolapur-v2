@@ -278,166 +278,44 @@ Thank you for your time and consideration. We look forward to establishing a ban
 
   return (
     <div className="flex-1 space-y-4">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Left Column for Preview */}
-            <div className="lg:col-span-2 space-y-6">
-                 <div className="flex items-center justify-between">
-                    <h2 className="text-3xl font-bold tracking-tight font-headline text-primary">Organization Letterhead</h2>
-                    <div className="flex gap-2">
-                        <Button onClick={() => generatePdf(true)} disabled={isTemplateGenerating || !logoDataUri}>
-                            {isTemplateGenerating || !logoDataUri ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <FileText className="mr-2 h-4 w-4" />}
-                            Download Template
-                        </Button>
-                        <Button onClick={() => generatePdf(false)} disabled={isGenerating || !logoDataUri}>
-                            {isGenerating || !logoDataUri ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Download className="mr-2 h-4 w-4" />}
-                            Download as PDF
-                        </Button>
-                    </div>
-                </div>
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Letterhead Preview</CardTitle>
-                        <CardDescription>
-                            This is a preview of the official organization letterhead, reflecting your selections.
-                        </CardDescription>
-                    </CardHeader>
-                    <CardContent className="bg-gray-200 p-8 flex justify-center">
-                        <div className="transform scale-90 origin-top">
-                            {!logoDataUri ? (
-                                <div className="w-[210mm] h-[297mm] bg-white flex items-center justify-center shadow-lg">
-                                    <Loader2 className="h-10 w-10 animate-spin text-primary" />
-                                </div>
-                            ) : (
-                                <Letterhead 
-                                    ref={letterheadRef}
-                                    organization={organization}
-                                    logoDataUri={logoDataUri}
-                                    inclusions={inclusions}
-                                    letterContent={letterContent}
-                                />
-                            )}
-                        </div>
-                    </CardContent>
-                </Card>
-            </div>
-            
-            {/* Right Column for Settings */}
-            <div className="lg:col-span-1">
-                <Card>
-                     <CardHeader>
-                        <CardTitle className="flex items-center gap-2">
-                           <Settings className="h-5 w-5" />
-                           PDF Content
-                        </CardTitle>
-                        <CardDescription>
-                            Select the fields to include in the downloaded PDF.
-                        </CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                        <div>
-                            <h4 className="font-semibold text-sm mb-2">Header & Footer Details</h4>
-                            <div className="grid grid-cols-2 gap-x-4 gap-y-2">
-                                {headerInclusionOptions.map(option => (
-                                    <div key={option.id} className="flex items-center space-x-2">
-                                        <Checkbox
-                                            id={`inc-${option.id}`}
-                                            checked={inclusions[option.id as keyof LetterheadInclusionOptions]}
-                                            onCheckedChange={(checked) => handleInclusionChange(option.id as keyof LetterheadInclusionOptions, !!checked)}
-                                        />
-                                        <Label htmlFor={`inc-${option.id}`} className="font-normal">{option.label}</Label>
-                                    </div>
-                                ))}
-                                 {footerInclusionOptions.map(option => (
-                                    <div key={option.id} className="flex items-center space-x-2">
-                                        <Checkbox
-                                            id={`inc-${option.id}`}
-                                            checked={inclusions[option.id as keyof LetterheadInclusionOptions]}
-                                            onCheckedChange={(checked) => handleInclusionChange(option.id as keyof LetterheadInclusionOptions, !!checked)}
-                                        />
-                                        <Label htmlFor={`inc-${option.id}`} className="font-normal">{option.label}</Label>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                        <Separator />
-                         <div>
-                            <h4 className="font-semibold text-sm mb-2">Letter Sections</h4>
-                            <div className="grid grid-cols-2 gap-x-4 gap-y-2">
-                                {letterSectionOptions.map(option => (
-                                    <div key={option.id} className="flex items-center space-x-2">
-                                        <Checkbox
-                                            id={`inc-${option.id}`}
-                                            checked={inclusions[option.id as keyof LetterheadInclusionOptions]}
-                                            onCheckedChange={(checked) => handleInclusionChange(option.id as keyof LetterheadInclusionOptions, !!checked)}
-                                        />
-                                        <Label htmlFor={`inc-${option.id}`} className="font-normal">{option.label}</Label>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                    </CardContent>
-                </Card>
-
-                 <Card className="mt-6">
-                     <CardHeader>
-                        <CardTitle className="flex items-center gap-2">
-                           <Type className="h-5 w-5" />
-                           Letter Editor
-                        </CardTitle>
-                        <CardDescription>
-                            Edit the content of your letter here.
-                        </CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                        <div className="space-y-2">
-                            <Label htmlFor="date">Date</Label>
-                             <Popover>
-                                <PopoverTrigger asChild>
-                                    <Button
-                                    variant={"outline"}
-                                    className={cn(
-                                        "w-full justify-start text-left font-normal",
-                                        !letterContent.date && "text-muted-foreground"
-                                    )}
-                                    >
-                                    <CalendarIcon className="mr-2 h-4 w-4" />
-                                    {letterContent.date ? format(letterContent.date, "PPP") : <span>Pick a date</span>}
-                                    </Button>
-                                </PopoverTrigger>
-                                <PopoverContent className="w-auto p-0">
-                                    <Calendar
-                                    mode="single"
-                                    selected={letterContent.date}
-                                    onSelect={(date) => setLetterContent(prev => ({...prev, date: date || new Date()}))}
-                                    initialFocus
-                                    />
-                                </PopoverContent>
-                            </Popover>
-                        </div>
-                        <div className="space-y-2">
-                            <Label htmlFor="recipientName">Recipient Name</Label>
-                            <Input id="recipientName" value={letterContent.recipientName} onChange={e => setLetterContent(prev => ({...prev, recipientName: e.target.value}))} />
-                        </div>
-                         <div className="space-y-2">
-                            <Label htmlFor="recipientAddress">Recipient Address</Label>
-                            <Textarea id="recipientAddress" value={letterContent.recipientAddress} onChange={e => setLetterContent(prev => ({...prev, recipientAddress: e.target.value}))} />
-                        </div>
-                         <div className="space-y-2">
-                            <Label htmlFor="subject">Subject</Label>
-                            <Input id="subject" value={letterContent.subject} onChange={e => setLetterContent(prev => ({...prev, subject: e.target.value}))} />
-                        </div>
-                         <div className="space-y-2">
-                            <Label htmlFor="body">Body</Label>
-                            <Textarea id="body" value={letterContent.body} onChange={e => setLetterContent(prev => ({...prev, body: e.target.value}))} rows={8} />
-                        </div>
-                         <div className="space-y-2">
-                            <Label htmlFor="closingName">Closing Name</Label>
-                            <Input id="closingName" value={letterContent.closingName} onChange={e => setLetterContent(prev => ({...prev, closingName: e.target.value}))} />
-                        </div>
-                    </CardContent>
-                </Card>
+        <div className="flex items-center justify-between">
+            <h2 className="text-3xl font-bold tracking-tight font-headline text-primary">Organization Letterhead</h2>
+            <div className="flex gap-2">
+                <Button onClick={() => generatePdf(true)} disabled={isTemplateGenerating || !logoDataUri}>
+                    {isTemplateGenerating || !logoDataUri ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <FileText className="mr-2 h-4 w-4" />}
+                    Download Template
+                </Button>
+                <Button onClick={() => generatePdf(false)} disabled={isGenerating || !logoDataUri}>
+                    {isGenerating || !logoDataUri ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Download className="mr-2 h-4 w-4" />}
+                    Download as PDF
+                </Button>
             </div>
         </div>
+        <Card>
+            <CardHeader>
+                <CardTitle>Letterhead Preview</CardTitle>
+                <CardDescription>
+                    This is a preview of the official organization letterhead, reflecting your selections.
+                </CardDescription>
+            </CardHeader>
+            <CardContent className="bg-gray-200 p-8 flex justify-center">
+                <div className="transform scale-90 origin-top">
+                    {!logoDataUri ? (
+                        <div className="w-[210mm] h-[297mm] bg-white flex items-center justify-center shadow-lg">
+                            <Loader2 className="h-10 w-10 animate-spin text-primary" />
+                        </div>
+                    ) : (
+                        <Letterhead 
+                            ref={letterheadRef}
+                            organization={organization}
+                            logoDataUri={logoDataUri}
+                            inclusions={inclusions}
+                            letterContent={letterContent}
+                        />
+                    )}
+                </div>
+            </CardContent>
+        </Card>
     </div>
   );
 }
