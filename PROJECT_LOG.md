@@ -33,6 +33,7 @@ This document tracks the features and changes requested for the project.
 - **User Profile**: Created a page (`/profile`) for users to manage their settings, including notification preferences.
 - **Admin Dashboard**: Created at `/admin` to show key stats.
 - **Donation Management**: Created a page at `/admin/donations` to list all donations with their status.
+- **Theming**: Implemented a theme settings page to customize application colors. Performed a full-system audit to ensure all UI elements correctly use the defined theme colors.
 
 ### User Roles & Permissions
 
@@ -52,3 +53,4 @@ This document tracks the features and changes requested for the project.
 - Donation target tracker (e.g., Zakat obligation calculator)
 - Anonymous donation toggle
 - Multilingual UI (Arabic, Urdu, English, Hindi, Marathi)
+

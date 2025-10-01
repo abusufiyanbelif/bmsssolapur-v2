@@ -17,6 +17,7 @@ This document tracks the features and changes requested for the project.
     - **Public Collections (`publicLeads`, `publicCampaigns`)**: These contain sanitized, non-sensitive subsets of data intended for public display. Security rules on these collections permit read-only access for all users, including unauthenticated guests.
     - **Server-Side Logic**: Server-side functions are responsible for populating the public collections based on the status of items in the private collections (e.g., a lead is copied to `publicLeads` only when its status is set to "Publish").
 - **Infrastructure Permissions**: The application's backend, running on Firebase App Hosting, requires specific IAM (Identity and Access Management) roles to connect to Google Cloud services. The root cause of "Could not reach Cloud Firestore backend" errors is that the App Hosting service account (`[PROJECT_NUMBER]-compute@...`) is missing the **`Cloud Datastore User`** role, which is required for it to read from and write to Firestore.
+- **Consistent UI Theming**: All major headings, titles, and key icons should use the primary theme color (`text-primary`) to maintain a consistent brand identity. Descriptive text and less important information should use `text-muted-foreground`.
 
 ---
 
@@ -92,3 +93,4 @@ This document tracks the features and changes requested for the project.
 - Donation target tracker (e.g., Zakat obligation calculator)
 - Anonymous donation toggle
 - Multilingual UI (Arabic, Urdu, English, Hindi, Marathi)
+

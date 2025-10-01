@@ -10,14 +10,23 @@ The entire UI is built upon **ShadCN UI** components, styled with **Tailwind CSS
 
 The color system is defined in `src/app/globals.css` using HSL CSS variables for easy theming in both light and dark modes.
 
-- **Primary (Green)**: The main brand color used for primary buttons, active links, and important highlights.
+- **Primary (Green)**: The main brand color used for primary buttons, active links, page titles, and important highlights.
   - `--primary: 142.1 76.2% 36.3%`
 
 - **Accent (Gold/Yellow)**: A complementary color used sparingly to draw attention to secondary but important information.
   - `--accent: 45 93.4% 47.5%`
 
-- **Destructive (Red)**: Reserved for actions that delete or remove data, providing a clear visual warning.
+- **Destructive (Red)**: Reserved for actions that delete or remove data, and for displaying error messages.
   - `--destructive: 0 84.2% 60.2%`
+
+- **Success (Green)**: Used for success notifications and confirmation indicators.
+  - `--success: 142.1 76.2% 36.3%`
+
+- **Warning (Amber)**: Used for non-critical warnings or to draw attention to potentially important information.
+  - `--warning: 38.8 92.3% 50.2%`
+  
+- **Info (Blue)**: Used for informational alerts and messages.
+  - `--info: 217.2 91.2% 59.8%`
 
 - **Background & Foreground**: The base colors for the application's layout and text.
   - `--background`: `hsl(0 0% 100%)` (White)
@@ -34,11 +43,13 @@ The color system is defined in `src/app/globals.css` using HSL CSS variables for
 
 The application uses a two-font system, configured in `tailwind.config.ts` and loaded from Google Fonts in `src/app/layout.tsx`.
 
-- **Headlines (`font-headline`)**: **Space Grotesk** is used for all major page titles and card titles for a modern, clean look.
+- **Headlines (`font-headline`)**: **Space Grotesk** is used for all major page titles (`<h2>`) and card titles (`<CardTitle>`) for a modern, clean look. They are consistently colored with `text-primary`.
 
 - **Body Text (`font-body`)**: **Inter** is the primary font for all paragraphs, labels, descriptions, and other content, chosen for its high readability on screens.
+  - **Standard Text**: Uses `text-foreground`.
+  - **Descriptive/Muted Text**: Uses `text-muted-foreground` for subheadings, descriptions, and less important information.
 
-All text styling for size, weight, and color is handled by standard [Tailwind CSS](https://tailwindcss.com/) utility classes (e.g., `text-lg`, `font-semibold`, `text-muted-foreground`).
+All text styling for size and weight is handled by standard [Tailwind CSS](https://tailwindcss.com/) utility classes (e.g., `text-lg`, `font-semibold`).
 
 ---
 
@@ -74,9 +85,7 @@ User feedback is provided through a consistent set of components.
 
 - **Toasts (`Toaster`)**: Non-critical, temporary pop-up notifications that appear at the top-right of the screen for feedback like "Profile Updated". Managed by `src/components/ui/toaster.tsx` and the `useToast` hook. All toasts include an "OK" button, and `destructive` (error) toasts also include a "Copy" button.
 
-- **Alerts (`Alert`)**: Inline messages used to convey important, contextual information.
-  - **Default**: For informational messages (e.g., "You are editing a user record").
-  - **Destructive**: For displaying errors or critical warnings (e.g., "API Key Invalid").
+- **Alerts (`Alert`)**: Inline messages used to convey important, contextual information. They have variants for `default`, `destructive`, `success`, `warning`, and `info`, each styled with its corresponding theme color.
   - Defined in `src/components/ui/alert.tsx`.
 
 - **Dialogs (`AlertDialog`, `Dialog`)**: Modal windows that require focused user interaction.
