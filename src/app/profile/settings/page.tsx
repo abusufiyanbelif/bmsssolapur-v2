@@ -9,7 +9,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { getUser, User } from '@/services/user-service';
+import { getUser } from '@/services/user-service';
+import type { User } from '@/services/types';
 import { Loader2, AlertCircle, Edit, X, Save, PlusCircle, Trash2, CreditCard, Fingerprint, MapPin, Banknote, User as UserIcon } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Textarea } from "@/components/ui/textarea";

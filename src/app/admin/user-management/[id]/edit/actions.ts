@@ -2,9 +2,9 @@
 
 "use server";
 
-import { getUser, updateUser, User } from "@/services/user-service";
+import { getUser, updateUser } from "@/services/user-service";
 import { revalidatePath } from "next/cache";
-import type { UserRole } from "@/services/types";
+import type { User, UserRole } from "@/services/types";
 import { logActivity } from "@/services/activity-log-service";
 
 

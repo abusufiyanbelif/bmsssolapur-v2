@@ -2,7 +2,8 @@
 
 "use server";
 
-import { createUser, User } from '@/services/user-service';
+import { createUser } from '@/services/user-service';
+import type { User } from '@/services/types';
 import { isConfigValid } from '@/services/firebase';
 import { Timestamp } from 'firebase/firestore';
 
@@ -38,7 +39,7 @@ export async function handleRegister(formData: FormData): Promise<RegisterState>
 
 
   try {
-    const newUserData: Partial<Omit<User, 'id' | 'createdAt' | 'updatedAt'>> = {
+    const newUser: Partial<Omit<User, 'id'>> = {
       name: `${firstName} ${lastName}`.trim(),
       firstName,
       lastName,
@@ -47,6 +48,7 @@ export async function handleRegister(formData: FormData): Promise<RegisterState>
       password,
       roles: ['Donor'], // Default role for new registrations
       isActive: true, // New users are active by default
+      createdAt: Timestamp.now(),
       gender: 'Other',
       bankAccountName: formData.get("bankAccountName") as string || undefined,
       bankName: formData.get("bankName") as string || undefined,
