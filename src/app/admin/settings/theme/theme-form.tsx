@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -245,7 +246,7 @@ export function ThemeForm({ currentTheme }: ThemeFormProps) {
             
             <fieldset disabled={!isEditing} className="space-y-8">
                 <div className="space-y-4 rounded-lg border p-6">
-                    <h4 className="font-semibold flex items-center gap-2"><Droplets/> Theme Suggestions</h4>
+                    <h4 className="font-semibold flex items-center gap-2 text-primary"><Droplets/> Theme Suggestions</h4>
                      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                         {themeSuggestions.map(theme => {
                             const isSelected = isEqual(theme.colors, watchedColors);
@@ -286,7 +287,7 @@ export function ThemeForm({ currentTheme }: ThemeFormProps) {
                 
 
                  <div className="space-y-4 rounded-lg border p-6">
-                    <h4 className="font-semibold flex items-center gap-2"><Palette/>Live Preview</h4>
+                    <h4 className="font-semibold flex items-center gap-2 text-primary"><Palette/>Live Preview</h4>
                     <div className="p-6 rounded-lg" style={{ backgroundColor: colorToHsl(watchedColors.background)}}>
                         <div className="max-w-md mx-auto space-y-6">
                            <Card style={{ 

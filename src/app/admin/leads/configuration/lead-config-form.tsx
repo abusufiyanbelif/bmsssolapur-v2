@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useForm } from "react-hook-form";
@@ -94,7 +95,7 @@ export function LeadConfigForm({ settings, onUpdate }: LeadConfigFormProps) {
         
         <Card>
              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
+                <CardTitle className="flex items-center gap-2 text-primary">
                     <Settings />
                     General Settings
                 </CardTitle>
@@ -110,7 +111,9 @@ export function LeadConfigForm({ settings, onUpdate }: LeadConfigFormProps) {
                         <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
                             <div className="space-y-0.5">
                                 <FormLabel className="text-base">Allow Beneficiaries to Request Help</FormLabel>
-                                <FormDescription>If enabled, beneficiaries will see a &quot;Request Help&quot; button. Disable this to temporarily stop new requests.</FormDescription>
+                                <FormDescription>
+                                    If enabled, beneficiaries will see a &quot;Request Help&quot; button. Disable this to temporarily stop new requests.
+                                </FormDescription>
                             </div>
                             <FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl>
                         </FormItem>
@@ -148,7 +151,7 @@ export function LeadConfigForm({ settings, onUpdate }: LeadConfigFormProps) {
         {roleBasedCreationEnabled && (
             <Card>
                 <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
+                    <CardTitle className="flex items-center gap-2 text-primary">
                         <UserCheck />
                         Lead Creator Roles
                     </CardTitle>
@@ -197,7 +200,7 @@ export function LeadConfigForm({ settings, onUpdate }: LeadConfigFormProps) {
         <Card>
              <CardHeader className="flex flex-row items-center justify-between">
                 <div>
-                    <CardTitle>Manage Lead Purposes &amp; Categories</CardTitle>
+                    <CardTitle className="text-primary">Manage Lead Purposes &amp; Categories</CardTitle>
                     <CardDescription>
                         Add, edit, or delete the purposes and their sub-categories for new leads.
                     </CardDescription>
@@ -211,7 +214,7 @@ export function LeadConfigForm({ settings, onUpdate }: LeadConfigFormProps) {
                         <AccordionItem key={purpose.id} value={purpose.id}>
                             <div className="flex items-center pr-4">
                                 <AccordionTrigger className="flex-grow">
-                                    <FormLabel className="text-base">{purpose.name}</FormLabel>
+                                    <FormLabel className="text-base text-primary">{purpose.name}</FormLabel>
                                 </AccordionTrigger>
                                 <div className="flex items-center gap-2 pl-4">
                                     <FormField
@@ -235,7 +238,7 @@ export function LeadConfigForm({ settings, onUpdate }: LeadConfigFormProps) {
                             <AccordionContent>
                             <div className="p-4 border bg-muted/50 rounded-lg space-y-4">
                                     <div className="flex justify-between items-center">
-                                        <h4 className="font-semibold text-sm">Sub-Categories for &quot;{purpose.name}&quot;</h4>
+                                        <h4 className="font-semibold text-sm text-primary">Sub-Categories for &quot;{purpose.name}&quot;</h4>
                                         <AddCategoryDialog purposeId={purpose.id} />
                                     </div>
                                     {purpose.categories && purpose.categories.length > 0 ? (
@@ -271,7 +274,7 @@ export function LeadConfigForm({ settings, onUpdate }: LeadConfigFormProps) {
         
         <Card>
             <CardHeader>
-                 <CardTitle className="flex items-center gap-2">
+                 <CardTitle className="flex items-center gap-2 text-primary">
                     <BookOpen />
                     Education Field Options
                 </CardTitle>
@@ -333,5 +336,5 @@ export function LeadConfigForm({ settings, onUpdate }: LeadConfigFormProps) {
         )}
       </form>
     </Form>
-  );
+  )
 }

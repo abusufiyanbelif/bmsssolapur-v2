@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import Link from 'next/link';
@@ -47,11 +48,11 @@ export function Footer({ organization }: FooterProps) {
           <div className="space-y-4 lg:col-span-2">
              <div className="flex items-center gap-3">
                 <Logo className="h-24 w-24" logoUrl={organization.logoUrl} />
-                <h3 className="text-xl font-bold font-headline text-foreground">
-                    <span className="text-primary font-bold">{footer.organizationInfo.titleLine1}</span><br/>
-                    <span className="text-accent font-bold">{footer.organizationInfo.titleLine2}</span><br/>
-                    <span className="text-primary font-bold">{footer.organizationInfo.titleLine3}</span>
-                </h3>
+                <div className="font-headline text-foreground">
+                    <h3 className="text-xl font-bold text-primary">{footer.organizationInfo.titleLine1}</h3>
+                    <h3 className="text-xl font-bold text-accent">{footer.organizationInfo.titleLine2}</h3>
+                    <h3 className="text-lg font-bold text-primary">{footer.organizationInfo.titleLine3}</h3>
+                </div>
              </div>
             <p className="text-sm text-muted-foreground max-w-lg">
                 {footer.organizationInfo.description}
@@ -92,7 +93,7 @@ export function Footer({ organization }: FooterProps) {
                  ))}
              </div>
              <div className="space-y-2 text-sm pt-4">
-                <h4 className="font-semibold text-primary text-sm">{footer.connectWithUs.title}</h4>
+                <h5 className="font-semibold text-primary text-sm">{footer.connectWithUs.title}</h5>
                 <ul className="flex items-center gap-4">
                      {footer.connectWithUs.socialLinks.map((social, i) => (
                         <li key={i}>

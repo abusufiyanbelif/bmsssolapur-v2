@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -16,7 +17,7 @@ import {
 } from "@/components/ui/form";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
-import { handleUpdateGatewaySettings, handleTestGatewayConnection } from "./actions";
+import { handleUpdateGatewaySettings, testGatewayConnection } from "./actions";
 import { useState, useEffect } from "react";
 import { Loader2, Save, Wifi, WifiOff } from "lucide-react";
 import { AppSettings } from "@/services/app-settings-service";
@@ -88,7 +89,7 @@ function GatewayForm({ gatewayName, gatewayTitle, settings }: GatewayFormProps) 
 
     const onTestConnection = async () => {
         setIsTesting(true);
-        const result = await handleTestGatewayConnection(gatewayName);
+        const result = await testGatewayConnection(gatewayName);
         if (result.success) {
             toast({ variant: 'success', title: "Connection Successful!", description: `Successfully connected to ${gatewayTitle}.` });
         } else {
@@ -107,7 +108,7 @@ function GatewayForm({ gatewayName, gatewayTitle, settings }: GatewayFormProps) 
 
                     {activeMode === 'test' && (
                         <div>
-                            <h4 className="font-semibold text-muted-foreground mb-4">Test Credentials</h4>
+                            <h4 className="font-semibold text-primary mb-4">Test Credentials</h4>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <FormField control={form.control} name="test.keyId" render={({field}) => (<FormItem><FormLabel>Test Key ID</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
                                 <FormField control={form.control} name="test.keySecret" render={({field}) => (<FormItem><FormLabel>Test Key Secret</FormLabel><FormControl><Input {...field} type="password" /></FormControl><FormMessage /></FormItem>)} />
@@ -117,7 +118,7 @@ function GatewayForm({ gatewayName, gatewayTitle, settings }: GatewayFormProps) 
                     
                     {activeMode === 'live' && (
                         <div>
-                             <h4 className="font-semibold text-muted-foreground mb-4">Live Credentials</h4>
+                             <h4 className="font-semibold text-primary mb-4">Live Credentials</h4>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <FormField control={form.control} name="live.keyId" render={({field}) => (<FormItem><FormLabel>Live Key ID</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
                                 <FormField control={form.control} name="live.keySecret" render={({field}) => (<FormItem><FormLabel>Live Key Secret</FormLabel><FormControl><Input {...field} type="password" /></FormControl><FormMessage /></FormItem>)} />
@@ -182,7 +183,7 @@ export function PaymentGatewayForm({ settings, features }: PaymentGatewayFormPro
     <div className="space-y-12">
         <Card className="bg-muted/30">
             <CardHeader>
-                <CardTitle>Master Control</CardTitle>
+                <CardTitle className="text-primary">Master Control</CardTitle>
             </CardHeader>
             <CardContent>
                  <div className="flex flex-row items-center justify-between rounded-lg border p-4">
@@ -209,7 +210,7 @@ export function PaymentGatewayForm({ settings, features }: PaymentGatewayFormPro
                     <AccordionItem key={gateway.name} value={gateway.name}>
                         <Card className="border-primary/50">
                             <AccordionTrigger className="p-6 hover:no-underline">
-                                <CardTitle>{gateway.title}</CardTitle>
+                                <CardTitle className="text-primary">{gateway.title}</CardTitle>
                             </AccordionTrigger>
                             <AccordionContent className="p-6 pt-0">
                                 <GatewayForm gatewayName={gateway.name} gatewayTitle={gateway.title} settings={gateway.settings} />
