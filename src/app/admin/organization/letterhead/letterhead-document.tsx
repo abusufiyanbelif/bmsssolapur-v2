@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useRef, useState, useEffect } from "react";
@@ -239,7 +240,7 @@ Thank you for your time and consideration. We look forward to establishing a ban
   return (
     <div className="flex-1 space-y-4">
         <div className="flex items-center justify-between">
-            <div />
+            <h2 className="text-3xl font-bold tracking-tight font-headline text-primary">Organization Letterhead</h2>
             <div className="flex gap-2">
                 <Button onClick={() => generatePdf(true)} disabled={isTemplateGenerating || !logoDataUri}>
                     {isTemplateGenerating || !logoDataUri ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <FileText className="mr-2 h-4 w-4" />}

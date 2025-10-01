@@ -56,19 +56,19 @@ export default async function DataAnalyticsPage() {
         <Card>
           <CardHeader>
             <CardTitle className="text-primary">Analytics Dashboard</CardTitle>
-            <CardDescription>
+            <CardDescription className="text-muted-foreground">
               A high-level overview of application performance, data integrity, and fundraising metrics.
             </CardDescription>
           </CardHeader>
           <CardContent>
              <Accordion type="multiple" defaultValue={["performance-metrics"]} className="w-full space-y-4">
                 <AccordionItem value="performance-metrics" className="border rounded-lg">
-                    <AccordionTrigger className="p-4 hover:no-underline text-lg font-semibold">
-                        <div className="flex items-center gap-3">
-                           <TrendingUp className="h-6 w-6 text-primary" />
+                    <AccordionTrigger className="p-4 hover:no-underline">
+                        <div className="flex items-center gap-3 text-lg font-semibold text-primary">
+                           <TrendingUp className="h-6 w-6" />
                             <div>
                                 <h3 className="font-semibold text-lg">Performance Metrics</h3>
-                                <p className="text-sm text-muted-foreground text-left">Financial health and system data overview.</p>
+                                <p className="text-sm font-normal text-muted-foreground text-left">Financial health and system data overview.</p>
                             </div>
                         </div>
                     </AccordionTrigger>
@@ -83,12 +83,12 @@ export default async function DataAnalyticsPage() {
                     </AccordionContent>
                 </AccordionItem>
                 <AccordionItem value="data-growth" className="border rounded-lg">
-                    <AccordionTrigger className="p-4 hover:no-underline text-lg font-semibold">
-                        <div className="flex items-center gap-3">
-                           <LineChart className="h-6 w-6 text-primary" />
+                    <AccordionTrigger className="p-4 hover:no-underline">
+                        <div className="flex items-center gap-3 text-lg font-semibold text-primary">
+                           <LineChart className="h-6 w-6" />
                             <div>
                                 <h3 className="font-semibold text-lg">Data Growth</h3>
-                                <p className="text-sm text-muted-foreground text-left">Track the growth of users, leads, and donations over time.</p>
+                                <p className="text-sm font-normal text-muted-foreground text-left">Track the growth of users, leads, and donations over time.</p>
                             </div>
                         </div>
                     </AccordionTrigger>
@@ -99,12 +99,12 @@ export default async function DataAnalyticsPage() {
                     </AccordionContent>
                 </AccordionItem>
                 <AccordionItem value="donation-insights" className="border rounded-lg">
-                    <AccordionTrigger className="p-4 hover:no-underline text-lg font-semibold">
-                       <div className="flex items-center gap-3">
-                           <HandCoins className="h-6 w-6 text-primary" />
+                    <AccordionTrigger className="p-4 hover:no-underline">
+                       <div className="flex items-center gap-3 text-lg font-semibold text-primary">
+                           <HandCoins className="h-6 w-6" />
                             <div>
                                 <h3 className="font-semibold text-lg">Donation Insights</h3>
-                                <p className="text-sm text-muted-foreground text-left">Analyze donation trends and amounts.</p>
+                                <p className="text-sm font-normal text-muted-foreground text-left">Analyze donation trends and amounts.</p>
                             </div>
                         </div>
                     </AccordionTrigger>
@@ -115,12 +115,12 @@ export default async function DataAnalyticsPage() {
                     </AccordionContent>
                 </AccordionItem>
                  <AccordionItem value="user-insights" className="border rounded-lg">
-                    <AccordionTrigger className="p-4 hover:no-underline text-lg font-semibold">
-                       <div className="flex items-center gap-3">
-                           <UsersIcon className="h-6 w-6 text-primary" />
+                    <AccordionTrigger className="p-4 hover:no-underline">
+                       <div className="flex items-center gap-3 text-lg font-semibold text-primary">
+                           <UsersIcon className="h-6 w-6" />
                             <div>
                                 <h3 className="font-semibold text-lg">User Insights</h3>
-                                <p className="text-sm text-muted-foreground text-left">Analyze new user registration trends.</p>
+                                <p className="text-sm font-normal text-muted-foreground text-left">Analyze new user registration trends.</p>
                             </div>
                         </div>
                     </AccordionTrigger>
@@ -131,12 +131,12 @@ export default async function DataAnalyticsPage() {
                     </AccordionContent>
                 </AccordionItem>
                  <AccordionItem value="data-breakdown" className="border rounded-lg">
-                    <AccordionTrigger className="p-4 hover:no-underline text-lg font-semibold">
-                       <div className="flex items-center gap-3">
-                           <BarChart3 className="h-6 w-6 text-primary" />
+                    <AccordionTrigger className="p-4 hover:no-underline">
+                       <div className="flex items-center gap-3 text-lg font-semibold text-primary">
+                           <BarChart3 className="h-6 w-6" />
                             <div>
                                 <h3 className="font-semibold text-lg">Data Breakdowns</h3>
-                                <p className="text-sm text-muted-foreground text-left">View summaries of leads, campaigns, and more.</p>
+                                <p className="text-sm font-normal text-muted-foreground text-left">View summaries of leads, campaigns, and more.</p>
                             </div>
                         </div>
                     </AccordionTrigger>

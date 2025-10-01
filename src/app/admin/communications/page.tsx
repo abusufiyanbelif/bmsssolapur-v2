@@ -1,4 +1,5 @@
 
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { CommunicationsForm } from "./communications-form";
 import { getAllLeads } from "@/services/lead-service";
@@ -22,11 +23,11 @@ export default async function CommunicationsPage() {
             <h2 className="text-3xl font-bold tracking-tight font-headline text-primary">Communications Center</h2>
              <Card>
                 <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
+                    <CardTitle className="flex items-center gap-2 text-primary">
                         <MessageSquare />
                         Generate Formatted Messages
                     </CardTitle>
-                    <CardDescription>
+                    <CardDescription className="text-muted-foreground">
                         Select a message type and provide the necessary information to generate a pre-formatted message for platforms like WhatsApp.
                     </CardDescription>
                 </CardHeader>

@@ -1,4 +1,5 @@
 
+
 // src/app/referral/my-beneficiaries/page.tsx
 "use client";
 
@@ -187,8 +188,8 @@ export default function MyBeneficiariesPage() {
             </div>
             <Card>
                 <CardHeader>
-                    <CardTitle>Referred Beneficiaries</CardTitle>
-                    <CardDescription>A list of all beneficiaries you have referred to the organization.</CardDescription>
+                    <CardTitle className="text-primary">Referred Beneficiaries</CardTitle>
+                    <CardDescription className="text-muted-foreground">A list of all beneficiaries you have referred to the organization.</CardDescription>
                 </CardHeader>
                 <CardContent>
                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6 p-4 border rounded-lg bg-muted/50">

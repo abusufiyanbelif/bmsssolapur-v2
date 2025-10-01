@@ -258,8 +258,8 @@ export default function MyDonationsPage() {
         
         <Card>
             <CardHeader>
-            <CardTitle>Donation History</CardTitle>
-            <CardDescription>
+            <CardTitle className="text-primary">Donation History</CardTitle>
+            <CardDescription className="text-muted-foreground">
                 A record of all your generous contributions. Thank you for your support.
             </CardDescription>
             </CardHeader>

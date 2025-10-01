@@ -1,4 +1,5 @@
 
+
 import { getCurrentOrganization } from "@/app/admin/settings/actions";
 import { notFound } from "next/navigation";
 import { LetterheadDocument } from "@/app/admin/organization/letterhead/letterhead-document";
@@ -27,9 +28,6 @@ export default async function LetterheadPage() {
     const logoDataUri = await getImageAsBase64(organization.logoUrl);
 
     return (
-        <div className="flex-1 space-y-4">
-            <h2 className="text-3xl font-bold tracking-tight font-headline text-primary">Organization Letterhead</h2>
-            <LetterheadDocument organization={organization} logoDataUri={logoDataUri} />
-        </div>
+        <LetterheadDocument organization={organization} logoDataUri={logoDataUri} />
     )
 }

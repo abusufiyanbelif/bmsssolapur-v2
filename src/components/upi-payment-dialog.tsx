@@ -25,8 +25,8 @@ export function UpiPaymentDialog({ open, onOpenChange, upiLink }: UpiPaymentDial
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-sm">
         <DialogHeader>
-          <DialogTitle>Choose your UPI App</DialogTitle>
-          <DialogDescription>
+          <DialogTitle className="text-primary">Choose your UPI App</DialogTitle>
+          <DialogDescription className="text-muted-foreground">
             Select your preferred application to complete the payment.
           </DialogDescription>
         </DialogHeader>

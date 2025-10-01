@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState } from "react";
@@ -106,7 +107,7 @@ export function CommunicationsForm({ openLeads, formType }: CommunicationsFormPr
 
     const renderLeadSelection = () => (
          <div className="space-y-6">
-            <h3 className="text-lg font-semibold">2. Select Leads</h3>
+            <h3 className="text-lg font-semibold text-primary">2. Select Leads</h3>
             {formType === 'public-appeal' && (
                 <RadioGroup value={appealType} onValueChange={(v) => setAppealType(v as AppealType)} className="grid grid-cols-1 md:grid-cols-3 gap-2">
                      <Label className="flex items-center space-x-2 rounded-md border p-3 hover:bg-muted/50 transition-colors cursor-pointer">
@@ -185,13 +186,13 @@ export function CommunicationsForm({ openLeads, formType }: CommunicationsFormPr
             <div className="space-y-6">
                  {formType === 'public-appeal' ? (
                      <>
-                        <h3 className="text-lg font-semibold">1. Configure Your Message</h3>
+                        <h3 className="text-lg font-semibold text-primary">1. Configure Your Message</h3>
                         {renderPublicAppealConfig()}
                         {renderLeadSelection()}
                      </>
                  ) : (
                     <>
-                        <h3 className="text-lg font-semibold">1. Select Leads for Admin Action</h3>
+                        <h3 className="text-lg font-semibold text-primary">1. Select Leads for Admin Action</h3>
                         <p className="text-sm text-muted-foreground">Select one or more leads that require verification or another administrative action.</p>
                         {renderLeadSelection()}
                     </>
@@ -202,7 +203,7 @@ export function CommunicationsForm({ openLeads, formType }: CommunicationsFormPr
                 </Button>
             </div>
              <div className="space-y-6">
-                <h3 className="text-lg font-semibold">3. Copy or Share</h3>
+                <h3 className="text-lg font-semibold text-primary">3. Copy or Share</h3>
                 <div className="relative">
                     <ScrollArea className="h-96 w-full rounded-md border">
                         <Textarea

@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useRef, useState, useEffect } from "react";
@@ -89,8 +90,8 @@ export function DonationReceiptDialog({ donation, user, organization }: Donation
       </DialogTrigger>
       <DialogContent className="max-w-4xl">
         <DialogHeader>
-          <DialogTitle>Donation Receipt</DialogTitle>
-          <DialogDescription>
+          <DialogTitle className="text-primary">Donation Receipt</DialogTitle>
+          <DialogDescription className="text-muted-foreground">
             This is a preview of your donation receipt. Click download to save it as a PDF.
           </DialogDescription>
         </DialogHeader>
