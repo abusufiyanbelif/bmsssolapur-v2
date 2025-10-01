@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -73,7 +74,7 @@ export function AllocateToCampaignDialog({ donation, allCampaigns, onAllocation 
             </DialogTrigger>
             <DialogContent>
                 <DialogHeader>
-                    <DialogTitle>Allocate Donation to Campaign</DialogTitle>
+                    <DialogTitle className="text-primary">Allocate Donation to Campaign</DialogTitle>
                     <DialogDescription>
                         Link this donation to one of the active campaigns.
                     </DialogDescription>

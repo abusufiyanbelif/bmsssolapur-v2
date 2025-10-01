@@ -69,7 +69,7 @@ export const PublicMainMetricsCard = ({ allDonations = [], allLeads = [] }: { al
                  <CardWrapper href={metric.href} key={metric.title} isClickable={true}>
                     <Card className="h-full transition-all hover:shadow-md hover:border-primary/50">
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">{metric.title}</CardTitle>
+                        <CardTitle className="text-sm font-medium text-primary">{metric.title}</CardTitle>
                         <metric.icon className="h-4 w-4 text-muted-foreground" />
                         </CardHeader>
                         <CardContent>

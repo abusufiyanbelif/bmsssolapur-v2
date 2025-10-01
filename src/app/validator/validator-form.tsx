@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useActionState } from "react";
@@ -80,7 +81,7 @@ export function ValidatorForm() {
       <div className="space-y-4 p-4 border rounded-lg bg-muted/50">
         <div className="flex items-center gap-2">
             <KeySquare className="h-5 w-5 text-primary" />
-            <Label htmlFor="geminiApiKey" className="font-semibold text-base">Gemini API Key (Optional for Testing)</Label>
+            <Label htmlFor="geminiApiKey" className="font-semibold text-base text-primary">Gemini API Key (Optional for Testing)</Label>
         </div>
         <p className="text-sm text-muted-foreground">
           If you provide an API key here, you can test it directly. Submitting the main form will also use this key for a live validation check.
@@ -131,7 +132,7 @@ export function ValidatorForm() {
       {state && (state.errors.length > 0 || state.isValid) && (
         <Card className="mt-6">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
+            <CardTitle className="flex items-center gap-2 text-primary">
               {state.isValid ? (
                 <CheckCircle2 className="h-6 w-6 text-green-500" />
               ) : (

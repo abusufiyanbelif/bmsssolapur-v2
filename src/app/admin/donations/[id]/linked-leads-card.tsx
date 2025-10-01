@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useState } from "react";
@@ -40,11 +39,11 @@ export function LinkedLeadsCard({ donation, leads }: LinkedLeadsCardProps) {
         return (
             <Card>
                 <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
+                    <CardTitle className="flex items-center gap-2 text-primary">
                         <FileText />
                         Linked Leads & Allocations
                     </CardTitle>
-                    <CardDescription>
+                    <CardDescription className="text-muted-foreground">
                         This donation has not yet been allocated to any specific help cases.
                     </CardDescription>
                 </CardHeader>
@@ -58,11 +57,11 @@ export function LinkedLeadsCard({ donation, leads }: LinkedLeadsCardProps) {
     return (
         <Card>
             <CardHeader>
-                <CardTitle className="flex items-center gap-2">
+                <CardTitle className="flex items-center gap-2 text-primary">
                     <FileText />
                     Linked Leads & Allocations ({allocations.length})
                 </CardTitle>
-                <CardDescription>
+                <CardDescription className="text-muted-foreground">
                     This donation has been allocated to the following help cases. You can remove an allocation if the funds have not yet been transferred.
                 </CardDescription>
             </CardHeader>

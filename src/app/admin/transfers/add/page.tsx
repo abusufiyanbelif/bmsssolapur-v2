@@ -1,4 +1,5 @@
 
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import Link from "next/link";
 import { ArrowLeft, Ban } from "lucide-react";
@@ -15,8 +16,8 @@ export default async function AddTransferPage() {
             </Link>
             <Card>
                 <CardHeader>
-                    <CardTitle className="flex items-center gap-2"><Ban className="text-destructive"/>Page Deprecated</CardTitle>
-                    <CardDescription>
+                    <CardTitle className="flex items-center gap-2 text-primary"><Ban className="text-destructive"/>Page Deprecated</CardTitle>
+                    <CardDescription className="text-muted-foreground">
                        This page is no longer in use. Fund transfers should now be recorded directly from the Lead Details page.
                     </CardDescription>
                 </CardHeader>

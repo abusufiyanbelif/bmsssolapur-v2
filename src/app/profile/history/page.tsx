@@ -8,6 +8,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { format, formatDistanceToNow } from "date-fns";
 import { Timestamp } from "firebase/firestore";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 interface ActivityFeedProps {
   userId: string;
@@ -21,34 +22,41 @@ const ActivityItem = ({ log }: { log: ActivityLog }) => {
     timeAgo = formatDistanceToNow(log.timestamp.toDate(), { addSuffix: true });
     fullDate = format(log.timestamp.toDate(), 'PPP p');
   }
-
-  const renderDetails = () => {
-    switch(log.activity) {
-      case 'Switched Role':
-        return `Switched from "${log.details.from}" to "${log.details.to}" profile.`;
-      case 'Donation Created':
-        return `${log.details.details}`;
-      case 'Status Changed':
-          return `Donation status changed from "${log.details.from}" to "${log.details.to}".`;
-      case 'Donation Updated':
-          return `Donation details updated. Fields changed: ${log.details.updates}.`;
-      default:
-        return 'Performed an action.';
-    }
-  }
+  
+  const changes = log.details.changes || {};
 
   return (
     <div className="flex items-start gap-4">
-      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10">
+      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 mt-1">
         <ListChecks className="h-4 w-4 text-primary" />
       </div>
       <div className="flex-1">
         <p className="font-semibold text-sm">
-          {renderDetails()}
+          Profile updated by <span className="text-primary">{log.userName}</span>
         </p>
         <p className="text-xs text-muted-foreground" title={fullDate}>
           As <span className="font-semibold">{log.role}</span> &middot; {timeAgo}
         </p>
+        <div className="mt-2 border rounded-lg overflow-hidden">
+             <Table>
+                <TableHeader>
+                    <TableRow>
+                        <TableHead className="bg-muted/50">Field</TableHead>
+                        <TableHead className="bg-muted/50">Previous Value</TableHead>
+                        <TableHead className="bg-muted/50">New Value</TableHead>
+                    </TableRow>
+                </TableHeader>
+                <TableBody>
+                    {Object.entries(changes).map(([key, value]: [string, any]) => (
+                         <TableRow key={key}>
+                            <TableCell className="font-medium capitalize text-xs">{key.replace(/([A-Z])/g, ' $1')}</TableCell>
+                            <TableCell className="text-muted-foreground text-xs">{String(value.from)}</TableCell>
+                            <TableCell className="text-foreground font-semibold text-xs">{String(value.to)}</TableCell>
+                        </TableRow>
+                    ))}
+                </TableBody>
+            </Table>
+        </div>
       </div>
     </div>
   );
@@ -76,8 +84,12 @@ export default function ActivityHistoryPage() {
       try {
         setLoading(true);
         setError(null);
-        const userActivities = await getUserActivity(userId);
-        setActivities(userActivities);
+        // We need a specific query for this, let's filter client-side for now
+        const allUserActivities = await getUserActivity(userId);
+        const profileUpdates = allUserActivities.filter(
+            log => log.activity === 'User Profile Updated' && log.details.targetUserId === userId
+        );
+        setActivities(profileUpdates);
       } catch (e) {
         setError("Failed to load activity history.");
         console.error(e);
@@ -111,7 +123,7 @@ export default function ActivityHistoryPage() {
     }
 
     if (activities.length === 0) {
-      return <p className="text-center text-muted-foreground py-10">No activities recorded yet.</p>;
+      return <p className="text-center text-muted-foreground py-10">No profile update activities recorded yet.</p>;
     }
 
     return (
@@ -126,8 +138,8 @@ export default function ActivityHistoryPage() {
   return (
      <Card>
         <CardHeader>
-            <CardTitle>Activity History</CardTitle>
-            <CardDescription>A log of actions you have performed in the system.</CardDescription>
+            <CardTitle className="text-primary">Activity History</CardTitle>
+            <CardDescription className="text-muted-foreground">A log of actions you have performed in the system.</CardDescription>
         </CardHeader>
         <CardContent>
            {renderContent()}

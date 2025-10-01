@@ -85,7 +85,7 @@ export default function ProfileLayout({ children }: { children: React.ReactNode 
                             <AvatarImage src={`https://placehold.co/100x100.png?text=${userInitials}`} alt={user.name} data-ai-hint="female portrait" />
                             <AvatarFallback>{userInitials}</AvatarFallback>
                         </Avatar>
-                        <CardTitle>{user.name}</CardTitle>
+                        <CardTitle className="text-primary">{user.name}</CardTitle>
                         <CardDescription>{user.userId}</CardDescription>
                         <Badge variant="outline" className={user.isActive ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"}>
                             {user.isActive ? 'Active' : 'Inactive'}

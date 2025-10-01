@@ -31,8 +31,8 @@ export default function CampaignsPage() {
 
             <Card>
                 <CardHeader>
-                    <CardTitle>Our Campaigns</CardTitle>
-                    <CardDescription>
+                    <CardTitle className="text-primary">Our Campaigns</CardTitle>
+                    <CardDescription className="text-muted-foreground">
                         Browse through our focused fundraising campaigns. Your donation can help us achieve these specific goals.
                     </CardDescription>
                 </CardHeader>

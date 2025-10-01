@@ -1,4 +1,5 @@
 
+
 // src/app/admin/donations/allocate-to-lead-dialog.tsx
 "use client";
 
@@ -166,7 +167,7 @@ export function AllocateToLeadDialog({ donation, allLeads, allCampaigns, onAlloc
             </DialogTrigger>
             <DialogContent className="max-w-4xl">
                 <DialogHeader>
-                    <DialogTitle>Allocate Donation to Leads</DialogTitle>
+                    <DialogTitle className="text-primary">Allocate Donation to Leads</DialogTitle>
                     <DialogDescription>
                         Select one or more leads to allocate this donation of <span className="font-bold">₹{donation.amount.toLocaleString()}</span> from <span className="font-bold">{donation.donorName}</span>.
                          {campaignForDonation && (
@@ -226,7 +227,7 @@ export function AllocateToLeadDialog({ donation, allLeads, allCampaigns, onAlloc
 
                     {/* Right Column: Allocation Details */}
                     <div className="space-y-4">
-                        <h3 className="font-semibold">Selected Leads for Allocation</h3>
+                        <h3 className="font-semibold text-primary">Selected Leads for Allocation</h3>
                         <ScrollArea className="h-96 border rounded-lg">
                             <div className="p-4 space-y-4">
                                 {selectedLeads.length > 0 ? selectedLeads.map(lead => (

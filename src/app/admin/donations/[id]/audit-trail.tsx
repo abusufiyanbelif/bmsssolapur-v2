@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { History, ListChecks, Trash2, Upload } from "lucide-react";
 import { format, formatDistanceToNow } from "date-fns";
 import type { ActivityLog } from "@/services/types";
+import { Timestamp } from "firebase/firestore";
 
 interface ActivityItemProps {
   log: ActivityLog;
@@ -15,9 +16,10 @@ const ActivityItem = ({ log }: ActivityItemProps) => {
   let timeAgo = "Just now";
   let fullDate = "Pending timestamp...";
 
-  const logTimestamp = log.timestamp instanceof Date ? log.timestamp : new Date(log.timestamp);
-  timeAgo = formatDistanceToNow(logTimestamp, { addSuffix: true });
-  fullDate = format(logTimestamp, 'PPP p');
+  if (log.timestamp instanceof Timestamp) {
+    timeAgo = formatDistanceToNow(log.timestamp.toDate(), { addSuffix: true });
+    fullDate = log.timestamp.toDate().toLocaleString();
+  }
 
   const renderDetails = () => {
     let icon = <ListChecks className="h-4 w-4 text-primary" />;
@@ -75,11 +77,11 @@ export function AuditTrail({ activityLogs }: AuditTrailProps) {
     return (
         <Card>
             <CardHeader>
-                <CardTitle className="flex items-center gap-2">
+                <CardTitle className="flex items-center gap-2 text-primary">
                     <History />
                     Audit Trail
                 </CardTitle>
-                <CardDescription>
+                <CardDescription className="text-muted-foreground">
                     A log of key actions performed on this donation.
                 </CardDescription>
             </CardHeader>

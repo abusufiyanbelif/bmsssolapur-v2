@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
@@ -133,8 +134,8 @@ export default function PublicLeadsPage() {
 
             <Card>
                 <CardHeader>
-                    <CardTitle>Support an Individual or Family</CardTitle>
-                    <CardDescription>
+                    <CardTitle className="text-primary">Support an Individual or Family</CardTitle>
+                    <CardDescription className="text-muted-foreground">
                         These are verified general help requests that are not part of a specific campaign. Your donation can make a direct impact.
                     </CardDescription>
                 </CardHeader>

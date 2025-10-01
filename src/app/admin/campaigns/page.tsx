@@ -273,7 +273,7 @@ function CampaignsPageContent() {
                             <div className="p-4 flex flex-col flex-grow">
                                 <Link href={`/admin/campaigns/${campaign.id}/edit`} className="block flex-grow">
                                     <CardHeader className="p-0">
-                                        <CardTitle className="text-lg">{campaign.name}</CardTitle>
+                                        <CardTitle className="text-lg text-primary">{campaign.name}</CardTitle>
                                         <CardDescription>{format(campaign.startDate, "dd MMM yyyy")} - {format(campaign.endDate, "dd MMM yyyy")}</CardDescription>
                                     </CardHeader>
                                     <CardContent className="space-y-4 flex-grow p-0 pt-4">
@@ -351,7 +351,7 @@ function CampaignsPageContent() {
         </div>
         <Card>
             <CardHeader>
-                <CardTitle className="flex items-center gap-2">
+                <CardTitle className="flex items-center gap-2 text-primary">
                   <Megaphone />
                   All Campaigns
                 </CardTitle>

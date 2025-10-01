@@ -52,8 +52,8 @@ export default function QuotesPage() {
            
             <Card>
                 <CardHeader>
-                    <CardTitle>A Collection of Wisdom</CardTitle>
-                    <CardDescription>
+                    <CardTitle className="text-primary">A Collection of Wisdom</CardTitle>
+                    <CardDescription className="text-muted-foreground">
                         A collection of quotes from the Quran, Hadith, and scholars about charity, compassion, and helping others.
                     </CardDescription>
                 </CardHeader>

@@ -112,7 +112,7 @@ export function PublicHomePage({ quotes, initialLeads, campaigns, allLeads }: { 
       <Card>
           <CardHeader>
               <CardTitle className="text-primary">General Help Cases</CardTitle>
-              <CardDescription>These are verified, individual cases that need your direct support right now.</CardDescription>
+              <CardDescription className="text-muted-foreground">These are verified, individual cases that need your direct support right now.</CardDescription>
           </CardHeader>
           <CardContent>
               {initialLeads.length > 0 ? (
