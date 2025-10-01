@@ -1,3 +1,4 @@
+
 // src/app/admin/leads/add/add-lead-form.tsx
 "use client";
 
@@ -287,7 +288,7 @@ function AddLeadFormContent({ users, campaigns, settings, prefilledRawText }: Ad
       setCaseRawText("");
   };
 
-  const { formState: { isValid }, setValue, watch, getValues, control, trigger, reset } = form;
+  const { formState: { isValid }, setValue, watch, getValues, control, trigger, reset, handleSubmit } = form;
   
   const selectedPurposeName = watch("purpose");
   const selectedCategory = watch("category");
@@ -546,20 +547,20 @@ function AddLeadFormContent({ users, campaigns, settings, prefilledRawText }: Ad
         loadingSetter(true);
         
         let missingFields: (keyof ExtractBeneficiaryDetailsOutput)[] = [];
-        if (isRefresh && extractedBeneficiaryDetails) {
-            missingFields = Object.keys(extractedBeneficiaryDetails).filter(key => !extractedBeneficiaryDetails[key as keyof ExtractBeneficiaryDetailsOutput]) as (keyof ExtractBeneficiaryDetailsOutput)[];
+        if (isRefresh && extractedDetails) {
+            missingFields = Object.keys(extractedDetails).filter(key => !extractedDetails[key as keyof ExtractBeneficiaryDetailsOutput]) as (keyof ExtractBeneficiaryDetailsOutput)[];
         }
 
         const result = await handleExtractLeadBeneficiaryDetailsFromText(rawText, missingFields.length > 0 ? missingFields : undefined);
 
         if (result.success && result.details) {
-             if (isRefresh && extractedBeneficiaryDetails) {
+             if (isRefresh && extractedDetails) {
                 // Merge new results with existing ones
-                const mergedDetails = { ...extractedBeneficiaryDetails, ...result.details };
-                setExtractedBeneficiaryDetails(mergedDetails);
+                const mergedDetails = { ...extractedDetails, ...result.details };
+                setExtractedDetails(mergedDetails);
                 toast({ variant: 'success', title: 'Refresh Complete', description: 'AI tried to find the missing details.' });
             } else {
-                setExtractedBeneficiaryDetails(result.details);
+                setExtractedDetails(result.details);
             }
         } else {
             toast({ variant: 'destructive', title: 'Analysis Failed', description: result.error });
@@ -568,8 +569,8 @@ function AddLeadFormContent({ users, campaigns, settings, prefilledRawText }: Ad
     };
 
     const applyExtractedDetails = () => {
-        if (!extractedBeneficiaryDetails) return;
-        const details = extractedBeneficiaryDetails;
+        if (!extractedDetails) return;
+        const details = extractedDetails;
         Object.entries(details).forEach(([key, value]) => {
             if (value) {
                 switch(key) {
@@ -594,7 +595,7 @@ function AddLeadFormContent({ users, campaigns, settings, prefilledRawText }: Ad
             }
         });
         toast({ variant: 'success', title: 'Auto-fill Complete', description: 'User details have been populated. Please review.' });
-        setExtractedBeneficiaryDetails(null);
+        setExtractedDetails(null);
     }
     
     const dialogFields: { key: keyof ExtractBeneficiaryDetailsOutput; label: string }[] = [
@@ -1102,7 +1103,7 @@ function AddLeadFormContent({ users, campaigns, settings, prefilledRawText }: Ad
                 </AlertDialogFooter>
             </AlertDialogContent>
         </AlertDialog>
-        <AlertDialog open={!!extractedBeneficiaryDetails} onOpenChange={() => setExtractedBeneficiaryDetails(null)}>
+        <AlertDialog open={!!extractedDetails} onOpenChange={() => setExtractedDetails(null)}>
             <AlertDialogContent>
                 <AlertDialogHeader>
                     <AlertDialogTitle className="flex items-center gap-2">
@@ -1115,7 +1116,7 @@ function AddLeadFormContent({ users, campaigns, settings, prefilledRawText }: Ad
                 </AlertDialogHeader>
                 <div className="max-h-80 overflow-y-auto p-4 bg-muted/50 rounded-lg space-y-2 text-sm">
                     {dialogFields.map(({ key, label }) => {
-                        const value = extractedBeneficiaryDetails?.[key as keyof ExtractBeneficiaryDetailsOutput] as string | undefined;
+                        const value = extractedDetails?.[key as keyof ExtractBeneficiaryDetailsOutput] as string | undefined;
                         return (
                             <div key={key} className="flex justify-between border-b pb-1">
                                 <span className="text-muted-foreground capitalize">{label}</span>
