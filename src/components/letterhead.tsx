@@ -61,13 +61,13 @@ export const Letterhead = forwardRef<HTMLDivElement, LetterheadProps>(
         const textStyle = { letterSpacing: '0.5px' };
 
         const emailPhoneText = [
-            (includeEmail) && `Email: ${isTemplate ? '' : organizationDetails.email}`,
-            (includePhone) && `Phone: ${isTemplate ? '' : organizationDetails.phone}`
+            (includeEmail || isTemplate) && `Email: ${isTemplate ? '' : organizationDetails.email}`,
+            (includePhone || isTemplate) && `Phone: ${isTemplate ? '' : organizationDetails.phone}`
         ].filter(Boolean).join('  |  ');
         
         const regPanText = [
-            (includeRegNo) && `Reg No: ${isTemplate ? '' : organizationDetails.registration}`,
-            (includePan) && `PAN: ${isTemplate ? '' : organizationDetails.pan}`
+            (includeRegNo || isTemplate) && `Reg No: ${isTemplate ? '' : organizationDetails.registration}`,
+            (includePan || isTemplate) && `PAN: ${isTemplate ? '' : organizationDetails.pan}`
         ].filter(Boolean).join(' | ');
 
         return (
@@ -108,7 +108,7 @@ export const Letterhead = forwardRef<HTMLDivElement, LetterheadProps>(
                                         <h3 className="text-3xl font-bold font-headline text-primary" style={{...textStyle}}>
                                              {organizationDetails.titleLine3.toUpperCase()}
                                         </h3>
-                                        {includeAddress && (
+                                        {(includeAddress || isTemplate) && (
                                             <p className="text-sm text-muted-foreground mt-2" style={textStyle}>
                                                 Address: {isTemplate ? '' : `${organizationDetails.address}`}
                                             </p>
@@ -125,25 +125,25 @@ export const Letterhead = forwardRef<HTMLDivElement, LetterheadProps>(
                     </header>
                     <ScrollArea className="flex-grow my-4">
                         <main className="text-foreground/80 text-base leading-normal whitespace-pre-wrap" style={textStyle}>
-                           {includeDate && <p>Date: {isTemplate ? '' : format(content.date, 'dd MMM, yyyy')}</p>}
-                           {includeRecipient && (
+                           {(includeDate || isTemplate) && <p>Date: {isTemplate ? '' : format(content.date, 'dd MMM, yyyy')}</p>}
+                           {(includeRecipient || isTemplate) && (
                                <div className="pt-8">
                                    <p>To,</p>
                                    <p className='font-bold'>{content.recipientName}</p>
                                    <p>{content.recipientAddress}</p>
                                </div>
                            )}
-                            {includeSubject && (
+                            {(includeSubject || isTemplate) && (
                                 <p className="pt-8"><span className="font-bold">Subject:</span> {content.subject}</p>
                             )}
-                            {includeBody && (
+                            {(includeBody || isTemplate) && (
                                <p className="pt-8">{content.body}</p>
                             )}
                         </main>
                     </ScrollArea>
 
                      <div className="mt-auto pt-4 text-right">
-                        {includeClosing && (
+                        {(includeClosing || isTemplate) && (
                             <div className="space-y-1 mb-12">
                                 <p className="text-foreground/80" style={textStyle}>Sincerely,</p>
                                 <p className="text-foreground/80" style={textStyle}>{content.closingName}</p>
@@ -157,7 +157,7 @@ export const Letterhead = forwardRef<HTMLDivElement, LetterheadProps>(
                          {regPanText && (
                             <p>{regPanText}</p>
                          )}
-                         {includeUrl && (
+                         {(includeUrl || isTemplate) && (
                             <p className='mt-2'>
                                 URL: {isTemplate ? '' : organization.website}
                             </p>

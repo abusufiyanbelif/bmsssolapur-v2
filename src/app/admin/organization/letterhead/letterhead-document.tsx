@@ -9,15 +9,13 @@ import type { Organization, LetterheadInclusionOptions, LetterContentOptions } f
 import { Letterhead } from "@/components/letterhead";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import jsPDF from "jspdf";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Label } from "@/components/ui/label";
-import { Separator } from "@/components/ui/separator";
-import { Textarea } from "@/components/ui/textarea";
-import { Input } from "@/components/ui/input";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Calendar } from "@/components/ui/calendar";
 import { format } from 'date-fns';
 import { cn } from "@/lib/utils";
+import { Label } from "@/components/ui/label";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 
 
 interface LetterheadDocumentProps {
@@ -25,48 +23,10 @@ interface LetterheadDocumentProps {
   logoDataUri?: string;
 }
 
-const headerInclusionOptions: { id: keyof LetterheadInclusionOptions, label: string }[] = [
-    { id: 'includeAddress', label: 'Address' },
-    { id: 'includeEmail', label: 'Email' },
-    { id: 'includePhone', label: 'Phone' },
-];
-
-const footerInclusionOptions: { id: keyof LetterheadInclusionOptions, label: string }[] = [
-    { id: 'includeRegNo', label: 'Registration No.' },
-    { id: 'includePan', label: 'PAN Number' },
-    { id: 'includeUrl', label: 'Website URL' },
-];
-
-const letterSectionOptions: { id: keyof LetterheadInclusionOptions, label: string }[] = [
-    { id: 'includeDate', label: 'Date' },
-    { id: 'includeRecipient', label: 'Recipient' },
-    { id: 'includeSubject', label: 'Subject Line' },
-    { id: 'includeBody', label: 'Body Text' },
-    { id: 'includeClosing', label: 'Closing/Signature' },
-]
-
-
 export function LetterheadDocument({ organization, logoDataUri }: LetterheadDocumentProps) {
   const { toast } = useToast();
   const [isGenerating, setIsGenerating] = useState(false);
   const [isTemplateGenerating, setIsTemplateGenerating] = useState(false);
-
-  // State for what to *include* in the letterhead
-  const [inclusions, setInclusions] = useState<LetterheadInclusionOptions>({
-      includeAddress: true,
-      includeEmail: true,
-      includePhone: true,
-      includeRegNo: true,
-      includePan: true,
-      includeUrl: true,
-      includeDate: true,
-      includeRecipient: true,
-      includeSubject: true,
-      includeBody: true,
-      includeClosing: true,
-  });
-  
-  // State for the *content* of the letterhead
   const [letterContent, setLetterContent] = useState<LetterContentOptions>({
       date: new Date(),
       recipientName: 'The Manager',
@@ -87,9 +47,9 @@ Thank you for your time and consideration. We look forward to establishing a ban
   });
 
   const letterheadRef = useRef<HTMLDivElement>(null);
-  const letterheadContentRef = useRef<HTMLDivElement>(null); // Ref for text content only
+  const letterheadContentRef = useRef<HTMLDivElement>(null);
   const templateRef = useRef<HTMLDivElement>(null);
-  const templateContentRef = useRef<HTMLDivElement>(null); // Ref for template text content
+  const templateContentRef = useRef<HTMLDivElement>(null);
 
   const generatePdf = async (isTemplate: boolean = false) => {
     if (!logoDataUri) {
@@ -148,20 +108,18 @@ Thank you for your time and consideration. We look forward to establishing a ban
       pdf.setFontSize(9);
       
       let headerTextY = 145;
-      if (inclusions.includeAddress) {
-          pdf.text(`Address: ${isTemplate ? '' : `${organization.address}, ${organization.city}`}`, textX, headerTextY);
-          headerTextY += 15;
-      }
+      pdf.text(`Address: ${isTemplate ? '' : `${organization.address}, ${organization.city}`}`, textX, headerTextY);
+      headerTextY += 15;
       
        if (isTemplate) {
           const emailX = textX;
           const phoneX = emailX + 150; 
-          if (inclusions.includeEmail) pdf.text('Email:', emailX, headerTextY);
-          if (inclusions.includePhone) pdf.text('Phone:', phoneX, headerTextY);
+          pdf.text('Email:', emailX, headerTextY);
+          pdf.text('Phone:', phoneX, headerTextY);
       } else {
            const emailPhoneText = [
-              inclusions.includeEmail && `Email: ${organization.contactEmail}`,
-              inclusions.includePhone && `Phone: ${organization.contactPhone}`,
+              `Email: ${organization.contactEmail}`,
+              `Phone: ${organization.contactPhone}`,
           ].filter(Boolean).join('  |  ');
           if (emailPhoneText) pdf.text(emailPhoneText, textX, headerTextY);
       }
@@ -175,49 +133,39 @@ Thank you for your time and consideration. We look forward to establishing a ban
       pdf.setFontSize(11);
       let bodyY = 220;
       
-      if (inclusions.includeDate) {
-        pdf.text(`Date: ${isTemplate ? '' : format(letterContent.date, 'dd MMM, yyyy')}`, margin, bodyY);
-      }
+      pdf.text(`Date: ${isTemplate ? '' : format(letterContent.date, 'dd MMM, yyyy')}`, margin, bodyY);
       
-      if (inclusions.includeRecipient) {
-          bodyY += 40;
-          pdf.text('To,', margin, bodyY);
-          bodyY += 15;
-          const recipientLines = pdf.splitTextToSize(isTemplate ? "" : letterContent.recipientName, contentWidth);
-          pdf.setFont('Helvetica', 'bold');
-          pdf.text(recipientLines, margin, bodyY);
-          bodyY += (recipientLines.length * 15);
-          
-          pdf.setFont('Helvetica', 'normal');
-          const addressLines = pdf.splitTextToSize(isTemplate ? '' : letterContent.recipientAddress, contentWidth);
-          pdf.text(addressLines, margin, bodyY);
-          bodyY += (addressLines.length * 15);
-      }
+      bodyY += 40;
+      pdf.text('To,', margin, bodyY);
+      bodyY += 15;
+      const recipientLines = pdf.splitTextToSize(isTemplate ? "" : letterContent.recipientName, contentWidth);
+      pdf.setFont('Helvetica', 'bold');
+      pdf.text(recipientLines, margin, bodyY);
+      bodyY += (recipientLines.length * 15);
+      
+      pdf.setFont('Helvetica', 'normal');
+      const addressLines = pdf.splitTextToSize(isTemplate ? '' : letterContent.recipientAddress, contentWidth);
+      pdf.text(addressLines, margin, bodyY);
+      bodyY += (addressLines.length * 15);
 
-      if(inclusions.includeSubject) {
-        bodyY += 40;
-        pdf.setFont('Helvetica', 'bold');
-        pdf.text('Subject: ', margin, bodyY);
-        pdf.setFont('Helvetica', 'normal');
-        pdf.text(isTemplate ? '' : letterContent.subject, margin + 50, bodyY);
-        bodyY += 15;
-      }
+      bodyY += 40;
+      pdf.setFont('Helvetica', 'bold');
+      pdf.text('Subject: ', margin, bodyY);
+      pdf.setFont('Helvetica', 'normal');
+      pdf.text(isTemplate ? '' : letterContent.subject, margin + 50, bodyY);
+      bodyY += 15;
       
-       if (inclusions.includeBody) {
-        bodyY += 40;
-        const bodyText = isTemplate ? '[Main body of the letter...]' : letterContent.body;
-        const bodyLines = pdf.splitTextToSize(bodyText, contentWidth);
-        pdf.text(bodyLines, margin, bodyY);
-      }
+      bodyY += 40;
+      const bodyText = isTemplate ? '[Main body of the letter...]' : letterContent.body;
+      const bodyLines = pdf.splitTextToSize(bodyText, contentWidth);
+      pdf.text(bodyLines, margin, bodyY);
 
       // --- Signature ---
       let signatureY = A4_HEIGHT_PT - 150;
-      if (inclusions.includeClosing) {
-          pdf.setFont('Helvetica', 'normal');
-          pdf.text('Sincerely,', margin, signatureY - 30);
-          const closingName = isTemplate ? '[Sender Name]' : letterContent.closingName;
-          pdf.text(closingName, margin, signatureY);
-      }
+      pdf.setFont('Helvetica', 'normal');
+      pdf.text('Sincerely,', margin, signatureY - 30);
+      const closingName = isTemplate ? '[Sender Name]' : letterContent.closingName;
+      pdf.text(closingName, margin, signatureY);
 
       const signatureLineX2 = A4_WIDTH_PT - margin;
       const signatureLineX1 = signatureLineX2 - 200;
@@ -236,20 +184,20 @@ Thank you for your time and consideration. We look forward to establishing a ban
           const regX = margin;
           const panX = regX + 150;
           let currentY = footerY;
-          if(inclusions.includeRegNo) pdf.text('Reg No:', regX, currentY);
-          if(inclusions.includePan) pdf.text('PAN:', panX, currentY);
+          pdf.text('Reg No:', regX, currentY);
+          pdf.text('PAN:', panX, currentY);
           
           currentY += 15;
-          if (inclusions.includeUrl) pdf.text('URL:', regX, currentY);
+          pdf.text('URL:', regX, currentY);
 
       } else {
           const regPanText = [
-            inclusions.includeRegNo && `Reg No: ${organization.registrationNumber}`,
-            inclusions.includePan && `PAN: ${organization.panNumber || 'N/A'}`,
+            `Reg No: ${organization.registrationNumber}`,
+            `PAN: ${organization.panNumber || 'N/A'}`,
           ].filter(Boolean).join(' | ');
           
           if(regPanText) pdf.text(regPanText, margin, footerY);
-          if (inclusions.includeUrl) pdf.text(`URL: ${organization.website}`, A4_WIDTH_PT - margin, footerY, { align: 'right' });
+          pdf.text(`URL: ${organization.website}`, A4_WIDTH_PT - margin, footerY, { align: 'right' });
       }
 
       const fileName = isTemplate 
@@ -275,9 +223,6 @@ Thank you for your time and consideration. We look forward to establishing a ban
     }
   };
 
-  const handleInclusionChange = (field: keyof LetterheadInclusionOptions, checked: boolean) => {
-    setInclusions(prev => ({ ...prev, [field]: checked }));
-  }
 
   return (
     <div className="flex-1 space-y-4">
@@ -374,7 +319,6 @@ Thank you for your time and consideration. We look forward to establishing a ban
                                         contentRef={letterheadContentRef}
                                         organization={organization}
                                         logoDataUri={logoDataUri}
-                                        inclusions={inclusions}
                                         letterContent={letterContent}
                                     />
                                     {/* Hidden template for PDF generation */}
@@ -385,7 +329,6 @@ Thank you for your time and consideration. We look forward to establishing a ban
                                             organization={organization}
                                             logoDataUri={logoDataUri}
                                             isTemplate={true}
-                                            inclusions={inclusions}
                                         />
                                     </div>
                                 </>
