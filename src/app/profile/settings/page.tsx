@@ -18,6 +18,7 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, For
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { Separator } from "@/components/ui/separator";
 
 const profileFormSchema = z.object({
   firstName: z.string().min(2, "First name must be at least 2 characters."),
@@ -167,8 +168,8 @@ export default function ProfileSettingsPage() {
                     <CardHeader>
                         <div className="flex justify-between items-start">
                             <div>
-                                <CardTitle>Account Settings</CardTitle>
-                                <CardDescription>{isEditing ? "Update your account details below." : "View your account details."}</CardDescription>
+                                <CardTitle className="text-primary">Account Settings</CardTitle>
+                                <CardDescription className="text-muted-foreground">{isEditing ? "Update your account details below." : "View your account details."}</CardDescription>
                             </div>
                             <div className="flex gap-2">
                                 {isEditing ? (
@@ -191,9 +192,9 @@ export default function ProfileSettingsPage() {
                     </CardHeader>
                     <CardContent className="space-y-6">
                         <Accordion type="multiple" defaultValue={["basic", "payment"]} className="w-full space-y-4">
-                            <AccordionItem value="basic">
-                                <AccordionTrigger className="text-lg font-semibold">Basic Information</AccordionTrigger>
-                                <AccordionContent className="pt-4 space-y-6">
+                            <AccordionItem value="basic" className="border rounded-lg">
+                                <AccordionTrigger className="p-4 font-semibold text-primary"><h4 className="flex items-center gap-2"><User className="h-5 w-5"/>Basic Information</h4></AccordionTrigger>
+                                <AccordionContent className="p-6 pt-2 space-y-6">
                                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                         <FormField control={form.control} name="firstName" render={({ field }) => (<FormItem><FormLabel>First Name</FormLabel><FormControl><Input {...field} disabled={!isEditing} /></FormControl><FormMessage /></FormItem>)} />
                                         <FormField control={form.control} name="middleName" render={({ field }) => (<FormItem><FormLabel>Middle Name</FormLabel><FormControl><Input {...field} disabled={!isEditing} /></FormControl><FormMessage /></FormItem>)} />
@@ -218,9 +219,9 @@ export default function ProfileSettingsPage() {
                                 </AccordionContent>
                             </AccordionItem>
 
-                            <AccordionItem value="address">
-                                <AccordionTrigger className="text-lg font-semibold">Address Details</AccordionTrigger>
-                                <AccordionContent className="pt-4 space-y-6">
+                            <AccordionItem value="address" className="border rounded-lg">
+                                <AccordionTrigger className="p-4 font-semibold text-primary"><h4 className="flex items-center gap-2"><MapPin className="h-5 w-5"/>Address Details</h4></AccordionTrigger>
+                                <AccordionContent className="p-6 pt-2 space-y-6">
                                     <FormField control={form.control} name="addressLine1" render={({ field }) => (<FormItem><FormLabel>Address</FormLabel><FormControl><Textarea {...field} disabled={!isEditing} /></FormControl><FormMessage /></FormItem>)} />
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <FormField control={form.control} name="pincode" render={({ field }) => (<FormItem><FormLabel>Pincode</FormLabel><FormControl><Input {...field} disabled={!isEditing} /></FormControl><FormMessage /></FormItem>)} />
@@ -229,9 +230,9 @@ export default function ProfileSettingsPage() {
                             </AccordionItem>
                             
                              {isBeneficiary && (
-                                 <AccordionItem value="beneficiary">
-                                     <AccordionTrigger className="text-lg font-semibold">Beneficiary Details</AccordionTrigger>
-                                     <AccordionContent className="pt-4 space-y-6">
+                                 <AccordionItem value="beneficiary" className="border rounded-lg">
+                                     <AccordionTrigger className="p-4 font-semibold text-primary"><h4 className="flex items-center gap-2"><User className="h-5 w-5"/>Beneficiary Details</h4></AccordionTrigger>
+                                     <AccordionContent className="p-6 pt-2 space-y-6">
                                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                             <FormField control={form.control} name="occupation" render={({ field }) => (<FormItem><FormLabel>Occupation</FormLabel><FormControl><Input {...field} disabled={!isEditing} /></FormControl><FormMessage /></FormItem>)}/>
                                             <FormField control={form.control} name="familyMembers" render={({ field }) => (<FormItem><FormLabel>Number of Family Members</FormLabel><FormControl><Input type="number" {...field} disabled={!isEditing} /></FormControl><FormMessage /></FormItem>)}/>
@@ -254,9 +255,9 @@ export default function ProfileSettingsPage() {
                                  </AccordionItem>
                              )}
 
-                            <AccordionItem value="payment">
-                                <AccordionTrigger className="text-lg font-semibold">Verification &amp; Payment Details</AccordionTrigger>
-                                <AccordionContent className="pt-4 space-y-6">
+                            <AccordionItem value="payment" className="border rounded-lg">
+                                <AccordionTrigger className="p-4 font-semibold text-primary"><h4 className="flex items-center gap-2"><CreditCard className="h-5 w-5"/>Verification &amp; Payment Details</h4></AccordionTrigger>
+                                <AccordionContent className="p-6 pt-2 space-y-6">
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <FormField control={form.control} name="panNumber" render={({ field }) => (<FormItem><FormLabel>PAN Number</FormLabel><FormControl><Input {...field} disabled={!isEditing} /></FormControl><FormMessage /></FormItem>)}/>
                                         <FormField control={form.control} name="aadhaarNumber" render={({ field }) => (<FormItem><FormLabel>Aadhaar Number</FormLabel><FormControl><Input {...field} disabled={!isEditing} /></FormControl><FormMessage /></FormItem>)}/>
