@@ -1,10 +1,9 @@
 
-
 "use client";
 
 import { useRef, useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Download, Loader2, FileText, Settings, Type, Milestone, CalendarIcon } from "lucide-react";
+import { Download, Loader2, FileText, Settings, Type, Milestone, CalendarIcon, Users } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import type { Organization, LetterheadInclusionOptions, LetterContentOptions } from "@/services/types";
 import { Letterhead } from "@/components/letterhead";
