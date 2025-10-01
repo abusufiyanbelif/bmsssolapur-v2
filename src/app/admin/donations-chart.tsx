@@ -229,8 +229,8 @@ export function DonationsChart({ donations }: { donations: Donation[] }) {
     <Card className="col-span-4">
       <CardHeader className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
         <div>
-            <CardTitle className="font-headline">Donations Overview</CardTitle>
-            <CardDescription>Verified donations from the selected time period.</CardDescription>
+            <CardTitle className="font-headline text-primary">Donations Overview</CardTitle>
+            <CardDescription className="text-muted-foreground">Verified donations from the selected time period.</CardDescription>
         </div>
         <div className="flex flex-col sm:flex-row gap-2 w-full lg:w-auto">
              <Select onValueChange={setTimeframe} value={selectedTimeframe}>

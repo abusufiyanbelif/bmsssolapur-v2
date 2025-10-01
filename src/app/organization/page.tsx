@@ -6,7 +6,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import Image from "next/image";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import type { User, Organization } from "@/services/types";
-import { QrCodeDialog } from "@/app/organization/qr-code-dialog";
+import { QrCodeDialog } from "@/components/qr-code-dialog";
 import { getAllUsers } from "@/services/user-service";
 import { getPublicOrganization } from "@/services/public-data-service";
 import { getCurrentOrganization } from "../admin/settings/actions";
@@ -116,8 +116,8 @@ export default async function OrganizationPage() {
             <h2 className="text-3xl font-bold tracking-tight font-headline text-primary">About Our Organization</h2>
             <Card>
                 <CardHeader>
-                    <CardTitle>Verifiable Details</CardTitle>
-                    <CardDescription>
+                    <CardTitle className="text-primary">Verifiable Details</CardTitle>
+                    <CardDescription className="text-muted-foreground">
                         Transparency is important to us. Here are the official details of our organization.
                     </CardDescription>
                 </CardHeader>
@@ -142,11 +142,7 @@ export default async function OrganizationPage() {
                             </div>
                         </div>
                         {organization.qrCodeUrl && (
-                            <QrCodeDialog
-                                qrCodeUrl={organization.qrCodeUrl}
-                                upiId={organization.upiId!}
-                                orgName={organization.name}
-                            >
+                             <QrCodeDialog organization={organization}>
                                 <div className="flex flex-col items-center justify-center gap-4 p-4 border rounded-lg bg-muted/50 cursor-pointer hover:bg-muted transition-colors">
                                     <div className="relative w-56 h-56">
                                         <Image src={organization.qrCodeUrl} alt="UPI QR Code" fill className="object-contain rounded-md" data-ai-hint="qr code" />
@@ -160,7 +156,7 @@ export default async function OrganizationPage() {
                         )}
                     </div>
                      <div className="mt-8 pt-6 border-t">
-                        <h3 className="text-lg font-semibold mb-4">Bank Account Details</h3>
+                        <h3 className="text-lg font-semibold mb-4 text-primary">Bank Account Details</h3>
                         <div className="grid md:grid-cols-2 gap-x-8 gap-y-4">
                             {paymentDetails.map(item => (
                                 <div key={item.label} className="flex items-start gap-4">
@@ -178,18 +174,18 @@ export default async function OrganizationPage() {
             
             <Card id="board-members">
                  <CardHeader>
-                    <CardTitle className="flex items-center gap-3">
-                        <Users className="h-6 w-6 text-accent" />
+                    <CardTitle className="flex items-center gap-3 text-primary">
+                        <Users className="h-6 w-6" />
                         Our Team
                     </CardTitle>
-                    <CardDescription>
+                    <CardDescription className="text-muted-foreground">
                         The dedicated individuals leading our organization and its mission.
                     </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
                     {boardMembers.founder.length > 0 && (
                         <div>
-                            <h3 className="text-lg font-semibold mb-4">Founder</h3>
+                            <h3 className="text-lg font-semibold mb-4 text-primary">Founder</h3>
                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                                 {boardMembers.founder.map(member => <MemberCard key={member.id} member={member} />)}
                             </div>
@@ -197,7 +193,7 @@ export default async function OrganizationPage() {
                     )}
                      {boardMembers.cofounder.length > 0 && (
                         <div>
-                            <h3 className="text-lg font-semibold mb-4">Co-Founder</h3>
+                            <h3 className="text-lg font-semibold mb-4 text-primary">Co-Founder</h3>
                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                                 {boardMembers.cofounder.map(member => <MemberCard key={member.id} member={member} />)}
                             </div>
@@ -205,7 +201,7 @@ export default async function OrganizationPage() {
                      )}
                       {boardMembers.finance.length > 0 && (
                         <div>
-                            <h3 className="text-lg font-semibold mb-4 flex items-center gap-2"><Banknote className="h-5 w-5" /> Finance</h3>
+                            <h3 className="text-lg font-semibold mb-4 flex items-center gap-2 text-primary"><Banknote className="h-5 w-5" /> Finance</h3>
                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                                 {boardMembers.finance.map(member => <MemberCard key={member.id} member={member} />)}
                             </div>
@@ -213,7 +209,7 @@ export default async function OrganizationPage() {
                     )}
                     {boardMembers.members.length > 0 && (
                         <div>
-                            <h3 className="text-lg font-semibold mb-4">Members</h3>
+                            <h3 className="text-lg font-semibold mb-4 text-primary">Members</h3>
                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                                 {boardMembers.members.map(member => <MemberCard key={member.id} member={member} />)}
                             </div>
@@ -224,11 +220,11 @@ export default async function OrganizationPage() {
 
             <Card id="principles">
                 <CardHeader>
-                    <CardTitle className="flex items-center gap-3">
-                        <Award className="h-6 w-6 text-accent" />
+                    <CardTitle className="flex items-center gap-3 text-primary">
+                        <Award className="h-6 w-6" />
                         Our Guiding Principles
                     </CardTitle>
-                    <CardDescription>
+                    <CardDescription className="text-muted-foreground">
                         To ensure our operations are transparent, fair, and impactful, we adhere to a clear set of guiding principles. These rules govern how we identify beneficiaries, allocate funds, and manage our resources to best serve the community.
                     </CardDescription>
                 </CardHeader>

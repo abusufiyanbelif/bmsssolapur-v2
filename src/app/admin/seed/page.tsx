@@ -94,8 +94,8 @@ export default function SeedPage() {
         const isSuccess = status === 'success';
 
         return (
-            <Alert variant={isSuccess ? 'default' : 'destructive'} className={isSuccess ? "border-green-300 bg-green-50 text-green-800" : ""}>
-                {isSuccess ? <CheckCircle className="h-4 w-4 !text-green-600" /> : <AlertCircle className="h-4 w-4" />}
+            <Alert variant={isSuccess ? 'success' : 'destructive'}>
+                {isSuccess ? <CheckCircle className="h-4 w-4" /> : <AlertCircle className="h-4 w-4" />}
                 <AlertTitle>{result?.message}</AlertTitle>
                 {result?.details && result.details.length > 0 && (
                     <AlertDescription>
@@ -113,8 +113,8 @@ export default function SeedPage() {
              <h2 className="text-3xl font-bold tracking-tight font-headline text-primary">Database Seeding</h2>
              <Card>
                 <CardHeader>
-                    <CardTitle>Seed Initial Data</CardTitle>
-                    <CardDescription>
+                    <CardTitle className="text-primary">Seed Initial Data</CardTitle>
+                    <CardDescription className="text-muted-foreground">
                        Use these actions to populate or clear your Firestore database. Run the &quot;Initial Users &amp; Quotes&quot; seed first.
                     </CardDescription>
                 </CardHeader>

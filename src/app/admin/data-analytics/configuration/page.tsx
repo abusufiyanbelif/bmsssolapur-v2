@@ -26,8 +26,8 @@ export default async function DataAnalyticsConfigurationPage() {
             <h2 className="text-3xl font-bold tracking-tight font-headline text-primary">Analytics Dashboard Settings</h2>
             <Card>
                 <CardHeader>
-                    <CardTitle>Dashboard Card Visibility</CardTitle>
-                    <CardDescription>
+                    <CardTitle className="text-primary">Dashboard Card Visibility</CardTitle>
+                    <CardDescription className="text-muted-foreground">
                        Click &quot;Edit Settings&quot; to configure which analytics sections are visible on the dashboard for each admin role.
                     </CardDescription>
                 </CardHeader>

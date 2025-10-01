@@ -126,22 +126,32 @@ export function EditOrganizationForm({ organization }: EditOrganizationFormProps
         <CardHeader>
             <div className="flex items-center justify-between">
                 <div>
-                    <CardTitle>Manage Organization Details</CardTitle>
-                    <CardDescription>
+                    <CardTitle className="text-primary">Manage Organization Details</CardTitle>
+                    <CardDescription className="text-muted-foreground">
                         Update your organization's public information, contact details, and payment settings. These details will be visible on the public-facing pages.
                     </CardDescription>
                 </div>
-                 {!isEditing && (
+                 {!isEditing ? (
                     <Button onClick={() => setIsEditing(true)}>
                         <Edit className="mr-2 h-4 w-4" />
                         Edit
                     </Button>
+                ) : (
+                    <div className="flex gap-2">
+                        <Button type="button" variant="outline" onClick={handleCancel}>
+                             <X className="mr-2 h-4 w-4" /> Cancel
+                        </Button>
+                         <Button onClick={form.handleSubmit(onSubmit)} disabled={isSubmitting || !isDirty}>
+                            {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+                            Save Changes
+                        </Button>
+                    </div>
                 )}
             </div>
         </CardHeader>
         <CardContent>
             <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+            <form className="space-y-8">
                 <fieldset disabled={!isEditing} className="space-y-8">
                     <div className="grid md:grid-cols-3 gap-8">
                         <div className="md:col-span-2 space-y-8">
@@ -382,19 +392,6 @@ export function EditOrganizationForm({ organization }: EditOrganizationFormProps
                         </div>
                     </div>
                 </fieldset>
-                
-                {isEditing && (
-                    <div className="flex gap-4 border-t pt-6">
-                        <Button type="submit" disabled={isSubmitting || !isDirty} size="lg">
-                            {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-                            Save Changes
-                        </Button>
-                        <Button type="button" variant="outline" onClick={handleCancel} size="lg" disabled={isSubmitting}>
-                            <X className="mr-2 h-4 w-4" />
-                            Cancel
-                        </Button>
-                    </div>
-                )}
             </form>
             </Form>
         </CardContent>

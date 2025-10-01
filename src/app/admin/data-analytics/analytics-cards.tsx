@@ -82,7 +82,7 @@ export function FinancialPerformanceCards({ allDonations, allCampaigns }: Financ
 
     return (
         <div className="space-y-4">
-             <h3 className="text-xl font-bold tracking-tight font-headline">Fundraising & Financial Performance</h3>
+             <h3 className="text-xl font-bold tracking-tight font-headline text-primary">Fundraising & Financial Performance</h3>
              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                 {financialMetrics.map(metric => (
                     <Card key={metric.title}>
@@ -136,7 +136,7 @@ export function SystemHealthCards({ allUsers, allLeads, allDonations }: SystemHe
     
     return (
         <div className="space-y-4">
-            <h3 className="text-xl font-bold tracking-tight font-headline">System & Data Health</h3>
+            <h3 className="text-xl font-bold tracking-tight font-headline text-primary">System & Data Health</h3>
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">

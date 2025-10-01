@@ -21,19 +21,18 @@ export default function PersonaManagementPage() {
       </div>
       <Card>
         <CardHeader>
-          <CardTitle>Manage Personas</CardTitle>
-          <CardDescription>
+          <CardTitle className="text-primary">Manage Personas</CardTitle>
+          <CardDescription className="text-muted-foreground">
             Define and manage the AI personas used throughout the application.
           </CardDescription>
         </CardHeader>
-        <CardContent>
-          <div className="grid gap-6">
+        <CardContent className="grid gap-6">
             {personas.map((persona) => (
               <Card key={persona.name}>
                 <CardHeader className="flex flex-row items-start justify-between">
                   <div>
                     <CardTitle className="text-lg">{persona.name}</CardTitle>
-                    <CardDescription className="mt-1">{persona.description}</CardDescription>
+                    <CardDescription className="mt-1 text-muted-foreground">{persona.description}</CardDescription>
                   </div>
                    <div className="flex items-center gap-2">
                     {persona.isDefault && (
@@ -44,7 +43,6 @@ export default function PersonaManagementPage() {
                 </CardHeader>
               </Card>
             ))}
-          </div>
         </CardContent>
       </Card>
     </div>

@@ -8,11 +8,11 @@ export default function CommunicationConfigurationPage() {
             <h2 className="text-3xl font-bold tracking-tight font-headline text-primary">Communications Configuration</h2>
             <Card>
                 <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
+                    <CardTitle className="flex items-center gap-2 text-primary">
                         <Settings />
                         Communications Settings
                     </CardTitle>
-                    <CardDescription>
+                    <CardDescription className="text-muted-foreground">
                         Configure settings related to communications, such as message templates and provider settings.
                     </CardDescription>
                 </CardHeader>

@@ -137,7 +137,7 @@ const ServiceCard = ({ service, loading }: { service: any, loading: boolean }) =
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-4">
                         <service.icon className="h-8 w-8 text-primary" />
-                        <CardTitle className="text-lg">{service.name}</CardTitle>
+                        <CardTitle className="text-lg text-primary">{service.name}</CardTitle>
                     </div>
                     {service.version && (
                          <div className="flex items-center gap-2">
@@ -296,8 +296,8 @@ export default function ServicesPage() {
       metric: "Configured",
       metricLabel: "Status",
       action: async () => { 
-        const { testRazorpayConnection } = await import('@/app/admin/payment-gateways/actions');
-        return testRazorpayConnection();
+        const { testGatewayConnection } = await import('@/app/admin/payment-gateways/actions');
+        return testGatewayConnection('razorpay');
        },
       status: null,
       version: `razorpay v${packageJson.dependencies.razorpay}`,
@@ -312,8 +312,8 @@ export default function ServicesPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Technology Stack</CardTitle>
-          <CardDescription>
+          <CardTitle className="text-primary">Technology Stack</CardTitle>
+          <CardDescription className="text-muted-foreground">
             This application is built with the following technologies and frameworks.
           </CardDescription>
         </CardHeader>
@@ -353,8 +353,8 @@ export default function ServicesPage() {
       
       <Card>
         <CardHeader>
-          <CardTitle>Usage & Configuration Overview</CardTitle>
-          <CardDescription>
+          <CardTitle className="text-primary">Usage & Configuration Overview</CardTitle>
+          <CardDescription className="text-muted-foreground">
             An overview of all Firebase and external services used in the
             project, along with their current usage metrics.
           </CardDescription>
@@ -368,8 +368,8 @@ export default function ServicesPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Data & Logs Location</CardTitle>
-          <CardDescription>
+          <CardTitle className="text-primary">Data & Logs Location</CardTitle>
+          <CardDescription className="text-muted-foreground">
             Your application&apos;s data and logs are securely managed by Google Cloud and Firebase. Here’s where to find them.
           </CardDescription>
         </CardHeader>

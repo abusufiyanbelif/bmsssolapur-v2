@@ -41,11 +41,11 @@ export default async function ThemeSettingsPage() {
             <h2 className="text-3xl font-bold tracking-tight font-headline text-primary">Theme Settings</h2>
             <Card>
                 <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
+                    <CardTitle className="flex items-center gap-2 text-primary">
                         <Palette />
                         Application Theme
                     </CardTitle>
-                    <CardDescription>
+                    <CardDescription className="text-muted-foreground">
                        Customize the look and feel of the application. Changes will be applied globally.
                     </CardDescription>
                 </CardHeader>

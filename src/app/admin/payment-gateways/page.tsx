@@ -13,11 +13,11 @@ export default async function PaymentGatewaySettingsPage() {
             <h2 className="text-3xl font-bold tracking-tight font-headline text-primary">Payment Gateway Settings</h2>
             <Card>
                 <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
+                    <CardTitle className="flex items-center gap-2 text-primary">
                         <CreditCard />
                         Manage Payment Gateways
                     </CardTitle>
-                    <CardDescription>
+                    <CardDescription className="text-muted-foreground">
                         Use the master switch to enable or disable all online payment methods. When enabled, you can configure individual gateways below.
                     </CardDescription>
                 </CardHeader>

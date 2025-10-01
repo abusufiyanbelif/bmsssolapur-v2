@@ -104,11 +104,11 @@ export default function UserGroupsPage() {
         <h2 className="text-3xl font-bold tracking-tight font-headline text-primary">User Groups</h2>
         <Card>
             <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                    <Group className="h-6 w-6 text-primary" />
+                <CardTitle className="flex items-center gap-2 text-primary">
+                    <Group className="h-6 w-6" />
                     Manage User Groups
                 </CardTitle>
-                <CardDescription className="space-y-2">
+                <CardDescription className="space-y-2 text-muted-foreground">
                    <p>
                         In this application, <strong className="text-foreground">Roles</strong> define a user&apos;s function (e.g., Admin, Donor), while <strong className="text-foreground">Groups</strong> define their organizational title or team (e.g., Founder, Finance).
                    </p>

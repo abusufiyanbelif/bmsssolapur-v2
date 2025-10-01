@@ -1,7 +1,7 @@
 
 import { getCurrentOrganization } from "@/app/admin/settings/actions";
 import { notFound } from "next/navigation";
-import { LetterheadDocument } from "./letterhead-document";
+import { LetterheadDocument } from "@/app/admin/organization/letterhead/letterhead-document";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
 import { getImageAsBase64 } from "./actions";
@@ -26,5 +26,10 @@ export default async function LetterheadPage() {
     
     const logoDataUri = await getImageAsBase64(organization.logoUrl);
 
-    return <LetterheadDocument organization={organization} logoDataUri={logoDataUri} />;
+    return (
+        <div className="flex-1 space-y-4">
+            <h2 className="text-3xl font-bold tracking-tight font-headline text-primary">Organization Letterhead</h2>
+            <LetterheadDocument organization={organization} logoDataUri={logoDataUri} />
+        </div>
+    )
 }

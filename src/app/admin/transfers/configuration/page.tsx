@@ -8,11 +8,11 @@ export default function TransferConfigurationPage() {
             <h2 className="text-3xl font-bold tracking-tight font-headline text-primary">Transfer Configuration</h2>
             <Card>
                 <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
+                    <CardTitle className="flex items-center gap-2 text-primary">
                         <Settings />
                         Beneficiary Transfer Settings
                     </CardTitle>
-                    <CardDescription>
+                    <CardDescription className="text-muted-foreground">
                         Configure settings related to transferring funds to beneficiaries.
                     </CardDescription>
                 </CardHeader>

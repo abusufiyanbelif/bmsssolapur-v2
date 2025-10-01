@@ -1,4 +1,5 @@
 
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { getAppSettings } from "@/services/app-settings-service";
 import { NotificationSettingsForm } from "./notification-settings-form";
@@ -26,11 +27,11 @@ export default async function NotificationSettingsPage() {
             <h2 className="text-3xl font-bold tracking-tight font-headline text-primary">Notification Settings</h2>
             <Card>
                 <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
+                    <CardTitle className="flex items-center gap-2 text-primary">
                         <BellRing />
                         Manage Notification Providers
                     </CardTitle>
-                    <CardDescription>
+                    <CardDescription className="text-muted-foreground">
                        Configure credentials for external notification services like Twilio and Nodemailer. Disabled services will not send notifications.
                     </CardDescription>
                 </CardHeader>

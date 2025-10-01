@@ -7,6 +7,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Loader2, AlertCircle, Server } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
+import { listAvailableModels } from "./actions";
+
 
 interface Model {
     name: string;
@@ -18,27 +20,6 @@ interface Model {
     supportedGenerationMethods: string[];
 }
 
-async function listModels(): Promise<{ models: Model[], error?: string }> {
-    try {
-        const res = await fetch(
-            "https://generativelanguage.googleapis.com/v1beta/models",
-            { headers: { "x-goog-api-key": process.env.NEXT_PUBLIC_GEMINI_API_KEY! } }
-        );
-
-        if (!res.ok) {
-            const errorBody = await res.json();
-            return { models: [], error: `Failed to fetch models: ${errorBody.error.message}` };
-        }
-        
-        const data = await res.json();
-        return { models: data.models };
-
-    } catch (e) {
-        const error = e instanceof Error ? e.message : "An unknown network error occurred.";
-        return { models: [], error };
-    }
-}
-
 export default function ModelsDiagnosticsPage() {
     const [models, setModels] = useState<Model[]>([]);
     const [loading, setLoading] = useState(true);
@@ -46,7 +27,7 @@ export default function ModelsDiagnosticsPage() {
 
     useEffect(() => {
         const fetchModels = async () => {
-            const result = await listModels();
+            const result = await listAvailableModels();
             if (result.error) {
                 setError(result.error);
             } else {
@@ -110,11 +91,11 @@ export default function ModelsDiagnosticsPage() {
             <h2 className="text-3xl font-bold tracking-tight font-headline text-primary">Model Diagnostics</h2>
             <Card>
                 <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
+                    <CardTitle className="flex items-center gap-2 text-primary">
                         <Server />
                         Available Gemini Models
                     </CardTitle>
-                    <CardDescription>
+                    <CardDescription className="text-muted-foreground">
                         This is a live list of the generative AI models available to your application via the provided API key.
                     </CardDescription>
                 </CardHeader>

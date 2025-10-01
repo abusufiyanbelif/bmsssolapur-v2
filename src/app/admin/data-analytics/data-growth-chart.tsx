@@ -200,10 +200,10 @@ export function DataGrowthChart({ users, leads, donations }: { users: User[], le
     <Card>
       <CardHeader className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
         <div>
-            <CardTitle className="font-headline flex items-center gap-2">
+            <CardTitle className="font-headline flex items-center gap-2 text-primary">
                 Data Growth Overview
             </CardTitle>
-            <CardDescription>New users, leads, and donations created over the selected period.</CardDescription>
+            <CardDescription className="text-muted-foreground">New users, leads, and donations created over the selected period.</CardDescription>
         </div>
         <div className="flex flex-col sm:flex-row gap-2 w-full lg:w-auto">
              <Select onValueChange={setTimeframe} defaultValue="half-yearly">

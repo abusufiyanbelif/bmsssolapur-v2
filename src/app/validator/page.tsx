@@ -8,8 +8,8 @@ export default function ValidatorPage() {
             <h2 className="text-3xl font-bold tracking-tight font-headline text-primary">Configuration Validator</h2>
             <Card>
                 <CardHeader>
-                    <CardTitle>Validate Configuration</CardTitle>
-                    <CardDescription>
+                    <CardTitle className="text-primary">Validate Configuration</CardTitle>
+                    <CardDescription className="text-muted-foreground">
                         Use the AI-powered validator to check your configurations for potential misconfigurations or security vulnerabilities.
                     </CardDescription>
                 </CardHeader>
@@ -20,5 +20,3 @@ export default function ValidatorPage() {
         </div>
     );
 }
-
-    

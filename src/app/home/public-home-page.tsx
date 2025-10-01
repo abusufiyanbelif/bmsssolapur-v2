@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
@@ -34,8 +35,8 @@ function InspirationalQuotes({ quotes }: { quotes: Quote[] }) {
         return (
              <Card>
                 <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                        <QuoteIcon className="text-primary" />
+                    <CardTitle className="flex items-center gap-2 text-primary">
+                        <QuoteIcon />
                         Wisdom & Reflection
                     </CardTitle>
                 </CardHeader>
@@ -53,17 +54,17 @@ function InspirationalQuotes({ quotes }: { quotes: Quote[] }) {
     return (
         <Card>
             <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                    <QuoteIcon className="text-primary" />
+                <CardTitle className="flex items-center gap-2 text-primary">
+                    <QuoteIcon />
                     Wisdom & Reflection
                 </CardTitle>
             </CardHeader>
             <CardContent>
                 <div className="space-y-6">
                     {_quotes.map((quote, index) => (
-                        <blockquote key={index} className="border-l-2 pl-4 italic text-sm">
+                        <blockquote key={index} className="border-l-2 pl-4 italic text-sm text-muted-foreground">
                             <p>&quot;{quote.text}&quot;</p>
-                            <cite className="block text-right not-italic text-xs text-muted-foreground mt-1">— {quote.source}</cite>
+                            <cite className="block text-right not-italic text-xs mt-1">— {quote.source}</cite>
                         </blockquote>
                     ))}
                 </div>
@@ -110,7 +111,7 @@ export function PublicHomePage({ quotes, initialLeads, campaigns, allLeads }: { 
       {/* Open Cases */}
       <Card>
           <CardHeader>
-              <CardTitle>General Help Cases</CardTitle>
+              <CardTitle className="text-primary">General Help Cases</CardTitle>
               <CardDescription>These are verified, individual cases that need your direct support right now.</CardDescription>
           </CardHeader>
           <CardContent>

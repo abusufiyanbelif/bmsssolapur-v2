@@ -157,7 +157,7 @@ export default function BoardManagementPage() {
             <div className="space-y-6">
                  {boardMembers.founder.length > 0 && (
                     <div>
-                        <h3 className="text-lg font-semibold mb-4">Founder</h3>
+                        <h3 className="text-lg font-semibold mb-4 text-primary">Founder</h3>
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                             {boardMembers.founder.map(member => <MemberCard key={member.id} member={member} onRemove={handleRemoveMember} />)}
                         </div>
@@ -165,7 +165,7 @@ export default function BoardManagementPage() {
                 )}
                 {boardMembers.cofounder.length > 0 && (
                     <div>
-                        <h3 className="text-lg font-semibold mb-4">Co-Founder</h3>
+                        <h3 className="text-lg font-semibold mb-4 text-primary">Co-Founder</h3>
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                             {boardMembers.cofounder.map(member => <MemberCard key={member.id} member={member} onRemove={handleRemoveMember} />)}
                         </div>
@@ -173,7 +173,7 @@ export default function BoardManagementPage() {
                 )}
                 {boardMembers.finance.length > 0 && (
                     <div>
-                        <h3 className="text-lg font-semibold mb-4 flex items-center gap-2"><Banknote className="h-5 w-5" /> Finance</h3>
+                        <h3 className="text-lg font-semibold mb-4 flex items-center gap-2 text-primary"><Banknote className="h-5 w-5" /> Finance</h3>
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                             {boardMembers.finance.map(member => <MemberCard key={member.id} member={member} onRemove={handleRemoveMember} />)}
                         </div>
@@ -181,7 +181,7 @@ export default function BoardManagementPage() {
                 )}
                 {boardMembers.members.length > 0 && (
                     <div>
-                        <h3 className="text-lg font-semibold mb-4">Members</h3>
+                        <h3 className="text-lg font-semibold mb-4 text-primary">Members</h3>
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                             {boardMembers.members.map(member => <MemberCard key={member.id} member={member} onRemove={handleRemoveMember} />)}
                         </div>
@@ -205,11 +205,11 @@ export default function BoardManagementPage() {
             </div>
             <Card id="board-members">
                 <CardHeader>
-                    <CardTitle className="flex items-center gap-3">
-                        <Users className="h-6 w-6 text-primary" />
+                    <CardTitle className="flex items-center gap-3 text-primary">
+                        <Users className="h-6 w-6" />
                         Our Team
                     </CardTitle>
-                    <CardDescription>
+                    <CardDescription className="text-muted-foreground">
                         The dedicated individuals leading our organization and its mission, organized by groups.
                     </CardDescription>
                 </CardHeader>

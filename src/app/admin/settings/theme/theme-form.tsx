@@ -260,21 +260,21 @@ export function ThemeForm({ currentTheme }: ThemeFormProps) {
 
                 <Accordion type="multiple" defaultValue={["branding", "text", "notifications"]} className="w-full space-y-4">
                     <AccordionItem value="branding" className="border rounded-lg">
-                        <AccordionTrigger className="p-4"><h4 className="font-semibold flex items-center gap-2"><Paintbrush /> Branding & UI Colors</h4></AccordionTrigger>
+                        <AccordionTrigger className="p-4 font-semibold text-primary"><h4 className="flex items-center gap-2"><Paintbrush /> Branding & UI Colors</h4></AccordionTrigger>
                         <AccordionContent className="p-6 pt-2 grid grid-cols-1 md:grid-cols-2 gap-6">
                             <ColorInput name="primary" label="Primary Color" />
                             <ColorInput name="accent" label="Accent Color" />
                         </AccordionContent>
                     </AccordionItem>
                      <AccordionItem value="text" className="border rounded-lg">
-                        <AccordionTrigger className="p-4"><h4 className="font-semibold flex items-center gap-2"><Type /> Text & Background Colors</h4></AccordionTrigger>
+                        <AccordionTrigger className="p-4 font-semibold text-primary"><h4 className="flex items-center gap-2"><Type /> Text & Background Colors</h4></AccordionTrigger>
                         <AccordionContent className="p-6 pt-2 grid grid-cols-1 md:grid-cols-2 gap-6">
                             <ColorInput name="background" label="Background Color" />
                             <ColorInput name="foreground" label="Foreground (Text) Color" />
                         </AccordionContent>
                     </AccordionItem>
                     <AccordionItem value="notifications" className="border rounded-lg">
-                        <AccordionTrigger className="p-4"><h4 className="font-semibold flex items-center gap-2"><MessageSquare /> Notification & Status Colors</h4></AccordionTrigger>
+                        <AccordionTrigger className="p-4 font-semibold text-primary"><h4 className="flex items-center gap-2"><MessageSquare /> Notification & Status Colors</h4></AccordionTrigger>
                         <AccordionContent className="p-6 pt-2 grid grid-cols-1 md:grid-cols-2 gap-6">
                             <ColorInput name="success" label="Success Color" />
                             <ColorInput name="warning" label="Warning Color" />
@@ -331,7 +331,7 @@ export function ThemeForm({ currentTheme }: ThemeFormProps) {
                                <AlertTitle style={{color: colorToHsl(watchedColors.foreground)}}>Warning Message</AlertTitle>
                                <AlertDescription style={{color: `hsl(var(--muted-foreground))`}}>This is a warning alert.</AlertDescription>
                            </Alert>
-                           <Alert variant="destructive" style={{borderColor: `hsl(${watchedColors.destructive})`, backgroundColor: `hsla(${watchedColors.destructive}, 0.1)`, color: `hsl(${watchedColors.destructive})` }}>
+                           <Alert variant="destructive" style={{borderColor: `hsl(${watchedColors.destructive})`, color: `hsl(${watchedColors.destructive})` }}>
                                <AlertCircle className="h-4 w-4" />
                                <AlertTitle style={{color: `hsl(${watchedColors.destructive})`}}>Error Message</AlertTitle>
                                <AlertDescription style={{color: `hsla(${watchedColors.destructive}, 0.8)`}}>This is a destructive alert.</AlertDescription>
