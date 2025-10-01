@@ -189,6 +189,36 @@ const ramadan2025Campaign: Omit<Campaign, 'id' | 'createdAt' | 'updatedAt'> = {
     source: 'Seeded',
 };
 
+const floodReliefCampaign: Omit<Campaign, 'id' | 'createdAt' | 'updatedAt'> = {
+    name: "Flood Relief September 2025 Solapur by SIO",
+    description: `Solapur Flood Relief Report - Day 3
+
+- Pakani Village :
+
+Today our team visited Pakani Village in North Solapur, where we conducted survey of homes affected by flood, we identified 15+ homes who lost almost everything in Flood. We also distributed Water Bottles and Biscuits.
+
+- Tirhe Village :
+
+In Tirhe Village we distributed 20 Ration Kits of 1500/- each, which includes (Daal, oil, Mat, Dettol, Soap, Water Bottles, Sugar, Tea, Cleaning Materials, etc.) to all affected people. We also identified 20+ people who lost everything in Flood.
+
+- Hattur Village :
+
+In Hattur Village we conducted survey of houses affected by Floods, and we also distributed Water Bottles and Biscuits to needy people in village.
+
+We need 50+ Ration Kits (1500/- each) for coming days.
+
+Donate Generously for the Flood affected people. 
+
+💐 SIO and Jamaat-e-Islami Hind Solapur💐`,
+    goal: 75000, // 50 kits * 1500 each
+    collectedAmount: 7500,
+    status: 'Completed',
+    startDate: Timestamp.fromDate(new Date("2025-09-01")),
+    endDate: Timestamp.fromDate(new Date("2025-09-15")),
+    isHistoricalRecord: true,
+    source: 'Seeded',
+};
+
 
 // WINTER CAMPAIGN DATA
 const winterCampaignUsers: Omit<User, 'id' | 'createdAt'>[] = [
@@ -596,6 +626,9 @@ export const seedSampleData = async (): Promise<SeedResult> => {
 
     // Seed General Leads
     details.push(...await seedGeneralLeads(superAdmin));
+
+    // Seed Flood Relief Campaign
+    details.push(...await seedCampaignAndData(floodReliefCampaign, [], []));
 
     // Seed Ramadan 2025 Campaign and its main leads
     const ramadanLeads = [
