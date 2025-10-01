@@ -215,7 +215,6 @@ function AddLeadFormContent({ users, campaigns, settings, prefilledRawText }: Ad
   const [isRefreshingSummary, setIsRefreshingSummary] = useState(false);
   const [caseRawText, setCaseRawText] = useState<string>(prefilledRawText || '');
   
-  const [extractedBeneficiaryDetails, setExtractedBeneficiaryDetails] = useState<ExtractBeneficiaryDetailsOutput | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false); // Renamed from isAnalyzingId
   
   const otherDocsInputRef = useRef<HTMLInputElement>(null);
@@ -555,7 +554,7 @@ function AddLeadFormContent({ users, campaigns, settings, prefilledRawText }: Ad
             missingFields = Object.keys(extractedDetails).filter(key => !extractedDetails[key as keyof ExtractBeneficiaryDetailsOutput]) as (keyof ExtractBeneficiaryDetailsOutput)[];
         }
 
-        const result = await handleExtractLeadBeneficiaryDetailsFromText(rawText, missingFields.length > 0 ? missingFields : undefined);
+        const result = await handleExtractUserDetailsFromText(rawText, missingFields.length > 0 ? missingFields : undefined);
 
         if (result.success && result.details) {
              if (isRefresh && extractedDetails) {
@@ -1100,7 +1099,7 @@ function AddLeadFormContent({ users, campaigns, settings, prefilledRawText }: Ad
                     <AlertDialogCancel onClick={() => setDuplicateWarning(null)}>Cancel</AlertDialogCancel>
                     <AlertDialogAction onClick={() => {
                         setDuplicateWarning(null);
-                        form.handleSubmit((values) => onSubmit(values, true))();
+                        handleSubmit((values) => onSubmit(values, true))();
                     }}>
                         Yes, Create Anyway
                     </AlertDialogAction>
