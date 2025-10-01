@@ -144,6 +144,8 @@ interface AddLeadFormProps {
   campaigns: Campaign[];
   settings: AppSettings;
   prefilledRawText?: string;
+  isSubForm?: boolean;
+  onUserCreate?: (user: User) => void;
 }
 
 type AvailabilityState = {
@@ -214,12 +216,15 @@ function AddLeadFormContent({ users, campaigns, settings, prefilledRawText }: Ad
   const [caseRawText, setCaseRawText] = useState<string>(prefilledRawText || '');
   
   const [extractedBeneficiaryDetails, setExtractedBeneficiaryDetails] = useState<ExtractBeneficiaryDetailsOutput | null>(null);
-  const [isAnalyzingId, setIsAnalyzingId] = useState(false);
+  const [isAnalyzing, setIsAnalyzing] = useState(false); // Renamed from isAnalyzingId
   
   const otherDocsInputRef = useRef<HTMLInputElement>(null);
   const [otherDocs, setOtherDocs] = useState<File[]>([]);
   const [zoomLevels, setZoomLevels] = useState<Record<number, number>>({});
   const [rotation, setRotation] = useState(0);
+
+  const [extractedDetails, setExtractedDetails] = useState<ExtractBeneficiaryDetailsOutput | null>(null);
+  const [isRefreshingDetails, setIsRefreshingDetails] = useState(false);
 
   const leadConfiguration = settings.leadConfiguration || {};
   const approvalProcessDisabled = leadConfiguration.approvalProcessDisabled || false;
@@ -522,7 +527,6 @@ function AddLeadFormContent({ users, campaigns, settings, prefilledRawText }: Ad
       return [];
   }, [selectedCategory, leadConfiguration]);
 
-  const [isRefreshingDetails, setIsRefreshingDetails] = useState(false);
   
   const handleSelectAllDonationTypes = (checked: boolean) => {
     if (checked) {
@@ -917,7 +921,7 @@ function AddLeadFormContent({ users, campaigns, settings, prefilledRawText }: Ad
                                                     <div className="absolute top-1 right-1 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity bg-background/80 rounded-md">
                                                         <Button type="button" size="icon" variant="ghost" className="h-6 w-6" onClick={() => setZoomLevels(z => ({...z, [index]: (z[index] || 1) * 1.2}))}><ZoomIn className="h-4 w-4"/></Button>
                                                         <Button type="button" size="icon" variant="ghost" className="h-6 w-6" onClick={() => setZoomLevels(z => ({...z, [index]: Math.max(0.5, (z[index] || 1) / 1.2)}))}><ZoomOut className="h-4 w-4"/></Button>
-                                                        <Button type="button" size="icon" variant="ghost" className="h-6 w-6" onClick={() => setRotation(r => r + 90)}><RotateCw className="h-4 w-4"/></Button>
+                                                        <Button type="button" size="icon" variant="ghost" className="h-6 w-6" onClick={() => setRotation(r => r + 90)}><RotateCw className="h-4 w-4" /></Button>
                                                         <Button type="button" size="icon" variant="ghost" className="h-6 w-6 text-destructive hover:bg-destructive/10" onClick={() => {
                                                             setOtherDocs(docs => docs.filter((_, i) => i !== index));
                                                             setZoomLevels(prev => {
@@ -1145,8 +1149,7 @@ function AddLeadFormContent({ users, campaigns, settings, prefilledRawText }: Ad
   );
 }
 
-export function AddLeadForm(props: AddUserFormProps) {
-    const isSubForm = props.isSubForm;
+export function AddLeadForm(props: AddLeadFormProps) {
     return (
         <Suspense fallback={<div>Loading form...</div>}>
             <AddLeadFormContent {...props} />
