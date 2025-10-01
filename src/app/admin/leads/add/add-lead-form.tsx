@@ -1,4 +1,3 @@
-
 // src/app/admin/leads/add/add-lead-form.tsx
 "use client";
 
@@ -625,9 +624,9 @@ function AddLeadFormContent({ users, campaigns, settings, prefilledRawText }: Ad
         )}
 
         <Form {...form}>
-        <form onSubmit={form.handleSubmit((values) => onSubmit(values, false))} className="space-y-6 max-w-2xl">
+        <form onSubmit={handleSubmit((values) => onSubmit(values, false))} className="space-y-6 max-w-2xl">
             <fieldset disabled={isFormDisabled} className="space-y-6">
-                 <h3 className="text-lg font-semibold border-b pb-2">Beneficiary Details</h3>
+                 <h3 className="text-lg font-semibold border-b pb-2 text-primary">Beneficiary Details</h3>
                 <FormField
                     control={form.control}
                     name="linkBeneficiaryLater"
@@ -729,17 +728,20 @@ function AddLeadFormContent({ users, campaigns, settings, prefilledRawText }: Ad
                     />
                 ) : (
                     <div className="space-y-4 p-4 border rounded-lg bg-muted/50">
-                       <AddUserForm settings={settings} isSubForm={true} prefilledData={extractedBeneficiaryDetails || undefined} onUserCreate={(user) => {
-                          setValue('beneficiaryId', user.id, { shouldDirty: true });
-                          setValue('beneficiaryType', 'existing');
-                          toast({ variant: "success", title: "Beneficiary Created & Selected", description: `${user.name} is now ready.` });
-                       }} />
+                       <h3 className="font-medium text-primary">New Beneficiary Details</h3>
+                       {settings && (
+                          <AddUserForm settings={settings} isSubForm={true} prefilledData={extractedDetails || undefined} onUserCreate={(user) => {
+                             setValue('beneficiaryId', user.id, { shouldDirty: true });
+                             setValue('beneficiaryType', 'existing');
+                             toast({ variant: "success", title: "Beneficiary Created & Selected", description: `${user.name} is now ready.` });
+                         }} />
+                       )}
                     </div>
                 )}
                 </>
                 )}
                  
-                 <h3 className="text-lg font-semibold border-b pb-2">Case Details</h3>
+                 <h3 className="text-lg font-semibold border-b pb-2 text-primary">Case Details</h3>
                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                      <FormField
                         control={form.control}
@@ -958,7 +960,7 @@ function AddLeadFormContent({ users, campaigns, settings, prefilledRawText }: Ad
                 
                 {selectedPurposeName === 'Medical' && (
                      <div className="p-4 border rounded-lg space-y-4">
-                        <h4 className="font-semibold text-md">Medical Details</h4>
+                        <h4 className="font-semibold text-md text-primary">Medical Details</h4>
                         <FormField control={form.control} name="diseaseIdentified" render={({field}) => (<FormItem><FormLabel>Disease Identified</FormLabel><FormControl><Input placeholder="e.g., Typhoid, Cataract" {...field} /></FormControl></FormItem>)} />
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <FormField control={form.control} name="diseaseStage" render={({field}) => (<FormItem><FormLabel>Disease Stage</FormLabel><FormControl><Input placeholder="e.g., Stage II, Chronic" {...field} /></FormControl></FormItem>)} />
@@ -975,7 +977,7 @@ function AddLeadFormContent({ users, campaigns, settings, prefilledRawText }: Ad
                 </div>
                  <FormField control={form.control} name="dueDate" render={({ field }) => (<FormItem><FormLabel>Due Date (Optional)</FormLabel><Popover><PopoverTrigger asChild><FormControl><Button variant="outline" className={cn("w-full text-left font-normal",!field.value&&"text-muted-foreground")}><CalendarIcon className="mr-2 h-4 w-4"/>{field.value?format(field.value,"PPP"):"Pick a date"}</Button></FormControl></PopoverTrigger><PopoverContent className="w-auto p-0"><Calendar mode="single" selected={field.value} onSelect={field.onChange} disabled={(d) => d < new Date() && !isHistoricalRecord} initialFocus /></PopoverContent></Popover><FormMessage /></FormItem>)} />
                 
-                <h3 className="text-lg font-semibold border-b pb-2">Financials</h3>
+                <h3 className="text-lg font-semibold border-b pb-2 text-primary">Financials</h3>
                  <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                     <FormField control={control} name="helpRequested" render={({ field }) => (<FormItem><FormLabel>Amount Requested</FormLabel><FormControl><Input type="number" placeholder="0.00" {...field} /></FormControl><FormMessage /></FormItem>)} />
                     {isHistoricalRecord && (
@@ -1142,7 +1144,7 @@ function AddLeadFormContent({ users, campaigns, settings, prefilledRawText }: Ad
   );
 }
 
-export function AddLeadForm(props: AddLeadFormProps) {
+export function AddLeadForm(props: AddUserFormProps) {
     const isSubForm = props.isSubForm;
     return (
         <Suspense fallback={<div>Loading form...</div>}>
