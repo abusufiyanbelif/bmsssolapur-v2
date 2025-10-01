@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -11,9 +10,9 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { getUser, User } from '@/services/user-service';
-import { Loader2, AlertCircle, Edit, X, Save, PlusCircle, Trash2, CreditCard, Fingerprint, MapPin, Banknote } from 'lucide-react';
+import { Loader2, AlertCircle, Edit, X, Save, PlusCircle, Trash2, CreditCard, Fingerprint, MapPin, Banknote, User as UserIcon } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Textarea } from '@/components/ui/textarea';
+import { Textarea } from "@/components/ui/textarea";
 import { handleUpdateProfile } from '../actions';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
@@ -194,7 +193,7 @@ export default function ProfileSettingsPage() {
                     <CardContent className="space-y-6">
                         <Accordion type="multiple" defaultValue={["basic", "payment"]} className="w-full space-y-4">
                             <AccordionItem value="basic" className="border rounded-lg">
-                                <AccordionTrigger className="p-4 font-semibold text-primary"><h4 className="flex items-center gap-2"><User className="h-5 w-5"/>Basic Information</h4></AccordionTrigger>
+                                <AccordionTrigger className="p-4 font-semibold text-primary"><h4 className="flex items-center gap-2"><UserIcon className="h-5 w-5"/>Basic Information</h4></AccordionTrigger>
                                 <AccordionContent className="p-6 pt-2 space-y-6">
                                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                         <FormField control={form.control} name="firstName" render={({ field }) => (<FormItem><FormLabel>First Name</FormLabel><FormControl><Input {...field} disabled={!isEditing} /></FormControl><FormMessage /></FormItem>)} />
@@ -232,7 +231,7 @@ export default function ProfileSettingsPage() {
                             
                              {isBeneficiary && (
                                  <AccordionItem value="beneficiary" className="border rounded-lg">
-                                     <AccordionTrigger className="p-4 font-semibold text-primary"><h4 className="flex items-center gap-2"><User className="h-5 w-5"/>Beneficiary Details</h4></AccordionTrigger>
+                                     <AccordionTrigger className="p-4 font-semibold text-primary"><h4 className="flex items-center gap-2"><UserIcon className="h-5 w-5"/>Beneficiary Details</h4></AccordionTrigger>
                                      <AccordionContent className="p-6 pt-2 space-y-6">
                                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                             <FormField control={form.control} name="occupation" render={({ field }) => (<FormItem><FormLabel>Occupation</FormLabel><FormControl><Input {...field} disabled={!isEditing} /></FormControl><FormMessage /></FormItem>)}/>
@@ -289,3 +288,5 @@ export default function ProfileSettingsPage() {
         </Form>
     );
 }
+
+    
