@@ -72,17 +72,17 @@ function InspirationalQuotes({ quotes }: { quotes: Quote[] }) {
     return (
         <Card>
             <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                    <QuoteIcon className="text-primary" />
+                <CardTitle className="flex items-center gap-2 text-primary">
+                    <QuoteIcon />
                     Wisdom & Reflection
                 </CardTitle>
             </CardHeader>
             <CardContent>
                 <div className="space-y-6">
                     {quotes.map((quote, index) => (
-                        <blockquote key={index} className="border-l-2 pl-4 italic text-sm">
+                        <blockquote key={index} className="border-l-2 pl-4 italic text-sm text-muted-foreground">
                             <p>&quot;{quote.text}&quot;</p>
-                            <cite className="block text-right not-italic text-xs text-muted-foreground mt-1">— {quote.source}</cite>
+                            <cite className="block text-right not-italic mt-1">— {quote.source}</cite>
                         </blockquote>
                     ))}
                 </div>
@@ -120,7 +120,7 @@ export function DashboardClient({ allDonations, allUsers, allLeads, allCampaigns
         
         <Accordion type="multiple" className="space-y-4">
           <AccordionItem value="actions" className="border-b-0">
-            <AccordionTrigger className="text-lg font-semibold p-4 bg-muted/50 rounded-lg hover:no-underline"><CheckCheck className="mr-2 h-5 w-5 text-destructive"/>Pending Actions</AccordionTrigger>
+            <AccordionTrigger className="text-lg font-semibold p-4 bg-muted/50 rounded-lg hover:no-underline text-destructive"><CheckCheck className="mr-2 h-5 w-5"/>Pending Actions</AccordionTrigger>
             <AccordionContent className="pt-4 space-y-4">
               <PendingLeadsCard allLeads={allLeads} />
               <PendingDonationsCard allDonations={allDonations} />
@@ -129,7 +129,7 @@ export function DashboardClient({ allDonations, allUsers, allLeads, allCampaigns
           </AccordionItem>
 
           <AccordionItem value="breakdowns" className="border-b-0">
-            <AccordionTrigger className="text-lg font-semibold p-4 bg-muted/50 rounded-lg hover:no-underline"><BarChart3 className="mr-2 h-5 w-5 text-primary"/>Breakdowns</AccordionTrigger>
+            <AccordionTrigger className="text-lg font-semibold p-4 bg-muted/50 rounded-lg hover:no-underline text-primary"><BarChart3 className="mr-2 h-5 w-5"/>Breakdowns</AccordionTrigger>
             <AccordionContent className="pt-4 space-y-4">
               <LeadBreakdownCard allLeads={allLeads} />
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
@@ -142,7 +142,7 @@ export function DashboardClient({ allDonations, allUsers, allLeads, allCampaigns
           </AccordionItem>
           
           <AccordionItem value="donations-insights" className="border-b-0">
-            <AccordionTrigger className="text-lg font-semibold p-4 bg-muted/50 rounded-lg hover:no-underline"><HandCoins className="mr-2 h-5 w-5 text-primary"/>Donation Insights</AccordionTrigger>
+            <AccordionTrigger className="text-lg font-semibold p-4 bg-muted/50 rounded-lg hover:no-underline text-primary"><HandCoins className="mr-2 h-5 w-5"/>Donation Insights</AccordionTrigger>
             <AccordionContent className="pt-4 space-y-4">
               <DonationsChart donations={allDonations} />
               <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
@@ -157,7 +157,7 @@ export function DashboardClient({ allDonations, allUsers, allLeads, allCampaigns
           </AccordionItem>
 
            <AccordionItem value="campaigns-insights" className="border-b-0">
-            <AccordionTrigger className="text-lg font-semibold p-4 bg-muted/50 rounded-lg hover:no-underline"><Megaphone className="mr-2 h-5 w-5 text-primary"/>Campaign Insights</AccordionTrigger>
+            <AccordionTrigger className="text-lg font-semibold p-4 bg-muted/50 rounded-lg hover:no-underline text-primary"><Megaphone className="mr-2 h-5 w-5"/>Campaign Insights</AccordionTrigger>
             <AccordionContent className="pt-4">
                 <RecentCampaignsCard allCampaigns={allCampaigns} allLeads={allLeads} />
             </AccordionContent>
