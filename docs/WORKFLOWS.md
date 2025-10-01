@@ -16,7 +16,7 @@ This workflow details the lifecycle of a help request, from creation to closure.
 
 1.  **Creation**:
     *   **By Beneficiary**: A logged-in beneficiary navigates to `/request-help` and fills out a form detailing their need.
-    *   **By Admin**: An admin navigates to `/admin/leads/add`, selects or creates a beneficiary, and fills out the lead details, potentially using AI to scan documents and pre-fill the form.
+    *   **By Admin**: An admin navigates to `/admin/leads/add`. They can link an existing beneficiary or create a new one directly within the form. They fill out the lead details, with the option to use AI to scan documents and pre-fill the form.
 
 2.  **Initial Status**:
     *   Upon creation, the lead's `caseVerification` status is set to **"Pending"**.
@@ -68,7 +68,7 @@ This workflow is designed to take a payment screenshot, automatically find the d
     a.  **AI Processing (Server-Side)**:
         -   The browser sends the image file to the server.
         -   The server calls the `extractDonationDetails` AI flow.
-        -   The AI model (`gemini-1.5-flash-latest`) scans the image (OCR) and parses the text to extract structured data (e.g., amount, transaction ID, sender's name, sender's UPI/phone number).
+        -   The AI model (`gemini-1.5-flash-latest`) scans the image (OCR) and parses the text to extract structured data (e.g., amount, transaction ID, sender's name, sender's UPI/phone number). The AI is trained to handle receipts from Google Pay, PhonePe, and Paytm, including cross-app transactions.
 
     b.  **Donor Matching**:
         -   The system takes the extracted identifiers (UPI ID, phone number, bank account) and queries the user database to find a matching donor profile.

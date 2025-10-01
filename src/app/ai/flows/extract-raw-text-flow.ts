@@ -12,7 +12,7 @@ import {
     ExtractRawTextOutput,
     ExtractRawTextOutputSchema
 } from '@/ai/schemas';
-
+import { getSafeGeminiModel } from '@/services/gemini-service';
 
 export const extractRawTextFlow = ai.defineFlow(
   {
@@ -24,41 +24,24 @@ export const extractRawTextFlow = ai.defineFlow(
     
     const mediaParts = input.photoDataUris.map(uri => ({ media: { url: uri } }));
     
-    const modelCandidates = [
-        googleAI.model('gemini-1.5-flash-latest'),
-        googleAI.model('gemini-1.5-pro-latest'),
-    ];
-    
-    let lastError: any;
-
-    for (const model of modelCandidates) {
-        try {
-            console.log(`🔄 Trying ${model.name} for extractRawText...`);
-            const llmResponse = await ai.generate({
-                model: model,
-                prompt: [
-                    { text: `You are an Optical Character Recognition (OCR) tool. You will be given one or more images or PDF documents (like medical reports, ID cards, or payment receipts). Extract all text from each document exactly as you see it. Maintain the original line breaks and formatting as best as possible. Do not summarize, analyze, or reformat the text. Just extract it. If there are multiple documents, separate the text from each one with '---'.` },
-                    ...mediaParts
-                ],
-                output: {
-                    schema: ExtractRawTextOutputSchema
-                }
-            });
-            
-            const output = llmResponse.output;
-
-            if (!output?.rawText) {
-              throw new Error("The AI model did not return any text. The document might be unreadable or contain no text.");
-            }
-            console.log(`✅ Success with ${model.name}`);
-            return output; // Success
-        } catch (err) {
-            lastError = err;
-            console.error(`❌ Error with ${model.name} for extractRawText:`, err instanceof Error ? err.message : String(err));
+    const modelName = await getSafeGeminiModel('models/gemini-1.5-flash-latest');
+    const llmResponse = await ai.generate({
+        model: googleAI.model(modelName),
+        prompt: [
+            { text: `You are an Optical Character Recognition (OCR) tool. You will be given one or more images or PDF documents (like medical reports, ID cards, or payment receipts). Extract all text from each document exactly as you see it. Maintain the original line breaks and formatting as best as possible. Do not summarize, analyze, or reformat the text. Just extract it. If there are multiple documents, separate the text from each one with '---'.` },
+            ...mediaParts
+        ],
+        output: {
+            schema: ExtractRawTextOutputSchema
         }
-    }
+    });
     
-    console.error("All models failed for extractRawText.", lastError);
-    throw new Error(`All models failed. Last error: ${lastError?.message}`);
+    const output = llmResponse.output;
+
+    if (!output?.rawText) {
+      throw new Error("The AI model did not return any text. The document might be unreadable or contain no text.");
+    }
+
+    return output;
   }
 );

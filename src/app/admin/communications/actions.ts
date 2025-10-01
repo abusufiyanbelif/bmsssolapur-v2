@@ -81,58 +81,43 @@ export async function generateAppealMessage(
         const appBaseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://baitul-mal-connect.web.app';
         const ctaLink = `${appBaseUrl}/public-leads`;
 
-        const modelCandidates = [
-            await getSafeGeminiModel('gemini-1.5-flash-latest'),
-            await getSafeGeminiModel('gemini-1.5-pro-latest'),
-        ];
-        let lastError: any;
-
-        for (const modelName of modelCandidates) {
-             try {
-                console.log(`🔄 Trying ${modelName} for generateAppealMessage...`);
-                const llmResponse = await ai.generate({
-                    model: googleAI.model(modelName),
-                    prompt: `
-                        You are a helpful assistant for a charity organization. Your task is to craft a complete and compelling WhatsApp appeal message.
-                        
-                        Follow these instructions precisely:
-                        1.  Start the message with an inspirational quote about charity from Islamic teachings. The quote should be formatted like this: _"The text of the quote"_\n- The Source (e.g., Quran 2:261 or Sahih al-Bukhari)
-                        2.  After the quote, add two newlines.
-                        3.  Insert the provided introduction message.
-                        4.  After the introduction, add two newlines.
-                        5.  Insert the provided list of leads.
-                        6.  Calculate the total required amount from the leads and add a line: *Required target amt: ₹[TOTAL_AMOUNT]*
-                        7.  After the total amount, add two newlines.
-                        8.  Insert the call-to-action link to view details.
-                        9.  After the link, add two newlines.
-                        10. Insert the provided concluding message.
-
-                        ---
-                        **Introduction Message:**
-                        ${introMessage}
-                        ---
-                        **List of Leads:**
-                        ${messageBody}
-                        ---
-                        **Call-to-Action Link:**
-                        *View details and contribute here:*
-                        ${ctaLink}
-                        ---
-                        **Concluding Message:**
-                        ${outroMessage}
-                        ---
-                    `,
-                });
+        const modelName = await getSafeGeminiModel();
+        const llmResponse = await ai.generate({
+            model: googleAI.model(modelName),
+            prompt: `
+                You are a helpful assistant for a charity organization. Your task is to craft a complete and compelling WhatsApp appeal message.
                 
-                console.log(`✅ Success with ${modelName}`);
-                return { success: true, message: llmResponse.text }; // Success
-            } catch (err) {
-                 lastError = err;
-                console.error(`❌ Error with ${modelName} for generateAppealMessage:`, err instanceof Error ? err.message : String(err));
-            }
-        }
+                Follow these instructions precisely:
+                1.  Start the message with an inspirational quote about charity from Islamic teachings. The quote should be formatted like this: _"The text of the quote"_\n- The Source (e.g., Quran 2:261 or Sahih al-Bukhari)
+                2.  After the quote, add two newlines.
+                3.  Insert the provided introduction message.
+                4.  After the introduction, add two newlines.
+                5.  Insert the provided list of leads.
+                6.  Calculate the total required amount from the leads and add a line: *Required target amt: ₹[TOTAL_AMOUNT]*
+                7.  After the total amount, add two newlines.
+                8.  Insert the call-to-action link to view details.
+                9.  After the link, add two newlines.
+                10. Insert the provided concluding message.
+
+                ---
+                **Introduction Message:**
+                ${introMessage}
+                ---
+                **List of Leads:**
+                ${messageBody}
+                ---
+                **Call-to-Action Link:**
+                *View details and contribute here:*
+                ${ctaLink}
+                ---
+                **Concluding Message:**
+                ${outroMessage}
+                ---
+            `,
+        });
         
-        throw lastError; // All models failed
+        return { success: true, message: llmResponse.text };
+
     } catch (e) {
         const error = e instanceof Error ? e.message : "An unknown error occurred.";
         console.error("Error generating appeal message:", error);
