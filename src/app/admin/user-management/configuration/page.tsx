@@ -1,4 +1,5 @@
 
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Settings, User, AlertCircle } from "lucide-react";
 import { getAppSettings } from "@/services/app-settings-service";
@@ -29,11 +30,11 @@ export default async function UserManagementConfigurationPage() {
             <h2 className="text-3xl font-bold tracking-tight font-headline text-primary">User Management Configuration</h2>
             <Card>
                 <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                        <User className="h-6 w-6 text-primary" />
+                    <CardTitle className="flex items-center gap-2 text-primary">
+                        <User className="h-6 w-6" />
                         User Settings
                     </CardTitle>
-                    <CardDescription>
+                    <CardDescription className="text-muted-foreground">
                         Configure global settings related to user profiles and registration.
                     </CardDescription>
                 </CardHeader>
@@ -44,3 +45,6 @@ export default async function UserManagementConfigurationPage() {
         </div>
     );
 }
+
+
+    

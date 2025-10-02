@@ -377,7 +377,7 @@ export default function ServicesPage() {
         <CardContent className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             <Card>
                 <CardHeader>
-                    <CardTitle className="flex items-center gap-2"><Database /> Firestore Database</CardTitle>
+                    <CardTitle className="flex items-center gap-2"><Database className="text-primary" /> Firestore Database</CardTitle>
                 </CardHeader>
                  <CardContent>
                     <p className="text-sm text-muted-foreground">
@@ -394,7 +394,7 @@ export default function ServicesPage() {
             </Card>
             <Card>
                 <CardHeader>
-                    <CardTitle className="flex items-center gap-2"><Server /> Application Logs</CardTitle>
+                    <CardTitle className="flex items-center gap-2"><Server className="text-primary" /> Application Logs</CardTitle>
                 </CardHeader>
                  <CardContent>
                     <p className="text-sm text-muted-foreground">
@@ -411,7 +411,7 @@ export default function ServicesPage() {
             </Card>
              <Card>
                 <CardHeader>
-                    <CardTitle className="flex items-center gap-2"><Cloud /> File Storage</CardTitle>
+                    <CardTitle className="flex items-center gap-2"><Cloud className="text-primary" /> File Storage</CardTitle>
                 </CardHeader>
                  <CardContent>
                     <p className="text-sm text-muted-foreground">
@@ -432,3 +432,5 @@ export default function ServicesPage() {
     </div>
   );
 }
+
+    

@@ -28,8 +28,8 @@ export default async function LetterheadPage() {
     const logoDataUri = await getImageAsBase64(organization.logoUrl);
 
     return (
-        <div className="flex-1 space-y-4">
-            <LetterheadDocument organization={organization} logoDataUri={logoDataUri} />
-        </div>
+        <LetterheadDocument organization={organization} logoDataUri={logoDataUri} />
     )
 }
+
+    

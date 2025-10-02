@@ -57,8 +57,8 @@ const allGroups: UserGroup[] = [
 ];
 
 export default function UserGroupsPage() {
-    const [currentPage, setCurrentPage = useState(1);
-    const [itemsPerPage, setItemsPerPage = useState(5);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [itemsPerPage, setItemsPerPage] = useState(5);
 
     const paginatedGroups = useMemo(() => {
         const startIndex = (currentPage - 1) * itemsPerPage;
@@ -68,94 +68,108 @@ export default function UserGroupsPage() {
     const totalPages = Math.ceil(allGroups.length / itemsPerPage);
 
     const renderPaginationControls = () => (
-         
-             Showing {paginatedGroups.length} of {allGroups.length} groups.
-            
-             
-                 
-                    Rows per page
-                    
-                        
-                            {setItemsPerPage(Number(value)); setCurrentPage(1); }}
-                        >
-                            
-                                {itemsPerPage}
-                            
-                            
-                                {[5, 10, 20].map(pageSize => {pageSize}</SelectItem>)}
-                            
-                        
-                    
-                
-                 Page {currentPage} of {totalPages}
-                 
-                    
-                        
-                         
-                        Previous
-                    
-                    
-                        
-                         
-                        Next
-                    
-                
-            
-        
+         <div className="flex items-center justify-between pt-4">
+             <div className="text-sm text-muted-foreground">
+                 Showing {paginatedGroups.length} of {allGroups.length} groups.
+            </div>
+            <div className="flex items-center gap-4">
+                 <div className="flex items-center gap-2">
+                    <p className="text-sm font-medium">Rows per page</p>
+                    <Select
+                        value={`${itemsPerPage}`}
+                        onValueChange={(value) => { setItemsPerPage(Number(value)); setCurrentPage(1); }}
+                    >
+                        <SelectTrigger className="h-8 w-[70px]">
+                        <SelectValue placeholder={itemsPerPage} />
+                        </SelectTrigger>
+                        <SelectContent side="top">
+                        {[5, 10, 20].map(pageSize => <SelectItem key={pageSize} value={`${pageSize}`}>{pageSize}</SelectItem>)}
+                        </SelectContent>
+                    </Select>
+                </div>
+                <div className="flex w-[100px] items-center justify-center text-sm font-medium">
+                    Page {currentPage} of {totalPages}
+                </div>
+                <div className="flex items-center space-x-2">
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                        disabled={currentPage === 1}
+                    >
+                        <ChevronLeft className="h-4 w-4" />
+                        <span className="sr-only">Previous</span>
+                    </Button>
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                        disabled={currentPage === totalPages}
+                    >
+                        <ChevronRight className="h-4 w-4" />
+                        <span className="sr-only">Next</span>
+                    </Button>
+                </div>
+            </div>
+        </div>
     );
 
 
   return (
-     
-         
-             User Groups
-        
-         
-             
-                
-                    Manage User Groups
-                
-                 
+    <div className="flex-1 space-y-4">
+        <h2 className="text-3xl font-bold tracking-tight font-headline text-primary">User Groups</h2>
+        <Card>
+            <CardHeader>
+                <CardTitle className="text-primary">Manage User Groups</CardTitle>
+                 <CardDescription className="text-muted-foreground">
                        In this application, Roles define a user&apos;s function (e.g., Admin, Donor), while Groups define their organizational title or team (e.g., Founder, Finance).
-                  
-                  
-                       This page provides a read-only view of the groups used to organize users and grant special permissions. To assign a user to a group, edit their profile in the User Management section.
-                  
+                  </CardDescription>
+                   <Alert variant="info" className="!mt-4">
+                        <AlertTitle>Read-Only View</AlertTitle>
+                       <AlertDescription>
+                           This page provides a read-only view of the groups used to organize users and grant special permissions. To assign a user to a group, edit their profile in the User Management section.
+                       </AlertDescription>
+                  </Alert>
                 
-            
-             
-                
-                    
-                        
-                            Sr. No.
-                            Group Name
-                            Description
-                            Typical Roles
-                        
-                    
-                    
+            </CardHeader>
+            <CardContent>
+                <Table>
+                    <TableHeader>
+                        <TableRow>
+                            <TableHead className="w-[50px]">Sr. No.</TableHead>
+                            <TableHead>Group Name</TableHead>
+                            <TableHead>Description</TableHead>
+                            <TableHead>Typical Roles</TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
                         {paginatedGroups.map((group, index) => (
-                             
-                                {(currentPage - 1) * itemsPerPage + index + 1}
-                                
-                                     
+                            <TableRow key={group.name}>
+                                <TableCell>{(currentPage - 1) * itemsPerPage + index + 1}</TableCell>
+                                <TableCell>
+                                    <div className="font-medium flex items-center gap-2">
+                                        <group.icon className="h-5 w-5 text-accent" />
                                         {group.name}
-                                    
-                                
-                                {group.description}
-                                
-                                     {role}</Badge>
-                                    ))}
-                                
-                            
-                        
-                    ))}
-                
+                                    </div>
+                                </TableCell>
+                                <TableCell className="text-muted-foreground">{group.description}</TableCell>
+                                <TableCell>
+                                    <div className="flex flex-wrap gap-2">
+                                        {group.typicalRoles.map(role => (
+                                            <Badge key={role} variant="secondary">{role}</Badge>
+                                        ))}
+                                    </div>
+                                </TableCell>
+                            </TableRow>
+                        ))}
+                    </TableBody>
+                </Table>
                  {totalPages > 1 && renderPaginationControls()}
-            
-        
-    
+            </CardContent>
+        </Card>
+    </div>
   );
 }
 
+    
     
