@@ -206,9 +206,9 @@ export async function handleUpdateUser(
     const error = e instanceof Error ? e.message : "An unknown error occurred while updating the user.";
     console.error("Error updating user:", error);
     
-    let userFriendlyError = error;
+    let userFriendlyError = `Failed to update user: ${error}`;
     if (error.includes('already exists')) {
-        userFriendlyError = `One of the unique fields (like Phone or Email) is already taken by another user. ${error}`;
+        userFriendlyError += ` One of the unique fields (like Phone or Email) is already taken by another user.`
     }
 
     return {

@@ -414,7 +414,6 @@ export interface UserConfiguration {
     Beneficiary?: RoleFieldRequirements;
     Referral?: RoleFieldRequirements;
     Admin?: RoleFieldRequirements;
-    isAadhaarMandatory?: boolean; // Keep for backward compatibility
 }
 
 export interface DashboardSettings {

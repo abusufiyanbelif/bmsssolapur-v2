@@ -119,7 +119,6 @@ const createFormSchema = (isAadhaarMandatory: boolean) => z.object({
   upiPhoneNumbers: z.array(z.object({ value: z.string() })).optional(),
   upiIds: z.array(z.object({ value: z.string() })).optional(),
   aadhaarCard: z.any().optional(),
-  addressProof: z.any().optional(),
 });
 
 
@@ -267,7 +266,6 @@ function AddUserFormContent({ settings, isSubForm = false, prefilledData, onUser
       upiPhoneNumbers: [{ value: "" }],
       upiIds: [{ value: "" }],
       aadhaarCard: null,
-      addressProof: null,
     },
   });
   
@@ -495,6 +493,10 @@ function AddUserFormContent({ settings, isSubForm = false, prefilledData, onUser
         formData.append(key, String(value));
       }
     });
+    
+    if(aadhaarFile) {
+        formData.append('aadhaarCard', aadhaarFile);
+    }
 
     const result = await handleAddUser(formData);
 
@@ -526,8 +528,8 @@ function AddUserFormContent({ settings, isSubForm = false, prefilledData, onUser
         title: "Error Creating User",
         description: result.error || "An unknown error occurred. Please check the form and try again.",
       });
+      setIsSubmitting(false);
     }
-     setIsSubmitting(false);
   }
   
   const availableRoles = currentAdmin?.roles.includes('Super Admin') ? allRoles : normalAdminRoles;

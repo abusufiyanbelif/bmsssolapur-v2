@@ -1,4 +1,4 @@
-
+// src/app/admin/user-management/[id]/edit/edit-user-form.tsx
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -36,11 +36,10 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
-import { UserActivityFeed } from "./user-activity-feed";
+import { UserProfileAuditTrail } from "./user-profile-audit-trail";
 import { DeleteUserButton } from "./delete-user-button";
 import Image from "next/image";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { Separator } from "@/components/ui/separator";
 
 const FileUploadField = ({ name, label, control, currentUrl, isEditing = true }: { name: "aadhaarCard" | "addressProof" | "otherDocument1" | "otherDocument2", label: string, control: any, currentUrl?: string, isEditing?: boolean }) => {
     const [previewUrl, setPreviewUrl] = useState<string | null>(currentUrl || null);
@@ -247,8 +246,7 @@ export function EditUserForm({ user }: EditUserFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [currentAdmin, setCurrentAdmin] = useState<User | null>(null);
   const [isEditing, setIsEditing] = useState(false);
-  const [isFileDirty, setIsFileDirty] = useState(false); // Manually track file changes
-
+  
   useEffect(() => {
     const adminId = localStorage.getItem('userId');
     if (adminId) {
@@ -295,6 +293,20 @@ export function EditUserForm({ user }: EditUserFormProps) {
   });
 
   const { formState: { isDirty }, control, reset, handleSubmit } = form;
+  
+  // Manually track if a file input has been changed
+  const [isFileDirty, setIsFileDirty] = useState(false);
+  
+  useEffect(() => {
+      const subscription = form.watch((value, { name, type }) => {
+          if (name && (name.includes('Card') || name.includes('Proof'))) {
+              setIsFileDirty(true);
+          }
+      });
+      return () => subscription.unsubscribe();
+  }, [form.watch]);
+
+
   const { fields: upiIdFields, append: appendUpiId, remove: removeUpiId } = useFieldArray({ control, name: "upiIds" });
   const { fields: upiPhoneFields, append: appendUpiPhone, remove: removeUpiPhone } = useFieldArray({ control, name: "upiPhoneNumbers" });
   const selectedRoles = form.watch("roles");
@@ -313,27 +325,28 @@ export function EditUserForm({ user }: EditUserFormProps) {
     setIsSubmitting(true);
     
     const formData = new FormData();
-    Object.entries(values).forEach(([key, value]) => {
-      if (key === 'roles' && Array.isArray(value)) {
-        value.forEach(role => formData.append('roles', role));
-      } else if (key === 'upiIds' && Array.isArray(value)) {
-        value.forEach(item => {
-          if (item.value) formData.append('upiIds', item.value)
-        });
-      } else if (key === 'upiPhoneNumbers' && Array.isArray(value)) {
-        value.forEach(item => {
-          if (item.value) formData.append('upiPhoneNumbers', item.value)
-        });
-      } else if (['isActive', 'isAnonymousAsBeneficiary', 'isAnonymousAsDonor', 'isWidow'].includes(key)) {
-        if (value) formData.append(key, 'on');
-      }
-      else if (value instanceof File) {
+    for (const key in values) {
+      const formKey = key as keyof EditUserFormValues;
+      const value = values[formKey];
+
+      if (value instanceof File) {
         formData.append(key, value);
-      }
-      else if (value !== null && value !== undefined) {
+      } else if (Array.isArray(value)) {
+        if (key === 'roles') {
+          value.forEach(v => formData.append(key, v));
+        } else {
+          value.forEach(item => {
+            if(item && typeof item === 'object' && 'value' in item && item.value) {
+                formData.append(key, item.value);
+            }
+          })
+        }
+      } else if (typeof value === 'boolean') {
+        if (value) formData.append(key, 'on');
+      } else if (value !== null && value !== undefined) {
         formData.append(key, String(value));
       }
-    });
+    }
 
     const result = await handleUpdateUser(user.id!, formData, currentAdmin.id);
 
@@ -371,7 +384,7 @@ export function EditUserForm({ user }: EditUserFormProps) {
                     </div>
                     <div className="flex gap-2">
                         {!isEditing ? (
-                            <Button onClick={() => setIsEditing(true)}>
+                            <Button type="button" onClick={() => setIsEditing(true)}>
                                 <Edit className="mr-2 h-4 w-4" />
                                 Edit Profile
                             </Button>
@@ -428,6 +441,34 @@ export function EditUserForm({ user }: EditUserFormProps) {
                                     </div>
                                 </AccordionContent>
                             </AccordionItem>
+                            
+                            <AccordionItem value="beneficiary" className="border rounded-lg">
+                                <AccordionTrigger className="p-4 font-semibold text-primary"><h4 className="flex items-center gap-2"><UserIcon className="h-5 w-5"/>Family &amp; Occupation Details</h4></AccordionTrigger>
+                                <AccordionContent className="p-6 pt-2 space-y-6">
+                                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <FormField control={form.control} name="occupation" render={({ field }) => (<FormItem><FormLabel>Occupation</FormLabel><FormControl><Input {...field} disabled={!isEditing} /></FormControl><FormMessage /></FormItem>)}/>
+                                        <FormField control={form.control} name="fatherOccupation" render={({ field }) => (<FormItem><FormLabel>Father&apos;s Occupation</FormLabel><FormControl><Input {...field} disabled={!isEditing} /></FormControl><FormMessage /></FormItem>)}/>
+                                        <FormField control={form.control} name="motherOccupation" render={({ field }) => (<FormItem><FormLabel>Mother&apos;s Occupation</FormLabel><FormControl><Input {...field} disabled={!isEditing} /></FormControl><FormMessage /></FormItem>)}/>
+                                        <FormField control={form.control} name="familyMembers" render={({ field }) => (<FormItem><FormLabel>Number of Family Members</FormLabel><FormControl><Input type="number" {...field} disabled={!isEditing} /></FormControl><FormMessage /></FormItem>)}/>
+                                        <FormField control={form.control} name="earningMembers" render={({ field }) => (<FormItem><FormLabel>Earning Members</FormLabel><FormControl><Input type="number" {...field} disabled={!isEditing} /></FormControl><FormMessage /></FormItem>)}/>
+                                        <FormField control={form.control} name="totalFamilyIncome" render={({ field }) => (<FormItem><FormLabel>Total Family Income (Monthly)</FormLabel><FormControl><Input type="number" {...field} disabled={!isEditing} /></FormControl><FormMessage /></FormItem>)}/>
+                                    </div>
+                                     <FormField control={form.control} name="beneficiaryType" render={({ field }) => (
+                                         <FormItem>
+                                             <FormLabel>Beneficiary Type</FormLabel>
+                                             <FormControl>
+                                                 <RadioGroup onValueChange={field.onChange} value={field.value} className="flex flex-row space-x-4 pt-2" disabled={!isEditing}>
+                                                    <FormItem className="flex items-center space-x-3 space-y-0"><RadioGroupItem value="Adult" id="type-adult"/><FormLabel className="font-normal" htmlFor="type-adult">Adult</FormLabel></FormItem>
+                                                    <FormItem className="flex items-center space-x-3 space-y-0"><RadioGroupItem value="Old Age" id="type-old"/><FormLabel className="font-normal" htmlFor="type-old">Old Age</FormLabel></FormItem>
+                                                    <FormItem className="flex items-center space-x-3 space-y-0"><RadioGroupItem value="Kid" id="type-kid"/><FormLabel className="font-normal" htmlFor="type-kid">Kid</FormLabel></FormItem>
+                                                    <FormItem className="flex items-center space-x-3 space-y-0"><RadioGroupItem value="Family" id="type-family"/><FormLabel className="font-normal" htmlFor="type-family">Family</FormLabel></FormItem>
+                                                 </RadioGroup>
+                                             </FormControl>
+                                             <FormMessage />
+                                         </FormItem>
+                                     )}/>
+                                </AccordionContent>
+                            </AccordionItem>
 
                             <AccordionItem value="account" className="border rounded-lg">
                                 <AccordionTrigger className="p-4 font-semibold text-primary"><h4 className="flex items-center gap-2">Account Settings & Roles</h4></AccordionTrigger>
@@ -463,7 +504,7 @@ export function EditUserForm({ user }: EditUserFormProps) {
         
         {currentAdmin?.roles.includes("Super Admin") && (
             <div className="mt-6">
-                <UserActivityFeed userId={user.id!} />
+                <UserProfileAuditTrail userId={user.id!} />
             </div>
         )}
     </>

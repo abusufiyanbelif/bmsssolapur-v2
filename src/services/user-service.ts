@@ -27,6 +27,7 @@ import { db } from './firebase';
 import { adminDb } from './firebase-admin';
 import type { User, UserRole } from './types';
 import { uploadFile } from './storage-service';
+import { logActivity } from './activity-log-service';
 
 const USERS_COLLECTION = 'users';
 
@@ -183,11 +184,16 @@ export const createUser = async (userData: Partial<Omit<User, 'id' | 'createdAt'
         anonymousBeneficiaryId,
         anonymousDonorId,
         occupation: userData.occupation,
-        familyMembers: userData.familyMembers,
+        fatherOccupation: userData.fatherOccupation,
+        motherOccupation: userData.motherOccupation,
+        familyMembers: userData.familyMembers || 0,
+        earningMembers: userData.earningMembers || 0,
+        totalFamilyIncome: userData.totalFamilyIncome || 0,
         isWidow: userData.isWidow,
         panNumber: userData.panNumber,
         aadhaarNumber: userData.aadhaarNumber,
         bankAccountName: userData.bankAccountName,
+        bankName: userData.bankName,
         bankAccountNumber: userData.bankAccountNumber,
         bankIfscCode: userData.bankIfscCode,
         upiPhoneNumbers: userData.upiPhoneNumbers || [],
@@ -213,8 +219,11 @@ export const createUser = async (userData: Partial<Omit<User, 'id' | 'createdAt'
     const uploadPath = `users/${userKey}/documents/`;
     
     try {
-        if (userData.aadhaarCardUrl) docUpdates.aadhaarCardUrl = userData.aadhaarCardUrl;
-        if (userData.addressProofUrl) docUpdates.addressProofUrl = userData.addressProofUrl;
+        const [aadhaarUrl] = await Promise.all([
+            userData.aadhaarCard ? uploadFile(userData.aadhaarCard as File, uploadPath) : Promise.resolve(null),
+        ]);
+
+        if (aadhaarUrl) docUpdates.aadhaarCardUrl = aadhaarUrl;
         
         if (Object.keys(docUpdates).length > 0) {
           await updateDoc(userRef, docUpdates);
@@ -238,7 +247,7 @@ export const createUser = async (userData: Partial<Omit<User, 'id' | 'createdAt'
 };
 
 // Function to get a user by ID
-export const getUser = async (id: string): Promise<User | null> => {
+export const getUser = async (id?: string): Promise<User | null> => {
   if (!id) {
     return null;
   }
@@ -566,14 +575,71 @@ export const updateUser = async (id: string, updates: Partial<User>) => {
     }
 };
 
-// Function to delete a user
-export const deleteUser = async (id: string) => {
+// Function to delete a user and handle related data
+export const deleteUser = async (id: string, adminUser: User, isBulkOperation: boolean = false) => {
     try {
+        const batch = writeBatch(db);
         const userRef = doc(db, USERS_COLLECTION, id);
-        await deleteDoc(userRef);
+        const userToDelete = await getUser(id);
+        if (!userToDelete) throw new Error("User to delete not found.");
+
+        const anonymousDonor = await getUserByUserId('anonymous');
+        if (!anonymousDonor) throw new Error("Could not find the 'anonymous' system user to re-assign donations to.");
+
+        // 1. Reassign donations from this user to "Anonymous Donor"
+        const donationsQuery = query(collection(db, 'donations'), where("donorId", "==", id));
+        const donationsSnapshot = await getDocs(donationsQuery);
+        donationsSnapshot.forEach(donationDoc => {
+            batch.update(donationDoc.ref, { 
+                donorId: anonymousDonor.id,
+                donorName: anonymousDonor.name,
+                notes: arrayUnion(`Original donor (${userToDelete.name}, ID: ${id}) deleted by ${adminUser.name}.`)
+            });
+        });
+
+        // 2. Anonymize leads referred by this user
+        const referredLeadsQuery = query(collection(db, 'leads'), where("referredByUserId", "==", id));
+        const referredLeadsSnapshot = await getDocs(referredLeadsQuery);
+        referredLeadsSnapshot.forEach(leadDoc => {
+            batch.update(leadDoc.ref, {
+                referredByUserId: null,
+                referredByUserName: 'Deleted User',
+            });
+        });
+        
+        // 3. Anonymize leads created by this user
+        const createdLeadsQuery = query(collection(db, 'leads'), where("adminAddedBy.id", "==", id));
+        const createdLeadsSnapshot = await getDocs(createdLeadsQuery);
+        createdLeadsSnapshot.forEach(leadDoc => {
+            batch.update(leadDoc.ref, {
+                'adminAddedBy.id': anonymousDonor.id,
+                'adminAddedBy.name': 'Deleted User'
+            });
+        });
+
+        // 4. Delete the user document
+        batch.delete(userRef);
+        await batch.commit();
+        
+        if (!isBulkOperation) {
+             await logActivity({
+                userId: adminUser.id!,
+                userName: adminUser.name,
+                userEmail: adminUser.email,
+                role: 'Admin',
+                activity: 'User Deleted',
+                details: { 
+                    deletedUserId: id,
+                    deletedUserName: userToDelete.name,
+                    reassignedDonations: donationsSnapshot.size,
+                    anonymizedLeads: referredLeadsSnapshot.size + createdLeadsSnapshot.size
+                },
+            });
+        }
+        
     } catch (error) {
-        console.error(`Error deleting user ${id}:`, error);
-        throw new Error(`Failed to delete user: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        console.error(`Error during cascading delete for user ${id}:`, error);
+        throw new Error(`Failed to delete user and clean up related data: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
 }
 
