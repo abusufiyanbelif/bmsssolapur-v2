@@ -1,3 +1,4 @@
+
 // src/app/admin/user-management/add/add-user-form.tsx
 "use client";
 
@@ -212,7 +213,8 @@ function AddUserFormContent({ settings, isSubForm = false, prefilledData, onUser
   const [rotation, setRotation] = useState(0);
 
   
-  const isAadhaarMandatory = settings?.userConfiguration?.Beneficiary?.isAadhaarMandatory || false;
+  const beneficiaryUserConfig = settings?.userConfiguration?.Beneficiary || {};
+  const isAadhaarMandatory = beneficiaryUserConfig.isAadhaarMandatory || false;
   const formSchema = createFormSchema(isAadhaarMandatory);
 
   useEffect(() => {

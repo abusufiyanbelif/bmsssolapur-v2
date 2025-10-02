@@ -1,3 +1,4 @@
+
 // src/app/admin/user-management/[id]/edit/edit-user-form.tsx
 "use client";
 
@@ -23,7 +24,7 @@ import { Loader2, CheckCircle, Save, RefreshCw, AlertTriangle, Edit, X, PlusCirc
 import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
-import type { User, UserRole } from "@/services/types";
+import type { User, UserRole, AppSettings } from "@/services/types";
 import { getUser } from "@/services/user-service";
 import {
   AlertDialog,
@@ -40,6 +41,7 @@ import { UserProfileAuditTrail } from "./user-profile-audit-trail";
 import { DeleteUserButton } from "./delete-user-button";
 import Image from "next/image";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { getAppSettings } from "@/app/admin/settings/actions";
 
 const FileUploadField = ({ name, label, control, currentUrl, isEditing = true }: { name: "aadhaarCard" | "addressProof" | "otherDocument1" | "otherDocument2", label: string, control: any, currentUrl?: string, isEditing?: boolean }) => {
     const [previewUrl, setPreviewUrl] = useState<string | null>(currentUrl || null);
@@ -194,7 +196,7 @@ const normalAdminRoles: Exclude<UserRole, 'Guest' | 'Admin' | 'Super Admin' | 'F
     "Referral",
 ];
 
-const formSchema = z.object({
+const createFormSchema = (settings?: AppSettings) => z.object({
   userId: z.string().optional(),
   firstName: z.string().min(2, "First name must be at least 2 characters."),
   middleName: z.string().optional(),
@@ -233,9 +235,29 @@ const formSchema = z.object({
   addressProof: z.any().optional(),
   otherDocument1: z.any().optional(),
   otherDocument2: z.any().optional(),
+}).superRefine((data, ctx) => {
+    // Dynamic mandatory fields based on roles and settings
+    const isBeneficiary = data.roles.includes('Beneficiary');
+    const beneficiarySettings = settings?.userConfiguration?.Beneficiary;
+
+    if (isBeneficiary && beneficiarySettings) {
+        if (beneficiarySettings.isAadhaarMandatory && !data.aadhaarNumber) {
+            ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Aadhaar Number is required for Beneficiaries.", path: ["aadhaarNumber"] });
+        }
+        if (beneficiarySettings.isAddressMandatory && !data.addressLine1) {
+            ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Address is required for Beneficiaries.", path: ["addressLine1"] });
+        }
+        if (beneficiarySettings.isPanMandatory && !data.panNumber) {
+            ctx.addIssue({ code: z.ZodIssueCode.custom, message: "PAN Number is required for Beneficiaries.", path: ["panNumber"] });
+        }
+        if (beneficiarySettings.isBankAccountMandatory && !data.bankAccountNumber) {
+             ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Bank Account Number is required for Beneficiaries.", path: ["bankAccountNumber"] });
+        }
+    }
 });
 
-type EditUserFormValues = z.infer<typeof formSchema>;
+
+type EditUserFormValues = z.infer<ReturnType<typeof createFormSchema>>;
 
 interface EditUserFormProps {
     user: User;
@@ -246,12 +268,16 @@ export function EditUserForm({ user }: EditUserFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [currentAdmin, setCurrentAdmin] = useState<User | null>(null);
   const [isEditing, setIsEditing] = useState(false);
-  
+  const [settings, setSettings] = useState<AppSettings | null>(null);
+
+  const formSchema = createFormSchema(settings || undefined);
+
   useEffect(() => {
     const adminId = localStorage.getItem('userId');
     if (adminId) {
       getUser(adminId).then(setCurrentAdmin);
     }
+    getAppSettings().then(setSettings);
   }, []);
 
   const form = useForm<EditUserFormValues>({
@@ -365,7 +391,7 @@ export function EditUserForm({ user }: EditUserFormProps) {
     } else {
       toast({
         variant: "destructive",
-        title: "Error",
+        title: "Error Updating User",
         description: result.error || "An unknown error occurred.",
       });
     }
