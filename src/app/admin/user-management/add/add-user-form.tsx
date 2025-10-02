@@ -3,7 +3,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm, useFieldArray, FormProvider } from "react-hook-form";
+import { useForm, useFieldArray, FormProvider, useFormContext } from "react-hook-form";
 import * as z from "zod";
 import Link from 'next/link';
 import { Button } from "@/components/ui/button";
@@ -79,7 +79,7 @@ const states = [
     { name: "Telangana", cities: ["Hyderabad", "Warangal", "Nizamabad"] },
 ];
 
-const createFormSchema = (isAadhaarMandatory: boolean) => z.object({
+const createFormSchema = (settings?: AppSettings) => z.object({
   userId: z.string().min(3, "User ID must be at least 3 characters."),
   fullName: z.string().optional(),
   firstName: z.string().min(2, "First name must be at least 2 characters."),
@@ -110,9 +110,7 @@ const createFormSchema = (isAadhaarMandatory: boolean) => z.object({
   totalFamilyIncome: z.coerce.number().optional(),
   isWidow: z.boolean().default(false),
   panNumber: z.string().optional(),
-  aadhaarNumber: isAadhaarMandatory
-    ? z.string().regex(/^[0-9]{12}$/, "Aadhaar must be 12 digits.")
-    : z.string().optional(),
+  aadhaarNumber: z.string().optional(),
   bankAccountName: z.string().optional(),
   bankName: z.string().optional(),
   bankAccountNumber: z.string().optional(),
@@ -120,6 +118,24 @@ const createFormSchema = (isAadhaarMandatory: boolean) => z.object({
   upiPhoneNumbers: z.array(z.object({ value: z.string() })).optional(),
   upiIds: z.array(z.object({ value: z.string() })).optional(),
   aadhaarCard: z.any().optional(),
+}).superRefine((data, ctx) => {
+    const isBeneficiary = data.roles.includes('Beneficiary');
+    const beneficiarySettings = settings?.userConfiguration?.Beneficiary;
+
+    if (isBeneficiary && beneficiarySettings) {
+        if (beneficiarySettings.isAadhaarMandatory && !data.aadhaarNumber) {
+            ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Aadhaar Number is required for Beneficiaries.", path: ["aadhaarNumber"] });
+        }
+        if (beneficiarySettings.isAddressMandatory && !data.addressLine1) {
+            ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Address is required for Beneficiaries.", path: ["addressLine1"] });
+        }
+        if (beneficiarySettings.isPanMandatory && !data.panNumber) {
+            ctx.addIssue({ code: z.ZodIssueCode.custom, message: "PAN Number is required for Beneficiaries.", path: ["panNumber"] });
+        }
+        if (beneficiarySettings.isBankAccountMandatory && !data.bankAccountNumber) {
+             ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Bank Account Number is required for Beneficiaries.", path: ["bankAccountNumber"] });
+        }
+    }
 });
 
 
@@ -212,11 +228,6 @@ function AddUserFormContent({ settings, isSubForm = false, prefilledData, onUser
   const [zoom, setZoom] = useState(1);
   const [rotation, setRotation] = useState(0);
 
-  
-  const beneficiaryUserConfig = settings?.userConfiguration?.Beneficiary || {};
-  const isAadhaarMandatory = beneficiaryUserConfig.isAadhaarMandatory || false;
-  const formSchema = createFormSchema(isAadhaarMandatory);
-
   useEffect(() => {
     const adminId = localStorage.getItem('userId');
     if (adminId) {
@@ -229,7 +240,7 @@ function AddUserFormContent({ settings, isSubForm = false, prefilledData, onUser
   }, [prefilledData]);
 
   const form = useForm<AddUserFormValues>({
-    resolver: zodResolver(formSchema),
+    resolver: zodResolver(createFormSchema(settings)),
     mode: 'onBlur',
     defaultValues: {
       userId: "",
@@ -301,6 +312,12 @@ function AddUserFormContent({ settings, isSubForm = false, prefilledData, onUser
   const middleName = watch("middleName");
   const lastName = watch("lastName");
   const fullName = watch("fullName");
+
+  useEffect(() => {
+    form.reset(undefined, { keepValues: true });
+    trigger();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedRoles, trigger]);
 
   const handleFullNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newFullName = e.target.value;
