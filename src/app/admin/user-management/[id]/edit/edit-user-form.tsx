@@ -247,6 +247,7 @@ export function EditUserForm({ user }: EditUserFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [currentAdmin, setCurrentAdmin] = useState<User | null>(null);
   const [isEditing, setIsEditing] = useState(false);
+  const [isFileDirty, setIsFileDirty] = useState(false); // Manually track file changes
 
   useEffect(() => {
     const adminId = localStorage.getItem('userId');
@@ -297,13 +298,12 @@ export function EditUserForm({ user }: EditUserFormProps) {
   const { fields: upiIdFields, append: appendUpiId, remove: removeUpiId } = useFieldArray({ control, name: "upiIds" });
   const { fields: upiPhoneFields, append: appendUpiPhone, remove: removeUpiPhone } = useFieldArray({ control, name: "upiPhoneNumbers" });
   const selectedRoles = form.watch("roles");
-  const selectedGender = form.watch("gender");
   
   const handleCancel = () => {
-      reset(); // Resets form to the initial values, clearing dirty state
+      reset();
       setIsEditing(false);
+      setIsFileDirty(false);
   }
-
 
   async function onSubmit(values: EditUserFormValues) {
     if(!currentAdmin?.id) {
@@ -347,6 +347,7 @@ export function EditUserForm({ user }: EditUserFormProps) {
         icon: <CheckCircle />,
       });
       form.reset(values);
+      setIsFileDirty(false); // Reset file dirty state on success
       setIsEditing(false);
     } else {
       toast({
@@ -379,7 +380,7 @@ export function EditUserForm({ user }: EditUserFormProps) {
                                 <Button type="button" variant="outline" onClick={handleCancel} disabled={isSubmitting}>
                                     <X className="mr-2 h-4 w-4" /> Cancel
                                 </Button>
-                                 <Button onClick={handleSubmit(onSubmit)} disabled={isSubmitting || !isDirty}>
+                                 <Button onClick={handleSubmit(onSubmit)} disabled={isSubmitting || (!isDirty && !isFileDirty)}>
                                     {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
                                     Save Changes
                                 </Button>
