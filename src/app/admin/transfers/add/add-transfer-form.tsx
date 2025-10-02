@@ -266,7 +266,12 @@ function AddTransferFormContent({ leads, campaigns, users }: AddTransferFormProp
                 newAutoFilledFields.add(key);
                 if (key === 'date') setValue('transactionDate', new Date(value as string));
                 else if (key === 'amount') setValue('amount', value as number);
-                else setValue(key as any, value);
+                else if (key === 'paymentApp' && paymentApps.includes(value as any)) {
+                    setValue('paymentApp', value as any);
+                }
+                else {
+                    setValue(key as any, value);
+                }
             }
         });
         setAutoFilledFields(newAutoFilledFields);
@@ -413,7 +418,7 @@ function AddTransferFormContent({ leads, campaigns, users }: AddTransferFormProp
     ) : (
       <Form {...form}>
         <form onSubmit={handleSubmit(onFormSubmit)} className="space-y-8">
-            <h3 className="text-lg font-semibold border-b pb-2">Recipient & Case Details</h3>
+            <h3 className="text-lg font-semibold border-b pb-2 text-primary">Recipient & Case Details</h3>
             <FormField
                 control={control}
                 name="leadId"
@@ -460,7 +465,7 @@ function AddTransferFormContent({ leads, campaigns, users }: AddTransferFormProp
             />
           
             {selectedLead && (
-                 <Alert>
+                 <Alert variant="info">
                     <Info className="h-4 w-4" />
                     <AlertTitle>Case Summary: {selectedLead.purpose}</AlertTitle>
                     <AlertDescription>
@@ -473,7 +478,7 @@ function AddTransferFormContent({ leads, campaigns, users }: AddTransferFormProp
 
             <Card>
                 <CardHeader>
-                    <CardTitle className="text-base">Recipient Details</CardTitle>
+                    <CardTitle className="text-base text-primary">Recipient Details</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-6">
                     <FormField
@@ -493,11 +498,11 @@ function AddTransferFormContent({ leads, campaigns, users }: AddTransferFormProp
                             >
                                 <FormItem className="flex items-center space-x-2">
                                     <FormControl><RadioGroupItem value="Beneficiary" /></FormControl>
-                                    <FormLabel className="font-normal">Beneficiary</FormLabel>
+                                    <FormLabel className="font-normal text-foreground">Beneficiary</FormLabel>
                                 </FormItem>
                                 <FormItem className="flex items-center space-x-2">
                                     <FormControl><RadioGroupItem value="Referral" disabled={!selectedLead?.referredByUserId} /></FormControl>
-                                    <FormLabel className="font-normal">Referral</FormLabel>
+                                    <FormLabel className="font-normal text-foreground">Referral</FormLabel>
                                 </FormItem>
                             </RadioGroup>
                             </FormControl>
@@ -517,7 +522,7 @@ function AddTransferFormContent({ leads, campaigns, users }: AddTransferFormProp
                 </CardContent>
             </Card>
 
-            <h3 className="text-lg font-semibold border-b pb-2">Transaction Details</h3>
+            <h3 className="text-lg font-semibold border-b pb-2 text-primary">Transaction Details</h3>
             <div className="space-y-4 p-4 border rounded-lg bg-muted/50">
               <FormField
                   control={form.control}

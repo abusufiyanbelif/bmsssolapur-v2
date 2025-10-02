@@ -95,11 +95,11 @@ export function CommunicationsForm({ openLeads, formType }: CommunicationsFormPr
     const renderPublicAppealConfig = () => (
         <>
             <div className="space-y-2">
-                <Label htmlFor="introMessage">Introduction</Label>
+                <Label htmlFor="introMessage" className="text-foreground">Introduction</Label>
                 <Textarea id="introMessage" value={introMessage} onChange={(e) => setIntroMessage(e.target.value)} rows={4} />
             </div>
             <div className="space-y-2">
-                <Label htmlFor="outroMessage">Conclusion / Note</Label>
+                <Label htmlFor="outroMessage" className="text-foreground">Conclusion / Note</Label>
                 <Textarea id="outroMessage" value={outroMessage} onChange={(e) => setOutroMessage(e.target.value)} rows={2} />
             </div>
         </>
@@ -112,15 +112,15 @@ export function CommunicationsForm({ openLeads, formType }: CommunicationsFormPr
                 <RadioGroup value={appealType} onValueChange={(v) => setAppealType(v as AppealType)} className="grid grid-cols-1 md:grid-cols-3 gap-2">
                      <Label className="flex items-center space-x-2 rounded-md border p-3 hover:bg-muted/50 transition-colors cursor-pointer">
                         <RadioGroupItem value="selected" />
-                        <span>Selected Leads</span>
+                        <span className="text-foreground">Selected Leads</span>
                     </Label>
                     <Label className="flex items-center space-x-2 rounded-md border p-3 hover:bg-muted/50 transition-colors cursor-pointer">
                         <RadioGroupItem value="purpose" />
-                        <span>By Purpose</span>
+                        <span className="text-foreground">By Purpose</span>
                     </Label>
                     <Label className="flex items-center space-x-2 rounded-md border p-3 hover:bg-muted/50 transition-colors cursor-pointer">
                         <RadioGroupItem value="all" />
-                        <span>All Open</span>
+                        <span className="text-foreground">All Open</span>
                     </Label>
                 </RadioGroup>
             )}
@@ -170,7 +170,7 @@ export function CommunicationsForm({ openLeads, formType }: CommunicationsFormPr
             )}
             
             {appealType === 'selected' && (
-                <Alert>
+                <Alert variant="info">
                     <AlertCircle className="h-4 w-4" />
                     <AlertTitle>Total Required for Selection</AlertTitle>
                     <AlertDescription>
