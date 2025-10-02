@@ -291,8 +291,12 @@ function AddLeadFormContent({ users, campaigns, settings, prefilledRawText }: Ad
       setCaseRawText("");
   };
 
-  const { formState: { isValid }, setValue, watch, getValues, control, trigger, reset, handleSubmit } = form;
+  const { formState: { isValid }, setValue, watch, getValues, control, trigger, reset, handleSubmit: originalHandleSubmit } = form;
   
+  const handleSubmit = (onSubmitFunction: (values: AddLeadFormValues) => void) => {
+    return originalHandleSubmit(onSubmitFunction);
+  }
+
   const selectedPurposeName = watch("purpose");
   const selectedCategory = watch("category");
   const selectedDegree = watch("degree");
@@ -534,12 +538,9 @@ function AddLeadFormContent({ users, campaigns, settings, prefilledRawText }: Ad
     }
   };
 
-  const handleWheel = (e: React.WheelEvent<HTMLDivElement>) => {
+  const handleWheel = (e: React.WheelEvent<HTMLDivElement>, index: number) => {
     e.preventDefault();
-    const target = e.currentTarget as HTMLImageElement;
-    const currentZoom = parseFloat(target.style.transform.replace('scale(', '').replace(')', '')) || 1;
-    const newZoom = Math.max(0.5, Math.min(currentZoom - e.deltaY * 0.001, 5));
-    target.style.transform = `scale(${newZoom})`;
+    setZoomLevels(prev => ({...prev, [index]: Math.max(0.5, Math.min((prev[index] || 1) - e.deltaY * 0.001, 5))}));
   };
   
     const handleFetchUserData = async (isRefresh = false) => {
@@ -553,7 +554,7 @@ function AddLeadFormContent({ users, campaigns, settings, prefilledRawText }: Ad
             missingFields = Object.keys(extractedDetails).filter(key => !extractedDetails[key as keyof ExtractBeneficiaryDetailsOutput]) as (keyof ExtractBeneficiaryDetailsOutput)[];
         }
 
-        const result = await handleExtractUserDetailsFromText(rawText, missingFields.length > 0 ? missingFields : undefined);
+        const result = await handleExtractLeadBeneficiaryDetailsFromText(rawText, missingFields.length > 0 ? missingFields : undefined);
 
         if (result.success && result.details) {
              if (isRefresh && extractedDetails) {
@@ -902,7 +903,7 @@ function AddLeadFormContent({ users, campaigns, settings, prefilledRawText }: Ad
                                                 <div key={index} className="relative group p-2 border rounded-lg bg-background space-y-2">
                                                     <div className="w-full h-32 overflow-auto flex items-center justify-center">
                                                             {file.type.startsWith('image/') ? (
-                                                            <div className="relative w-full h-full" onWheel={handleWheel}>
+                                                            <div className="relative w-full h-full" onWheel={(e) => handleWheel(e, index)}>
                                                                 <Image
                                                                     src={URL.createObjectURL(file)}
                                                                     alt={`Preview ${index + 1}`}
