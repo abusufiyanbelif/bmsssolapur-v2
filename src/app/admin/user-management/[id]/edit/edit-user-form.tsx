@@ -20,7 +20,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { handleUpdateUser, handleSetPassword } from "./actions";
 import { useState, useEffect } from "react";
-import { Loader2, CheckCircle, Save, RefreshCw, AlertTriangle, Edit, X, PlusCircle, Trash2, Paperclip, FileIcon } from "lucide-react";
+import { Loader2, CheckCircle, Save, RefreshCw, AlertTriangle, Edit, X, PlusCircle, Trash2, Paperclip, FileIcon, User as UserIcon, MapPin, CreditCard } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
@@ -40,6 +40,8 @@ import {
 import { UserActivityFeed } from "./user-activity-feed";
 import { DeleteUserButton } from "./delete-user-button";
 import Image from "next/image";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { Separator } from "@/components/ui/separator";
 
 const FileUploadField = ({ name, label, control, currentUrl, isEditing = true }: { name: "aadhaarCard" | "addressProof" | "otherDocument1" | "otherDocument2", label: string, control: any, currentUrl?: string, isEditing?: boolean }) => {
     const [previewUrl, setPreviewUrl] = useState<string | null>(currentUrl || null);
