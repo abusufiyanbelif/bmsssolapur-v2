@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -325,7 +324,7 @@ export function EditUserForm({ user }: EditUserFormProps) {
         value.forEach(item => {
           if (item.value) formData.append('upiPhoneNumbers', item.value)
         });
-      } else if (key === 'isActive' || key === 'isAnonymousAsBeneficiary' || key === 'isAnonymousAsDonor' || key === 'isWidow') {
+      } else if (['isActive', 'isAnonymousAsBeneficiary', 'isAnonymousAsDonor', 'isWidow'].includes(key)) {
         if (value) formData.append(key, 'on');
       }
       else if (value instanceof File) {
@@ -407,8 +406,8 @@ export function EditUserForm({ user }: EditUserFormProps) {
                                     </div>
                                     <FormField control={form.control} name="fatherName" render={({ field }) => (<FormItem><FormLabel>Father&apos;s Name (Optional)</FormLabel><FormControl><Input placeholder="Enter father's name" {...field} disabled={!isEditing} /></FormControl><FormMessage /></FormItem>)}/>
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                        <FormField control={form.control} name="gender" render={({ field }) => ( <FormItem className="space-y-3"><FormLabel>Gender</FormLabel><FormControl><RadioGroup onValueChange={field.onChange} value={field.value} className="flex flex-row space-x-4 pt-2" disabled={!isEditing}><FormItem className="flex items-center space-x-3 space-y-0"><FormControl><RadioGroupItem value="Male" /></FormControl><FormLabel className="font-normal">Male</FormLabel></FormItem><FormItem className="flex items-center space-x-3 space-y-0"><FormControl><RadioGroupItem value="Female" /></FormControl><FormLabel className="font-normal">Female</FormLabel></FormItem></RadioGroup></FormControl><FormMessage /></FormItem>)} />
-                                        <FormField control={form.control} name="phone" render={({ field }) => (<FormItem><FormLabel>Phone Number (10 digits)</FormLabel><FormControl><Input type="tel" maxLength={10} placeholder="9876543210" {...field} disabled={!isEditing} /></FormControl><FormMessage /></FormItem>)}/>
+                                       <FormField control={form.control} name="phone" render={({ field }) => (<FormItem><FormLabel>Primary Phone</FormLabel><FormControl><Input {...field} disabled={!isEditing} /></FormControl><FormMessage /></FormItem>)} />
+                                        <FormField control={form.control} name="gender" render={({ field }) => ( <FormItem className="space-y-3"><FormLabel>Gender</FormLabel><FormControl><RadioGroup onValueChange={field.onChange} value={field.value} className="flex items-center space-x-4 pt-2" disabled={!isEditing}><FormItem className="flex items-center space-x-2"><RadioGroupItem value="Male" id="male" /><FormLabel htmlFor="male" className="font-normal">Male</FormLabel></FormItem><FormItem className="flex items-center space-x-2"><RadioGroupItem value="Female" id="female" /><FormLabel htmlFor="female" className="font-normal">Female</FormLabel></FormItem></RadioGroup></FormControl><FormMessage /></FormItem>)} />
                                     </div>
                                      <div className="space-y-2"><FormLabel>Email Address</FormLabel><Input type="email" value={user.email || ''} disabled /><FormDescription>Email address cannot be changed.</FormDescription></div>
                                 </AccordionContent>
