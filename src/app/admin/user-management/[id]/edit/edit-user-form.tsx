@@ -201,7 +201,7 @@ const formSchema = z.object({
   middleName: z.string().optional(),
   lastName: z.string().min(1, "Last name is required."),
   fatherName: z.string().optional(),
-  phone: z.string().regex(/^[0-9]{10}$/, "Phone number must be exactly 10 digits."),
+  phone: z.string().regex(/^[0-9]{10}$/, "Phone number must be 10 digits."),
   roles: z.array(z.string()).refine((value) => (value || []).length > 0, {
     message: "You have to select at least one role.",
   }),
