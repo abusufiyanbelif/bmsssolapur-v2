@@ -335,12 +335,22 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation, set
     const formData = new FormData();
      // Append all form values
     for (const [key, value] of Object.entries(values)) {
-        if (value instanceof Date) formData.append(key, value.toISOString());
-        else if (value !== undefined && value !== null) formData.append(key, String(value));
+      const formKey = key as keyof AddDonationFormValues;
+      if (value instanceof Date) {
+        formData.append(key, value.toISOString());
+      } else if (value !== undefined && value !== null) {
+        if(key === 'donorType') {
+          formData.append(key, value);
+        } else if (Array.isArray(value)) {
+            value.forEach(v => formData.append(key, v));
+        } else if (typeof value === 'boolean') {
+            if (value) formData.append(key, 'on');
+        } else {
+            formData.append(key, String(value));
+        }
+      }
     }
     
-    formData.append('donorType', donorType);
-
     // Handle file
     const proofFile = getValues('paymentScreenshot');
     if (proofFile instanceof File) {
@@ -597,7 +607,7 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation, set
                     name="donorType"
                     render={({ field }) => (
                     <FormItem className="space-y-3">
-                        <FormLabel>Donor</FormLabel>
+                        <h3 className="text-lg font-semibold border-b pb-2 text-primary">Donor Details</h3>
                         <FormControl>
                         <RadioGroup onValueChange={(value) => { field.onChange(value as 'existing' | 'new'); }} value={field.value} className="grid grid-cols-2 gap-4">
                             <FormItem className="flex items-center space-x-3 space-y-0">
@@ -669,7 +679,7 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation, set
                     />
               ) : (
                  <div className="space-y-4 p-4 border rounded-lg bg-muted/50">
-                    <h3 className="font-medium">New Donor Details</h3>
+                    <h3 className="font-medium text-primary">New Donor Details</h3>
                     {settings && (
                        <AddUserForm settings={settings} isSubForm={true} prefilledData={extractedDetails || undefined} onUserCreate={(user) => {
                           setValue('donorId', user.id, { shouldDirty: true });
@@ -729,7 +739,7 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation, set
                 </div>
               
                 <div className="p-4 border rounded-lg space-y-4">
-                    <h3 className="font-medium">Transaction Details</h3>
+                    <h3 className="font-medium text-primary">Transaction Details</h3>
                      <FormField
                         control={form.control}
                         name="paymentApp"
