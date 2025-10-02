@@ -1,4 +1,4 @@
-
+// src/app/admin/leads/add/actions.ts
 
 "use server";
 
@@ -136,6 +136,7 @@ export async function handleAddLead(
                 gender: gender,
                 roles: ['Beneficiary'],
                 isActive: true,
+                source: 'Manual Entry',
                 address: {
                     addressLine1: addressLine1,
                     city: city,
