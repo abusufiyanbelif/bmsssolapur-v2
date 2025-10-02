@@ -139,12 +139,13 @@ export function DataGrowthChart({ users, leads, donations }: { users: User[], le
                     axisLine={false}
                     allowDecimals={false}
                 />
-                <Tooltip
-                content={
-                    <ChartTooltipContent
-                    indicator="dot"
-                    />
-                }
+                <ChartTooltip
+                    cursor={false}
+                    content={
+                        <ChartTooltipContent
+                        indicator="dot"
+                        />
+                    }
                 />
                 <ChartLegend content={<ChartLegendContent />} />
             </>

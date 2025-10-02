@@ -171,13 +171,14 @@ export function DonationsChart({ donations }: { donations: Donation[] }) {
                     tickLine={false}
                     axisLine={false}
                 />
-                <Tooltip
-                content={
-                    <ChartTooltipContent
-                    formatter={(value) => `₹${Number(value).toLocaleString()}`}
-                    indicator="dot"
-                    />
-                }
+                <ChartTooltip
+                    cursor={false}
+                    content={
+                        <ChartTooltipContent
+                        formatter={(value) => `₹${Number(value).toLocaleString()}`}
+                        indicator="dot"
+                        />
+                    }
                 />
                 <Legend />
             </>

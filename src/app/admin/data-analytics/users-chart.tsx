@@ -123,7 +123,8 @@ export function UsersChart({ users }: { users: User[] }) {
                     axisLine={false}
                     allowDecimals={false}
                 />
-                <Tooltip
+                <ChartTooltip
+                    cursor={false}
                     content={
                         <ChartTooltipContent
                         formatter={(value) => `${value} new users`}
