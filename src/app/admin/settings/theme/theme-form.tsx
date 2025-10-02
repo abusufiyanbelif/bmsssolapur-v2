@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -261,21 +260,21 @@ export function ThemeForm({ currentTheme }: ThemeFormProps) {
 
                 <Accordion type="multiple" defaultValue={["branding", "text", "notifications"]} className="w-full space-y-4">
                     <AccordionItem value="branding" className="border rounded-lg">
-                        <AccordionTrigger className="p-4 font-semibold text-primary"><h4 className="flex items-center gap-2"><Paintbrush /> Branding & UI Colors</h4></AccordionTrigger>
+                        <AccordionTrigger className="p-4 font-semibold text-primary"><h4 className="flex items-center gap-2"><Paintbrush /> Branding &amp; UI Colors</h4></AccordionTrigger>
                         <AccordionContent className="p-6 pt-2 grid grid-cols-1 md:grid-cols-2 gap-6">
                             <ColorInput name="primary" label="Primary Color" />
                             <ColorInput name="accent" label="Accent Color" />
                         </AccordionContent>
                     </AccordionItem>
                      <AccordionItem value="text" className="border rounded-lg">
-                        <AccordionTrigger className="p-4 font-semibold text-primary"><h4 className="flex items-center gap-2"><Type /> Text & Background Colors</h4></AccordionTrigger>
+                        <AccordionTrigger className="p-4 font-semibold text-primary"><h4 className="flex items-center gap-2"><Type /> Text &amp; Background Colors</h4></AccordionTrigger>
                         <AccordionContent className="p-6 pt-2 grid grid-cols-1 md:grid-cols-2 gap-6">
                             <ColorInput name="background" label="Background Color" />
                             <ColorInput name="foreground" label="Foreground (Text) Color" />
                         </AccordionContent>
                     </AccordionItem>
                     <AccordionItem value="notifications" className="border rounded-lg">
-                        <AccordionTrigger className="p-4 font-semibold text-primary"><h4 className="flex items-center gap-2"><MessageSquare /> Notification & Status Colors</h4></AccordionTrigger>
+                        <AccordionTrigger className="p-4 font-semibold text-primary"><h4 className="flex items-center gap-2"><MessageSquare /> Notification &amp; Status Colors</h4></AccordionTrigger>
                         <AccordionContent className="p-6 pt-2 grid grid-cols-1 md:grid-cols-2 gap-6">
                             <ColorInput name="success" label="Success Color" />
                             <ColorInput name="warning" label="Warning Color" />
