@@ -4,7 +4,7 @@
 import Razorpay from 'razorpay';
 import crypto from 'crypto';
 import { getAppSettings } from '@/services/app-settings-service';
-import { updateDonation } from '@/services/donation-service';
+import { updateDonation, createDonation } from '@/services/donation-service';
 import { getUser } from '@/services/user-service';
 import { config } from '@/lib/config';
 
@@ -95,6 +95,7 @@ export async function verifyRazorpayPayment(payload: VerificationPayload): Promi
         await updateDonation(payload.donationId, {
             status: 'Verified',
             transactionId: payload.razorpayPaymentId,
+            source: 'Online (Razorpay)'
         }, adminUser, 'Donation Verified (Razorpay)');
         
         return { success: true };

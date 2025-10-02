@@ -1,4 +1,3 @@
-
 // src/services/donation-service.ts
 /**
  * @fileOverview Donation service for interacting with Firestore.
@@ -81,7 +80,7 @@ export const createDonation = async (
         ...donation,
         id: donationRef.id,
         createdAt: new Date(),
-        source: donation.source || 'Manual Entry', // Default source
+        source: donation.source || 'Manual (Admin)', // Default source for admin-created entries
     };
     
     // Remove undefined fields to prevent Firestore errors

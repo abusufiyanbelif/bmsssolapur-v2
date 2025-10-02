@@ -115,6 +115,8 @@ export async function handleAddDonation(
         const campaign = await getCampaign(campaignId);
         campaignName = campaign?.name;
     }
+    
+    const source = formData.get("source") as string || 'Manual (Admin)';
 
     const createDonationRecord = async (data: Partial<Donation>) => {
         let proofUrl: string | undefined = undefined;
@@ -128,6 +130,7 @@ export async function handleAddDonation(
             leadId: formData.get("leadId") === 'none' ? undefined : formData.get("leadId") as string | undefined,
             campaignId: campaignId === 'none' ? undefined : campaignId,
             campaignName: campaignName,
+            source: source,
         }, adminUser.id!, adminUser.name, adminUser.email);
 
         if(screenshotFile && screenshotFile.size > 0) {

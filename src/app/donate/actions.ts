@@ -19,6 +19,7 @@ export async function handleManualDonation(userId: string, formData: FormData): 
         formData.append("adminUserId", userId); // The user is acting as their own admin here
         formData.append("donorId", userId);
         formData.append("status", "Pending verification");
+        formData.append("source", "Manual (Donor)"); // Set source for self-recorded donations
         
         // Pass leadId and campaignId if they exist
         const leadId = formData.get('leadId');

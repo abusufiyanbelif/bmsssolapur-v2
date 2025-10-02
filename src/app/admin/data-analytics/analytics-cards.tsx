@@ -19,7 +19,9 @@ export function FinancialPerformanceCards({ allDonations, allCampaigns }: Financ
         fundingProgress,
         totalDonationsYTD,
         averageDonationSize,
-        manualDonations,
+        manualAdminDonations,
+        manualDonorDonations,
+        onlineDonations,
         seededDonations
     } = useMemo(() => {
         const verifiedDonations = allDonations.filter(d => d.status === 'Verified' || d.status === 'Allocated');
@@ -34,10 +36,12 @@ export function FinancialPerformanceCards({ allDonations, allCampaigns }: Financ
         
         const averageDonationSize = verifiedDonations.length > 0 ? totalRaised / verifiedDonations.length : 0;
 
-        const manualDonations = verifiedDonations.filter(d => d.source === 'Manual Entry').length;
+        const manualAdminDonations = verifiedDonations.filter(d => d.source === 'Manual (Admin)').length;
+        const manualDonorDonations = verifiedDonations.filter(d => d.source === 'Manual (Donor)').length;
+        const onlineDonations = verifiedDonations.filter(d => d.source?.includes('Online')).length;
         const seededDonations = verifiedDonations.filter(d => d.source === 'Seeded').length;
         
-        return { totalRaised, totalGoal, fundingProgress, totalDonationsYTD, averageDonationSize, manualDonations, seededDonations };
+        return { totalRaised, totalGoal, fundingProgress, totalDonationsYTD, averageDonationSize, manualAdminDonations, manualDonorDonations, onlineDonations, seededDonations };
     }, [allDonations, allCampaigns]);
 
     const financialMetrics = [
@@ -73,8 +77,10 @@ export function FinancialPerformanceCards({ allDonations, allCampaigns }: Financ
             icon: ScanLine,
             content: (
                 <div className="text-sm space-y-2">
-                    <div className="flex justify-between items-center"><Pencil className="mr-2 h-4 w-4 text-muted-foreground"/><span>Manual Entry</span><Badge variant="secondary">{manualDonations}</Badge></div>
-                    <div className="flex justify-between items-center"><Users className="mr-2 h-4 w-4 text-muted-foreground"/><span>Seeded Data</span><Badge variant="secondary">{seededDonations}</Badge></div>
+                    <div className="flex justify-between items-center"><Pencil className="mr-2 h-4 w-4 text-muted-foreground"/><span>Manual (Admin)</span><Badge variant="secondary">{manualAdminDonations}</Badge></div>
+                    <div className="flex justify-between items-center"><Users className="mr-2 h-4 w-4 text-muted-foreground"/><span>Manual (Donor)</span><Badge variant="secondary">{manualDonorDonations}</Badge></div>
+                    <div className="flex justify-between items-center"><ScanLine className="mr-2 h-4 w-4 text-muted-foreground"/><span>Online (Gateway)</span><Badge variant="secondary">{onlineDonations}</Badge></div>
+                    <div className="flex justify-between items-center"><Database className="mr-2 h-4 w-4 text-muted-foreground"/><span>Seeded Data</span><Badge variant="secondary">{seededDonations}</Badge></div>
                 </div>
             )
         }
