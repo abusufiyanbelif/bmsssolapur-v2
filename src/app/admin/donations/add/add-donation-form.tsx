@@ -1,4 +1,3 @@
-
 // src/app/admin/donations/add/add-donation-form.tsx
 "use client";
 
@@ -27,7 +26,7 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect, Suspense, useRef, useCallback } from "react";
-import { Loader2, Info, CalendarIcon, ChevronsUpDown, Check, X, ScanEye, TextSelect, XCircle, AlertTriangle, Bot, Text, ZoomIn, ZoomOut, FileIcon, UserPlus, UserSearch, ScanSearch, UserRoundPlus, Trash2, RotateCw } from "lucide-react";
+import { Loader2, Info, CalendarIcon, ChevronsUpDown, Check, X, ScanEye, TextSelect, XCircle, AlertTriangle, Bot, Text, ZoomIn, ZoomOut, FileIcon, UserPlus, UserSearch, ScanSearch, UserRoundPlus, Trash2, RotateCw, RefreshCw as RefreshIcon, BookOpen, Sparkles, CreditCard, Fingerprint, MapPin } from "lucide-react";
 import type { User, Donation, DonationType, DonationPurpose, PaymentMethod, Lead, Campaign, ExtractDonationDetailsOutput, ExtractBeneficiaryDetailsOutput, AppSettings } from "@/services/types";
 import { getUser, checkAvailability } from "@/services/user-service";
 import { useSearchParams, useRouter } from "next/navigation";
@@ -548,17 +547,17 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation, set
                         </div>
                         {filePreview && (
                             <div className="relative group p-2 border rounded-lg">
-                                <div className="relative w-full h-80 bg-gray-100 dark:bg-gray-800 rounded-md overflow-auto cursor-zoom-in flex items-center justify-center">
+                                <div className="relative w-full h-80 bg-gray-100 dark:bg-gray-800 rounded-md overflow-auto flex items-center justify-center">
                                      {file?.type.startsWith('image/') ? (
-                                        <Image 
-                                          src={filePreview} 
-                                          alt="Proof preview" 
-                                          width={800 * zoom}
-                                          height={800 * zoom}
-                                          className="object-contain transition-transform duration-100" 
-                                          style={{ transform: `scale(${zoom}) rotate(${rotation}deg)` }}
-                                          onWheel={handleWheel}
-                                        />
+                                        <div onWheel={handleWheel} className="relative w-full h-full cursor-zoom-in">
+                                            <Image 
+                                            src={filePreview} 
+                                            alt="Proof preview" 
+                                            fill
+                                            className="object-contain transition-transform duration-100" 
+                                            style={{ transform: `scale(${zoom}) rotate(${rotation}deg)` }}
+                                            />
+                                        </div>
                                     ) : (
                                         <div className="flex flex-col items-center gap-2 text-muted-foreground p-4">
                                             <FileIcon className="h-16 w-16" />
@@ -760,7 +759,7 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation, set
                     />
 
                     <div className="space-y-4">
-                        <FormField control={form.control} name="transactionId" render={({ field }) => (<FormItem><FormLabel>Primary Transaction ID</FormLabel><FormControl><Input {...field} className={getFieldClass('transactionId')} /></FormControl><FormMessage /></FormItem>)} />
+                        <FormField control={form.control} name="transactionId" render={({ field }) => (<FormItem><FormLabel>{transactionIdLabel}</FormLabel><FormControl><Input {...field} className={getFieldClass('transactionId')} /></FormControl><FormMessage /></FormItem>)} />
                         
                         {paymentApp === 'Google Pay' && (
                             <div className="space-y-4 p-2 border-l-2 border-blue-500">

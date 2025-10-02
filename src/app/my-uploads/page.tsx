@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, UploadCloud, FileText, ScanSearch, XCircle, PlusCircle, FileIcon, ZoomIn, ZoomOut } from "lucide-react";
+import { Loader2, UploadCloud, FileText, ScanSearch, XCircle, PlusCircle, FileIcon, ZoomIn, ZoomOut, RotateCw } from "lucide-react";
 import Image from "next/image";
 
 export default function MyUploadsPage() {
@@ -15,6 +15,7 @@ export default function MyUploadsPage() {
   const [isUploading, setIsUploading] = useState(false);
   const [files, setFiles] = useState<File[]>([]);
   const [zoomLevels, setZoomLevels] = useState<Record<number, number>>({});
+  const [rotation, setRotation] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -49,6 +50,11 @@ export default function MyUploadsPage() {
     });
     setFiles([]);
     setZoomLevels({});
+  };
+  
+   const handleWheel = (e: React.WheelEvent<HTMLDivElement>, index: number) => {
+    e.preventDefault();
+    setZoomLevels(prev => ({...prev, [index]: Math.max(0.5, Math.min((prev[index] || 1) - e.deltaY * 0.001, 5))}));
   };
 
   return (
@@ -90,13 +96,15 @@ export default function MyUploadsPage() {
                           <div key={index} className="relative group p-2 border rounded-lg bg-background space-y-2">
                               <div className="w-full h-40 overflow-auto flex items-center justify-center">
                                       {isImage ? (
-                                      <Image
-                                          src={URL.createObjectURL(file)}
-                                          alt={`Preview ${index + 1}`}
-                                          width={150 * zoom}
-                                          height={150 * zoom}
-                                          className="object-contain transition-transform duration-300"
-                                      />
+                                      <div className="relative w-full h-full cursor-zoom-in" onWheel={(e) => handleWheel(e, index)}>
+                                        <Image
+                                            src={URL.createObjectURL(file)}
+                                            alt={`Preview ${index + 1}`}
+                                            fill
+                                            className="object-contain transition-transform duration-300"
+                                             style={{ transform: `scale(${zoom}) rotate(${rotation}deg)` }}
+                                        />
+                                      </div>
                                       ) : (
                                           <FileIcon className="w-16 h-16 text-muted-foreground" />
                                       )}
@@ -104,7 +112,8 @@ export default function MyUploadsPage() {
                               <p className="text-xs text-muted-foreground truncate">{file.name}</p>
                               <div className="absolute top-1 right-1 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity bg-background/80 rounded-md">
                                   <Button type="button" size="icon" variant="ghost" className="h-6 w-6" onClick={() => setZoomLevels(z => ({...z, [index]: (z[index] || 1) * 1.2}))}><ZoomIn className="h-4 w-4"/></Button>
-                                  <Button type="button" size="icon" variant="ghost" className="h-6 w-6" onClick={() => setZoomLevels(z => ({...z, [index]: Math.max(1, (z[index] || 1) / 1.2)}))}><ZoomOut className="h-4 w-4"/></Button>
+                                  <Button type="button" size="icon" variant="ghost" className="h-6 w-6" onClick={() => setZoomLevels(z => ({...z, [index]: Math.max(0.5, (z[index] || 1) / 1.2)}))}><ZoomOut className="h-4 w-4"/></Button>
+                                  <Button type="button" size="icon" variant="ghost" className="h-6 w-6" onClick={() => setRotation(r => r + 90)}><RotateCw className="h-4 w-4"/></Button>
                                   <Button type="button" size="icon" variant="ghost" className="h-6 w-6 text-destructive hover:bg-destructive/10" onClick={() => handleRemoveFile(index)}>
                                       <XCircle className="h-4 w-4"/>
                                   </Button>

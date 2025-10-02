@@ -133,7 +133,14 @@ export function AddTransferDialog({ leadId }: AddTransferDialogProps) {
         Object.entries(result.details).forEach(([key, value]) => {
             if (value && key !== 'rawText') {
                 newAutoFilledFields.add(key);
-                setValue(key as any, value);
+                if (key === 'date') setValue('transactionDate', new Date(value as string));
+                else if (key === 'amount') setValue('amount', value as number);
+                else if (key === 'paymentApp' && paymentApps.includes(value as any)) {
+                    setValue('paymentApp', value as any);
+                }
+                else {
+                    setValue(key as any, value);
+                }
             }
         });
         setAutoFilledFields(newAutoFilledFields);
@@ -215,21 +222,28 @@ export function AddTransferDialog({ leadId }: AddTransferDialogProps) {
                 {previewUrl && (
                   <div className="relative group p-2 border rounded-lg">
                      <div className="relative w-full h-60 bg-gray-100 dark:bg-gray-800 rounded-md overflow-auto flex items-center justify-center">
-                          <Image 
-                              src={previewUrl} 
-                              alt="Proof preview" 
-                              width={600 * zoom}
-                              height={600 * zoom}
-                              className="object-contain transition-transform duration-100"
-                              style={{ transform: `scale(${zoom}) rotate(${rotation}deg)` }}
-                              onWheel={handleWheel}
-                          />
+                           {file?.type.startsWith('image/') ? (
+                                <div onWheel={handleWheel} className="relative w-full h-full cursor-zoom-in">
+                                    <Image 
+                                    src={previewUrl} 
+                                    alt="Proof preview" 
+                                    fill
+                                    className="object-contain transition-transform duration-100"
+                                    style={{ transform: `scale(${zoom}) rotate(${rotation}deg)` }}
+                                    />
+                                </div>
+                            ) : (
+                                <div className="flex flex-col items-center gap-2 text-muted-foreground p-4">
+                                    <FileIcon className="h-16 w-16" />
+                                    <span className="text-sm font-semibold">{file?.name}</span>
+                                </div>
+                            )}
                       </div>
                       <div className="absolute top-2 right-2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity bg-background/80 p-1 rounded-md">
                           <Button type="button" size="icon" variant="ghost" className="h-7 w-7" onClick={() => setZoom(z => z * 1.2)}><ZoomIn className="h-4 w-4"/></Button>
                           <Button type="button" size="icon" variant="ghost" className="h-7 w-7" onClick={() => setZoom(z => Math.max(0.5, z / 1.2))}><ZoomOut className="h-4 w-4"/></Button>
                           <Button type="button" size="icon" variant="ghost" className="h-7 w-7" onClick={() => setRotation(r => r + 90)}><RotateCw className="h-4 w-4" /></Button>
-                          <Button type="button" variant="destructive" size="icon" className="h-7 w-7" onClick={() => { setFile(null); setPreviewUrl(null); setRawText(null); setExtractedDetails(null); setAutoFilledFields(new Set()); setZoom(1); setRotation(0); }}><X className="h-4 w-4"/></Button>
+                          <Button type="button" variant="destructive" size="icon" className="h-7 w-7" onClick={() => { setFile(null); setPreviewUrl(null); setRawText(null); setExtractedDetails(null); setZoom(1); setRotation(0); }}><X className="h-4 w-4"/></Button>
                       </div>
                   </div>
                 )}

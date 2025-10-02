@@ -16,12 +16,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useRef, useEffect } from "react";
-import { Loader2, Upload, RotateCw } from "lucide-react";
+import { Loader2, Upload, RotateCw, FileIcon, ZoomIn, ZoomOut, XCircle } from "lucide-react";
 import { handleUploadVerificationDocument } from "./actions";
 import { useRouter } from "next/navigation";
 import { Progress } from "@/components/ui/progress"; // Import Progress component
 import Image from "next/image";
-import { FileIcon, ZoomIn, ZoomOut, XCircle } from "lucide-react";
 
 interface UploadDocumentDialogProps {
   leadId: string;
@@ -128,14 +127,15 @@ export function UploadDocumentDialog({ leadId }: UploadDocumentDialogProps) {
                 <div className="relative group p-2 border rounded-lg">
                     <div className="relative w-full h-60 bg-gray-100 dark:bg-gray-800 rounded-md overflow-auto flex items-center justify-center">
                         {file?.type.startsWith('image/') ? (
-                             <Image 
-                                src={previewUrl} 
-                                alt="Document Preview" 
-                                width={600 * zoom}
-                                height={600 * zoom}
-                                className="object-contain transition-transform duration-100"
-                                style={{ transform: `scale(${zoom}) rotate(${rotation}deg)` }}
-                             />
+                             <div className="relative w-full h-full cursor-zoom-in" onWheel={(e) => {e.preventDefault(); setZoom(prev => Math.max(0.5, Math.min(prev - e.deltaY * 0.001, 5)))}}>
+                                <Image 
+                                    src={previewUrl} 
+                                    alt="Document Preview" 
+                                    fill
+                                    className="object-contain transition-transform duration-100"
+                                    style={{ transform: `scale(${zoom}) rotate(${rotation}deg)` }}
+                                />
+                             </div>
                         ) : (
                             <div className="flex flex-col items-center gap-2 text-muted-foreground">
                                 <FileIcon className="h-16 w-16" />
@@ -143,10 +143,11 @@ export function UploadDocumentDialog({ leadId }: UploadDocumentDialogProps) {
                             </div>
                         )}
                     </div>
-                    <div className="absolute top-1 right-1 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity bg-background/80 rounded-md">
+                     <div className="absolute top-1 right-1 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity bg-background/80 rounded-md">
                         <Button type="button" size="icon" variant="ghost" className="h-6 w-6" onClick={() => setZoom(z => z * 1.2)}><ZoomIn className="h-4 w-4"/></Button>
                         <Button type="button" size="icon" variant="ghost" className="h-6 w-6" onClick={() => setZoom(z => Math.max(0.5, z / 1.2))}><ZoomOut className="h-4 w-4"/></Button>
                         <Button type="button" size="icon" variant="ghost" className="h-6 w-6" onClick={() => setRotation(r => r + 90)}><RotateCw className="h-4 w-4"/></Button>
+                        <Button type="button" size="icon" variant="ghost" className="h-6 w-6 text-destructive" onClick={() => { setFile(null); setPreviewUrl(null); }}><XCircle className="h-4 w-4"/></Button>
                     </div>
                 </div>
             )}

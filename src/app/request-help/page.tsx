@@ -307,17 +307,18 @@ export default function RequestHelpPage() {
                             (Optional) Upload a supporting document (e.g., ID card, medical report, bill).
                         </FormDescription>
                         {filePreview && (
-                            <div className="relative group p-2 border rounded-lg">
+                             <div className="relative group p-2 border rounded-lg">
                                 <div className="relative w-full h-60 bg-gray-100 dark:bg-gray-800 rounded-md overflow-auto flex items-center justify-center">
-                                    {file?.type.startsWith('image/') ? (
-                                        <Image 
-                                            src={filePreview} 
-                                            alt="Proof preview" 
-                                            width={600 * zoom}
-                                            height={600 * zoom}
-                                            className="object-contain transition-transform duration-100"
-                                            style={{ transform: `scale(${zoom}) rotate(${rotation}deg)` }}
-                                        />
+                                     {file?.type.startsWith('image/') ? (
+                                         <div className="relative w-full h-full cursor-zoom-in" onWheel={(e) => {e.preventDefault(); setZoom(prev => Math.max(0.5, Math.min(prev - e.deltaY * 0.001, 5)))}}>
+                                            <Image 
+                                                src={filePreview} 
+                                                alt="Document Preview" 
+                                                fill
+                                                className="object-contain transition-transform duration-100"
+                                                style={{ transform: `scale(${zoom}) rotate(${rotation}deg)` }}
+                                            />
+                                         </div>
                                     ) : (
                                         <div className="flex flex-col items-center gap-2 text-muted-foreground">
                                             <FileIcon className="h-16 w-16" />
