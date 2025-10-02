@@ -126,7 +126,7 @@ export function LoginForm() {
     <div className="flex items-center justify-center min-h-[calc(100vh-200px)]">
       <Card className="w-full max-w-sm">
         <CardHeader className="text-center">
-          <CardTitle>Account Login</CardTitle>
+          <CardTitle className="text-primary">Account Login</CardTitle>
           <CardDescription>
             Choose your preferred method to access your account.
           </CardDescription>
