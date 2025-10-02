@@ -69,22 +69,14 @@ export async function handleAddUser(
   }
   
   try {
-    const newUser = await createUser({
+    // The createUser function now handles the transactional creation, including file uploads.
+    // We can pass the file objects directly to the service.
+    const createdUser = await createUser({
+        ...rawFormData,
         name: `${rawFormData.firstName} ${rawFormData.middleName || ''} ${rawFormData.lastName}`.replace(/\s+/g, ' ').trim(),
-        userId: rawFormData.userId,
-        firstName: rawFormData.firstName,
-        middleName: rawFormData.middleName,
-        lastName: rawFormData.lastName,
-        fatherName: rawFormData.fatherName,
         email: rawFormData.email || undefined,
-        phone: rawFormData.phone,
-        password: rawFormData.password,
         roles: rawFormData.roles,
         isActive: true,
-        isAnonymousAsBeneficiary: rawFormData.isAnonymousAsBeneficiary,
-        isAnonymousAsDonor: rawFormData.isAnonymousAsDonor,
-        gender: rawFormData.gender!,
-        beneficiaryType: rawFormData.beneficiaryType,
         address: {
             addressLine1: rawFormData.addressLine1 || '',
             city: rawFormData.city || 'Solapur',
@@ -92,40 +84,15 @@ export async function handleAddUser(
             country: rawFormData.country || 'India',
             pincode: rawFormData.pincode || '',
         },
-        occupation: rawFormData.occupation || '',
-        fatherOccupation: rawFormData.fatherOccupation || '',
-        motherOccupation: rawFormData.motherOccupation || '',
         familyMembers: rawFormData.familyMembers || 0,
         earningMembers: rawFormData.earningMembers || 0,
         totalFamilyIncome: rawFormData.totalFamilyIncome || 0,
         isWidow: rawFormData.isWidow,
-        panNumber: rawFormData.panNumber || '',
-        aadhaarNumber: rawFormData.aadhaarNumber || '',
-        bankAccountName: rawFormData.bankAccountName || '',
-        bankName: rawFormData.bankName || '',
-        bankAccountNumber: rawFormData.bankAccountNumber || '',
-        bankIfscCode: rawFormData.bankIfscCode || '',
         upiPhoneNumbers: rawFormData.upiPhoneNumbers?.filter(Boolean) || [],
         upiIds: rawFormData.upiIds.filter(id => id.trim() !== ''),
         privileges: [],
         groups: [],
     });
-    
-    // After user is created, upload files if they exist
-    const docUpdates: Partial<User> = {};
-    const uploadPath = `users/${newUser.userKey}/documents/`;
-
-    if (rawFormData.aadhaarCard && rawFormData.aadhaarCard.size > 0) {
-      docUpdates.aadhaarCardUrl = await uploadFile(rawFormData.aadhaarCard, uploadPath, onProgress);
-    }
-    if (rawFormData.addressProof && rawFormData.addressProof.size > 0) {
-      docUpdates.addressProofUrl = await uploadFile(rawFormData.addressProof, uploadPath, onProgress);
-    }
-
-    if (Object.keys(docUpdates).length > 0) {
-      await updateUser(newUser.id!, docUpdates);
-      Object.assign(newUser, docUpdates);
-    }
     
     revalidatePath("/admin/user-management");
     revalidatePath("/admin/beneficiaries");
@@ -135,7 +102,7 @@ export async function handleAddUser(
 
     return {
       success: true,
-      user: newUser,
+      user: createdUser,
     };
   } catch (e) {
     const error = e instanceof Error ? e.message : "An unknown error occurred.";

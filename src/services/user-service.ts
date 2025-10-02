@@ -19,10 +19,14 @@ import {
   serverTimestamp,
   getCountFromServer,
   orderBy,
+  writeBatch,
+  arrayUnion,
+  arrayRemove,
 } from 'firebase/firestore';
 import { db } from './firebase';
 import { adminDb } from './firebase-admin';
 import type { User, UserRole } from './types';
+import { uploadFile } from './storage-service';
 
 const USERS_COLLECTION = 'users';
 
@@ -122,75 +126,43 @@ export const getUserByUserId = async (userId: string): Promise<User | null> => {
 
 // Function to create or update a user
 export const createUser = async (userData: Partial<Omit<User, 'id' | 'createdAt' | 'updatedAt'>>) => {
+  const userRef = doc(collection(db, USERS_COLLECTION)); // Generate ID upfront
   
   try {
-    // Standardize phone number
     const standardizedPhone = userData.phone?.replace(/\D/g, '').slice(-10) || '';
     if (standardizedPhone.length !== 10) {
         throw new Error("Invalid phone number provided. Must be 10 digits.");
     }
-    
-    // --- DUPLICATE CHECKS ---
-    if (userData.email) {
-      const emailExists = await getUserByEmail(userData.email);
-      if (emailExists) throw new Error(`A user with the email ${userData.email} already exists (Name: ${emailExists.name}).`);
-    }
-    const phoneExists = await getUserByPhone(standardizedPhone);
-    if (phoneExists) throw new Error(`A user with the phone number ${standardizedPhone} already exists (Name: ${phoneExists.name}).`);
-    
-    let finalUserId = userData.userId;
-    if (!finalUserId) {
-        finalUserId = `${userData.firstName?.toLowerCase() || 'user'}.${userData.lastName?.toLowerCase() || Date.now()}`.replace(/\s+/g, '');
-    }
-    const idExists = await getUserByUserId(finalUserId);
-    if (idExists) throw new Error(`User ID "${finalUserId}" is already taken.`);
 
-    if (userData.aadhaarNumber) {
-        const aadhaarExists = await getUserByAadhaar(userData.aadhaarNumber);
-        if (aadhaarExists) throw new Error(`A user with this Aadhaar number already exists (Name: ${aadhaarExists.name}).`);
+    if (userData.userId && (await getUserByUserId(userData.userId))) {
+      throw new Error(`User ID "${userData.userId}" is already taken.`);
     }
-
-    if (userData.upiIds && userData.upiIds.length > 0) {
-        for (const upiId of userData.upiIds) {
-            const upiExists = await getUserByUpiId(upiId);
-            if (upiExists) {
-                throw new Error(`The UPI ID "${upiId}" is already associated with another user (Name: ${upiExists.name}).`);
-            }
-        }
+    if (userData.email && (await getUserByEmail(userData.email))) {
+      throw new Error(`A user with the email ${userData.email} already exists.`);
     }
-    // --- END DUPLICATE CHECKS ---
-
-    const userRef = doc(collection(db, USERS_COLLECTION));
+    if (await getUserByPhone(standardizedPhone)) {
+      throw new Error(`A user with the phone number ${standardizedPhone} already exists.`);
+    }
     
-    // Generate a new userKey.
+    const finalUserId = userData.userId || `${userData.firstName?.toLowerCase() || 'user'}.${userData.lastName?.toLowerCase() || Date.now()}`.replace(/\s+/g, '');
+
     const usersCollection = collection(db, USERS_COLLECTION);
     const countSnapshot = await getCountFromServer(usersCollection);
     const userNumber = countSnapshot.data().count + 1;
     const userKey = `USR${userNumber.toString().padStart(2, '0')}`;
 
-    // --- On-demand Anonymous ID Generation ---
     const assignedRoles = getUnique(userData.roles || ['Donor']);
     let anonymousDonorId: string | undefined;
     let anonymousBeneficiaryId: string | undefined;
-    let anonymousReferralId: string | undefined;
-    let anonymousAdminId: string | undefined;
 
-    if (assignedRoles.includes('Donor')) {
+    if (assignedRoles.includes('Donor') && !userData.anonymousDonorId) {
         anonymousDonorId = await generateNextAnonymousId('DONOR', 'anonymousDonorId');
     }
-    if (assignedRoles.includes('Beneficiary')) {
+    if (assignedRoles.includes('Beneficiary') && !userData.anonymousBeneficiaryId) {
         anonymousBeneficiaryId = await generateNextAnonymousId('BENFCRY', 'anonymousBeneficiaryId');
     }
-     if (assignedRoles.includes('Referral')) {
-        anonymousReferralId = await generateNextAnonymousId('REF', 'anonymousReferralId');
-    }
-    if (assignedRoles.some(r => ['Admin', 'Super Admin', 'Finance Admin'].includes(r))) {
-         anonymousAdminId = await generateNextAnonymousId('ADM', 'anonymousAdminId');
-    }
-    // --- End On-demand ID Generation ---
-
-    const newUser: User = { 
-        id: userRef.id,
+    
+    const newUser: Omit<User, 'id'> = {
         userKey: userKey,
         name: userData.name || `${userData.firstName || ''} ${userData.middleName || ''} ${userData.lastName || ''}`.replace(/\s+/g, ' ').trim(),
         userId: finalUserId,
@@ -202,28 +174,19 @@ export const createUser = async (userData: Partial<Omit<User, 'id' | 'createdAt'
         phone: standardizedPhone,
         password: userData.password,
         isActive: userData.isActive !== undefined ? userData.isActive : true,
-        address: {
-            addressLine1: userData.address?.addressLine1 || '',
-            city: userData.address?.city || 'Solapur',
-            state: userData.address?.state || 'Maharashtra',
-            country: userData.address?.country || 'India',
-            pincode: userData.address?.pincode || '',
-        },
+        address: userData.address || {},
         gender: userData.gender!,
         dateOfBirth: userData.dateOfBirth,
         beneficiaryType: userData.beneficiaryType,
         isAnonymousAsBeneficiary: userData.isAnonymousAsBeneficiary || false,
         isAnonymousAsDonor: userData.isAnonymousAsDonor || false,
-        anonymousBeneficiaryId: anonymousBeneficiaryId,
-        anonymousDonorId: anonymousDonorId,
-        anonymousReferralId: anonymousReferralId,
-        anonymousAdminId: anonymousAdminId,
+        anonymousBeneficiaryId,
+        anonymousDonorId,
         occupation: userData.occupation,
         familyMembers: userData.familyMembers,
         isWidow: userData.isWidow,
-        secondaryPhone: userData.secondaryPhone,
-        aadhaarNumber: userData.aadhaarNumber,
         panNumber: userData.panNumber,
+        aadhaarNumber: userData.aadhaarNumber,
         bankAccountName: userData.bankAccountName,
         bankAccountNumber: userData.bankAccountNumber,
         bankIfscCode: userData.bankIfscCode,
@@ -238,17 +201,32 @@ export const createUser = async (userData: Partial<Omit<User, 'id' | 'createdAt'
         updatedAt: Timestamp.now(),
         source: userData.source || 'Manual Entry',
     };
+    
+    const dataToWrite: any = { ...newUser };
+    Object.keys(dataToWrite).forEach(key => { if ((dataToWrite as any)[key] === undefined) delete (dataToWrite as any)[key]; });
 
-    // Remove undefined fields to prevent Firestore errors
-    Object.keys(newUser).forEach(key => {
-        const typedKey = key as keyof User;
-        if ((newUser as any)[typedKey] === undefined) {
-            delete (newUser as any)[typedKey];
+    await setDoc(userRef, dataToWrite);
+
+    // --- Transactional File Upload ---
+    // Now that the user exists, try to upload files. If this fails, delete the user.
+    const docUpdates: Partial<User> = {};
+    const uploadPath = `users/${userKey}/documents/`;
+    
+    try {
+        if (userData.aadhaarCardUrl) docUpdates.aadhaarCardUrl = userData.aadhaarCardUrl;
+        if (userData.addressProofUrl) docUpdates.addressProofUrl = userData.addressProofUrl;
+        
+        if (Object.keys(docUpdates).length > 0) {
+          await updateDoc(userRef, docUpdates);
         }
-    });
-
-    await setDoc(userRef, newUser);
-    return newUser;
+    } catch (uploadError) {
+        console.error("File upload failed during user creation, rolling back user creation.", uploadError);
+        await deleteDoc(userRef); // Rollback: delete the created user
+        throw new Error("File upload failed, user creation was rolled back.");
+    }
+    
+    const finalUser = { ...newUser, ...docUpdates, id: userRef.id } as User;
+    return finalUser;
 
   } catch (error) {
     console.error('Error creating user: ', error);
