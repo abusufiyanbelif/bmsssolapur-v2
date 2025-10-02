@@ -6,6 +6,7 @@ import { getUser, updateUser } from "@/services/user-service";
 import { revalidatePath } from "next/cache";
 import type { User, UserRole } from "@/services/types";
 import { logActivity } from "@/services/activity-log-service";
+import { uploadFile } from "@/services/storage-service";
 
 
 interface FormState {
@@ -85,6 +86,11 @@ export async function handleUpdateUser(
       bankIfscCode: formData.get("bankIfscCode") as string | undefined,
       upiPhoneNumbers: formData.getAll("upiPhoneNumbers") as string[] | undefined,
       upiIds: formData.getAll("upiIds") as string[] | undefined,
+      // File fields
+      aadhaarCard: formData.get("aadhaarCard") as File | null,
+      addressProof: formData.get("addressProof") as File | null,
+      otherDocument1: formData.get("otherDocument1") as File | null,
+      otherDocument2: formData.get("otherDocument2") as File | null,
   };
   
   if (!rawFormData.firstName || !rawFormData.lastName || !rawFormData.phone || rawFormData.roles.length === 0) {
@@ -150,6 +156,22 @@ export async function handleUpdateUser(
         upiIds: rawFormData.upiIds?.filter(Boolean) || [],
     };
     
+     // Handle file uploads
+    const uploadPath = `users/${originalUser.userKey}/documents/`;
+    const uploadPromises = [
+        rawFormData.aadhaarCard?.size ? uploadFile(rawFormData.aadhaarCard, uploadPath) : Promise.resolve(null),
+        rawFormData.addressProof?.size ? uploadFile(rawFormData.addressProof, uploadPath) : Promise.resolve(null),
+        rawFormData.otherDocument1?.size ? uploadFile(rawFormData.otherDocument1, uploadPath) : Promise.resolve(null),
+        rawFormData.otherDocument2?.size ? uploadFile(rawFormData.otherDocument2, uploadPath) : Promise.resolve(null),
+    ];
+    
+    const [aadhaarUrl, addressUrl, other1Url, other2Url] = await Promise.all(uploadPromises);
+    if(aadhaarUrl) updates.aadhaarCardUrl = aadhaarUrl;
+    if(addressUrl) updates.addressProofUrl = addressUrl;
+    if(other1Url) updates.otherDocument1Url = other1Url;
+    if(other2Url) updates.otherDocument2Url = other2Url;
+
+
     const changes = getChangedFields(originalUser, updates);
     
     if (Object.keys(changes).length > 0) {
