@@ -24,7 +24,6 @@ import { Loader2, AlertCircle, PlusCircle, MoreHorizontal, FilterX, ArrowUpDown,
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator, DropdownMenuSub, DropdownMenuSubContent, DropdownMenuSubTrigger, DropdownMenuPortal, DropdownMenuLabel } from "@/components/ui/dropdown-menu";
 import { useToast } from "@/hooks/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Input } from "@/components/ui/input";
@@ -109,6 +108,7 @@ export function DonationsPageClient({ initialDonations, initialUsers, initialLea
 
     const { toast } = useToast();
     const isMobile = useIsMobile();
+    const router = useRouter();
 
     const fetchData = async () => {
         try {
@@ -825,6 +825,12 @@ export function DonationsPageClient({ initialDonations, initialUsers, initialLea
         <div className="flex items-center justify-between">
             <h2 className="text-3xl font-bold tracking-tight font-headline text-primary">Donation Management</h2>
              <div className="flex gap-2">
+                 <Button asChild variant="secondary">
+                    <Link href="/admin/donations/add?scan=true">
+                        <ScanEye className="mr-2 h-4 w-4" />
+                        Scan Screenshot
+                    </Link>
+                </Button>
                 <Button asChild>
                     <Link href="/admin/donations/add">
                         <PlusCircle className="mr-2" />

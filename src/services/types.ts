@@ -563,5 +563,3 @@ export interface LetterContentOptions {
     body: string;
     closingName: string;
 }
-
-

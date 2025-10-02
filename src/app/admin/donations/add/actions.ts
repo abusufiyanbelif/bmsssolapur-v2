@@ -8,11 +8,12 @@ import { createDonation, getDonationByTransactionId, updateDonation } from "@/se
 import { getUser, getUserByUpiId, getUserByBankAccountNumber, getUserByPhone, createUser, updateUser } from "@/services/user-service";
 import { revalidatePath } from "next/cache";
 import type { Donation, DonationPurpose, DonationType, PaymentMethod, UserRole, User, ExtractDonationDetailsOutput } from "@/services/types";
-import { Timestamp, arrayUnion } from "firebase/firestore";
+import { Timestamp, arrayUnion, collection } from "firebase/firestore";
 import { uploadFile } from "@/services/storage-service";
 import { extractDonationDetails } from "@/ai/flows/extract-donation-details-flow";
 import { getCampaign } from "@/services/campaign-service";
-
+import { db } from "@/services/firebase";
+import { doc } from "firebase/firestore";
 
 interface FormState {
     success: boolean;

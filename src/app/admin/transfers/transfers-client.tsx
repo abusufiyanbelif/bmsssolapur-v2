@@ -36,7 +36,7 @@ import { getAllLeads, Lead } from "@/services/lead-service";
 export interface EnrichedTransfer extends FundTransfer {
   leadId: string;
   leadName: string; // Beneficiary name
-  beneficiaryId: string;
+  beneficiaryId?: string;
   uniqueId: string; // A unique identifier for the transfer itself
 }
 
@@ -427,7 +427,7 @@ export function AllTransfersPageClient({ initialTransfers, error: initialError }
                         )}
                          <DeleteConfirmationDialog
                             itemType={`${selectedTransfers.length} transfer(s)`}
-                            itemName="the selected items"
+                            itemName="the selected items. This will also update the 'Help Given' amount on the corresponding leads."
                             onDelete={() => handleBulkDeleteTransfers(selectedTransfers)}
                             onSuccess={onBulkDeleteSuccess}
                         >
@@ -457,8 +457,8 @@ export function AllTransfersPageClient({ initialTransfers, error: initialError }
         </div>
         <Card>
             <CardHeader>
-                <CardTitle>Transfer History</CardTitle>
-                <CardDescription>
+                <CardTitle className="text-primary">Transfer History</CardTitle>
+                <CardDescription className="text-muted-foreground">
                     A complete log of all funds transferred to beneficiaries.
                 </CardDescription>
             </CardHeader>
