@@ -18,7 +18,6 @@ import {
   limit,
   serverTimestamp,
   getCountFromServer,
-  orderBy,
   writeBatch,
   arrayUnion,
   arrayRemove,
@@ -583,8 +582,8 @@ export const deleteUser = async (id: string, adminUser: User, isBulkOperation: b
         const userToDelete = await getUser(id);
         if (!userToDelete) throw new Error("User to delete not found.");
 
-        const anonymousDonor = await getUserByUserId('anonymous');
-        if (!anonymousDonor) throw new Error("Could not find the 'anonymous' system user to re-assign donations to.");
+        const anonymousDonor = await getUserByUserId('anonymous_donor');
+        if (!anonymousDonor) throw new Error("Could not find the 'anonymous_donor' system user to re-assign donations to. Please run the seeder.");
 
         // 1. Reassign donations from this user to "Anonymous Donor"
         const donationsQuery = query(collection(db, 'donations'), where("donorId", "==", id));

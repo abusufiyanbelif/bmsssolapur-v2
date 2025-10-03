@@ -18,7 +18,7 @@ import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { handleUpdateUser, handleSetPassword } from "./actions";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Loader2, CheckCircle, Save, RefreshCw, AlertTriangle, Edit, X, PlusCircle, Trash2, Paperclip, FileIcon, User as UserIcon, MapPin, CreditCard, Banknote } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -34,7 +34,6 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import { UserProfileAuditTrail } from "./user-profile-audit-trail";
 import { DeleteUserButton } from "./delete-user-button";
@@ -196,7 +195,6 @@ const normalAdminRoles: Exclude<UserRole, 'Guest' | 'Admin' | 'Super Admin' | 'F
 ];
 
 const createFormSchema = (settings?: AppSettings) => z.object({
-  userId: z.string().optional(),
   firstName: z.string().min(2, "First name must be at least 2 characters."),
   middleName: z.string().optional(),
   lastName: z.string().min(1, "Last name is required."),
@@ -252,6 +250,9 @@ const createFormSchema = (settings?: AppSettings) => z.object({
         if (beneficiarySettings.isBankAccountMandatory && !data.bankAccountNumber) {
              ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Bank Account Number is required for Beneficiaries.", path: ["bankAccountNumber"] });
         }
+        if (!data.beneficiaryType) {
+             ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Beneficiary Type is required when the Beneficiary role is selected.", path: ["beneficiaryType"] });
+        }
     }
 });
 
@@ -267,10 +268,12 @@ export function EditUserForm({ user }: EditUserFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [currentAdmin, setCurrentAdmin] = useState<User | null>(null);
   const [isEditing, setIsEditing] = useState(false);
+  const [isFileDirty, setIsFileDirty] = useState(false);
+  
   const [settings, setSettings] = useState<AppSettings | null>(null);
 
   const formSchema = createFormSchema(settings || undefined);
-
+  
   useEffect(() => {
     const adminId = localStorage.getItem('userId');
     if (adminId) {
@@ -282,7 +285,6 @@ export function EditUserForm({ user }: EditUserFormProps) {
   const form = useForm<EditUserFormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      userId: user.userId || '',
       firstName: user.firstName,
       middleName: user.middleName || '',
       lastName: user.lastName,
@@ -317,10 +319,7 @@ export function EditUserForm({ user }: EditUserFormProps) {
     },
   });
 
-  const { formState, control, reset, handleSubmit: originalHandleSubmit, watch } = form;
-  
-  // Combine form's built-in dirty state with our manual file dirty state
-  const [isFileDirty, setIsFileDirty] = useState(false);
+  const { formState, control, reset, handleSubmit: originalHandleSubmit, watch, trigger } = form;
   const isFormDirty = formState.isDirty || isFileDirty;
 
   const handleSubmit = (onSubmitFunction: (values: EditUserFormValues) => void) => {
@@ -329,12 +328,15 @@ export function EditUserForm({ user }: EditUserFormProps) {
   
   useEffect(() => {
       const subscription = watch((value, { name }) => {
-          if (name && (name.includes('Card') || name.includes('Proof') || name.startsWith('otherDocument'))) {
+          if (name?.includes('Card') || name?.startsWith('otherDocument') || name?.includes('Proof')) {
               setIsFileDirty(true);
+          }
+          if(name === 'roles'){
+              trigger(); // Re-validate the form when roles change
           }
       });
       return () => subscription.unsubscribe();
-  }, [watch]);
+  }, [watch, trigger]);
 
 
   const { fields: upiIdFields, append: appendUpiId, remove: removeUpiId } = useFieldArray({ control, name: "upiIds" });
@@ -342,7 +344,7 @@ export function EditUserForm({ user }: EditUserFormProps) {
   const selectedRoles = form.watch("roles");
   
   const handleCancel = () => {
-      reset();
+      reset(); // Reset to the original default values
       setIsEditing(false);
       setIsFileDirty(false);
   }
@@ -377,7 +379,7 @@ export function EditUserForm({ user }: EditUserFormProps) {
         formData.append(key, String(value));
       }
     }
-
+    
     const result = await handleUpdateUser(user.id!, formData, currentAdmin.id);
 
     setIsSubmitting(false);
@@ -389,7 +391,7 @@ export function EditUserForm({ user }: EditUserFormProps) {
         description: `Successfully updated user ${user.name}.`,
         icon: <CheckCircle />,
       });
-      form.reset(values);
+      reset(values);
       setIsFileDirty(false);
       setIsEditing(false);
     } else {
@@ -442,7 +444,7 @@ export function EditUserForm({ user }: EditUserFormProps) {
                             <AccordionItem value="basic" className="border rounded-lg">
                                 <AccordionTrigger className="p-4 font-semibold text-primary"><h4 className="flex items-center gap-2"><UserIcon className="h-5 w-5"/>Basic Information</h4></AccordionTrigger>
                                 <AccordionContent className="p-6 pt-2 space-y-6">
-                                     <FormField control={form.control} name="userId" render={({ field }) => (<FormItem><FormLabel>User ID</FormLabel><FormControl><Input {...field} disabled /></FormControl><FormDescription>The user&apos;s custom ID cannot be changed.</FormDescription><FormMessage /></FormItem>)}/>
+                                     <FormItem><FormLabel>User ID</FormLabel><FormControl><Input value={user.userId || ''} disabled /></FormControl><FormDescription>The user&apos;s custom ID cannot be changed.</FormDescription></FormItem>
                                      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                                         <FormField control={form.control} name="firstName" render={({ field }) => (<FormItem><FormLabel>First Name</FormLabel><FormControl><Input placeholder="First Name" {...field} disabled={!isEditing} /></FormControl><FormMessage /></FormItem>)}/>
                                         <FormField control={form.control} name="middleName" render={({ field }) => (<FormItem><FormLabel>Middle Name</FormLabel><FormControl><Input placeholder="Middle Name" {...field} disabled={!isEditing} /></FormControl><FormMessage /></FormItem>)}/>
@@ -476,7 +478,7 @@ export function EditUserForm({ user }: EditUserFormProps) {
                                 <AccordionItem value="beneficiary" className="border rounded-lg">
                                     <AccordionTrigger className="p-4 font-semibold text-primary"><h4 className="flex items-center gap-2"><UserIcon className="h-5 w-5"/>Family &amp; Occupation Details</h4></AccordionTrigger>
                                     <AccordionContent className="p-6 pt-2 space-y-6">
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                             <FormField control={form.control} name="occupation" render={({ field }) => (<FormItem><FormLabel>Occupation</FormLabel><FormControl><Input {...field} disabled={!isEditing} /></FormControl><FormMessage /></FormItem>)}/>
                                             <FormField control={form.control} name="fatherOccupation" render={({ field }) => (<FormItem><FormLabel>Father&apos;s Occupation</FormLabel><FormControl><Input {...field} disabled={!isEditing} /></FormControl><FormMessage /></FormItem>)}/>
                                             <FormField control={form.control} name="motherOccupation" render={({ field }) => (<FormItem><FormLabel>Mother&apos;s Occupation</FormLabel><FormControl><Input {...field} disabled={!isEditing} /></FormControl><FormMessage /></FormItem>)}/>
@@ -485,18 +487,18 @@ export function EditUserForm({ user }: EditUserFormProps) {
                                             <FormField control={form.control} name="totalFamilyIncome" render={({ field }) => (<FormItem><FormLabel>Total Family Income (Monthly)</FormLabel><FormControl><Input type="number" {...field} disabled={!isEditing} /></FormControl><FormMessage /></FormItem>)}/>
                                         </div>
                                          <FormField control={form.control} name="beneficiaryType" render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel>Beneficiary Type</FormLabel>
-                                                <FormControl>
-                                                    <RadioGroup onValueChange={field.onChange} value={field.value} className="flex flex-row space-x-4 pt-2" disabled={!isEditing}>
+                                             <FormItem>
+                                                 <FormLabel>Beneficiary Type</FormLabel>
+                                                 <FormControl>
+                                                     <RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="flex flex-row space-x-4 pt-2" disabled={!isEditing}>
                                                         <FormItem className="flex items-center space-x-3 space-y-0"><RadioGroupItem value="Adult" id="type-adult"/><FormLabel className="font-normal" htmlFor="type-adult">Adult</FormLabel></FormItem>
                                                         <FormItem className="flex items-center space-x-3 space-y-0"><RadioGroupItem value="Old Age" id="type-old"/><FormLabel className="font-normal" htmlFor="type-old">Old Age</FormLabel></FormItem>
                                                         <FormItem className="flex items-center space-x-3 space-y-0"><RadioGroupItem value="Kid" id="type-kid"/><FormLabel className="font-normal" htmlFor="type-kid">Kid</FormLabel></FormItem>
                                                         <FormItem className="flex items-center space-x-3 space-y-0"><RadioGroupItem value="Family" id="type-family"/><FormLabel className="font-normal" htmlFor="type-family">Family</FormLabel></FormItem>
-                                                    </RadioGroup>
-                                                </FormControl>
-                                                <FormMessage />
-                                            </FormItem>
+                                                     </RadioGroup>
+                                                 </FormControl>
+                                                 <FormMessage />
+                                             </FormItem>
                                          )}/>
                                     </AccordionContent>
                                 </AccordionItem>
