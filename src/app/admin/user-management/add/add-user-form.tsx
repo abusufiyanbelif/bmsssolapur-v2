@@ -315,8 +315,7 @@ function AddUserFormContent({ settings, isSubForm = false, prefilledData, onUser
   const lastName = watch("lastName");
   const fullName = watch("fullName");
   
-  const beneficiaryUserConfig = settings?.userConfiguration?.Beneficiary;
-  const isAadhaarMandatory = selectedRoles.includes('Beneficiary') && !!beneficiaryUserConfig?.isAadhaarMandatory;
+  const isAadhaarMandatory = selectedRoles.includes('Beneficiary') && !!settings?.userConfiguration?.Beneficiary?.isAadhaarMandatory;
   
   useEffect(() => {
     trigger();
@@ -1235,5 +1234,3 @@ export function AddUserForm(props: AddUserFormProps) {
         </Suspense>
     )
 }
-
-```
