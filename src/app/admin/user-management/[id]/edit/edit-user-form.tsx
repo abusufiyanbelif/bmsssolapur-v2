@@ -1,3 +1,4 @@
+
 // src/app/admin/user-management/[id]/edit/edit-user-form.tsx
 "use client";
 
@@ -34,6 +35,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
+  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import { UserProfileAuditTrail } from "./user-profile-audit-trail";
 import { DeleteUserButton } from "./delete-user-button";
@@ -357,32 +359,27 @@ export function EditUserForm({ user }: EditUserFormProps) {
     setIsSubmitting(true);
     
     const formData = new FormData();
-    for (const key in values) {
-      const formKey = key as keyof EditUserFormValues;
-      const value = values[formKey];
-
-      if (value instanceof File) {
-        formData.append(key, value);
-      } else if (Array.isArray(value)) {
-        if (key === 'roles') {
-          value.forEach(v => formData.append(key, v));
-        } else {
-          value.forEach(item => {
-            if(item && typeof item === 'object' && 'value' in item && item.value) {
-                formData.append(key, item.value);
+    Object.entries(values).forEach(([key, value]) => {
+        if (value instanceof File) {
+            formData.append(key, value);
+        } else if (Array.isArray(value)) {
+            if (key === 'roles') {
+            value.forEach(v => formData.append(key, v));
+            } else {
+            value.forEach(item => {
+                if(item && typeof item === 'object' && 'value' in item && item.value) {
+                    formData.append(key, item.value);
+                }
+            })
             }
-          })
+        } else if (typeof value === 'boolean') {
+            if (value) formData.append(key, 'on');
+        } else if (value !== null && value !== undefined) {
+            formData.append(key, String(value));
         }
-      } else if (typeof value === 'boolean') {
-        if (value) formData.append(key, 'on');
-      } else if (value !== null && value !== undefined) {
-        formData.append(key, String(value));
-      }
-    }
+    });
     
     const result = await handleUpdateUser(user.id!, formData, currentAdmin.id);
-
-    setIsSubmitting(false);
 
     if (result.success) {
       toast({
@@ -401,6 +398,8 @@ export function EditUserForm({ user }: EditUserFormProps) {
         description: result.error || "An unknown error occurred.",
       });
     }
+
+    setIsSubmitting(false);
   }
 
   const availableRoles = currentAdmin?.roles.includes('Super Admin') ? allRoles : normalAdminRoles;
@@ -514,7 +513,7 @@ export function EditUserForm({ user }: EditUserFormProps) {
                                 </AccordionContent>
                             </AccordionItem>
                              
-                            {selectedRoles.includes("Beneficiary") && (
+                            {(selectedRoles.includes("Beneficiary") || selectedRoles.includes("Donor")) && (
                                 <AccordionItem value="payment" className="border rounded-lg">
                                     <AccordionTrigger className="p-4 font-semibold text-primary"><h4 className="flex items-center gap-2"><CreditCard className="h-5 w-5"/>Verification &amp; Payment Details</h4></AccordionTrigger>
                                     <AccordionContent className="p-6 pt-2 space-y-6">
@@ -529,10 +528,27 @@ export function EditUserForm({ user }: EditUserFormProps) {
                                             <FileUploadField name="otherDocument1" label="Other Document 1" control={control} currentUrl={user.otherDocument1Url} isEditing={isEditing} />
                                             <FileUploadField name="otherDocument2" label="Other Document 2" control={control} currentUrl={user.otherDocument2Url} isEditing={isEditing} />
                                         </div>
+                                         <h3 className="text-lg font-semibold border-b pb-2 pt-4">Bank Details</h3>
+                                        <FormField control={form.control} name="bankAccountName" render={({ field }) => (<FormItem><FormLabel>Full Name as per Bank Account</FormLabel><FormControl><Input {...field} disabled={!isEditing} /></FormControl><FormMessage /></FormItem>)}/>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <FormField control={form.control} name="bankAccountNumber" render={({ field }) => (<FormItem><FormLabel>Bank Account Number</FormLabel><FormControl><Input {...field} disabled={!isEditing} /></FormControl><FormMessage /></FormItem>)}/>
+                                            <FormField control={form.control} name="bankIfscCode" render={({ field }) => (<FormItem><FormLabel>IFSC Code</FormLabel><FormControl><Input {...field} disabled={!isEditing} /></FormControl><FormMessage /></FormItem>)}/>
+                                        </div>
+                                        <FormField control={form.control} name="bankName" render={({ field }) => (<FormItem><FormLabel>Bank Name</FormLabel><FormControl><Input {...field} disabled={!isEditing} /></FormControl><FormMessage /></FormItem>)}/>
+                                        <Separator />
+                                        <div className="space-y-4">
+                                            <FormLabel>UPI Phone Numbers</FormLabel>
+                                            {upiPhoneFields.map((field, index) => (<FormField control={form.control} key={field.id} name={`upiPhoneNumbers.${index}.value`} render={({ field }) => (<FormItem><div className="flex items-center gap-2"><FormControl><Input {...field} disabled={!isEditing} type="tel" maxLength={10} /></FormControl>{isEditing && (<Button type="button" variant="ghost" size="icon" onClick={() => removeUpiPhone(index)}><Trash2 className="h-4 w-4 text-destructive" /></Button>)}</div><FormMessage /></FormItem>)}/>))}
+                                            {isEditing && (<Button type="button" variant="outline" size="sm" onClick={() => appendUpiPhone({ value: "" })}><PlusCircle className="mr-2" />Add Phone</Button>)}
+                                        </div>
+                                        <div className="space-y-4">
+                                            <FormLabel>UPI IDs</FormLabel>
+                                            {upiIdFields.map((field, index) => (<FormField control={form.control} key={field.id} name={`upiIds.${index}.value`} render={({ field }) => (<FormItem><div className="flex items-center gap-2"><FormControl><Input {...field} disabled={!isEditing} /></FormControl>{isEditing && (<Button type="button" variant="ghost" size="icon" onClick={() => removeUpiId(index)}><Trash2 className="h-4 w-4 text-destructive" /></Button>)}</div><FormMessage /></FormItem>)}/>))}
+                                            {isEditing && (<Button type="button" variant="outline" size="sm" onClick={() => appendUpiId({ value: "" })}><PlusCircle className="mr-2" />Add UPI ID</Button>)}
+                                        </div>
                                     </AccordionContent>
                                 </AccordionItem>
                             )}
-
                         </Accordion>
                     </fieldset>
                 </form>
