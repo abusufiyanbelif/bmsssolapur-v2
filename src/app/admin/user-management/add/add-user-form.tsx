@@ -239,8 +239,10 @@ function AddUserFormContent({ settings, isSubForm = false, prefilledData, onUser
     }
   }, [prefilledData]);
 
+  const formSchema = useMemo(() => createFormSchema(settings), [settings]);
+
   const form = useForm<AddUserFormValues>({
-    resolver: zodResolver(createFormSchema(settings)),
+    resolver: zodResolver(formSchema),
     mode: 'onBlur',
     defaultValues: {
       userId: "",
@@ -312,9 +314,11 @@ function AddUserFormContent({ settings, isSubForm = false, prefilledData, onUser
   const middleName = watch("middleName");
   const lastName = watch("lastName");
   const fullName = watch("fullName");
-
+  
+  const beneficiaryUserConfig = settings?.userConfiguration?.Beneficiary;
+  const isAadhaarMandatory = selectedRoles.includes('Beneficiary') && !!beneficiaryUserConfig?.isAadhaarMandatory;
+  
   useEffect(() => {
-    form.reset(undefined, { keepValues: true });
     trigger();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedRoles, trigger]);
@@ -591,7 +595,7 @@ function AddUserFormContent({ settings, isSubForm = false, prefilledData, onUser
                                             style={{ transform: `scale(${zoom}) rotate(${rotation}deg)` }}
                                         />
                                     </div>
-                                    <div className="absolute top-2 right-2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity bg-background/80 p-1 rounded-md">
+                                    <div className="absolute top-2 right-2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity bg-background/80 rounded-md">
                                         <Button type="button" size="icon" variant="ghost" className="h-7 w-7" onClick={() => setZoom(z => z * 1.2)}><ZoomIn className="h-4 w-4"/></Button>
                                         <Button type="button" size="icon" variant="ghost" className="h-7 w-7" onClick={() => setZoom(z => Math.max(0.5, z / 1.2))}><ZoomOut className="h-4 w-4"/></Button>
                                         <Button type="button" size="icon" variant="ghost" className="h-7 w-7" onClick={() => setRotation(r => r + 90)}><RotateCw className="h-4 w-4" /></Button>
@@ -1231,3 +1235,5 @@ export function AddUserForm(props: AddUserFormProps) {
         </Suspense>
     )
 }
+
+```
