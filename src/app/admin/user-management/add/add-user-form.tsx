@@ -53,7 +53,6 @@ import { getUser, checkAvailability } from "@/services/user-service";
 import { useDebounce } from "@/hooks/use-debounce";
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Separator } from "@/components/ui/separator";
-import { Textarea } from "@/components/ui/textarea";
 
 
 const allRoles: Exclude<UserRole, 'Guest'>[] = [
@@ -236,6 +235,7 @@ function AddUserFormContent({ settings, isSubForm = false, prefilledData, onUser
   const form = useForm<AddUserFormValues>({
     resolver: zodResolver(formSchema),
     mode: 'onSubmit',
+    reValidateMode: 'onChange',
     defaultValues: {
       userId: "",
       fullName: "",
@@ -309,11 +309,7 @@ function AddUserFormContent({ settings, isSubForm = false, prefilledData, onUser
     name: "upiPhoneNumbers"
   });
   
-  const { watch, trigger, setValue, reset, handleSubmit: originalHandleSubmit } = form;
-  
-  const handleSubmit = (onSubmitFunction: (values: AddUserFormValues) => void) => {
-    return originalHandleSubmit(onSubmitFunction);
-  }
+  const { watch, trigger, setValue, reset, handleSubmit } = form;
 
   const selectedState = watch("state");
   const selectedRoles = watch("roles");
@@ -334,12 +330,11 @@ function AddUserFormContent({ settings, isSubForm = false, prefilledData, onUser
     const newFullName = e.target.value;
     setValue('fullName', newFullName, { shouldDirty: true });
     const nameParts = newFullName.split(' ').filter(Boolean);
-    const firstName = nameParts[0] || '';
-    const lastName = nameParts.length > 1 ? nameParts[nameParts.length - 1] : '';
-    const middleName = nameParts.slice(1, -1).join(' ');
-    setValue('firstName', firstName, { shouldDirty: true });
-    setValue('middleName', middleName, { shouldDirty: true });
-    setValue('lastName', lastName, { shouldDirty: true });
+    setValue('firstName', nameParts[0] || '', { shouldDirty: true });
+    setValue('lastName', nameParts.length > 1 ? nameParts[nameParts.length - 1] : '', { shouldDirty: true });
+    setValue('middleName', nameParts.slice(1, -1).join(' '), { shouldDirty: true });
+    // Manually trigger validation for these fields after programmatic update
+    if (nameParts.length > 0) trigger(['firstName', 'lastName']);
   }
 
   useEffect(() => {
@@ -379,12 +374,12 @@ function AddUserFormContent({ settings, isSubForm = false, prefilledData, onUser
   const debouncedUpiIds = useDebounce(watch('upiIds'), 500);
 
   // Effects for debounced checks
-  useEffect(() => { if (!debouncedUserId) return; handleAvailabilityCheck('userId', debouncedUserId, setUserIdState); }, [debouncedUserId, handleAvailabilityCheck]);
-  useEffect(() => { if (!debouncedEmail) return; handleAvailabilityCheck('email', debouncedEmail || '', setEmailState); }, [debouncedEmail, handleAvailabilityCheck]);
-  useEffect(() => { if (!debouncedPhone) return; handleAvailabilityCheck('phone', debouncedPhone, setPhoneState); }, [debouncedPhone, handleAvailabilityCheck]);
-  useEffect(() => { if (!debouncedPan) return; handleAvailabilityCheck('panNumber', debouncedPan || '', setPanState); }, [debouncedPan, handleAvailabilityCheck]);
-  useEffect(() => { if (!debouncedAadhaar) return; handleAvailabilityCheck('aadhaarNumber', debouncedAadhaar || '', setAadhaarState); }, [debouncedAadhaar, handleAvailabilityCheck]);
-  useEffect(() => { if (!debouncedBankAccount) return; handleAvailabilityCheck('bankAccountNumber', debouncedBankAccount || '', setBankAccountState); }, [debouncedBankAccount, handleAvailabilityCheck]);
+  useEffect(() => { if (debouncedUserId) handleAvailabilityCheck('userId', debouncedUserId, setUserIdState); }, [debouncedUserId, handleAvailabilityCheck]);
+  useEffect(() => { if (debouncedEmail) handleAvailabilityCheck('email', debouncedEmail || '', setEmailState); }, [debouncedEmail, handleAvailabilityCheck]);
+  useEffect(() => { if (debouncedPhone) handleAvailabilityCheck('phone', debouncedPhone, setPhoneState); }, [debouncedPhone, handleAvailabilityCheck]);
+  useEffect(() => { if (debouncedPan) handleAvailabilityCheck('panNumber', debouncedPan || '', setPanState); }, [debouncedPan, handleAvailabilityCheck]);
+  useEffect(() => { if (debouncedAadhaar) handleAvailabilityCheck('aadhaarNumber', debouncedAadhaar || '', setAadhaarState); }, [debouncedAadhaar, handleAvailabilityCheck]);
+  useEffect(() => { if (debouncedBankAccount) handleAvailabilityCheck('bankAccountNumber', debouncedBankAccount || '', setBankAccountState); }, [debouncedBankAccount, handleAvailabilityCheck]);
 
   useEffect(() => {
     debouncedUpiIds?.forEach((upi, index) => {
@@ -558,13 +553,12 @@ function AddUserFormContent({ settings, isSubForm = false, prefilledData, onUser
         title: "Error Creating User",
         description: result.error || "An unknown error occurred. Please check the form and try again.",
       });
-      setIsSubmitting(false);
     }
+     setIsSubmitting(false);
   }
   
   const availableRoles = currentAdmin?.roles.includes('Super Admin') ? allRoles : normalAdminRoles;
   
-  const isAnyFieldChecking = userIdState.isChecking || emailState.isChecking || phoneState.isChecking || panState.isChecking || aadhaarState.isChecking || bankAccountState.isChecking || Object.values(upiIdStates).some(s => s.isChecking);
   const isAnyFieldInvalid = userIdState.isAvailable === false || emailState.isAvailable === false || phoneState.isAvailable === false || panState.isAvailable === false || aadhaarState.isAvailable === false || bankAccountState.isAvailable === false || Object.values(upiIdStates).some(s => s.isAvailable === false);
 
   const handleWheel = (e: React.WheelEvent<HTMLDivElement>) => {
@@ -1171,7 +1165,7 @@ function AddUserFormContent({ settings, isSubForm = false, prefilledData, onUser
               </div>
               
               <div className="flex items-center gap-4">
-                  <Button type="submit" disabled={isSubmitting || isAnyFieldChecking || isAnyFieldInvalid}>
+                  <Button type="submit" disabled={isSubmitting || isAnyFieldInvalid}>
                       {isSubmitting ? (
                           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                       ) : (
