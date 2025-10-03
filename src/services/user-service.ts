@@ -1,5 +1,4 @@
 
-
 /**
  * @fileOverview User service for interacting with Firestore.
  */
@@ -21,6 +20,7 @@ import {
   writeBatch,
   arrayUnion,
   arrayRemove,
+  orderBy,
 } from 'firebase/firestore';
 import { db } from './firebase';
 import { adminDb } from './firebase-admin';
