@@ -1,3 +1,4 @@
+
 // src/app/admin/user-management/add/add-user-form.tsx
 "use client";
 
@@ -217,8 +218,6 @@ function AddUserFormContent({ settings, isSubForm = false, prefilledData, onUser
   const [bankAccountState, setBankAccountState] = useState<AvailabilityState>(initialAvailabilityState);
   const [upiIdStates, setUpiIdStates] = useState<Record<number, AvailabilityState>>({});
   
-  const isInitialMount = useRef(true);
-
   // AI related state
   const [isTextExtracting, setIsTextExtracting] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -236,7 +235,7 @@ function AddUserFormContent({ settings, isSubForm = false, prefilledData, onUser
   
   const form = useForm<AddUserFormValues>({
     resolver: zodResolver(formSchema),
-    mode: 'onBlur',
+    mode: 'onSubmit',
     defaultValues: {
       userId: "",
       fullName: "",
@@ -276,7 +275,7 @@ function AddUserFormContent({ settings, isSubForm = false, prefilledData, onUser
       aadhaarCard: null,
     },
   });
-
+  
   useEffect(() => {
     const adminId = localStorage.getItem('userId');
     if (adminId) {
@@ -380,16 +379,12 @@ function AddUserFormContent({ settings, isSubForm = false, prefilledData, onUser
   const debouncedUpiIds = useDebounce(watch('upiIds'), 500);
 
   // Effects for debounced checks
-  useEffect(() => { if(isInitialMount.current && debouncedUserId === '') return; handleAvailabilityCheck('userId', debouncedUserId, setUserIdState); }, [debouncedUserId, handleAvailabilityCheck]);
-  useEffect(() => { if(isInitialMount.current && debouncedEmail === '') return; handleAvailabilityCheck('email', debouncedEmail || '', setEmailState); }, [debouncedEmail, handleAvailabilityCheck]);
-  useEffect(() => { if(isInitialMount.current && debouncedPhone === '') return; handleAvailabilityCheck('phone', debouncedPhone, setPhoneState); }, [debouncedPhone, handleAvailabilityCheck]);
-  useEffect(() => { if(isInitialMount.current && debouncedPan === '') return; handleAvailabilityCheck('panNumber', debouncedPan || '', setPanState); }, [debouncedPan, handleAvailabilityCheck]);
-  useEffect(() => { if(isInitialMount.current && debouncedAadhaar === '') return; handleAvailabilityCheck('aadhaarNumber', debouncedAadhaar || '', setAadhaarState); }, [debouncedAadhaar, handleAvailabilityCheck]);
-  useEffect(() => { if(isInitialMount.current && debouncedBankAccount === '') return; handleAvailabilityCheck('bankAccountNumber', debouncedBankAccount || '', setBankAccountState); }, [debouncedBankAccount, handleAvailabilityCheck]);
-  
-  useEffect(() => {
-    isInitialMount.current = false;
-  }, []);
+  useEffect(() => { if (!debouncedUserId) return; handleAvailabilityCheck('userId', debouncedUserId, setUserIdState); }, [debouncedUserId, handleAvailabilityCheck]);
+  useEffect(() => { if (!debouncedEmail) return; handleAvailabilityCheck('email', debouncedEmail || '', setEmailState); }, [debouncedEmail, handleAvailabilityCheck]);
+  useEffect(() => { if (!debouncedPhone) return; handleAvailabilityCheck('phone', debouncedPhone, setPhoneState); }, [debouncedPhone, handleAvailabilityCheck]);
+  useEffect(() => { if (!debouncedPan) return; handleAvailabilityCheck('panNumber', debouncedPan || '', setPanState); }, [debouncedPan, handleAvailabilityCheck]);
+  useEffect(() => { if (!debouncedAadhaar) return; handleAvailabilityCheck('aadhaarNumber', debouncedAadhaar || '', setAadhaarState); }, [debouncedAadhaar, handleAvailabilityCheck]);
+  useEffect(() => { if (!debouncedBankAccount) return; handleAvailabilityCheck('bankAccountNumber', debouncedBankAccount || '', setBankAccountState); }, [debouncedBankAccount, handleAvailabilityCheck]);
 
   useEffect(() => {
     debouncedUpiIds?.forEach((upi, index) => {
@@ -596,7 +591,7 @@ function AddUserFormContent({ settings, isSubForm = false, prefilledData, onUser
                               </div>
 
                               {aadhaarPreview && (
-                                <div className="relative group p-2 border rounded-lg">
+                                <div className="relative group p-2 border rounded-lg bg-background">
                                     <div onWheel={handleWheel} className="relative w-full h-80 bg-gray-100 dark:bg-gray-800 rounded-md overflow-auto cursor-zoom-in flex items-center justify-center">
                                         <Image
                                             src={aadhaarPreview}
