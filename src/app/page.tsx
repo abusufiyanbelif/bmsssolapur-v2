@@ -1,74 +1,95 @@
 
-import { Suspense } from "react";
-import { Card, CardHeader, CardContent } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
+
+'use client';
+
+import { Suspense, useEffect, useState } from "react";
 import { PublicHomePage } from "./home/public-home-page";
-import { Quote, Donation, User, Lead, Campaign } from "@/services/types";
-import { getPublicDashboardData, getQuotes, getOpenGeneralLeads } from "./home/actions";
+import { Loader2 } from "lucide-react";
+import type { Quote, Lead, Campaign } from "@/services/types";
+import { getInspirationalQuotes, getOpenGeneralLeads, getPublicDashboardData } from "./home/actions";
+import { useRouter } from 'next/navigation';
 
-const CardSkeleton = () => (
-    <Card>
-        <CardHeader>
-            <Skeleton className="h-6 w-3/4" />
-            <Skeleton className="h-4 w-1/2" />
-        </CardHeader>
-        <CardContent>
-            <Skeleton className="h-10 w-full" />
-        </CardContent>
-    </Card>
+
+const LoadingState = () => (
+    <div className="flex flex-col flex-1 items-center justify-center h-full">
+        <Loader2 className="animate-spin rounded-full h-16 w-16 text-primary" />
+        <p className="mt-4 text-muted-foreground">Loading Dashboard...</p>
+    </div>
 );
 
-const TableSkeleton = () => (
-    <Card>
-        <div className="p-4 space-y-4">
-             <Skeleton className="h-6 w-1/4" />
-             <Skeleton className="h-10 w-full" />
-             <Skeleton className="h-10 w-full" />
-        </div>
-    </Card>
-);
+export default function Page() {
+    const [activeRole, setActiveRole] = useState<string | null>(null);
+    const [loading, setLoading] = useState(true);
+    const [quotes, setQuotes] = useState<Quote[]>([]);
+    const [openLeads, setOpenLeads] = useState<Lead[]>([]);
+    const [campaigns, setCampaigns] = useState<Campaign[]>([]);
+    const [allLeads, setAllLeads] = useState<Lead[]>([]); // For campaign stats
+    const router = useRouter();
 
+    useEffect(() => {
+        const initializeSession = async () => {
+            setLoading(true);
+            const role = localStorage.getItem('activeRole');
+            const userId = localStorage.getItem('userId');
 
-async function PublicData() {
-    const data = await getPublicDashboardData();
+            if (!role || !userId) {
+                setActiveRole('Guest');
+                // Fetch public data if guest
+                const [quotesData, leadsData, publicData] = await Promise.all([
+                    getQuotes(3),
+                    getOpenGeneralLeads(),
+                    getPublicDashboardData(),
+                ]);
+                setQuotes(quotesData);
+                setOpenLeads(leadsData);
+                if (publicData && !publicData.error) {
+                    const activeAndUpcomingCampaigns = (publicData.campaigns || []).filter(
+                        c => c.status === 'Active' || c.status === 'Upcoming'
+                    );
+                    setCampaigns(activeAndUpcomingCampaigns);
+                    setAllLeads(publicData.leads || []);
+                }
 
-    if (data.error) {
-        return (
-            <div className="text-destructive text-center p-4 border border-destructive/50 rounded-lg">
-                Error loading dashboard data: {data.error}
-            </div>
-        );
+            } else {
+                setActiveRole(role);
+            }
+            setLoading(false);
+        };
+        
+        initializeSession();
+    }, []);
+
+    useEffect(() => {
+        if (activeRole && activeRole !== 'Guest') {
+            switch (activeRole) {
+                case 'Donor':
+                    router.push('/donor');
+                    break;
+                case 'Beneficiary':
+                    router.push('/beneficiary');
+                    break;
+                case 'Referral':
+                    router.push('/referral');
+                    break;
+                case 'Admin':
+                case 'Super Admin':
+                case 'Finance Admin':
+                    router.push('/admin');
+                    break;
+                default:
+                    // Stay on the public home page if role is unknown
+                    break;
+            }
+        }
+    }, [activeRole, router]);
+
+    if (loading || (activeRole && activeRole !== 'Guest')) {
+        return <LoadingState />;
     }
 
-    const allDonations = data.donations || [];
-    const allUsers = data.users || [];
-    const allLeads = data.leads || [];
-    const allCampaigns = data.campaigns || [];
-    
-    return null;
-}
+    if (activeRole === 'Guest') {
+        return <PublicHomePage quotes={quotes} initialLeads={openLeads} campaigns={campaigns} allLeads={allLeads} />;
+    }
 
-
-export default async function Page() {
-    const [initialQuotes, openLeads] = await Promise.all([
-        getQuotes(3),
-        getOpenGeneralLeads(),
-    ]);
-
-    return (
-        <div className="flex-1 space-y-8">
-            <PublicHomePage quotes={initialQuotes} initialLeads={openLeads} />
-            <Suspense fallback={
-                 <div className="space-y-4">
-                    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                        <CardSkeleton />
-                        <CardSkeleton />
-                        <CardSkeleton />
-                    </div>
-                </div>
-            }>
-                <PublicData />
-            </Suspense>
-        </div>
-    );
+    return <LoadingState />;
 }
