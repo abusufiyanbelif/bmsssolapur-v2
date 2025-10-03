@@ -147,16 +147,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 };
                 setUser(userData);
                 
-                if (fetchedUser.roles.some(r => ['Admin', 'Super Admin', 'Finance Admin'].includes(r))) {
-                    const [allLeads, allDonations] = await Promise.all([
-                        getAllLeads(),
-                        getAllDonations()
-                    ]);
-                    setPendingLeads(allLeads.filter(l => l.caseVerification === 'Pending'));
-                    setReadyToPublishLeads(allLeads.filter(l => l.caseAction === 'Ready For Help'));
-                    setPendingDonations(allDonations.filter(d => d.status === 'Pending verification' || d.status === 'Pending'));
-                }
-
                 if (shouldShowRoleSwitcher && fetchedUser.roles.length > 1) {
                     setIsRoleSwitcherOpen(true);
                     localStorage.removeItem('showRoleSwitcher'); 
@@ -170,6 +160,22 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         setIsSessionReady(true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
+
+    // Effect for fetching notification data separately
+    useEffect(() => {
+        if (user?.isLoggedIn && user.roles.some(r => ['Admin', 'Super Admin', 'Finance Admin'].includes(r))) {
+            const fetchNotifications = async () => {
+                const [allLeads, allDonations] = await Promise.all([
+                    getAllLeads(),
+                    getAllDonations()
+                ]);
+                setPendingLeads(allLeads.filter(l => l.caseVerification === 'Pending'));
+                setReadyToPublishLeads(allLeads.filter(l => l.caseAction === 'Ready For Help'));
+                setPendingDonations(allDonations.filter(d => d.status === 'Pending verification' || d.status === 'Pending'));
+            };
+            fetchNotifications();
+        }
+    }, [user]);
 
 
     useEffect(() => {
@@ -223,8 +229,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         }
     }
 
-    const handleOpenRoleSwitcher = (requiredRoleName: string | null = null, redirect?: string) => {
-        setRequiredRole(requiredRoleName);
+    const handleOpenRoleSwitcher = (requiredRole: string | null = null, redirect?: string) => {
+        setRequiredRole(requiredRole);
         setRedirectUrl(redirect || null); // Store the URL to redirect to after switch
         setIsRoleSwitcherOpen(true);
     };
