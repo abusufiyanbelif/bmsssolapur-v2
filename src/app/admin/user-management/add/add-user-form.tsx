@@ -228,19 +228,8 @@ function AddUserFormContent({ settings, isSubForm = false, prefilledData, onUser
   const [zoom, setZoom] = useState(1);
   const [rotation, setRotation] = useState(0);
 
-  useEffect(() => {
-    const adminId = localStorage.getItem('userId');
-    if (adminId) {
-      getUser(adminId).then(setCurrentAdmin);
-    }
-    
-    if(prefilledData) {
-        setExtractedDetails(prefilledData);
-    }
-  }, [prefilledData]);
-
   const formSchema = useMemo(() => createFormSchema(settings), [settings]);
-
+  
   const form = useForm<AddUserFormValues>({
     resolver: zodResolver(formSchema),
     mode: 'onBlur',
@@ -283,6 +272,18 @@ function AddUserFormContent({ settings, isSubForm = false, prefilledData, onUser
       aadhaarCard: null,
     },
   });
+
+  useEffect(() => {
+    const adminId = localStorage.getItem('userId');
+    if (adminId) {
+      getUser(adminId).then(setCurrentAdmin);
+    }
+    
+    if(prefilledData) {
+        setExtractedDetails(prefilledData);
+    }
+  }, [prefilledData]);
+
   
   const handleCancel = () => {
     form.reset();
@@ -306,7 +307,12 @@ function AddUserFormContent({ settings, isSubForm = false, prefilledData, onUser
     name: "upiPhoneNumbers"
   });
   
-  const { watch, trigger, setValue, reset, handleSubmit } = form;
+  const { watch, trigger, setValue, reset, handleSubmit: originalHandleSubmit } = form;
+  
+  const handleSubmit = (onSubmitFunction: (values: AddUserFormValues) => void) => {
+    return originalHandleSubmit(onSubmitFunction);
+  }
+
   const selectedState = watch("state");
   const selectedRoles = watch("roles");
   const selectedGender = watch("gender");
