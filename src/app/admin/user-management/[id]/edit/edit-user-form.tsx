@@ -379,6 +379,19 @@ export function EditUserForm({ user }: EditUserFormProps) {
             formData.append(key, String(value));
         }
     });
+
+    // Manually add file fields since react-hook-form doesn't track them in 'values'
+    const aadhaarFile = form.getValues('aadhaarCard');
+    if (aadhaarFile instanceof File) formData.append('aadhaarCard', aadhaarFile);
+    
+    const addressFile = form.getValues('addressProof');
+    if (addressFile instanceof File) formData.append('addressProof', addressFile);
+    
+    const other1File = form.getValues('otherDocument1');
+    if (other1File instanceof File) formData.append('otherDocument1', other1File);
+
+    const other2File = form.getValues('otherDocument2');
+    if (other2File instanceof File) formData.append('otherDocument2', other2File);
     
     const result = await handleUpdateUser(user.id!, formData, currentAdmin.id);
 
@@ -404,6 +417,8 @@ export function EditUserForm({ user }: EditUserFormProps) {
   }
 
   const availableRoles = currentAdmin?.roles.includes('Super Admin') ? allRoles : normalAdminRoles;
+  
+  const isBeneficiary = selectedRoles.includes('Beneficiary');
 
   return (
     <>
@@ -440,7 +455,7 @@ export function EditUserForm({ user }: EditUserFormProps) {
                 <FormProvider {...form}>
                 <form className="space-y-8 max-w-2xl">
                     <fieldset disabled={!isEditing} className="space-y-6">
-                        <Accordion type="multiple" defaultValue={["basic", "payment"]} className="w-full space-y-4">
+                        <Accordion type="multiple" defaultValue={["basic", "payment", "beneficiary", "address"]} className="w-full space-y-4">
                             <AccordionItem value="basic" className="border rounded-lg">
                                 <AccordionTrigger className="p-4 font-semibold text-primary"><h4 className="flex items-center gap-2"><UserIcon className="h-5 w-5"/>Basic Information</h4></AccordionTrigger>
                                 <AccordionContent className="p-6 pt-2 space-y-6">
@@ -474,7 +489,7 @@ export function EditUserForm({ user }: EditUserFormProps) {
                                 </AccordionContent>
                             </AccordionItem>
                             
-                            {selectedRoles.includes("Beneficiary") && (
+                            {isBeneficiary && (
                                 <AccordionItem value="beneficiary" className="border rounded-lg">
                                     <AccordionTrigger className="p-4 font-semibold text-primary"><h4 className="flex items-center gap-2"><UserIcon className="h-5 w-5"/>Family &amp; Occupation Details</h4></AccordionTrigger>
                                     <AccordionContent className="p-6 pt-2 space-y-6">
@@ -490,7 +505,7 @@ export function EditUserForm({ user }: EditUserFormProps) {
                                              <FormItem>
                                                  <FormLabel>Beneficiary Type</FormLabel>
                                                  <FormControl>
-                                                     <RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="flex flex-row space-x-4 pt-2" disabled={!isEditing}>
+                                                     <RadioGroup onValueChange={field.onChange} value={field.value} className="flex flex-row space-x-4 pt-2" disabled={!isEditing}>
                                                         <FormItem className="flex items-center space-x-3 space-y-0"><RadioGroupItem value="Adult" id="type-adult"/><FormLabel className="font-normal" htmlFor="type-adult">Adult</FormLabel></FormItem>
                                                         <FormItem className="flex items-center space-x-3 space-y-0"><RadioGroupItem value="Old Age" id="type-old"/><FormLabel className="font-normal" htmlFor="type-old">Old Age</FormLabel></FormItem>
                                                         <FormItem className="flex items-center space-x-3 space-y-0"><RadioGroupItem value="Kid" id="type-kid"/><FormLabel className="font-normal" htmlFor="type-kid">Kid</FormLabel></FormItem>
@@ -514,42 +529,40 @@ export function EditUserForm({ user }: EditUserFormProps) {
                                 </AccordionContent>
                             </AccordionItem>
                              
-                            {(selectedRoles.includes("Beneficiary") || selectedRoles.includes("Donor")) && (
-                                <AccordionItem value="payment" className="border rounded-lg">
-                                    <AccordionTrigger className="p-4 font-semibold text-primary"><h4 className="flex items-center gap-2"><CreditCard className="h-5 w-5"/>Verification &amp; Payment Details</h4></AccordionTrigger>
-                                    <AccordionContent className="p-6 pt-2 space-y-6">
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                            <FormField control={form.control} name="panNumber" render={({ field }) => (<FormItem><FormLabel>PAN Number</FormLabel><FormControl><Input {...field} disabled={!isEditing} /></FormControl><FormMessage /></FormItem>)}/>
-                                            <FormField control={form.control} name="aadhaarNumber" render={({ field }) => (<FormItem><FormLabel>Aadhaar Number</FormLabel><FormControl><Input {...field} disabled={!isEditing} /></FormControl><FormMessage /></FormItem>)}/>
-                                        </div>
-                                        <h3 className="text-lg font-semibold border-b pb-2">Documents</h3>
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                            <FileUploadField name="aadhaarCard" label="Aadhaar Card" control={control} currentUrl={user.aadhaarCardUrl} isEditing={isEditing} />
-                                            <FileUploadField name="addressProof" label="Address Proof" control={control} currentUrl={user.addressProofUrl} isEditing={isEditing} />
-                                            <FileUploadField name="otherDocument1" label="Other Document 1" control={control} currentUrl={user.otherDocument1Url} isEditing={isEditing} />
-                                            <FileUploadField name="otherDocument2" label="Other Document 2" control={control} currentUrl={user.otherDocument2Url} isEditing={isEditing} />
-                                        </div>
-                                         <h3 className="text-lg font-semibold border-b pb-2 pt-4">Bank Details</h3>
-                                        <FormField control={form.control} name="bankAccountName" render={({ field }) => (<FormItem><FormLabel>Full Name as per Bank Account</FormLabel><FormControl><Input {...field} disabled={!isEditing} /></FormControl><FormMessage /></FormItem>)}/>
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                            <FormField control={form.control} name="bankAccountNumber" render={({ field }) => (<FormItem><FormLabel>Bank Account Number</FormLabel><FormControl><Input {...field} disabled={!isEditing} /></FormControl><FormMessage /></FormItem>)}/>
-                                            <FormField control={form.control} name="bankIfscCode" render={({ field }) => (<FormItem><FormLabel>IFSC Code</FormLabel><FormControl><Input {...field} disabled={!isEditing} /></FormControl><FormMessage /></FormItem>)}/>
-                                        </div>
-                                        <FormField control={form.control} name="bankName" render={({ field }) => (<FormItem><FormLabel>Bank Name</FormLabel><FormControl><Input {...field} disabled={!isEditing} /></FormControl><FormMessage /></FormItem>)}/>
-                                        <Separator />
-                                        <div className="space-y-4">
-                                            <FormLabel>UPI Phone Numbers</FormLabel>
-                                            {upiPhoneFields.map((field, index) => (<FormField control={form.control} key={field.id} name={`upiPhoneNumbers.${index}.value`} render={({ field }) => (<FormItem><div className="flex items-center gap-2"><FormControl><Input {...field} disabled={!isEditing} type="tel" maxLength={10} /></FormControl>{isEditing && (<Button type="button" variant="ghost" size="icon" onClick={() => removeUpiPhone(index)}><Trash2 className="h-4 w-4 text-destructive" /></Button>)}</div><FormMessage /></FormItem>)}/>))}
-                                            {isEditing && (<Button type="button" variant="outline" size="sm" onClick={() => appendUpiPhone({ value: "" })}><PlusCircle className="mr-2" />Add Phone</Button>)}
-                                        </div>
-                                        <div className="space-y-4">
-                                            <FormLabel>UPI IDs</FormLabel>
-                                            {upiIdFields.map((field, index) => (<FormField control={form.control} key={field.id} name={`upiIds.${index}.value`} render={({ field }) => (<FormItem><div className="flex items-center gap-2"><FormControl><Input {...field} disabled={!isEditing} /></FormControl>{isEditing && (<Button type="button" variant="ghost" size="icon" onClick={() => removeUpiId(index)}><Trash2 className="h-4 w-4 text-destructive" /></Button>)}</div><FormMessage /></FormItem>)}/>))}
-                                            {isEditing && (<Button type="button" variant="outline" size="sm" onClick={() => appendUpiId({ value: "" })}><PlusCircle className="mr-2" />Add UPI ID</Button>)}
-                                        </div>
-                                    </AccordionContent>
-                                </AccordionItem>
-                            )}
+                            <AccordionItem value="payment" className="border rounded-lg">
+                                <AccordionTrigger className="p-4 font-semibold text-primary"><h4 className="flex items-center gap-2"><CreditCard className="h-5 w-5"/>Verification &amp; Payment Details</h4></AccordionTrigger>
+                                <AccordionContent className="p-6 pt-2 space-y-6">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <FormField control={form.control} name="panNumber" render={({ field }) => (<FormItem><FormLabel>PAN Number</FormLabel><FormControl><Input {...field} disabled={!isEditing} /></FormControl><FormMessage /></FormItem>)}/>
+                                        <FormField control={form.control} name="aadhaarNumber" render={({ field }) => (<FormItem><FormLabel>Aadhaar Number</FormLabel><FormControl><Input {...field} disabled={!isEditing} /></FormControl><FormMessage /></FormItem>)}/>
+                                    </div>
+                                    <h3 className="text-lg font-semibold border-b pb-2">Documents</h3>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        <FileUploadField name="aadhaarCard" label="Aadhaar Card" control={control} currentUrl={user.aadhaarCardUrl} isEditing={isEditing} />
+                                        <FileUploadField name="addressProof" label="Address Proof" control={control} currentUrl={user.addressProofUrl} isEditing={isEditing} />
+                                        <FileUploadField name="otherDocument1" label="Other Document 1" control={control} currentUrl={user.otherDocument1Url} isEditing={isEditing} />
+                                        <FileUploadField name="otherDocument2" label="Other Document 2" control={control} currentUrl={user.otherDocument2Url} isEditing={isEditing} />
+                                    </div>
+                                     <h3 className="text-lg font-semibold border-b pb-2 pt-4">Bank Details</h3>
+                                    <FormField control={form.control} name="bankAccountName" render={({ field }) => (<FormItem><FormLabel>Full Name as per Bank Account</FormLabel><FormControl><Input {...field} disabled={!isEditing} /></FormControl><FormMessage /></FormItem>)}/>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <FormField control={form.control} name="bankAccountNumber" render={({ field }) => (<FormItem><FormLabel>Bank Account Number</FormLabel><FormControl><Input {...field} disabled={!isEditing} /></FormControl><FormMessage /></FormItem>)}/>
+                                        <FormField control={form.control} name="bankIfscCode" render={({ field }) => (<FormItem><FormLabel>IFSC Code</FormLabel><FormControl><Input {...field} disabled={!isEditing} /></FormControl><FormMessage /></FormItem>)}/>
+                                    </div>
+                                    <FormField control={form.control} name="bankName" render={({ field }) => (<FormItem><FormLabel>Bank Name</FormLabel><FormControl><Input {...field} disabled={!isEditing} /></FormControl><FormMessage /></FormItem>)}/>
+                                    <Separator />
+                                    <div className="space-y-4">
+                                        <FormLabel>UPI Phone Numbers</FormLabel>
+                                        {upiPhoneFields.map((field, index) => (<FormField control={form.control} key={field.id} name={`upiPhoneNumbers.${index}.value`} render={({ field }) => (<FormItem><div className="flex items-center gap-2"><FormControl><Input {...field} disabled={!isEditing} type="tel" maxLength={10} /></FormControl>{isEditing && (<Button type="button" variant="ghost" size="icon" onClick={() => removeUpiPhone(index)}><Trash2 className="h-4 w-4 text-destructive" /></Button>)}</div><FormMessage /></FormItem>)}/>))}
+                                        {isEditing && (<Button type="button" variant="outline" size="sm" onClick={() => appendUpiPhone({ value: "" })}><PlusCircle className="mr-2" />Add Phone</Button>)}
+                                    </div>
+                                    <div className="space-y-4">
+                                        <FormLabel>UPI IDs</FormLabel>
+                                        {upiIdFields.map((field, index) => (<FormField control={form.control} key={field.id} name={`upiIds.${index}.value`} render={({ field }) => (<FormItem><div className="flex items-center gap-2"><FormControl><Input {...field} disabled={!isEditing} /></FormControl>{isEditing && (<Button type="button" variant="ghost" size="icon" onClick={() => removeUpiId(index)}><Trash2 className="h-4 w-4 text-destructive" /></Button>)}</div><FormMessage /></FormItem>)}/>))}
+                                        {isEditing && (<Button type="button" variant="outline" size="sm" onClick={() => appendUpiId({ value: "" })}><PlusCircle className="mr-2" />Add UPI ID</Button>)}
+                                    </div>
+                                </AccordionContent>
+                            </AccordionItem>
                         </Accordion>
                     </fieldset>
                 </form>
@@ -565,5 +578,3 @@ export function EditUserForm({ user }: EditUserFormProps) {
     </>
   );
 }
-
-    
