@@ -1,4 +1,3 @@
-
 // src/app/admin/user-management/add/add-user-form.tsx
 "use client";
 
@@ -119,6 +118,7 @@ const createFormSchema = (settings?: AppSettings) => z.object({
   upiIds: z.array(z.object({ value: z.string() })).optional(),
   aadhaarCard: z.any().optional(),
 }).superRefine((data, ctx) => {
+    // Dynamic mandatory fields based on roles and settings
     const isBeneficiary = data.roles.includes('Beneficiary');
     const beneficiarySettings = settings?.userConfiguration?.Beneficiary;
 
@@ -134,6 +134,9 @@ const createFormSchema = (settings?: AppSettings) => z.object({
         }
         if (beneficiarySettings.isBankAccountMandatory && !data.bankAccountNumber) {
              ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Bank Account Number is required for Beneficiaries.", path: ["bankAccountNumber"] });
+        }
+        if (!data.beneficiaryType) {
+             ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Beneficiary Type is required when the Beneficiary role is selected.", path: ["beneficiaryType"] });
         }
     }
 });
@@ -214,6 +217,8 @@ function AddUserFormContent({ settings, isSubForm = false, prefilledData, onUser
   const [bankAccountState, setBankAccountState] = useState<AvailabilityState>(initialAvailabilityState);
   const [upiIdStates, setUpiIdStates] = useState<Record<number, AvailabilityState>>({});
   
+  const isInitialMount = useRef(true);
+
   // AI related state
   const [isTextExtracting, setIsTextExtracting] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -222,7 +227,6 @@ function AddUserFormContent({ settings, isSubForm = false, prefilledData, onUser
   const [isRefreshingDetails, setIsRefreshingDetails] = useState(false);
 
   const aadhaarInputRef = useRef<HTMLInputElement>(null);
-  const addressProofInputRef = useRef<HTMLInputElement>(null);
   const [aadhaarFile, setAadhaarFile] = useState<File | null>(null);
   const [aadhaarPreview, setAadhaarPreview] = useState<string | null>(null);
   const [zoom, setZoom] = useState(1);
@@ -283,7 +287,6 @@ function AddUserFormContent({ settings, isSubForm = false, prefilledData, onUser
         setExtractedDetails(prefilledData);
     }
   }, [prefilledData]);
-
   
   const handleCancel = () => {
     form.reset();
@@ -377,12 +380,16 @@ function AddUserFormContent({ settings, isSubForm = false, prefilledData, onUser
   const debouncedUpiIds = useDebounce(watch('upiIds'), 500);
 
   // Effects for debounced checks
-  useEffect(() => { if(debouncedUserId) handleAvailabilityCheck('userId', debouncedUserId, setUserIdState); }, [debouncedUserId, handleAvailabilityCheck]);
-  useEffect(() => { if(debouncedEmail) handleAvailabilityCheck('email', debouncedEmail || '', setEmailState); }, [debouncedEmail, handleAvailabilityCheck]);
-  useEffect(() => { if(debouncedPhone) handleAvailabilityCheck('phone', debouncedPhone, setPhoneState); }, [debouncedPhone, handleAvailabilityCheck]);
-  useEffect(() => { if(debouncedPan) handleAvailabilityCheck('panNumber', debouncedPan || '', setPanState); }, [debouncedPan, handleAvailabilityCheck]);
-  useEffect(() => { if(debouncedAadhaar) handleAvailabilityCheck('aadhaarNumber', debouncedAadhaar || '', setAadhaarState); }, [debouncedAadhaar, handleAvailabilityCheck]);
-  useEffect(() => { if(debouncedBankAccount) handleAvailabilityCheck('bankAccountNumber', debouncedBankAccount || '', setBankAccountState); }, [debouncedBankAccount, handleAvailabilityCheck]);
+  useEffect(() => { if(isInitialMount.current && debouncedUserId === '') return; handleAvailabilityCheck('userId', debouncedUserId, setUserIdState); }, [debouncedUserId, handleAvailabilityCheck]);
+  useEffect(() => { if(isInitialMount.current && debouncedEmail === '') return; handleAvailabilityCheck('email', debouncedEmail || '', setEmailState); }, [debouncedEmail, handleAvailabilityCheck]);
+  useEffect(() => { if(isInitialMount.current && debouncedPhone === '') return; handleAvailabilityCheck('phone', debouncedPhone, setPhoneState); }, [debouncedPhone, handleAvailabilityCheck]);
+  useEffect(() => { if(isInitialMount.current && debouncedPan === '') return; handleAvailabilityCheck('panNumber', debouncedPan || '', setPanState); }, [debouncedPan, handleAvailabilityCheck]);
+  useEffect(() => { if(isInitialMount.current && debouncedAadhaar === '') return; handleAvailabilityCheck('aadhaarNumber', debouncedAadhaar || '', setAadhaarState); }, [debouncedAadhaar, handleAvailabilityCheck]);
+  useEffect(() => { if(isInitialMount.current && debouncedBankAccount === '') return; handleAvailabilityCheck('bankAccountNumber', debouncedBankAccount || '', setBankAccountState); }, [debouncedBankAccount, handleAvailabilityCheck]);
+  
+  useEffect(() => {
+    isInitialMount.current = false;
+  }, []);
 
   useEffect(() => {
     debouncedUpiIds?.forEach((upi, index) => {
@@ -600,7 +607,7 @@ function AddUserFormContent({ settings, isSubForm = false, prefilledData, onUser
                                             style={{ transform: `scale(${zoom}) rotate(${rotation}deg)` }}
                                         />
                                     </div>
-                                    <div className="absolute top-2 right-2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity bg-background/80 rounded-md">
+                                    <div className="absolute top-1 right-1 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity bg-background/80 rounded-md">
                                         <Button type="button" size="icon" variant="ghost" className="h-7 w-7" onClick={() => setZoom(z => z * 1.2)}><ZoomIn className="h-4 w-4"/></Button>
                                         <Button type="button" size="icon" variant="ghost" className="h-7 w-7" onClick={() => setZoom(z => Math.max(0.5, z / 1.2))}><ZoomOut className="h-4 w-4"/></Button>
                                         <Button type="button" size="icon" variant="ghost" className="h-7 w-7" onClick={() => setRotation(r => r + 90)}><RotateCw className="h-4 w-4" /></Button>
