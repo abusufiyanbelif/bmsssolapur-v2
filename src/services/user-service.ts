@@ -1,4 +1,5 @@
 
+
 /**
  * @fileOverview User service for interacting with Firestore.
  */
@@ -581,6 +582,10 @@ export const deleteUser = async (id: string, adminUser: User, isBulkOperation: b
         const userRef = doc(db, USERS_COLLECTION, id);
         const userToDelete = await getUser(id);
         if (!userToDelete) throw new Error("User to delete not found.");
+
+        if (userToDelete.userId === 'anonymous_donor') {
+            throw new Error("The 'Anonymous Donor' system user cannot be deleted.");
+        }
 
         const anonymousDonor = await getUserByUserId('anonymous_donor');
         if (!anonymousDonor) throw new Error("Could not find the 'anonymous_donor' system user to re-assign donations to. Please run the seeder.");

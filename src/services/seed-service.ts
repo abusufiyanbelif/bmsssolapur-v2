@@ -20,6 +20,8 @@ const USERS_COLLECTION = 'users';
 const initialUsersToSeed: Omit<User, 'id' | 'createdAt'>[] = [
     // Super Admin
     { userKey: "USR01", name: "admin", userId: "admin", firstName: "Admin", lastName: "User", fatherName: "System", email: "admin@example.com", phone: "9999999999", password: "admin", roles: ["Super Admin"], privileges: ["all"], isActive: true, gender: 'Male', source: 'Seeded' },
+    // Anonymous Donor for reassignment
+    { userKey: "SYSTEM01", name: "Anonymous Donor", userId: "anonymous_donor", firstName: "Anonymous", lastName: "Donor", email: "anonymous@system.local", phone: "0000000000", password: "N/A", roles: [], isActive: false, gender: 'Other', source: 'Seeded' },
 ];
 
 const coreTeamUsersToSeed: Omit<User, 'id' | 'createdAt'>[] = [
@@ -671,10 +673,14 @@ export const eraseInitialUsersAndQuotes = async (): Promise<SeedResult> => {
     const details: string[] = [];
     const batch = writeBatch(db);
 
-    // Delete admin user
-    const adminUserRef = doc(db, USERS_COLLECTION, 'ADMIN_USER_ID');
-    batch.delete(adminUserRef);
-    details.push('Admin user scheduled for deletion.');
+    // Delete users with specific userKeys from the initial seed
+    const initialUserKeys = initialUsersToSeed.map(u => u.userKey);
+    const usersToDeleteQuery = query(collection(db, USERS_COLLECTION), where("userKey", "in", initialUserKeys));
+    const userSnapshot = await getDocs(usersToDeleteQuery);
+    userSnapshot.forEach(doc => batch.delete(doc.ref));
+    if (userSnapshot.size > 0) {
+        details.push(`Scheduled deletion for ${userSnapshot.size} initial user(s).`);
+    }
 
     // Delete quotes
     const quotesDeleted = await deleteCollection('inspirationalQuotes');
