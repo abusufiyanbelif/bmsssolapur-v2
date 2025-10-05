@@ -7,37 +7,35 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
+  DialogProps,
   DialogFooter,
   DialogClose,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
-import { Download, Copy, Check, X, Loader2 } from "lucide-react";
+import { Download, Copy, Check, X, HandHeart, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
+import type { Organization } from "@/services/types";
 
 interface QrCodeDialogProps {
   children: React.ReactNode;
-  qrCodeUrl: string;
-  upiId: string;
-  orgName: string;
+  organization: Organization;
 }
 
 export function QrCodeDialog({
   children,
-  qrCodeUrl,
-  upiId,
-  orgName,
+  organization,
 }: QrCodeDialogProps) {
   const { toast } = useToast();
   const [hasCopied, setHasCopied] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
 
   const handleDownload = async () => {
+    if (!organization.qrCodeUrl) return;
     setIsDownloading(true);
     try {
-      const response = await fetch(qrCodeUrl);
+      const response = await fetch(organization.qrCodeUrl);
       if (!response.ok) {
         throw new Error(`Failed to fetch QR code: ${response.statusText}`);
       }
@@ -68,13 +66,14 @@ export function QrCodeDialog({
   };
 
   const handleCopy = () => {
-    navigator.clipboard.writeText(upiId);
+    if (!organization.upiId) return;
+    navigator.clipboard.writeText(organization.upiId);
     setHasCopied(true);
     toast({
       title: "UPI ID Copied!",
       description: "The UPI ID has been copied to your clipboard.",
     });
-    setTimeout(() => setHasCopied(false), 2000); // Reset after 2 seconds
+    setTimeout(() => setHasCopied(false), 2000);
   };
 
   return (
@@ -84,13 +83,13 @@ export function QrCodeDialog({
         <DialogHeader>
           <DialogTitle>Scan to Pay</DialogTitle>
           <DialogDescription>
-            Use any UPI app to scan the code below to donate to {orgName}.
+            Use any UPI app to scan the code below to donate to {organization.name}.
           </DialogDescription>
         </DialogHeader>
         <div className="flex flex-col items-center justify-center gap-4 py-4">
           <div className="relative w-56 h-56">
             <Image
-              src={qrCodeUrl}
+              src={organization.qrCodeUrl!}
               alt="UPI QR Code"
               fill
               className="object-contain rounded-md"
@@ -98,7 +97,7 @@ export function QrCodeDialog({
             />
           </div>
           <div className="flex items-center w-full gap-2 rounded-lg bg-muted p-3">
-             <p className="font-mono text-sm flex-grow overflow-x-auto whitespace-nowrap">{upiId}</p>
+             <p className="font-mono text-sm flex-grow overflow-x-auto whitespace-nowrap">{organization.upiId}</p>
              <Button
                 variant="ghost"
                 size="icon"

@@ -19,7 +19,7 @@ import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { handleUpdateUser, handleSetPassword } from "./actions";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { Loader2, CheckCircle, Save, RefreshCw, AlertTriangle, Edit, X, PlusCircle, Trash2, Paperclip, FileIcon, User as UserIcon, MapPin, CreditCard, Banknote } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -202,7 +202,7 @@ const createFormSchema = (settings?: AppSettings) => z.object({
   middleName: z.string().optional(),
   lastName: z.string().min(1, "Last name is required."),
   fatherName: z.string().optional(),
-  phone: z.string().regex(/^[0-9]{10}$/, "Phone number must be 10 digits."),
+  phone: z.string().regex(/^[0-9]{10}$/, "Phone number must be exactly 10 digits."),
   roles: z.array(z.string()).refine((value) => (value || []).length > 0, {
     message: "You have to select at least one role.",
   }),
@@ -272,10 +272,9 @@ export function EditUserForm({ user }: EditUserFormProps) {
   const [currentAdmin, setCurrentAdmin] = useState<User | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [isFileDirty, setIsFileDirty] = useState(false);
-  
   const [settings, setSettings] = useState<AppSettings | null>(null);
 
-  const formSchema = createFormSchema(settings || undefined);
+  const formSchema = useMemo(() => createFormSchema(settings || undefined), [settings]);
   
   useEffect(() => {
     const adminId = localStorage.getItem('userId');
@@ -474,21 +473,16 @@ export function EditUserForm({ user }: EditUserFormProps) {
                                 </AccordionContent>
                             </AccordionItem>
                             
-                             <AccordionItem value="address" className="border rounded-lg">
-                                <AccordionTrigger className="p-4 font-semibold text-primary"><h4 className="flex items-center gap-2"><MapPin className="h-5 w-5"/>Address Details</h4></AccordionTrigger>
+                            <AccordionItem value="account" className="border rounded-lg">
+                                <AccordionTrigger className="p-4 font-semibold text-primary"><h4 className="flex items-center gap-2">Account Settings & Roles</h4></AccordionTrigger>
                                 <AccordionContent className="p-6 pt-2 space-y-6">
-                                    <FormField control={form.control} name="addressLine1" render={({ field }) => (<FormItem><FormLabel>Address</FormLabel><FormControl><Textarea placeholder="Enter user's full address" {...field} disabled={!isEditing} /></FormControl><FormMessage /></FormItem>)} />
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                        <FormField control={form.control} name="city" render={({ field }) => (<FormItem><FormLabel>City</FormLabel><FormControl><Input placeholder="e.g., Solapur" {...field} disabled={!isEditing} /></FormControl><FormMessage /></FormItem>)} />
-                                        <FormField control={form.control} name="pincode" render={({ field }) => (<FormItem><FormLabel>Pincode</FormLabel><FormControl><Input placeholder="e.g., 413001" {...field} disabled={!isEditing} /></FormControl><FormMessage /></FormItem>)} />
-                                    </div>
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                        <FormField control={form.control} name="state" render={({ field }) => (<FormItem><FormLabel>State</FormLabel><FormControl><Input placeholder="e.g., Maharashtra" {...field} disabled={!isEditing} /></FormControl><FormMessage /></FormItem>)}/>
-                                        <FormField control={form.control} name="country" render={({ field }) => (<FormItem><FormLabel>Country</FormLabel><FormControl><Input placeholder="e.g., India" {...field} disabled /></FormControl><FormMessage /></FormItem>)}/>
-                                    </div>
+                                     <FormField control={form.control} name="roles" render={() => ( <FormItem><div className="mb-4"><FormLabel className="text-base">User Roles</FormLabel><FormDescription>Select all roles that apply to this user.</FormDescription></div><div className="grid grid-cols-2 md:grid-cols-3 gap-4">{availableRoles.map((role) => (<FormField key={role} control={form.control} name="roles" render={({ field }) => { return (<FormItem key={role} className="flex flex-row items-start space-x-3 space-y-0"><FormControl><Checkbox checked={field.value?.includes(role)} onCheckedChange={(checked) => { return checked ? field.onChange([...field.value || [], role]) : field.onChange( field.value?.filter( (value) => value !== role))}} disabled={!isEditing}/></FormControl><FormLabel className="font-normal">{role}</FormLabel></FormItem> )}}/>))}</div><FormMessage /></FormItem>)}/>
+                                     {selectedRoles.includes("Beneficiary") && <FormField control={form.control} name="isAnonymousAsBeneficiary" render={({ field }) => ( <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4"><FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} disabled={!isEditing}/></FormControl><div className="space-y-1 leading-none"><FormLabel>Mark as Anonymous Beneficiary</FormLabel><FormDescription>If checked, their name will be hidden from public view and their Anonymous ID will be used instead.</FormDescription></div></FormItem>)} />}
+                                     {selectedRoles.includes("Donor") && <FormField control={form.control} name="isAnonymousAsDonor" render={({ field }) => ( <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4"><FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} disabled={!isEditing}/></FormControl><div className="space-y-1 leading-none"><FormLabel>Mark as Anonymous Donor</FormLabel><FormDescription>If checked, their name will be hidden from public view for all their donations.</FormDescription></div></FormItem>)} />}
+                                     <FormField control={form.control} name="isActive" render={({ field }) => ( <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4"><div className="space-y-0.5"><FormLabel className="text-base">User Status</FormLabel><FormDescription>Set the user account to active or inactive. Inactive users cannot log in.</FormDescription></div><FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} disabled={!isEditing}/></FormControl></FormItem>)}/>
                                 </AccordionContent>
                             </AccordionItem>
-                            
+
                             {isBeneficiary && (
                                 <AccordionItem value="beneficiary" className="border rounded-lg">
                                     <AccordionTrigger className="p-4 font-semibold text-primary"><h4 className="flex items-center gap-2"><UserIcon className="h-5 w-5"/>Family &amp; Occupation Details</h4></AccordionTrigger>
@@ -519,16 +513,21 @@ export function EditUserForm({ user }: EditUserFormProps) {
                                 </AccordionItem>
                             )}
 
-                            <AccordionItem value="account" className="border rounded-lg">
-                                <AccordionTrigger className="p-4 font-semibold text-primary"><h4 className="flex items-center gap-2">Account Settings & Roles</h4></AccordionTrigger>
+                            <AccordionItem value="address" className="border rounded-lg">
+                                <AccordionTrigger className="p-4 font-semibold text-primary"><h4 className="flex items-center gap-2"><MapPin className="h-5 w-5"/>Address Details</h4></AccordionTrigger>
                                 <AccordionContent className="p-6 pt-2 space-y-6">
-                                     <FormField control={form.control} name="roles" render={() => ( <FormItem><div className="mb-4"><FormLabel className="text-base">User Roles</FormLabel><FormDescription>Select all roles that apply to this user.</FormDescription></div><div className="grid grid-cols-2 md:grid-cols-3 gap-4">{availableRoles.map((role) => (<FormField key={role} control={form.control} name="roles" render={({ field }) => { return (<FormItem key={role} className="flex flex-row items-start space-x-3 space-y-0"><FormControl><Checkbox checked={field.value?.includes(role)} onCheckedChange={(checked) => { return checked ? field.onChange([...field.value || [], role]) : field.onChange( field.value?.filter( (value) => value !== role))}} disabled={!isEditing}/></FormControl><FormLabel className="font-normal">{role}</FormLabel></FormItem> )}}/>))}</div><FormMessage /></FormItem>)}/>
-                                     {selectedRoles.includes("Beneficiary") && <FormField control={form.control} name="isAnonymousAsBeneficiary" render={({ field }) => ( <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4"><FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} disabled={!isEditing}/></FormControl><div className="space-y-1 leading-none"><FormLabel>Mark as Anonymous Beneficiary</FormLabel><FormDescription>If checked, their name will be hidden from public view and their Anonymous ID will be used instead.</FormDescription></div></FormItem>)} />}
-                                     {selectedRoles.includes("Donor") && <FormField control={form.control} name="isAnonymousAsDonor" render={({ field }) => ( <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4"><FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} disabled={!isEditing}/></FormControl><div className="space-y-1 leading-none"><FormLabel>Mark as Anonymous Donor</FormLabel><FormDescription>If checked, their name will be hidden from public view for all their donations.</FormDescription></div></FormItem>)} />}
-                                     <FormField control={form.control} name="isActive" render={({ field }) => ( <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4"><div className="space-y-0.5"><FormLabel className="text-base">User Status</FormLabel><FormDescription>Set the user account to active or inactive. Inactive users cannot log in.</FormDescription></div><FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} disabled={!isEditing}/></FormControl></FormItem>)}/>
+                                    <FormField control={form.control} name="addressLine1" render={({ field }) => (<FormItem><FormLabel>Address</FormLabel><FormControl><Textarea placeholder="Enter user's full address" {...field} disabled={!isEditing} /></FormControl><FormMessage /></FormItem>)} />
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                        <FormField control={form.control} name="city" render={({ field }) => (<FormItem><FormLabel>City</FormLabel><FormControl><Input placeholder="e.g., Solapur" {...field} disabled={!isEditing} /></FormControl><FormMessage /></FormItem>)} />
+                                        <FormField control={form.control} name="pincode" render={({ field }) => (<FormItem><FormLabel>Pincode</FormLabel><FormControl><Input placeholder="e.g., 413001" {...field} disabled={!isEditing} /></FormControl><FormMessage /></FormItem>)} />
+                                    </div>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                        <FormField control={form.control} name="state" render={({ field }) => (<FormItem><FormLabel>State</FormLabel><FormControl><Input placeholder="e.g., Maharashtra" {...field} disabled={!isEditing} /></FormControl><FormMessage /></FormItem>)}/>
+                                        <FormField control={form.control} name="country" render={({ field }) => (<FormItem><FormLabel>Country</FormLabel><FormControl><Input placeholder="e.g., India" {...field} disabled /></FormControl><FormMessage /></FormItem>)}/>
+                                    </div>
                                 </AccordionContent>
                             </AccordionItem>
-                             
+                            
                             <AccordionItem value="payment" className="border rounded-lg">
                                 <AccordionTrigger className="p-4 font-semibold text-primary"><h4 className="flex items-center gap-2"><CreditCard className="h-5 w-5"/>Verification &amp; Payment Details</h4></AccordionTrigger>
                                 <AccordionContent className="p-6 pt-2 space-y-6">

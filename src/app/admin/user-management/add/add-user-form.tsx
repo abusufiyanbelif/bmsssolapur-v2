@@ -207,6 +207,7 @@ function AddUserFormContent({ settings, isSubForm = false, prefilledData, onUser
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [currentAdmin, setCurrentAdmin] = useState<User | null>(null);
+  const isInitialMount = useRef(true);
 
   // Availability states
   const [userIdState, setUserIdState] = useState<AvailabilityState>(initialAvailabilityState);
@@ -309,7 +310,11 @@ function AddUserFormContent({ settings, isSubForm = false, prefilledData, onUser
     name: "upiPhoneNumbers"
   });
   
-  const { watch, trigger, setValue, reset, handleSubmit } = form;
+  const { watch, trigger, setValue, reset, handleSubmit: originalHandleSubmit } = form;
+
+   const handleSubmit = (onSubmitFunction: (values: AddUserFormValues) => void) => {
+    return originalHandleSubmit(onSubmitFunction);
+  }
 
   const selectedState = watch("state");
   const selectedRoles = watch("roles");
@@ -355,6 +360,10 @@ function AddUserFormContent({ settings, isSubForm = false, prefilledData, onUser
   }, [firstName, lastName, form]);
 
   const handleAvailabilityCheck = useCallback(async (field: string, value: string, setState: React.Dispatch<React.SetStateAction<AvailabilityState>>) => {
+    // This check prevents validation on initial empty load
+    if (isInitialMount.current && !value) {
+        return;
+    }
     if (!value) {
         setState(initialAvailabilityState);
         return;
@@ -374,18 +383,22 @@ function AddUserFormContent({ settings, isSubForm = false, prefilledData, onUser
   const debouncedUpiIds = useDebounce(watch('upiIds'), 500);
 
   // Effects for debounced checks
-  useEffect(() => { if (debouncedUserId) handleAvailabilityCheck('userId', debouncedUserId, setUserIdState); }, [debouncedUserId, handleAvailabilityCheck]);
-  useEffect(() => { if (debouncedEmail) handleAvailabilityCheck('email', debouncedEmail || '', setEmailState); }, [debouncedEmail, handleAvailabilityCheck]);
-  useEffect(() => { if (debouncedPhone) handleAvailabilityCheck('phone', debouncedPhone, setPhoneState); }, [debouncedPhone, handleAvailabilityCheck]);
-  useEffect(() => { if (debouncedPan) handleAvailabilityCheck('panNumber', debouncedPan || '', setPanState); }, [debouncedPan, handleAvailabilityCheck]);
-  useEffect(() => { if (debouncedAadhaar) handleAvailabilityCheck('aadhaarNumber', debouncedAadhaar || '', setAadhaarState); }, [debouncedAadhaar, handleAvailabilityCheck]);
-  useEffect(() => { if (debouncedBankAccount) handleAvailabilityCheck('bankAccountNumber', debouncedBankAccount || '', setBankAccountState); }, [debouncedBankAccount, handleAvailabilityCheck]);
+  useEffect(() => { handleAvailabilityCheck('userId', debouncedUserId, setUserIdState); }, [debouncedUserId, handleAvailabilityCheck]);
+  useEffect(() => { handleAvailabilityCheck('email', debouncedEmail || '', setEmailState); }, [debouncedEmail, handleAvailabilityCheck]);
+  useEffect(() => { handleAvailabilityCheck('phone', debouncedPhone, setPhoneState); }, [debouncedPhone, handleAvailabilityCheck]);
+  useEffect(() => { handleAvailabilityCheck('panNumber', debouncedPan || '', setPanState); }, [debouncedPan, handleAvailabilityCheck]);
+  useEffect(() => { handleAvailabilityCheck('aadhaarNumber', debouncedAadhaar || '', setAadhaarState); }, [debouncedAadhaar, handleAvailabilityCheck]);
+  useEffect(() => { handleAvailabilityCheck('bankAccountNumber', debouncedBankAccount || '', setBankAccountState); }, [debouncedBankAccount, handleAvailabilityCheck]);
 
   useEffect(() => {
     debouncedUpiIds?.forEach((upi, index) => {
         if(upi.value) handleAvailabilityCheck('upiId', upi.value, (state) => setUpiIdStates(prev => ({...prev, [index]: state})));
     });
   }, [debouncedUpiIds, handleAvailabilityCheck]);
+  
+  useEffect(() => {
+    isInitialMount.current = false;
+  }, []);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
