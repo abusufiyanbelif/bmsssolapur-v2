@@ -170,7 +170,10 @@ export default function UserManagementPage() {
             let comparison = 0;
             if (aValue instanceof Date && bValue instanceof Date) {
                 comparison = aValue.getTime() - bValue.getTime();
-            } else if (String(aValue) > String(bValue)) {
+            } else if (typeof aValue === 'number' && typeof bValue === 'number') {
+                comparison = aValue - bValue;
+            }
+             else if (String(aValue) > String(bValue)) {
                 comparison = 1;
             } else if (String(aValue) < String(bValue)) {
                 comparison = -1;
