@@ -391,7 +391,7 @@ export default function UserManagementPage() {
                                 <CardDescription>{user.phone} &middot; {user.email}</CardDescription>
                             </CardHeader>
                             <CardContent className="p-0 space-y-3 text-sm">
-                                <div className="flex justify-between"><span className="text-muted-foreground">User Key</span><span className="font-semibold">{user.userKey || 'N/A'}</span></div>
+                                 <div className="flex justify-between"><span className="text-muted-foreground">User Key</span><span className="font-semibold">{user.userKey || 'N/A'}</span></div>
                                 <div className="flex justify-between"><span className="text-muted-foreground">User ID</span><span className="font-mono text-xs">{user.userId}</span></div>
                                 <div>
                                     <h4 className="font-semibold mb-2">Roles</h4>
@@ -529,9 +529,7 @@ export default function UserManagementPage() {
                             itemType={`${selectedUsers.length} user(s)`}
                             itemName="the selected items"
                             onDelete={async () => {
-                                if (!adminUserId) {
-                                    return { success: false, error: "Admin user ID not found." };
-                                }
+                                if (!adminUserId) return { success: false, error: 'Admin user ID not found.'};
                                 return await handleBulkDeleteUsers(selectedUsers, adminUserId);
                             }}
                             onSuccess={onBulkUsersDeleted}

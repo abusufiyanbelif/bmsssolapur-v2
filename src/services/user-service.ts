@@ -583,12 +583,14 @@ export const deleteUser = async (id: string, adminUser: User, isBulkOperation: b
         const userToDelete = await getUser(id);
         if (!userToDelete) throw new Error("User to delete not found.");
 
-        if (userToDelete.userId === 'anonymous_donor') {
+        if (userToDelete.userKey === 'SYSTEM01' || userToDelete.userId === 'anonymous_donor') {
             throw new Error("The 'Anonymous Donor' system user cannot be deleted.");
         }
 
         const anonymousDonor = await getUserByUserId('anonymous_donor');
-        if (!anonymousDonor) throw new Error("Could not find the 'anonymous_donor' system user to re-assign donations to. Please run the seeder.");
+        if (!anonymousDonor || !anonymousDonor.id) {
+            throw new Error("Could not find the 'anonymous_donor' system user to re-assign donations to. Please run the seeder.");
+        }
 
         // 1. Reassign donations from this user to "Anonymous Donor"
         const donationsQuery = query(collection(db, 'donations'), where("donorId", "==", id));
