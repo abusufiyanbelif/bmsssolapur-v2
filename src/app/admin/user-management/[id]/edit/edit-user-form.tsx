@@ -202,7 +202,7 @@ const createFormSchema = (settings?: AppSettings) => z.object({
   middleName: z.string().optional(),
   lastName: z.string().min(1, "Last name is required."),
   fatherName: z.string().optional(),
-  phone: z.string().regex(/^[0-9]{10}$/, "Phone number must be exactly 10 digits."),
+  phone: z.string().regex(/^[0-9]{10}$/, "Phone number must be 10 digits."),
   roles: z.array(z.string()).refine((value) => (value || []).length > 0, {
     message: "You have to select at least one role.",
   }),
@@ -286,6 +286,8 @@ export function EditUserForm({ user }: EditUserFormProps) {
 
   const form = useForm<EditUserFormValues>({
     resolver: zodResolver(formSchema),
+    mode: 'onSubmit',
+    reValidateMode: 'onChange',
     defaultValues: {
       firstName: user.firstName,
       middleName: user.middleName || '',
@@ -325,7 +327,20 @@ export function EditUserForm({ user }: EditUserFormProps) {
   const isFormDirty = formState.isDirty || isFileDirty;
 
   const handleSubmit = (onSubmitFunction: (values: EditUserFormValues) => void) => {
-    return originalHandleSubmit(onSubmitFunction);
+    return async (e: React.BaseSyntheticEvent) => {
+        e.preventDefault();
+        const isValid = await trigger();
+        if (!isValid) {
+            const errorMessages = Object.values(form.formState.errors).map(err => err.message).filter(Boolean).join('\n');
+            toast({
+                variant: "destructive",
+                title: "Please correct the errors below",
+                description: <pre className="mt-2 w-full rounded-md bg-slate-950 p-4"><code className="text-white whitespace-pre-wrap">{errorMessages}</code></pre>
+            });
+            return;
+        }
+        originalHandleSubmit(onSubmitFunction)(e);
+    };
   };
   
   useEffect(() => {
@@ -364,7 +379,7 @@ export function EditUserForm({ user }: EditUserFormProps) {
             formData.append(key, value);
         } else if (Array.isArray(value)) {
             if (key === 'roles') {
-            value.forEach(v => formData.append(key, v));
+            value.forEach(role => formData.append(key, role));
             } else {
             value.forEach(item => {
                 if(item && typeof item === 'object' && 'value' in item && item.value) {
@@ -577,3 +592,5 @@ export function EditUserForm({ user }: EditUserFormProps) {
     </>
   );
 }
+
+    
