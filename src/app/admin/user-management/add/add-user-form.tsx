@@ -3,7 +3,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm, useFieldArray, FormProvider, useFormContext } from "react-hook-form";
+import { useForm, useFieldArray, FormProvider } from "react-hook-form";
 import * as z from "zod";
 import Link from 'next/link';
 import { Button } from "@/components/ui/button";
@@ -156,6 +156,46 @@ const initialAvailabilityState: AvailabilityState = {
     isAvailable: null,
 };
 
+const initialFormValues: Partial<AddUserFormValues> = {
+    userId: "",
+    fullName: "",
+    firstName: "",
+    middleName: "",
+    lastName: "",
+    fatherName: "",
+    email: "",
+    phone: "",
+    password: "",
+    roles: ["Donor"],
+    createProfile: false,
+    isAnonymousAsBeneficiary: false,
+    isAnonymousAsDonor: false,
+    gender: undefined,
+    beneficiaryType: undefined,
+    addressLine1: "",
+    city: "Solapur",
+    state: "Maharashtra",
+    country: "India",
+    pincode: "",
+    occupation: "",
+    fatherOccupation: "",
+    motherOccupation: "",
+    familyMembers: 0,
+    earningMembers: 0,
+    totalFamilyIncome: 0,
+    isWidow: false,
+    panNumber: "",
+    aadhaarNumber: "",
+    bankAccountName: "",
+    bankName: "",
+    bankAccountNumber: "",
+    bankIfscCode: "",
+    upiPhoneNumbers: [{ value: "" }],
+    upiIds: [{ value: "" }],
+    aadhaarCard: null,
+};
+
+
 function AvailabilityFeedback({ state, fieldName, onSuggestionClick }: { state: AvailabilityState, fieldName: string, onSuggestionClick?: (suggestion: string) => void }) {
     if (state.isChecking) {
         return <p className="text-sm text-muted-foreground flex items-center mt-2"><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Checking...</p>;
@@ -201,74 +241,39 @@ interface AddUserFormProps {
     onUserCreate?: (user: User) => void;
 }
 
-function AddUserFormContent({ settings, isSubForm = false, prefilledData, onUserCreate }: AddUserFormProps) {
+function FormContent({ settings, isSubForm, onUserCreate }: AddUserFormProps) {
+    const { control, formState, watch, setValue, trigger, reset, handleSubmit: originalHandleSubmit } = useFormContext<AddUserFormValues>();
     const { toast } = useToast();
     const router = useRouter();
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [adminUser, setAdminUser] = useState<User | null>(null);
 
-    const formSchema = useMemo(() => createFormSchema(settings), [settings]);
-
-    const form = useForm<AddUserFormValues>({
-        resolver: zodResolver(formSchema),
-        mode: 'onSubmit',
-        reValidateMode: 'onChange',
-        defaultValues: {
-            userId: "",
-            fullName: prefilledData?.beneficiaryFullName || "",
-            firstName: prefilledData?.beneficiaryFirstName || "",
-            middleName: prefilledData?.beneficiaryMiddleName || "",
-            lastName: prefilledData?.beneficiaryLastName || "",
-            fatherName: prefilledData?.fatherName || "",
-            email: prefilledData?.beneficiaryEmail || "",
-            phone: prefilledData?.beneficiaryPhone || "",
-            password: "",
-            roles: ["Donor"],
-            createProfile: false,
-            isAnonymousAsBeneficiary: false,
-            isAnonymousAsDonor: false,
-            gender: prefilledData?.gender,
-            beneficiaryType: undefined,
-            addressLine1: prefilledData?.address || "",
-            city: prefilledData?.city || "Solapur",
-            state: prefilledData?.state || "Maharashtra",
-            country: prefilledData?.country || "India",
-            pincode: prefilledData?.pincode || "",
-            occupation: "",
-            fatherOccupation: "",
-            motherOccupation: "",
-            familyMembers: 0,
-            earningMembers: 0,
-            totalFamilyIncome: 0,
-            isWidow: false,
-            panNumber: "",
-            aadhaarNumber: prefilledData?.aadhaarNumber || "",
-            bankAccountName: "",
-            bankName: "",
-            bankAccountNumber: "",
-            bankIfscCode: "",
-            upiPhoneNumbers: [{ value: "" }],
-            upiIds: [{ value: "" }],
-            aadhaarCard: null,
-        },
-    });
-
-    const { control, formState, watch, setValue, trigger, reset, handleSubmit: originalHandleSubmit, getValues } = form;
-
-    const { fields: upiIdFields, append: appendUpiId, remove: removeUpiId } = useFieldArray({ control, name: "upiIds" });
-    const { fields: upiPhoneFields, append: appendUpiPhone, remove: removeUpiPhone } = useFieldArray({ control, name: "upiPhoneNumbers" });
+    const isAadhaarMandatory = settings?.userConfiguration?.Beneficiary?.isAadhaarMandatory || false;
+    
+    useEffect(() => {
+        const storedUserId = localStorage.getItem('userId');
+        if (storedUserId) {
+            getUser(storedUserId).then(setAdminUser);
+        }
+    }, []);
 
     const selectedRoles = watch("roles");
-    const selectedGender = watch("gender");
     const isBeneficiary = selectedRoles.includes('Beneficiary');
-
     const [userIdState, setUserIdState] = useState<AvailabilityState>(initialAvailabilityState);
     const [emailState, setEmailState] = useState<AvailabilityState>(initialAvailabilityState);
     const [phoneState, setPhoneState] = useState<AvailabilityState>(initialAvailabilityState);
     const [panState, setPanState] = useState<AvailabilityState>(initialAvailabilityState);
     const [aadhaarState, setAadhaarState] = useState<AvailabilityState>(initialAvailabilityState);
     const [bankAccountState, setBankAccountState] = useState<AvailabilityState>(initialAvailabilityState);
-    const [upiIdStates, setUpiIdStates] = useState<Record<number, AvailabilityState>>({});
+    
+    const debouncedUserId = useDebounce(watch('userId'), 500);
+    const debouncedEmail = useDebounce(watch('email'), 500);
+    const debouncedPhone = useDebounce(watch('phone'), 500);
+    const debouncedPan = useDebounce(watch('panNumber'), 500);
+    const debouncedAadhaar = useDebounce(watch('aadhaarNumber'), 500);
+    const debouncedBankAccount = useDebounce(watch('bankAccountNumber'), 500);
+    
+    const isInitialMount = useRef(true);
     
     const handleAvailabilityCheck = useCallback(async (field: string, value: string, setState: React.Dispatch<React.SetStateAction<AvailabilityState>>) => {
         if (!value) {
@@ -279,16 +284,6 @@ function AddUserFormContent({ settings, isSubForm = false, prefilledData, onUser
         const result = await checkAvailability(field, value);
         setState({ isChecking: false, ...result });
     }, []);
-
-    const debouncedUserId = useDebounce(watch('userId'), 500);
-    const debouncedEmail = useDebounce(watch('email'), 500);
-    const debouncedPhone = useDebounce(watch('phone'), 500);
-    const debouncedPan = useDebounce(watch('panNumber'), 500);
-    const debouncedAadhaar = useDebounce(watch('aadhaarNumber'), 500);
-    const debouncedBankAccount = useDebounce(watch('bankAccountNumber'), 500);
-    const debouncedUpiIds = useDebounce(watch('upiIds'), 500);
-
-    const isInitialMount = useRef(true);
 
     useEffect(() => { 
         if (isInitialMount.current && !debouncedUserId) return;
@@ -314,15 +309,16 @@ function AddUserFormContent({ settings, isSubForm = false, prefilledData, onUser
         if (isInitialMount.current && !debouncedBankAccount) return;
         if (debouncedBankAccount) handleAvailabilityCheck('bankAccountNumber', debouncedBankAccount, setBankAccountState); 
     }, [debouncedBankAccount, handleAvailabilityCheck]);
-    
+
     useEffect(() => {
         isInitialMount.current = false;
     }, []);
-
+    
     const fullName = watch("fullName");
     const firstName = watch("firstName");
     const middleName = watch("middleName");
     const lastName = watch("lastName");
+    const aadhaarCardFile = watch("aadhaarCard");
 
     const handleFullNameChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
         const newFullName = e.target.value;
@@ -340,13 +336,17 @@ function AddUserFormContent({ settings, isSubForm = false, prefilledData, onUser
             setValue('fullName', fullNameFromParts, { shouldDirty: true });
         }
     }, [firstName, middleName, lastName, fullName, setValue]);
+    
+    const handleCancel = () => {
+        reset(initialFormValues);
+    };
 
     const handleSubmit = (onSubmitFunction: (values: AddUserFormValues) => void) => {
         return async (e: React.BaseSyntheticEvent) => {
             e.preventDefault();
-            await trigger(); 
+            const isValid = await trigger(); 
         
-            if (Object.keys(formState.errors).length > 0) {
+            if (!isValid) {
                 const errorMessages = Object.values(formState.errors).map(err => err.message).filter(Boolean).join('\n');
                 toast({
                     variant: "destructive",
@@ -388,43 +388,59 @@ function AddUserFormContent({ settings, isSubForm = false, prefilledData, onUser
         }
         setIsSubmitting(false);
     }
-    
-    const beneficiaryUserConfig = settings?.userConfiguration?.Beneficiary || {};
-    const isAadhaarMandatory = beneficiaryUserConfig.isAadhaarMandatory || false;
+
     const selectedState = watch("state");
 
     return (
-        <FormProvider {...form}>
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-                <div className="space-y-6 pt-4">
-                    <h3 className="text-lg font-semibold border-b pb-2">Basic Information</h3>
-                    <FormField control={control} name="fullName" render={({ field }) => ( <FormItem><FormLabel>Full Name</FormLabel><FormControl><Input placeholder="Enter user's full name" {...field} onChange={handleFullNameChange}/></FormControl><FormDescription>The fields below will be auto-populated from this.</FormDescription><FormMessage /></FormItem> )}/>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        <FormField control={control} name="firstName" render={({ field }) => ( <FormItem><FormLabel>First Name</FormLabel><FormControl><Input type="text" placeholder="Enter your first name" {...field} /></FormControl><FormMessage /></FormItem> )}/>
-                        <FormField control={control} name="middleName" render={({ field }) => ( <FormItem><FormLabel>Middle Name</FormLabel><FormControl><Input type="text" placeholder="Enter your middle name" {...field} /></FormControl><FormMessage /></FormItem> )}/>
-                        <FormField control={control} name="lastName" render={({ field }) => ( <FormItem><FormLabel>Last Name</FormLabel><FormControl><Input type="text" placeholder="Enter your last name" {...field} /></FormControl><FormMessage /></FormItem> )}/>
-                    </div>
-                    <FormField control={control} name="fatherName" render={({ field }) => ( <FormItem><FormLabel>Father&apos;s Name (Optional)</FormLabel><FormControl><Input placeholder="Enter father's name" {...field} /></FormControl><FormMessage /></FormItem> )}/>
-                    <FormField control={control} name="userId" render={({ field }) => ( <FormItem><FormLabel>User ID</FormLabel><FormControl><Input type="text" placeholder="Create a custom user ID" {...field} /></FormControl><AvailabilityFeedback state={userIdState} fieldName="User ID" onSuggestionClick={(s) => setValue('userId', s, { shouldValidate: true })} /><FormMessage /></FormItem> )}/>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <FormField control={control} name="email" render={({ field }) => ( <FormItem><FormLabel>Email Address (Optional)</FormLabel><FormControl><Input type="email" placeholder="you@example.com" {...field} /></FormControl><AvailabilityFeedback state={emailState} fieldName="email" /><FormMessage /></FormItem> )}/>
-                        <FormField control={control} name="phone" render={({ field }) => ( <FormItem><FormLabel>Phone Number</FormLabel><FormControl><Input type="tel" placeholder="10-digit number" maxLength={10} {...field} /></FormControl><AvailabilityFeedback state={phoneState} fieldName="phone number" /><FormMessage /></FormItem> )}/>
-                    </div>
-                    <FormField control={control} name="gender" render={({ field }) => ( <FormItem className="space-y-3"><FormLabel>Gender</FormLabel><FormControl><RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="flex flex-row space-x-4 pt-2"><FormItem className="flex items-center space-x-2"><FormControl><RadioGroupItem value="Male" /></FormControl><FormLabel className="font-normal">Male</FormLabel></FormItem><FormItem className="flex items-center space-x-2"><FormControl><RadioGroupItem value="Female" /></FormControl><FormLabel className="font-normal">Female</FormLabel></FormItem></RadioGroup></FormControl><FormMessage /></FormItem> )}/>
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+            <div className="space-y-6 pt-4">
+                <h3 className="text-lg font-semibold border-b pb-2 text-primary">Basic Information</h3>
+                <FormField control={control} name="fullName" render={({ field }) => ( <FormItem><FormLabel>Full Name</FormLabel><FormControl><Input placeholder="Enter user's full name" {...field} onChange={handleFullNameChange}/></FormControl><FormDescription>The fields below will be auto-populated from this.</FormDescription><FormMessage /></FormItem> )}/>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <FormField control={control} name="firstName" render={({ field }) => ( <FormItem><FormLabel>First Name</FormLabel><FormControl><Input type="text" placeholder="Enter your first name" {...field} /></FormControl><FormMessage /></FormItem> )}/>
+                    <FormField control={control} name="middleName" render={({ field }) => ( <FormItem><FormLabel>Middle Name</FormLabel><FormControl><Input type="text" placeholder="Enter your middle name" {...field} /></FormControl><FormMessage /></FormItem> )}/>
+                    <FormField control={control} name="lastName" render={({ field }) => ( <FormItem><FormLabel>Last Name</FormLabel><FormControl><Input type="text" placeholder="Enter your last name" {...field} /></FormControl><FormMessage /></FormItem> )}/>
                 </div>
-                 {isSubForm ? null : (
-                     <div className="flex items-center gap-4 mt-8">
-                        <Button type="submit" disabled={isSubmitting}>
-                            {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <UserPlus className="mr-2 h-4 w-4" />}
-                            Create User
-                        </Button>
-                        <Button type="button" variant="outline" onClick={handleCancel} disabled={isSubmitting}>
-                            <XCircle className="mr-2 h-4 w-4" />
-                            Clear Form
-                        </Button>
-                    </div>
-                 )}
-            </form>
+                <FormField control={control} name="fatherName" render={({ field }) => ( <FormItem><FormLabel>Father&apos;s Name (Optional)</FormLabel><FormControl><Input placeholder="Enter father's name" {...field} /></FormControl><FormMessage /></FormItem> )}/>
+                <FormField control={control} name="userId" render={({ field }) => ( <FormItem><FormLabel>User ID</FormLabel><FormControl><Input type="text" placeholder="Create a custom user ID" {...field} /></FormControl><AvailabilityFeedback state={userIdState} fieldName="User ID" onSuggestionClick={(s) => setValue('userId', s, { shouldValidate: true })} /><FormMessage /></FormItem> )}/>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <FormField control={control} name="email" render={({ field }) => ( <FormItem><FormLabel>Email Address (Optional)</FormLabel><FormControl><Input type="email" placeholder="you@example.com" {...field} /></FormControl><AvailabilityFeedback state={emailState} fieldName="email" /><FormMessage /></FormItem> )}/>
+                    <FormField control={control} name="phone" render={({ field }) => ( <FormItem><FormLabel>Phone Number</FormLabel><FormControl><Input type="tel" placeholder="10-digit number" maxLength={10} {...field} /></FormControl><AvailabilityFeedback state={phoneState} fieldName="phone number" /><FormMessage /></FormItem> )}/>
+                </div>
+                <FormField control={control} name="gender" render={({ field }) => ( <FormItem className="space-y-3"><FormLabel>Gender</FormLabel><FormControl><RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="flex flex-row space-x-4 pt-2"><FormItem className="flex items-center space-x-2"><FormControl><RadioGroupItem value="Male" /></FormControl><FormLabel className="font-normal">Male</FormLabel></FormItem><FormItem className="flex items-center space-x-2"><FormControl><RadioGroupItem value="Female" /></FormControl><FormLabel className="font-normal">Female</FormLabel></FormItem></RadioGroup></FormControl><FormMessage /></FormItem> )}/>
+            </div>
+            {isSubForm ? null : (
+                <div className="flex items-center gap-4 mt-8">
+                    <Button type="submit" disabled={isSubmitting}>
+                        {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <UserPlus className="mr-2 h-4 w-4" />}
+                        Create User
+                    </Button>
+                    <Button type="button" variant="outline" onClick={handleCancel} disabled={isSubmitting}>
+                        <XCircle className="mr-2 h-4 w-4" />
+                        Clear Form
+                    </Button>
+                </div>
+            )}
+        </form>
+    );
+}
+
+
+function AddUserFormContent({ settings, isSubForm, prefilledData, onUserCreate }: AddUserFormProps) {
+    const formSchema = useMemo(() => createFormSchema(settings), [settings]);
+    const form = useForm<AddUserFormValues>({
+        resolver: zodResolver(formSchema),
+        reValidateMode: "onChange",
+        mode: "onSubmit",
+        defaultValues: {
+            ...initialFormValues,
+            ...prefilledData,
+        },
+    });
+
+    return (
+        <FormProvider {...form}>
+            <FormContent settings={settings} isSubForm={isSubForm} onUserCreate={onUserCreate} />
         </FormProvider>
     )
 }
