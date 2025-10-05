@@ -1,4 +1,3 @@
-
 // src/app/admin/user-management/add/add-user-form.tsx
 "use client";
 
@@ -310,26 +309,39 @@ function AddUserFormContent({ settings, isSubForm = false, prefilledData, onUser
     name: "upiPhoneNumbers"
   });
   
-  const { watch, trigger, setValue, reset, handleSubmit: originalHandleSubmit } = form;
-
-   const handleSubmit = (onSubmitFunction: (values: AddUserFormValues) => void) => {
-    return originalHandleSubmit(onSubmitFunction);
-  }
-
-  const selectedState = watch("state");
+  const { watch, trigger, setValue, reset, handleSubmit: originalHandleSubmit, formState } = form;
+  
   const selectedRoles = watch("roles");
   const selectedGender = watch("gender");
+  const isBeneficiary = selectedRoles.includes('Beneficiary');
+
+  const handleSubmit = (onSubmitFunction: (values: AddUserFormValues) => void) => {
+    return async (e: React.BaseSyntheticEvent) => {
+      e.preventDefault();
+      await trigger(); // Manually trigger validation
+  
+      if (Object.keys(formState.errors).length > 0) {
+        const errorMessages = Object.values(formState.errors)
+          .map(err => err.message)
+          .filter(Boolean)
+          .join('\n');
+        
+        toast({
+          variant: "destructive",
+          title: "Please correct the errors below",
+          description: <pre className="mt-2 w-full rounded-md bg-slate-950 p-4"><code className="text-white whitespace-pre-wrap">{errorMessages}</code></pre>
+        });
+        return; // Stop submission
+      }
+      
+      originalHandleSubmit(onSubmitFunction)(e);
+    };
+  }
+
+  const fullName = watch("fullName");
   const firstName = watch("firstName");
   const middleName = watch("middleName");
   const lastName = watch("lastName");
-  const fullName = watch("fullName");
-  
-  const isAadhaarMandatory = selectedRoles.includes('Beneficiary') && !!settings?.userConfiguration?.Beneficiary?.isAadhaarMandatory;
-  
-  useEffect(() => {
-    trigger();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedRoles, trigger]);
 
   const handleFullNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newFullName = e.target.value;
@@ -338,7 +350,6 @@ function AddUserFormContent({ settings, isSubForm = false, prefilledData, onUser
     setValue('firstName', nameParts[0] || '', { shouldDirty: true });
     setValue('lastName', nameParts.length > 1 ? nameParts[nameParts.length - 1] : '', { shouldDirty: true });
     setValue('middleName', nameParts.slice(1, -1).join(' '), { shouldDirty: true });
-    // Manually trigger validation for these fields after programmatic update
     if (nameParts.length > 0) trigger(['firstName', 'lastName']);
   }
 
@@ -354,13 +365,12 @@ function AddUserFormContent({ settings, isSubForm = false, prefilledData, onUser
     if (firstName && lastName) {
         const generatedUserId = `${firstName.toLowerCase()}.${lastName.toLowerCase()}`.replace(/\s+/g, '');
         if (!form.formState.dirtyFields.userId) {
-            form.setValue('userId', generatedUserId);
+            setValue('userId', generatedUserId);
         }
     }
   }, [firstName, lastName, form]);
 
   const handleAvailabilityCheck = useCallback(async (field: string, value: string, setState: React.Dispatch<React.SetStateAction<AvailabilityState>>) => {
-    // This check prevents validation on initial empty load
     if (isInitialMount.current && !value) {
         return;
     }
@@ -383,12 +393,12 @@ function AddUserFormContent({ settings, isSubForm = false, prefilledData, onUser
   const debouncedUpiIds = useDebounce(watch('upiIds'), 500);
 
   // Effects for debounced checks
-  useEffect(() => { handleAvailabilityCheck('userId', debouncedUserId, setUserIdState); }, [debouncedUserId, handleAvailabilityCheck]);
-  useEffect(() => { handleAvailabilityCheck('email', debouncedEmail || '', setEmailState); }, [debouncedEmail, handleAvailabilityCheck]);
-  useEffect(() => { handleAvailabilityCheck('phone', debouncedPhone, setPhoneState); }, [debouncedPhone, handleAvailabilityCheck]);
-  useEffect(() => { handleAvailabilityCheck('panNumber', debouncedPan || '', setPanState); }, [debouncedPan, handleAvailabilityCheck]);
-  useEffect(() => { handleAvailabilityCheck('aadhaarNumber', debouncedAadhaar || '', setAadhaarState); }, [debouncedAadhaar, handleAvailabilityCheck]);
-  useEffect(() => { handleAvailabilityCheck('bankAccountNumber', debouncedBankAccount || '', setBankAccountState); }, [debouncedBankAccount, handleAvailabilityCheck]);
+  useEffect(() => { if (debouncedUserId) handleAvailabilityCheck('userId', debouncedUserId, setUserIdState); }, [debouncedUserId, handleAvailabilityCheck]);
+  useEffect(() => { if (debouncedEmail) handleAvailabilityCheck('email', debouncedEmail, setEmailState); }, [debouncedEmail, handleAvailabilityCheck]);
+  useEffect(() => { if (debouncedPhone) handleAvailabilityCheck('phone', debouncedPhone, setPhoneState); }, [debouncedPhone, handleAvailabilityCheck]);
+  useEffect(() => { if (debouncedPan) handleAvailabilityCheck('panNumber', debouncedPan, setPanState); }, [debouncedPan, handleAvailabilityCheck]);
+  useEffect(() => { if (debouncedAadhaar) handleAvailabilityCheck('aadhaarNumber', debouncedAadhaar, setAadhaarState); }, [debouncedAadhaar, handleAvailabilityCheck]);
+  useEffect(() => { if (debouncedBankAccount) handleAvailabilityCheck('bankAccountNumber', debouncedBankAccount, setBankAccountState); }, [debouncedBankAccount, handleAvailabilityCheck]);
 
   useEffect(() => {
     debouncedUpiIds?.forEach((upi, index) => {
@@ -855,44 +865,55 @@ function AddUserFormContent({ settings, isSubForm = false, prefilledData, onUser
                       />
               </div>
 
-
-              <h3 className="text-lg font-semibold border-b pb-2">Family &amp; Occupation</h3>
-                <div className="space-y-6">
-                    <FormField control={form.control} name="occupation" render={({ field }) => (<FormItem><FormLabel>Beneficiary&apos;s Occupation</FormLabel><FormControl><Input placeholder="e.g., Daily wage worker, Unemployed" {...field} /></FormControl><FormMessage /></FormItem>)}/>
-                    <FormField control={form.control} name="fatherOccupation" render={({ field }) => (<FormItem><FormLabel>Father&apos;s Occupation</FormLabel><FormControl><Input placeholder="e.g., Shop owner, Retired" {...field} /></FormControl><FormMessage /></FormItem>)}/>
-                    <FormField control={form.control} name="motherOccupation" render={({ field }) => (<FormItem><FormLabel>Mother&apos;s Occupation</FormLabel><FormControl><Input placeholder="e.g., Homemaker, Teacher" {...field} /></FormControl><FormMessage /></FormItem>)}/>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        <FormField control={form.control} name="familyMembers" render={({ field }) => (<FormItem><FormLabel>Family Members</FormLabel><FormControl><Input type="number" placeholder="e.g., 5" {...field} /></FormControl><FormMessage /></FormItem>)}/>
-                        <FormField control={form.control} name="earningMembers" render={({ field }) => (<FormItem><FormLabel>Earning Members</FormLabel><FormControl><Input type="number" placeholder="e.g., 1" {...field} /></FormControl><FormMessage /></FormItem>)}/>
-                        <FormField control={form.control} name="totalFamilyIncome" render={({ field }) => (<FormItem><FormLabel>Total Family Income (Monthly)</FormLabel><FormControl><Input type="number" placeholder="e.g., 10000" {...field} /></FormControl><FormMessage /></FormItem>)}/>
-                    </div>
-                </div>
-
-              
-              {selectedGender === 'Female' && selectedRoles.includes('Beneficiary') && (
-                  <FormField
-                      control={form.control}
-                      name="isWidow"
-                      render={({ field }) => (
-                          <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
-                          <FormControl>
-                              <Checkbox
-                              checked={field.value}
-                              onCheckedChange={field.onChange}
-                              />
-                          </FormControl>
-                          <div className="space-y-1 leading-none">
-                              <FormLabel>
-                              Is the Beneficiary a Widow?
-                              </FormLabel>
-                              <FormDescription>
-                              Check this box if the user is a widow. This helps in prioritizing cases.
-                              </FormDescription>
-                          </div>
-                          </FormItem>
-                      )}
-                  />
-              )}
+                {isBeneficiary && (
+                    <>
+                        <h3 className="text-lg font-semibold border-b pb-2">Family &amp; Occupation</h3>
+                        <div className="space-y-6">
+                            <FormField control={form.control} name="occupation" render={({ field }) => (<FormItem><FormLabel>Beneficiary&apos;s Occupation</FormLabel><FormControl><Input placeholder="e.g., Daily wage worker, Unemployed" {...field} /></FormControl><FormMessage /></FormItem>)}/>
+                            <FormField control={form.control} name="fatherOccupation" render={({ field }) => (<FormItem><FormLabel>Father&apos;s Occupation</FormLabel><FormControl><Input placeholder="e.g., Shop owner, Retired" {...field} /></FormControl><FormMessage /></FormItem>)}/>
+                            <FormField control={form.control} name="motherOccupation" render={({ field }) => (<FormItem><FormLabel>Mother&apos;s Occupation</FormLabel><FormControl><Input placeholder="e.g., Homemaker, Teacher" {...field} /></FormControl><FormMessage /></FormItem>)}/>
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                <FormField control={form.control} name="familyMembers" render={({ field }) => (<FormItem><FormLabel>Family Members</FormLabel><FormControl><Input type="number" placeholder="e.g., 5" {...field} /></FormControl><FormMessage /></FormItem>)}/>
+                                <FormField control={form.control} name="earningMembers" render={({ field }) => (<FormItem><FormLabel>Earning Members</FormLabel><FormControl><Input type="number" placeholder="e.g., 1" {...field} /></FormControl><FormMessage /></FormItem>)}/>
+                                <FormField control={form.control} name="totalFamilyIncome" render={({ field }) => (<FormItem><FormLabel>Total Family Income (Monthly)</FormLabel><FormControl><Input type="number" placeholder="e.g., 10000" {...field} /></FormControl><FormMessage /></FormItem>)}/>
+                            </div>
+                        </div>
+                        {selectedGender === 'Female' && (
+                            <FormField
+                                control={form.control}
+                                name="isWidow"
+                                render={({ field }) => (
+                                    <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                                        <FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} /></FormControl>
+                                        <div className="space-y-1 leading-none">
+                                            <FormLabel>Is the Beneficiary a Widow?</FormLabel>
+                                            <FormDescription>Check this box if the user is a widow. This helps in prioritizing cases.</FormDescription>
+                                        </div>
+                                    </FormItem>
+                                )}
+                            />
+                        )}
+                        <FormField
+                            control={form.control}
+                            name="beneficiaryType"
+                            render={({ field }) => (
+                                <FormItem className="space-y-3">
+                                <FormLabel>Beneficiary Type</FormLabel>
+                                <FormDescription>Categorize the beneficiary for reporting and aid purposes.</FormDescription>
+                                <FormControl>
+                                    <RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="flex flex-row space-x-4 pt-2">
+                                        <FormItem className="flex items-center space-x-3 space-y-0"><FormControl><RadioGroupItem value="Adult" /></FormControl><FormLabel className="font-normal">Adult</FormLabel></FormItem>
+                                        <FormItem className="flex items-center space-x-3 space-y-0"><FormControl><RadioGroupItem value="Old Age" /></FormControl><FormLabel className="font-normal">Old Age</FormLabel></FormItem>
+                                        <FormItem className="flex items-center space-x-3 space-y-0"><FormControl><RadioGroupItem value="Kid" /></FormControl><FormLabel className="font-normal">Kid</FormLabel></FormItem>
+                                        <FormItem className="flex items-center space-x-3 space-y-0"><FormControl><RadioGroupItem value="Family" /></FormControl><FormLabel className="font-normal">Family</FormLabel></FormItem>
+                                    </RadioGroup>
+                                </FormControl>
+                                <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                    </>
+                )}
 
 
               <h3 className="text-lg font-semibold border-b pb-2">Account Settings &amp; Roles</h3>
@@ -924,7 +945,7 @@ function AddUserFormContent({ settings, isSubForm = false, prefilledData, onUser
                                       checked={field.value?.includes(role)}
                                       onCheckedChange={(checked) => {
                                       return checked
-                                          ? field.onChange([...field.value, role])
+                                          ? field.onChange([...(field.value || []), role])
                                           : field.onChange(
                                               field.value?.filter(
                                               (value) => value !== role
@@ -992,32 +1013,6 @@ function AddUserFormContent({ settings, isSubForm = false, prefilledData, onUser
                               If checked, their name will be hidden from public view for all their donations.
                               </FormDescription>
                           </div>
-                          </FormItem>
-                      )}
-                  />
-              )}
-
-              {selectedRoles.includes("Beneficiary") && (
-                  <FormField
-                      control={form.control}
-                      name="beneficiaryType"
-                      render={({ field }) => (
-                          <FormItem className="space-y-3">
-                          <FormLabel>Beneficiary Type</FormLabel>
-                          <FormDescription>Categorize the beneficiary for reporting and aid purposes.</FormDescription>
-                          <FormControl>
-                              <RadioGroup
-                              onValueChange={field.onChange}
-                              defaultValue={field.value}
-                              className="flex flex-row space-x-4 pt-2"
-                              >
-                              <FormItem className="flex items-center space-x-3 space-y-0"><FormControl><RadioGroupItem value="Adult" /></FormControl><FormLabel className="font-normal">Adult</FormLabel></FormItem>
-                              <FormItem className="flex items-center space-x-3 space-y-0"><FormControl><RadioGroupItem value="Old Age" /></FormControl><FormLabel className="font-normal">Old Age</FormLabel></FormItem>
-                              <FormItem className="flex items-center space-x-3 space-y-0"><FormControl><RadioGroupItem value="Kid" /></FormControl><FormLabel className="font-normal">Kid</FormLabel></FormItem>
-                              <FormItem className="flex items-center space-x-3 space-y-0"><FormControl><RadioGroupItem value="Family" /></FormControl><FormLabel className="font-normal">Family</FormLabel></FormItem>
-                              </RadioGroup>
-                          </FormControl>
-                          <FormMessage />
                           </FormItem>
                       )}
                   />
