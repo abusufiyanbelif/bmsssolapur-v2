@@ -1,4 +1,3 @@
-
 // src/app/admin/user-management/add/add-user-form.tsx
 "use client";
 
@@ -86,7 +85,7 @@ const createFormSchema = (settings?: AppSettings) => z.object({
   lastName: z.string().min(1, "Last name is required."),
   fatherName: z.string().optional(),
   email: z.string().email("Please enter a valid email address.").optional().or(z.literal('')),
-  phone: z.string().regex(/^[0-9]{10}$/, "Phone number must be exactly 10 digits."),
+  phone: z.string().optional(),
   password: z.string().optional(),
   roles: z.array(z.string()).refine((value) => (value || []).length > 0, {
     message: "You have to select at least one role.",
@@ -118,10 +117,26 @@ const createFormSchema = (settings?: AppSettings) => z.object({
   upiIds: z.array(z.object({ value: z.string() })).optional(),
   aadhaarCard: z.any().optional(),
 }).superRefine((data, ctx) => {
-    // Dynamic mandatory fields based on roles and settings
-    const isBeneficiary = data.roles.includes('Beneficiary');
     const beneficiarySettings = settings?.userConfiguration?.Beneficiary;
+    const donorSettings = settings?.userConfiguration?.Donor;
+    const referralSettings = settings?.userConfiguration?.Referral;
+    const adminSettings = settings?.userConfiguration?.Admin;
 
+    const roleConfigs = {
+        'Beneficiary': beneficiarySettings,
+        'Donor': donorSettings,
+        'Referral': referralSettings,
+        'Admin': adminSettings,
+    };
+
+    // Check if phone number is required for any selected role
+    const isPhoneMandatory = data.roles.some(role => roleConfigs[role as keyof typeof roleConfigs]?.isPhoneMandatory);
+    if(isPhoneMandatory && (!data.phone || !/^[0-9]{10}$/.test(data.phone))) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, message: "A valid 10-digit phone number is required for the selected role(s).", path: ["phone"] });
+    }
+    
+    // Dynamic mandatory fields based on Beneficiary role
+    const isBeneficiary = data.roles.includes('Beneficiary');
     if (isBeneficiary && beneficiarySettings) {
         if (beneficiarySettings.isAadhaarMandatory && !data.aadhaarNumber) {
             ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Aadhaar Number is required for Beneficiaries.", path: ["aadhaarNumber"] });
@@ -241,7 +256,7 @@ interface AddUserFormProps {
     onUserCreate?: (user: User) => void;
 }
 
-function FormContent({ settings, isSubForm, onUserCreate }: AddUserFormProps) {
+function FormContent({ settings, isSubForm, prefilledData, onUserCreate }: AddUserFormProps) {
     const { control, formState, watch, setValue, trigger, reset, handleSubmit: originalHandleSubmit } = useFormContext<AddUserFormValues>();
     const { toast } = useToast();
     const router = useRouter();
@@ -257,7 +272,7 @@ function FormContent({ settings, isSubForm, onUserCreate }: AddUserFormProps) {
         }
     }, []);
 
-    const selectedRoles = watch("roles");
+    const selectedRoles = watch("roles") || [];
     const isBeneficiary = selectedRoles.includes('Beneficiary');
     const [userIdState, setUserIdState] = useState<AvailabilityState>(initialAvailabilityState);
     const [emailState, setEmailState] = useState<AvailabilityState>(initialAvailabilityState);
@@ -313,6 +328,24 @@ function FormContent({ settings, isSubForm, onUserCreate }: AddUserFormProps) {
     useEffect(() => {
         isInitialMount.current = false;
     }, []);
+
+     useEffect(() => {
+        if (prefilledData) {
+            const { beneficiaryFirstName, beneficiaryMiddleName, beneficiaryLastName, fatherName, beneficiaryPhone, aadhaarNumber, address, city, pincode, state, country, gender } = prefilledData;
+            if (beneficiaryFirstName) setValue('firstName', beneficiaryFirstName);
+            if (beneficiaryMiddleName) setValue('middleName', beneficiaryMiddleName);
+            if (beneficiaryLastName) setValue('lastName', beneficiaryLastName);
+            if (fatherName) setValue('fatherName', fatherName);
+            if (beneficiaryPhone) setValue('phone', beneficiaryPhone.replace(/\D/g, '').slice(-10));
+            if (aadhaarNumber) setValue('aadhaarNumber', aadhaarNumber.replace(/\D/g, ''));
+            if (address) setValue('addressLine1', address);
+            if (city) setValue('city', city);
+            if (pincode) setValue('pincode', pincode);
+            if (state) setValue('state', state);
+            if (country) setValue('country', country);
+            if (gender) setValue('gender', gender);
+        }
+    }, [prefilledData, setValue]);
     
     const fullName = watch("fullName");
     const firstName = watch("firstName");
@@ -426,7 +459,8 @@ function FormContent({ settings, isSubForm, onUserCreate }: AddUserFormProps) {
 }
 
 
-function AddUserFormContent({ settings, isSubForm, prefilledData, onUserCreate }: AddUserFormProps) {
+export function AddUserForm(props: AddUserFormProps) {
+    const { settings } = props;
     const formSchema = useMemo(() => createFormSchema(settings), [settings]);
     const form = useForm<AddUserFormValues>({
         resolver: zodResolver(formSchema),
@@ -434,21 +468,13 @@ function AddUserFormContent({ settings, isSubForm, prefilledData, onUserCreate }
         mode: "onSubmit",
         defaultValues: {
             ...initialFormValues,
-            ...prefilledData,
+            ...props.prefilledData,
         },
     });
 
     return (
         <FormProvider {...form}>
-            <FormContent settings={settings} isSubForm={isSubForm} onUserCreate={onUserCreate} />
+            <FormContent {...props} />
         </FormProvider>
-    )
-}
-
-export function AddUserForm(props: AddUserFormProps) {
-    return (
-        <Suspense fallback={<div>Loading form...</div>}>
-            <AddUserFormContent {...props} />
-        </Suspense>
     )
 }

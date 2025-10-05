@@ -17,16 +17,16 @@ import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { handleUpdateUserConfiguration } from "./actions";
 import { useState } from "react";
-import { Loader2, Save, User, HandHeart, UserSearch, UserCog, Fingerprint, MapPin, CreditCard } from "lucide-react";
+import { Loader2, Save, User, HandHeart, UserSearch, UserCog, Fingerprint, MapPin, CreditCard, Phone } from "lucide-react";
 import { UserConfiguration, UserRole } from "@/services/types";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { Separator } from "@/components/ui/separator";
 
 const roleRequirementSchema = z.object({
   isAadhaarMandatory: z.boolean().default(false),
   isPanMandatory: z.boolean().default(false),
   isAddressMandatory: z.boolean().default(false),
   isBankAccountMandatory: z.boolean().default(false),
+  isPhoneMandatory: z.boolean().default(false),
 });
 
 const formSchema = z.object({
@@ -56,10 +56,10 @@ export function UserConfigForm({ settings }: UserConfigFormProps) {
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      Donor: settings?.Donor || { isAadhaarMandatory: false },
-      Beneficiary: settings?.Beneficiary || { isAadhaarMandatory: true }, // Default Aadhaar to true for Beneficiaries
-      Referral: settings?.Referral || { isAadhaarMandatory: false },
-      Admin: settings?.Admin || { isAadhaarMandatory: false },
+      Donor: settings?.Donor || { isPhoneMandatory: true }, // Default phone to true for Donor
+      Beneficiary: settings?.Beneficiary || { isAadhaarMandatory: true, isPhoneMandatory: true }, // Default Aadhaar & phone to true for Beneficiaries
+      Referral: settings?.Referral || { isPhoneMandatory: true },
+      Admin: settings?.Admin || { isPhoneMandatory: true },
     },
   });
 
@@ -102,6 +102,19 @@ export function UserConfigForm({ settings }: UserConfigFormProps) {
                             </div>
                         </AccordionTrigger>
                         <AccordionContent className="pt-4 space-y-4">
+                            <FormField
+                                control={form.control}
+                                name={`${role.name}.isPhoneMandatory`}
+                                render={({ field }) => (
+                                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                                        <div className="space-y-0.5">
+                                            <FormLabel className="text-base flex items-center gap-2"><Phone />Make Phone Number Mandatory</FormLabel>
+                                            <FormDescription>If enabled, the phone number will be a required field for {role.name} users.</FormDescription>
+                                        </div>
+                                        <FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl>
+                                    </FormItem>
+                                )}
+                            />
                              <FormField
                                 control={form.control}
                                 name={`${role.name}.isAadhaarMandatory`}
@@ -109,16 +122,9 @@ export function UserConfigForm({ settings }: UserConfigFormProps) {
                                     <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
                                         <div className="space-y-0.5">
                                             <FormLabel className="text-base flex items-center gap-2"><Fingerprint />Make Aadhaar Number Mandatory</FormLabel>
-                                            <FormDescription>
-                                                If enabled, the Aadhaar number will be a required field for {role.name} users.
-                                            </FormDescription>
+                                            <FormDescription>If enabled, the Aadhaar number will be a required field for {role.name} users.</FormDescription>
                                         </div>
-                                        <FormControl>
-                                            <Switch
-                                                checked={field.value}
-                                                onCheckedChange={field.onChange}
-                                            />
-                                        </FormControl>
+                                        <FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl>
                                     </FormItem>
                                 )}
                             />
@@ -129,16 +135,9 @@ export function UserConfigForm({ settings }: UserConfigFormProps) {
                                     <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
                                         <div className="space-y-0.5">
                                             <FormLabel className="text-base flex items-center gap-2"><Fingerprint />Make PAN Number Mandatory</FormLabel>
-                                            <FormDescription>
-                                               If enabled, the PAN card number will be a required field for {role.name} users.
-                                            </FormDescription>
+                                            <FormDescription>If enabled, the PAN card number will be a required field for {role.name} users.</FormDescription>
                                         </div>
-                                        <FormControl>
-                                            <Switch
-                                                checked={field.value}
-                                                onCheckedChange={field.onChange}
-                                            />
-                                        </FormControl>
+                                        <FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl>
                                     </FormItem>
                                 )}
                             />
@@ -149,16 +148,9 @@ export function UserConfigForm({ settings }: UserConfigFormProps) {
                                     <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
                                         <div className="space-y-0.5">
                                             <FormLabel className="text-base flex items-center gap-2"><MapPin />Make Address Mandatory</FormLabel>
-                                            <FormDescription>
-                                               If enabled, the full address will be a required field for {role.name} users.
-                                            </FormDescription>
+                                            <FormDescription>If enabled, the full address will be a required field for {role.name} users.</FormDescription>
                                         </div>
-                                        <FormControl>
-                                            <Switch
-                                                checked={field.value}
-                                                onCheckedChange={field.onChange}
-                                            />
-                                        </FormControl>
+                                        <FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl>
                                     </FormItem>
                                 )}
                             />
@@ -169,16 +161,9 @@ export function UserConfigForm({ settings }: UserConfigFormProps) {
                                     <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
                                         <div className="space-y-0.5">
                                             <FormLabel className="text-base flex items-center gap-2"><CreditCard />Make Bank Account Mandatory</FormLabel>
-                                            <FormDescription>
-                                               If enabled, bank details will be required for {role.name} users.
-                                            </FormDescription>
+                                            <FormDescription>If enabled, bank details will be required for {role.name} users.</FormDescription>
                                         </div>
-                                        <FormControl>
-                                            <Switch
-                                                checked={field.value}
-                                                onCheckedChange={field.onChange}
-                                            />
-                                        </FormControl>
+                                        <FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl>
                                     </FormItem>
                                 )}
                             />

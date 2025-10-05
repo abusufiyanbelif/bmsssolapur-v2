@@ -406,6 +406,7 @@ export interface RoleFieldRequirements {
     isPanMandatory?: boolean;
     isAddressMandatory?: boolean;
     isBankAccountMandatory?: boolean;
+    isPhoneMandatory?: boolean;
 }
 
 export interface UserConfiguration {
