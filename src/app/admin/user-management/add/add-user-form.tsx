@@ -218,6 +218,8 @@ function FormContent({ settings }: { settings?: AppSettings }) {
   const selectedRoles = watch("roles");
   const selectedGender = watch("gender");
   const isBeneficiary = selectedRoles.includes('Beneficiary');
+  
+  const isInitialMount = useRef(true);
 
   const handleAvailabilityCheck = useCallback(async (field: string, value: string, setState: React.Dispatch<React.SetStateAction<AvailabilityState>>) => {
     if (!value) {
@@ -237,18 +239,40 @@ function FormContent({ settings }: { settings?: AppSettings }) {
   const debouncedBankAccount = useDebounce(watch('bankAccountNumber'), 500);
   const debouncedUpiIds = useDebounce(watch('upiIds'), 500);
 
-  useEffect(() => { if (debouncedUserId) handleAvailabilityCheck('userId', debouncedUserId, setUserIdState); }, [debouncedUserId, handleAvailabilityCheck]);
-  useEffect(() => { if (debouncedEmail) handleAvailabilityCheck('email', debouncedEmail, setEmailState); }, [debouncedEmail, handleAvailabilityCheck]);
-  useEffect(() => { if (debouncedPhone) handleAvailabilityCheck('phone', debouncedPhone, setPhoneState); }, [debouncedPhone, handleAvailabilityCheck]);
-  useEffect(() => { if (debouncedPan) handleAvailabilityCheck('panNumber', debouncedPan, setPanState); }, [debouncedPan, handleAvailabilityCheck]);
-  useEffect(() => { if (debouncedAadhaar) handleAvailabilityCheck('aadhaarNumber', debouncedAadhaar, setAadhaarState); }, [debouncedAadhaar, handleAvailabilityCheck]);
-  useEffect(() => { if (debouncedBankAccount) handleAvailabilityCheck('bankAccountNumber', debouncedBankAccount, setBankAccountState); }, [debouncedBankAccount, handleAvailabilityCheck]);
+  useEffect(() => { 
+    if (isInitialMount.current && !debouncedUserId) return;
+    if (debouncedUserId) handleAvailabilityCheck('userId', debouncedUserId, setUserIdState); 
+  }, [debouncedUserId, handleAvailabilityCheck]);
+  useEffect(() => { 
+    if (isInitialMount.current && !debouncedEmail) return;
+    if (debouncedEmail) handleAvailabilityCheck('email', debouncedEmail, setEmailState); 
+  }, [debouncedEmail, handleAvailabilityCheck]);
+  useEffect(() => { 
+    if (isInitialMount.current && !debouncedPhone) return;
+    if (debouncedPhone) handleAvailabilityCheck('phone', debouncedPhone, setPhoneState); 
+  }, [debouncedPhone, handleAvailabilityCheck]);
+  useEffect(() => { 
+    if (isInitialMount.current && !debouncedPan) return;
+    if (debouncedPan) handleAvailabilityCheck('panNumber', debouncedPan, setPanState); 
+  }, [debouncedPan, handleAvailabilityCheck]);
+  useEffect(() => { 
+    if (isInitialMount.current && !debouncedAadhaar) return;
+    if (debouncedAadhaar) handleAvailabilityCheck('aadhaarNumber', debouncedAadhaar, setAadhaarState); 
+  }, [debouncedAadhaar, handleAvailabilityCheck]);
+  useEffect(() => { 
+    if (isInitialMount.current && !debouncedBankAccount) return;
+    if (debouncedBankAccount) handleAvailabilityCheck('bankAccountNumber', debouncedBankAccount, setBankAccountState); 
+  }, [debouncedBankAccount, handleAvailabilityCheck]);
 
   useEffect(() => {
     debouncedUpiIds?.forEach((upi, index) => {
         if(upi.value) handleAvailabilityCheck('upiId', upi.value, (state) => setUpiIdStates(prev => ({...prev, [index]: state})));
     });
   }, [debouncedUpiIds, handleAvailabilityCheck]);
+  
+  useEffect(() => {
+    isInitialMount.current = false;
+  }, []);
 
   const fullName = watch("fullName");
   const firstName = watch("firstName");
@@ -600,7 +624,7 @@ function FormContent({ settings }: { settings?: AppSettings }) {
                 </FormItem>
             )}
         />
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <FormField
                 control={control}
                 name="bankAccountNumber"
@@ -608,14 +632,14 @@ function FormContent({ settings }: { settings?: AppSettings }) {
                     <FormItem>
                     <FormLabel>Bank Account Number (Optional)</FormLabel>
                     <FormControl>
-                        <Input placeholder="Enter bank account number" {...field} />
+                        <Input placeholder="Enter account number" {...field} />
                     </FormControl>
                     <AvailabilityFeedback state={bankAccountState} fieldName="Bank Account" />
                     <FormMessage />
                     </FormItem>
                 )}
             />
-            <FormField
+             <FormField
                 control={control}
                 name="bankIfscCode"
                 render={({ field }) => (
@@ -647,24 +671,24 @@ function FormContent({ settings }: { settings?: AppSettings }) {
             <FormDescription>Add one or more UPI-linked phone numbers.</FormDescription>
             {upiPhoneFields.map((field, index) => (
             <FormField
-            control={control}
-            key={field.id}
-            name={`upiPhoneNumbers.${index}.value`}
-            render={({ field }) => (
+              control={control}
+              key={field.id}
+              name={`upiPhoneNumbers.${index}.value`}
+              render={({ field }) => (
                 <FormItem>
-                <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2">
                     <FormControl>
-                    <Input {...field} type="tel" maxLength={10} placeholder="10-digit UPI linked phone" />
+                      <Input {...field} type="tel" maxLength={10} placeholder="10-digit UPI linked phone" />
                     </FormControl>
                     <Button type="button" variant="ghost" size="icon" onClick={() => removeUpiPhone(index)}>
-                    <Trash2 className="h-4 w-4 text-destructive" />
+                      <Trash2 className="h-4 w-4 text-destructive" />
                     </Button>
-                </div>
-                <FormMessage />
+                  </div>
+                  <FormMessage />
                 </FormItem>
-            )}
+              )}
             />
-        ))}
+          ))}
             <Button
                 type="button"
                 variant="outline"
@@ -674,31 +698,31 @@ function FormContent({ settings }: { settings?: AppSettings }) {
                 <PlusCircle className="mr-2" />
                 Add Phone Number
             </Button>
-        </div>
-        <div className="space-y-4">
+         </div>
+         <div className="space-y-4">
             <FormLabel>UPI IDs (Optional)</FormLabel>
             <FormDescription>Add one or more UPI IDs for this user to help with automatic donor detection.</FormDescription>
             {upiIdFields.map((field, index) => (
             <FormField
-            control={control}
-            key={field.id}
-            name={`upiIds.${index}.value`}
-            render={({ field }) => (
+              control={control}
+              key={field.id}
+              name={`upiIds.${index}.value`}
+              render={({ field }) => (
                 <FormItem>
-                <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2">
                     <FormControl>
-                    <Input {...field} placeholder="e.g., username@okhdfc" />
+                      <Input {...field} placeholder="e.g., username@okhdfc" />
                     </FormControl>
                     <Button type="button" variant="ghost" size="icon" onClick={() => removeUpiId(index)}>
-                    <Trash2 className="h-4 w-4 text-destructive" />
+                      <Trash2 className="h-4 w-4 text-destructive" />
                     </Button>
-                </div>
-                <AvailabilityFeedback state={upiIdStates[index] || initialAvailabilityState} fieldName="UPI ID" />
-                <FormMessage />
+                  </div>
+                  <AvailabilityFeedback state={upiIdStates[index] || initialAvailabilityState} fieldName="UPI ID" />
+                  <FormMessage />
                 </FormItem>
-            )}
+              )}
             />
-        ))}
+          ))}
             <Button
                 type="button"
                 variant="outline"
@@ -708,7 +732,7 @@ function FormContent({ settings }: { settings?: AppSettings }) {
                 <PlusCircle className="mr-2" />
                 Add UPI ID
             </Button>
-        </div>
+         </div>
     </div>
   )
 }
@@ -717,7 +741,6 @@ function AddUserFormContent({ settings, isSubForm = false, prefilledData, onUser
   const { toast } = useToast();
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const isInitialMount = useRef(true);
   
   const formSchema = useMemo(() => createFormSchema(settings), [settings]);
   
@@ -769,12 +792,12 @@ function AddUserFormContent({ settings, isSubForm = false, prefilledData, onUser
     form.reset();
   };
 
-  const { handleSubmit: originalHandleSubmit, formState } = form;
+  const { handleSubmit: originalHandleSubmit, formState, trigger } = form;
 
   const handleSubmit = (onSubmitFunction: (values: AddUserFormValues) => void) => {
     return async (e: React.BaseSyntheticEvent) => {
       e.preventDefault();
-      await form.trigger(); // Manually trigger validation
+      await trigger(); // Manually trigger validation
   
       if (Object.keys(formState.errors).length > 0) {
         const errorMessages = Object.values(formState.errors)
@@ -793,10 +816,6 @@ function AddUserFormContent({ settings, isSubForm = false, prefilledData, onUser
       originalHandleSubmit(onSubmitFunction)(e);
     };
   };
-
-  useEffect(() => {
-    isInitialMount.current = false;
-  }, []);
 
   async function onSubmit(values: AddUserFormValues) {
     setIsSubmitting(true);
@@ -853,6 +872,7 @@ function AddUserFormContent({ settings, isSubForm = false, prefilledData, onUser
 
   return (
     <>
+      <FormProvider {...form}>
       {isSubForm ? (
         <FormContent settings={settings} />
       ) : (
@@ -874,6 +894,7 @@ function AddUserFormContent({ settings, isSubForm = false, prefilledData, onUser
             </div>
         </form>
       )}
+      </FormProvider>
     </>
   );
 }
