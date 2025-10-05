@@ -368,6 +368,7 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation, set
     if (result.success) {
       if (isEditing) {
           toast({
+              variant: 'success',
               title: "Donation Updated",
               description: "Successfully updated donation record.",
           });
@@ -378,7 +379,7 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation, set
       toast({
         variant: "destructive",
         title: `Error ${isEditing ? 'Updating' : 'Adding'} Donation`,
-        description: result.error || "An unknown error occurred.",
+        description: result.error,
       });
     }
   }
@@ -608,7 +609,7 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation, set
                     <FormItem className="space-y-3">
                         <h3 className="text-lg font-semibold border-b pb-2 text-primary">Donor Details</h3>
                         <FormControl>
-                        <RadioGroup onValueChange={(value) => { field.onChange(value as 'existing' | 'new'); }} value={field.value} className="grid grid-cols-2 gap-4">
+                        <RadioGroup onValueChange={(value) => { field.onChange(value as 'existing' | 'new'); setValue('donorId', undefined); }} value={field.value} className="grid grid-cols-2 gap-4">
                             <FormItem className="flex items-center space-x-3 space-y-0">
                                 <Button type="button" variant={field.value === 'existing' ? 'default' : 'outline'} className="w-full h-20 flex-col gap-2" onClick={() => field.onChange('existing')}><UserSearch className="h-6 w-6"/><span>Search Existing</span></Button>
                             </FormItem>

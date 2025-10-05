@@ -1,5 +1,4 @@
 
-
 // src/app/admin/donations/add/actions.ts
 
 "use server";
@@ -201,9 +200,10 @@ export async function handleAddDonation(
   } catch (e) {
     const error = e instanceof Error ? e.message : "An unknown error occurred.";
     console.error("Error adding donation:", error);
+    // Return the clean, specific error message from the service
     return {
       success: false,
-      error: `Failed to add donation: ${error}`,
+      error: error,
     };
   }
 }

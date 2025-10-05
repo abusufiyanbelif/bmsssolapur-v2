@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -67,6 +66,7 @@ export function AddMemberForm({ users }: AddMemberFormProps) {
 
     if (result.success) {
       toast({
+        variant: "success",
         title: "Member Added",
         description: `Successfully added member to the board.`,
       });

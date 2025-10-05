@@ -479,7 +479,7 @@ function RecordPastDonationForm({ user, targetLead, targetCampaignId, openLeads,
                             </FormItem>
                         )}/>
                         {previewUrl && (
-                            <div className="relative group">
+                            <div className="relative group p-2 border rounded-lg">
                                  <div onWheel={handleWheel} className="relative w-full h-80 bg-gray-100 dark:bg-gray-800 rounded-md overflow-auto flex items-center justify-center">
                                     {file?.type.startsWith('image/') ? (
                                         <Image 
@@ -496,13 +496,13 @@ function RecordPastDonationForm({ user, targetLead, targetCampaignId, openLeads,
                                             <span className="text-sm font-semibold">{file?.name}</span>
                                         </div>
                                     )}
-                                </div>
-                                <div className="absolute top-2 right-2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity bg-background/80 p-1 rounded-md">
-                                    <Button type="button" size="icon" variant="ghost" className="h-7 w-7" onClick={() => setZoom(z => z * 1.2)}><ZoomIn className="h-4 w-4"/></Button>
-                                    <Button type="button" size="icon" variant="ghost" className="h-7 w-7" onClick={() => setZoom(z => Math.max(0.5, z / 1.2))}><ZoomOut className="h-4 w-4"/></Button>
-                                    <Button type="button" variant="destructive" size="icon" className="h-7 w-7" onClick={clearFile}><X className="h-4 w-4"/></Button>
-                                </div>
-                            </div>
+                                  </div>
+                                  <div className="absolute top-2 right-2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity bg-background/80 p-1 rounded-md">
+                                      <Button type="button" size="icon" variant="ghost" className="h-7 w-7" onClick={() => setZoom(z => z * 1.2)}><ZoomIn className="h-4 w-4"/></Button>
+                                      <Button type="button" size="icon" variant="ghost" className="h-7 w-7" onClick={() => setZoom(z => Math.max(0.5, z / 1.2))}><ZoomOut className="h-4 w-4"/></Button>
+                                      <Button type="button" variant="destructive" size="icon" className="h-7 w-7" onClick={clearFile}><X className="h-4 w-4"/></Button>
+                                  </div>
+                              </div>
                         )}
                         
                         {file && (
