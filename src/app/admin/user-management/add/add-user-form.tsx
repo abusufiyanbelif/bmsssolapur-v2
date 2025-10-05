@@ -1,3 +1,4 @@
+
 // src/app/admin/user-management/add/add-user-form.tsx
 "use client";
 
@@ -52,6 +53,7 @@ import { getUser, checkAvailability } from "@/services/user-service";
 import { useDebounce } from "@/hooks/use-debounce";
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Separator } from "@/components/ui/separator";
+import { Textarea } from "@/components/ui/textarea";
 
 
 const allRoles: Exclude<UserRole, 'Guest'>[] = [
@@ -87,7 +89,7 @@ const createFormSchema = (settings?: AppSettings) => z.object({
   email: z.string().email("Please enter a valid email address.").optional().or(z.literal('')),
   phone: z.string().regex(/^[0-9]{10}$/, "Phone number must be exactly 10 digits."),
   password: z.string().optional(),
-  roles: z.array(z.string()).refine((value) => value.some((item) => item), {
+  roles: z.array(z.string()).refine((value) => (value || []).length > 0, {
     message: "You have to select at least one role.",
   }),
   createProfile: z.boolean().default(false),
@@ -433,7 +435,7 @@ function AddUserFormContent({ settings, isSubForm = false, prefilledData, onUser
 
     setIsTextExtracting(true);
     const formData = new FormData();
-    filesToScan.forEach(file => formData.append("imageFiles", file));
+    filesToScan.forEach(file => formData.append("imageFiles", file as File));
 
     try {
       const result = await getRawTextFromImage(formData);
@@ -588,6 +590,8 @@ function AddUserFormContent({ settings, isSubForm = false, prefilledData, onUser
     e.preventDefault();
     setZoom(prevZoom => Math.max(0.5, Math.min(prevZoom - e.deltaY * 0.001, 5)));
   };
+
+  const selectedState = watch("state");
 
   const FormContent = (
       <FormProvider {...form}>
