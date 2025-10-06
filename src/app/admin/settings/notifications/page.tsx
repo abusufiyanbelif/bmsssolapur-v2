@@ -6,6 +6,7 @@ import { NotificationSettingsForm } from "./notification-settings-form";
 import { BellRing } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
+import Link from "next/link";
 
 export default async function NotificationSettingsPage() {
     const settings = await getAppSettings();
@@ -32,7 +33,7 @@ export default async function NotificationSettingsPage() {
                         Manage Notification Providers
                     </CardTitle>
                     <CardDescription className="text-muted-foreground">
-                       Configure credentials for external notification services like Twilio and Nodemailer. Disabled services will not send notifications.
+                       Configure credentials for external notification services like Twilio and Nodemailer. After saving your settings, you can test the connection on the <Link href="/services" className="underline hover:text-primary">Services Summary</Link> page.
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
