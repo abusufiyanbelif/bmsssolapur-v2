@@ -586,23 +586,25 @@ export const deleteUser = async (id: string, adminUser: User, isBulkOperation: b
         if (userToDelete.userKey === 'SYSTEM01' || userToDelete.userId === 'anonymous_donor') {
             throw new Error("The 'Anonymous Donor' system user cannot be deleted.");
         }
-
-        const anonymousDonor = await getUserByUserId('anonymous_donor');
-        if (!anonymousDonor || !anonymousDonor.id) {
-            throw new Error("Could not find the 'anonymous_donor' system user to re-assign donations to. Please run the seeder.");
-        }
-
+        
         // 1. Reassign donations from this user to "Anonymous Donor"
         const donationsQuery = query(collection(db, 'donations'), where("donorId", "==", id));
         const donationsSnapshot = await getDocs(donationsQuery);
-        donationsSnapshot.forEach(donationDoc => {
-            batch.update(donationDoc.ref, { 
-                donorId: anonymousDonor.id,
-                donorName: anonymousDonor.name,
-                notes: arrayUnion(`Original donor (${userToDelete.name}, ID: ${id}) deleted by ${adminUser.name}.`)
+        
+        if (!donationsSnapshot.empty) {
+            const anonymousDonor = await getUserByUserId('anonymous_donor');
+            if (!anonymousDonor || !anonymousDonor.id) {
+                throw new Error("Could not find the 'anonymous_donor' system user to re-assign donations to. Please run the seeder.");
+            }
+            donationsSnapshot.forEach(donationDoc => {
+                batch.update(donationDoc.ref, { 
+                    donorId: anonymousDonor.id,
+                    donorName: anonymousDonor.name,
+                    notes: arrayUnion(`Original donor (${userToDelete.name}, ID: ${id}) deleted by ${adminUser.name}.`)
+                });
             });
-        });
-
+        }
+        
         // 2. Anonymize leads referred by this user
         const referredLeadsQuery = query(collection(db, 'leads'), where("referredByUserId", "==", id));
         const referredLeadsSnapshot = await getDocs(referredLeadsQuery);
@@ -617,9 +619,10 @@ export const deleteUser = async (id: string, adminUser: User, isBulkOperation: b
         const createdLeadsQuery = query(collection(db, 'leads'), where("adminAddedBy.id", "==", id));
         const createdLeadsSnapshot = await getDocs(createdLeadsQuery);
         createdLeadsSnapshot.forEach(leadDoc => {
+            const anonymousAdmin = { id: 'SYSTEM', name: 'Deleted Admin' }; // Using a generic placeholder
             batch.update(leadDoc.ref, {
-                'adminAddedBy.id': anonymousDonor.id,
-                'adminAddedBy.name': 'Deleted User'
+                'adminAddedBy.id': anonymousAdmin.id,
+                'adminAddedBy.name': anonymousAdmin.name
             });
         });
 
@@ -759,3 +762,5 @@ export async function checkAvailability(field: string, value: string): Promise<A
         return { isAvailable: false }; // Fail closed to prevent duplicates
     }
 }
+
+    
