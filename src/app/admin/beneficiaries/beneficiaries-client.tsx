@@ -1,4 +1,4 @@
-
+// src/app/admin/beneficiaries/beneficiaries-client.tsx
 "use client";
 
 import { useState, useEffect, useMemo, Suspense } from "react";
@@ -128,12 +128,12 @@ function BeneficiariesPageContent({ initialBeneficiaries, error: initialError }:
         setCurrentUserId(storedUserId);
     }, []);
     
-    const onUserDeleted = () => {
+    const onUserDeleted = (userId: string) => {
         toast({
             title: "User Deleted",
             description: "The user has been successfully removed.",
         });
-        fetchUsers();
+        setBeneficiaries(prev => prev.filter(u => u.id !== userId));
     }
 
      const onBulkUsersDeleted = () => {
@@ -141,17 +141,17 @@ function BeneficiariesPageContent({ initialBeneficiaries, error: initialError }:
             title: "Users Deleted",
             description: `${selectedUsers.length} user(s) have been successfully removed.`,
         });
+        setBeneficiaries(prev => prev.filter(u => !selectedUsers.includes(u.id!)));
         setSelectedUsers([]);
-        fetchUsers();
     }
     
-    const onStatusToggled = (newStatus: boolean) => {
+    const onStatusToggled = (userId: string, newStatus: boolean) => {
         toast({
             variant: "success",
             title: "Status Updated",
             description: `User has been successfully ${newStatus ? 'activated' : 'deactivated'}.`,
         });
-        fetchUsers();
+        setBeneficiaries(prev => prev.map(u => u.id === userId ? {...u, isActive: newStatus} : u));
     };
 
     const handleSort = (column: SortableColumn) => {
@@ -191,10 +191,8 @@ function BeneficiariesPageContent({ initialBeneficiaries, error: initialError }:
             let comparison = 0;
             if (aValue instanceof Date && bValue instanceof Date) {
                  comparison = aValue.getTime() - bValue.getTime();
-            } else if (String(aValue) > String(bValue)) {
-                comparison = 1;
-            } else if (String(aValue) < String(bValue)) {
-                comparison = -1;
+            } else if (typeof aValue === 'string' && typeof bValue === 'string') {
+                comparison = aValue.localeCompare(bValue);
             }
 
             return sortDirection === 'asc' ? comparison : -comparison;
@@ -243,14 +241,14 @@ function BeneficiariesPageContent({ initialBeneficiaries, error: initialError }:
                     {user.isActive ? (
                         <DropdownMenuItem disabled={isProtectedUser} onSelect={async () => {
                             const result = await handleToggleUserStatus(user.id!, false);
-                            if (result.success) onStatusToggled(false);
+                            if (result.success) onStatusToggled(user.id!, false);
                         }}>
                             <UserX className="mr-2 h-4 w-4" /> Deactivate
                         </DropdownMenuItem>
                     ) : (
                         <DropdownMenuItem disabled={isProtectedUser} onSelect={async () => {
                             const result = await handleToggleUserStatus(user.id!, true);
-                            if (result.success) onStatusToggled(true);
+                            if (result.success) onStatusToggled(user.id!, true);
                         }}>
                             <UserCheck className="mr-2 h-4 w-4" /> Activate
                         </DropdownMenuItem>
@@ -261,8 +259,11 @@ function BeneficiariesPageContent({ initialBeneficiaries, error: initialError }:
                     <DeleteConfirmationDialog
                         itemType="user"
                         itemName={user.name}
-                        onDelete={() => handleDeleteUser(user.id!)}
-                        onSuccess={onUserDeleted}
+                        onDelete={async () => {
+                            if (!currentUserId) return { success: false, error: 'Admin user ID not found.' };
+                            return await handleDeleteUser(user.id!, currentUserId);
+                        }}
+                        onSuccess={() => onUserDeleted(user.id!)}
                     >
                          <DropdownMenuItem disabled={isProtectedUser} onSelect={(e) => e.preventDefault()} className="text-destructive focus:text-destructive">
                             <Trash2 className="mr-2 h-4 w-4" /> Delete
@@ -513,7 +514,7 @@ function BeneficiariesPageContent({ initialBeneficiaries, error: initialError }:
 
         return (
             <>
-                {selectedUsers.length > 0 && (
+                {selectedUsers.length > 0 && currentUserId && (
                     <div className="flex items-center gap-4 mb-4 p-4 border rounded-lg bg-muted/50">
                         <p className="text-sm font-medium">
                             {selectedUsers.length} item(s) selected.
@@ -521,7 +522,10 @@ function BeneficiariesPageContent({ initialBeneficiaries, error: initialError }:
                          <DeleteConfirmationDialog
                             itemType={`${selectedUsers.length} user(s)`}
                             itemName="the selected items"
-                            onDelete={() => handleBulkDeleteUsers(selectedUsers)}
+                            onDelete={async () => {
+                                if (!currentUserId) return {success: false, error: 'Admin user ID not found.'}
+                                return await handleBulkDeleteUsers(selectedUsers, currentUserId);
+                            }}
                             onSuccess={onBulkUsersDeleted}
                         >
                             <Button variant="destructive">
@@ -618,10 +622,10 @@ function BeneficiariesPageContent({ initialBeneficiaries, error: initialError }:
   )
 }
 
-export function BeneficiariesPageClient({ initialBeneficiaries, error: initialError }: { initialBeneficiaries: User[], error?: string }) {
+export function BeneficiariesPageClient({ initialBeneficiaries, error }: { initialBeneficiaries: User[], error?: string }) {
     return (
-        <Suspense fallback={<div>Loading...</div>}>
-            <BeneficiariesPageContent initialBeneficiaries={initialBeneficiaries} error={initialError} />
+        <Suspense fallback={<div className="flex items-center justify-center p-8"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>}>
+            <BeneficiariesPageContent initialBeneficiaries={initialBeneficiaries} error={error} />
         </Suspense>
     )
 }

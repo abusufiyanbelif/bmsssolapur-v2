@@ -1,5 +1,4 @@
-
-
+// src/app/admin/donors/donors-client.tsx
 "use client";
 
 import { useState, useEffect, useMemo, Suspense } from "react";
@@ -109,12 +108,12 @@ function DonorsPageContent({ initialDonors, error: initialError }: { initialDono
         setAdminUserId(storedUserId);
     }, []);
     
-    const onUserDeleted = () => {
+    const onUserDeleted = (userId: string) => {
         toast({
             title: "User Deleted",
             description: "The user has been successfully removed.",
         });
-        fetchUsers();
+        setDonors(prev => prev.filter(u => u.id !== userId));
     }
     
     const onBulkUsersDeleted = () => {
@@ -122,17 +121,17 @@ function DonorsPageContent({ initialDonors, error: initialError }: { initialDono
             title: "Users Deleted",
             description: `${selectedUsers.length} user(s) have been successfully removed.`,
         });
+        setDonors(prev => prev.filter(u => !selectedUsers.includes(u.id!)));
         setSelectedUsers([]);
-        fetchUsers();
     }
     
-    const onStatusToggled = (newStatus: boolean) => {
+    const onStatusToggled = (userId: string, newStatus: boolean) => {
         toast({
             variant: "success",
             title: "Status Updated",
             description: `User has been successfully ${newStatus ? 'activated' : 'deactivated'}.`,
         });
-        fetchUsers();
+        setDonors(prev => prev.map(u => u.id === userId ? {...u, isActive: newStatus} : u));
     };
     
     const handleSort = (column: SortableColumn) => {
@@ -168,10 +167,8 @@ function DonorsPageContent({ initialDonors, error: initialError }: { initialDono
             let comparison = 0;
             if (aValue instanceof Date && bValue instanceof Date) {
                 comparison = aValue.getTime() - bValue.getTime();
-            } else if (String(aValue) > String(bValue)) {
-                comparison = 1;
-            } else if (String(aValue) < String(bValue)) {
-                comparison = -1;
+            } else if (typeof aValue === 'string' && typeof bValue === 'string') {
+                comparison = aValue.localeCompare(bValue);
             }
 
             return sortDirection === 'asc' ? comparison : -comparison;
@@ -219,14 +216,14 @@ function DonorsPageContent({ initialDonors, error: initialError }: { initialDono
                     {user.isActive ? (
                         <DropdownMenuItem disabled={isProtectedUser} onSelect={async () => {
                             const result = await handleToggleUserStatus(user.id!, false);
-                            if (result.success) onStatusToggled(false);
+                            if (result.success) onStatusToggled(user.id!, false);
                         }}>
                             <UserX className="mr-2 h-4 w-4" /> Deactivate
                         </DropdownMenuItem>
                     ) : (
                         <DropdownMenuItem disabled={isProtectedUser} onSelect={async () => {
                             const result = await handleToggleUserStatus(user.id!, true);
-                            if (result.success) onStatusToggled(true);
+                            if (result.success) onStatusToggled(user.id!, true);
                         }}>
                             <UserCheck className="mr-2 h-4 w-4" /> Activate
                         </DropdownMenuItem>
@@ -241,7 +238,7 @@ function DonorsPageContent({ initialDonors, error: initialError }: { initialDono
                             if (!adminUserId) return { success: false, error: 'Admin user ID not found.' };
                             return await handleDeleteUser(user.id!, adminUserId);
                         }}
-                        onSuccess={onUserDeleted}
+                        onSuccess={() => onUserDeleted(user.id!)}
                     >
                          <DropdownMenuItem disabled={isProtectedUser} onSelect={(e) => e.preventDefault()} className="text-destructive focus:text-destructive">
                             <Trash2 className="mr-2 h-4 w-4" /> Delete
@@ -561,12 +558,4 @@ function DonorsPageContent({ initialDonors, error: initialError }: { initialDono
         </Card>
     </div>
   )
-}
-
-export function DonorsPageClient({ initialDonors, error }: { initialDonors: User[], error?: string }) {
-    return (
-        <Suspense fallback={<div className="flex items-center justify-center p-8"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>}>
-            <DonorsPageContent initialDonors={initialDonors} error={error} />
-        </Suspense>
-    )
 }
