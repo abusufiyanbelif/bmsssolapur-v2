@@ -233,15 +233,24 @@ function AddLeadFormContent({ users, campaigns, settings, prefilledRawText }: Ad
     },
   });
   
-  const handleCancel = () => {
-    form.reset();
-      setSelectedReferralDetails(null);
-      setCaseRawText("");
+  const { formState, setValue, watch, getValues, control, trigger, reset, handleSubmit: originalHandleSubmit } = form;
+
+  const clearFile = () => {
+    setOtherDocs([]);
+    setCaseRawText('');
+    setZoomLevels({});
+    setRotation(0);
+    if (otherDocsInputRef.current) {
+        otherDocsInputRef.current.value = "";
+    }
   };
 
-  const { formState, setValue, watch, getValues, control, trigger, reset, handleSubmit: originalHandleSubmit } = form;
+  const handleCancel = () => {
+    form.reset();
+    clearFile();
+    setSelectedReferralDetails(null);
+  };
   
-
   const selectedPurposeName = watch("purpose");
   const selectedCategory = watch("category");
   const selectedDegree = watch("degree");
@@ -489,7 +498,7 @@ function AddLeadFormContent({ users, campaigns, settings, prefilledRawText }: Ad
   };
   
     const handleFetchUserData = async (isRefresh = false) => {
-        if (!rawText) return;
+        if (!caseRawText) return;
         
         const loadingSetter = isRefresh ? setIsRefreshingDetails : setIsAnalyzing;
         loadingSetter(true);
@@ -499,7 +508,7 @@ function AddLeadFormContent({ users, campaigns, settings, prefilledRawText }: Ad
             missingFields = Object.keys(extractedDetails).filter(key => !extractedDetails[key as keyof ExtractBeneficiaryDetailsOutput]) as (keyof ExtractBeneficiaryDetailsOutput)[];
         }
 
-        const result = await handleExtractLeadBeneficiaryDetailsFromText(rawText, missingFields.length > 0 ? missingFields : undefined);
+        const result = await handleExtractLeadBeneficiaryDetailsFromText(caseRawText, missingFields.length > 0 ? missingFields : undefined);
 
         if (result.success && result.details) {
              if (isRefresh && extractedDetails) {
@@ -1108,7 +1117,6 @@ function AddLeadFormContent({ users, campaigns, settings, prefilledRawText }: Ad
 
 export function AddLeadForm(props: AddLeadFormProps) {
     const { settings, prefilledData } = props;
-    const isAadhaarMandatory = settings?.userConfiguration?.Beneficiary?.isAadhaarMandatory || false;
     const formSchema = useMemo(() => createFormSchema(settings), [settings]);
     const form = useForm<AddLeadFormValues>({
         resolver: zodResolver(formSchema),
