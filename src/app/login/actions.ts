@@ -25,8 +25,10 @@ export async function handleLogin(formData: FormData): Promise<LoginState> {
     }
 
     try {
+        let user: User | null = null;
+        
         // This action now ONLY logs in via a custom User ID.
-        const user = await getUserByUserId(identifier);
+        user = await getUserByUserId(identifier);
         
         if (!user) {
             return { success: false, error: "User not found. Please check your User ID." };
@@ -156,74 +158,6 @@ export async function handleVerifyOtp(formData: FormData): Promise<LoginState> {
     }
 }
 
-interface OAuthLoginState {
-    success: boolean;
-    error?: string;
-    userId?: string;
-}
-
-export async function handleGoogleLogin(firebaseUser: {
-  uid: string;
-  email: string | null;
-  displayName: string | null;
-  phoneNumber: string | null;
-}): Promise<OAuthLoginState> {
-  if (!firebaseUser.email) {
-    return { success: false, error: 'Google account must have an email.' };
-  }
-
-  try {
-    const { createUser } = await import('@/services/user-service');
-    let appUser = await getUserByEmail(firebaseUser.email);
-    let isNewUser = false;
-
-    if (!appUser) {
-      isNewUser = true;
-      // User doesn't exist, create a new one
-      const newUser: Omit<User, 'id'> = {
-        name: firebaseUser.displayName || 'Google User',
-        email: firebaseUser.email,
-        password: `google_${Date.now()}`, // Set a random, unusable password for OAuth users
-        // Use a placeholder phone number; the user can update it in their profile
-        phone: Date.now().toString().slice(-10),
-        roles: ['Donor'], // Default role for new sign-ups
-        isActive: true, // New users are active by default
-        createdAt: Timestamp.now(),
-        gender: 'Other',
-        address: {
-            addressLine1: '',
-            city: 'Solapur',
-            state: 'Maharashtra',
-            country: 'India',
-            pincode: '',
-        },
-        panNumber: '',
-        aadhaarNumber: '',
-        privileges: [],
-        groups: []
-      };
-      // Use the Firebase UID as the document ID for our user record
-      appUser = await createUser({ ...newUser, id: firebaseUser.uid });
-    } else if (!appUser.isActive && !appUser.roles.includes('Super Admin')) {
-        return { success: false, error: 'This user account is inactive. Please contact an administrator.' };
-    }
-
-    await logActivity({
-        userId: appUser.id!,
-        userName: appUser.name,
-        userEmail: appUser.email,
-        role: appUser.roles[0],
-        activity: 'User Logged In',
-        details: { method: 'google-oauth', isNewUser: isNewUser },
-    });
-
-    return { success: true, userId: appUser.id };
-  } catch (e) {
-    console.error('Error during Google login process:', e);
-    const error = e instanceof Error ? e.message : 'An unknown error occurred during login.';
-    return { success: false, error };
-  }
-}
 
 export async function handleFirebaseOtpLogin(uid: string, phoneNumber: string | null): Promise<LoginState> {
     try {
@@ -243,7 +177,7 @@ export async function handleFirebaseOtpLogin(uid: string, phoneNumber: string | 
                 // **FIX:** Explicitly remove undefined fields before writing.
                 const cleanOldUserData: Record<string, any> = {};
                 for (const key in oldUserData) {
-                    if ((oldUserData as any)[key] !== undefined && (oldUserData as any)[key] !== null) {
+                    if ((oldUserData as any)[key] !== undefined) {
                         cleanOldUserData[key] = (oldUserData as any)[key];
                     }
                 }

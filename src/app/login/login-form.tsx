@@ -5,18 +5,24 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { KeyRound, LogIn, MessageSquare, Loader2, CheckCircle, User, Mail, Phone, UserPlus } from "lucide-react";
+import { KeyRound, LogIn, MessageSquare, Loader2, CheckCircle, User } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
-import { useState, useEffect } from "react";
-import { handleLogin, handleSendOtp, handleVerifyOtp, handleGoogleLogin, handleFirebaseOtpLogin } from "./actions";
+import { useState, useEffect, useCallback } from "react";
+import { handleLogin, handleSendOtp, handleVerifyOtp, handleFirebaseOtpLogin } from "./actions";
 import { auth } from "@/services/firebase";
-import { GoogleAuthProvider, signInWithPopup, User as FirebaseUser, RecaptchaVerifier, signInWithPhoneNumber, ConfirmationResult } from "firebase/auth";
+import { RecaptchaVerifier, signInWithPhoneNumber, ConfirmationResult } from "firebase/auth";
 import { Separator } from "@/components/ui/separator";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import Link from "next/link";
 import { useRouter } from 'next/navigation';
 
+
+// Add a declaration for the reCAPTCHA verifier on the window object
+declare global {
+  interface Window {
+    recaptchaVerifier: RecaptchaVerifier;
+  }
+}
 
 export function LoginForm() {
   const { toast } = useToast();
@@ -25,12 +31,14 @@ export function LoginForm() {
   const [isOtpSending, setIsOtpSending] = useState(false);
   const [isOtpSent, setIsOtpSent] = useState(false);
   const [otpPhoneNumber, setOtpPhoneNumber] = useState("");
-  const [loginSuccessData, setLoginSuccessData] = useState<{userId?: string, redirectTo?: string} | null>(null);
   const [otpProvider, setOtpProvider] = useState<'firebase' | 'twilio' | null>(null);
   const [confirmationResult, setConfirmationResult] = useState<ConfirmationResult | null>(null);
 
+  // This is the unified state that will trigger the final redirect effect
+  const [loginSuccessData, setLoginSuccessData] = useState<{userId: string; redirectTo: string;} | null>(null);
+
+  // This effect runs ONLY when loginSuccessData is set by ANY login method.
   useEffect(() => {
-    // This effect runs when loginSuccessData is updated by any login method
     if (loginSuccessData?.userId && loginSuccessData?.redirectTo) {
       toast({
         variant: "success",
@@ -38,38 +46,55 @@ export function LoginForm() {
         description: "Welcome! Redirecting you...",
         icon: <CheckCircle />,
       });
-      // Clear any previous role selection
+      
+      // Clear previous role and set the new user ID
       localStorage.removeItem('activeRole'); 
       localStorage.setItem('userId', loginSuccessData.userId);
-      // Set a flag to show the role switcher on the next page load
       localStorage.setItem('showRoleSwitcher', 'true');
       
       const redirectPath = sessionStorage.getItem('redirectAfterLogin') || loginSuccessData.redirectTo;
-      sessionStorage.removeItem('redirectAfterLogin'); // Clean up the stored path
+      sessionStorage.removeItem('redirectAfterLogin');
 
-      // Dispatch a custom event to notify AppShell that login was successful
+      // Dispatch event to notify AppShell immediately
       window.dispatchEvent(new CustomEvent('loginSuccess'));
 
-      router.push(redirectPath);
+      // Use a short timeout to allow the AppShell to process the event before redirecting.
+      setTimeout(() => {
+        router.push(redirectPath);
+      }, 100); 
     }
   }, [loginSuccessData, toast, router]);
   
-  useEffect(() => {
+  const initializeRecaptcha = useCallback(() => {
     if (typeof window !== 'undefined' && !window.recaptchaVerifier) {
       const recaptchaContainer = document.getElementById('recaptcha-container');
       if (recaptchaContainer) {
         window.recaptchaVerifier = new RecaptchaVerifier(auth, recaptchaContainer, {
           'size': 'invisible',
-          'callback': (response: any) => {
-            // reCAPTCHA solved, allow signInWithPhoneNumber.
-          },
+          'callback': () => {},
           'expired-callback': () => {
-            // Response expired. Ask user to solve reCAPTCHA again.
+            // Recaptcha expired, re-initialize if needed.
+            if(window.recaptchaVerifier) {
+              window.recaptchaVerifier.clear();
+            }
+            initializeRecaptcha();
           }
+        });
+        window.recaptchaVerifier.render().catch((error) => {
+            console.error("reCAPTCHA render error:", error);
+            toast({
+                variant: "destructive",
+                title: "reCAPTCHA Error",
+                description: "Could not initialize reCAPTCHA. Please refresh the page.",
+            });
         });
       }
     }
-  }, []);
+  }, [toast]);
+
+  useEffect(() => {
+      initializeRecaptcha();
+  }, [initializeRecaptcha]);
 
 
   const onPasswordSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -79,7 +104,7 @@ export function LoginForm() {
 
     const result = await handleLogin(formData);
 
-    if (result.success) {
+    if (result.success && result.userId && result.redirectTo) {
       setLoginSuccessData({userId: result.userId, redirectTo: result.redirectTo});
     } else {
       toast({
@@ -87,8 +112,9 @@ export function LoginForm() {
         title: "Login Failed",
         description: result.error || "An unknown error occurred.",
       });
+      setIsSubmitting(false);
     }
-    setIsSubmitting(false);
+    // No longer setting isSubmitting to false here, the page will redirect
   };
   
   const onSendOtp = async (event: React.MouseEvent<HTMLButtonElement>) => {
@@ -146,27 +172,21 @@ export function LoginForm() {
           try {
               const result = await confirmationResult.confirm(code);
               const user = result.user;
-              // Now we need to get our app-specific user ID
               const loginResult = await handleFirebaseOtpLogin(user.uid, user.phoneNumber);
-              if (loginResult.success) {
+              if (loginResult.success && loginResult.userId && loginResult.redirectTo) {
                   setLoginSuccessData({ userId: loginResult.userId, redirectTo: loginResult.redirectTo });
               } else {
                   toast({ variant: "destructive", title: "Login Failed", description: loginResult.error });
+                  setIsSubmitting(false);
               }
           } catch(error) {
                toast({ variant: "destructive", title: "Firebase OTP Verification Failed", description: "The code you entered was incorrect. Please try again." });
+               setIsSubmitting(false);
           }
-      } else if (otpProvider === 'twilio') {
-          formData.append('phone', otpPhoneNumber);
-          const result = await handleVerifyOtp(formData);
-          if (result.success) {
-            setLoginSuccessData({userId: result.userId, redirectTo: result.redirectTo});
-          } else {
-            toast({ variant: "destructive", title: "OTP Login Failed", description: result.error || "An unknown error occurred." });
-          }
+      } else {
+          toast({ variant: "destructive", title: "OTP Error", description: "Could not verify OTP. Please try sending a new one." });
+          setIsSubmitting(false);
       }
-      
-      setIsSubmitting(false);
   }
   
   return (
@@ -181,7 +201,7 @@ export function LoginForm() {
         <CardContent>
           <Tabs defaultValue="password" className="w-full">
             <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="password"><KeyRound className="mr-2" />Password</TabsTrigger>
+              <TabsTrigger value="password"><KeyRound className="mr-2" />User ID</TabsTrigger>
               <TabsTrigger value="otp"><MessageSquare className="mr-2" />OTP</TabsTrigger>
             </TabsList>
 
@@ -215,7 +235,6 @@ export function LoginForm() {
                             Login with OTP
                         </Button>
                     )}
-                    <div id="recaptcha-container"></div>
                 </form>
             </TabsContent>
             <TabsContent value="password">
@@ -226,7 +245,7 @@ export function LoginForm() {
                         id="identifier" 
                         name="identifier" 
                         type="text"
-                        placeholder="e.g., john.doe or admin"
+                        placeholder="e.g., abusufiyan.belif or admin"
                         required 
                       />
                     </div>
@@ -247,6 +266,7 @@ export function LoginForm() {
           </Tabs>
         </CardContent>
         <CardFooter className="flex-col gap-4 pt-6">
+            <div id="recaptcha-container"></div>
             <Separator />
             <div className="text-center text-sm text-muted-foreground">
                 <p>Don't have an account?</p>
@@ -260,11 +280,4 @@ export function LoginForm() {
       </Card>
     </div>
   );
-}
-
-// Add a declaration for the reCAPTCHA verifier on the window object
-declare global {
-  interface Window {
-    recaptchaVerifier: RecaptchaVerifier;
-  }
 }
