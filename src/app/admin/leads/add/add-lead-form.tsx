@@ -143,58 +143,6 @@ interface AddLeadFormProps {
   campaigns: Campaign[];
   settings: AppSettings;
   prefilledRawText?: string;
-  isSubForm?: boolean;
-  onUserCreate?: (user: User) => void;
-}
-
-type AvailabilityState = {
-    isChecking: boolean;
-    isAvailable: boolean | null;
-    suggestions?: string[];
-    existingUserName?: string;
-};
-
-const initialAvailabilityState: AvailabilityState = {
-    isChecking: false,
-    isAvailable: null,
-};
-
-function AvailabilityFeedback({ state, fieldName, onSuggestionClick }: { state: AvailabilityState, fieldName: string, onSuggestionClick?: (suggestion: string) => void }) {
-    if (state.isChecking) {
-        return <p className="text-sm text-muted-foreground flex items-center mt-2"><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Checking...</p>;
-    }
-    if (state.isAvailable === true) {
-        return <p className="text-sm text-green-600 flex items-center mt-2"><CheckCircle className="mr-2 h-4 w-4" /> Available</p>;
-    }
-    if (state.isAvailable === false) {
-        return (
-            <div className="mt-2">
-                <p className="text-sm text-destructive flex items-center">
-                    <XCircle className="mr-2 h-4 w-4" /> 
-                    This {fieldName} is already in use
-                    {state.existingUserName && ` by ${state.existingUserName}`}.
-                </p>
-                {state.suggestions && state.suggestions.length > 0 && onSuggestionClick && (
-                    <div className="flex gap-2 items-center mt-1">
-                        <p className="text-xs text-muted-foreground">Suggestions:</p>
-                        {state.suggestions.map(suggestion => (
-                            <Button 
-                                key={suggestion}
-                                type="button"
-                                variant="outline"
-                                size="sm"
-                                className="text-xs h-6 px-2"
-                                onClick={() => onSuggestionClick(suggestion)}
-                            >
-                                {suggestion}
-                            </Button>
-                        ))}
-                    </div>
-                )}
-            </div>
-        );
-    }
-    return null;
 }
 
 function AddLeadFormContent({ users, campaigns, settings, prefilledRawText }: AddLeadFormProps) {
@@ -213,6 +161,7 @@ function AddLeadFormContent({ users, campaigns, settings, prefilledRawText }: Ad
   const [isRefreshingStory, setIsRefreshingStory] = useState(false);
   const [isRefreshingSummary, setIsRefreshingSummary] = useState(false);
   const [caseRawText, setCaseRawText] = useState<string>(prefilledRawText || '');
+  const [extractedDetails, setExtractedDetails] = useState<ExtractBeneficiaryDetailsOutput | null>(null);
   
   const [isAnalyzing, setIsAnalyzing] = useState(false); // Renamed from isAnalyzingId
   
@@ -221,7 +170,6 @@ function AddLeadFormContent({ users, campaigns, settings, prefilledRawText }: Ad
   const [zoomLevels, setZoomLevels] = useState<Record<number, number>>({});
   const [rotation, setRotation] = useState(0);
 
-  const [extractedDetails, setExtractedDetails] = useState<ExtractBeneficiaryDetailsOutput | null>(null);
   const [isRefreshingDetails, setIsRefreshingDetails] = useState(false);
 
   const leadConfiguration = settings.leadConfiguration || {};
@@ -291,11 +239,8 @@ function AddLeadFormContent({ users, campaigns, settings, prefilledRawText }: Ad
       setCaseRawText("");
   };
 
-  const { formState: { isValid }, setValue, watch, getValues, control, trigger, reset, handleSubmit: originalHandleSubmit } = form;
+  const { formState, setValue, watch, getValues, control, trigger, reset, handleSubmit } = form;
   
-  const handleSubmit = (onSubmitFunction: (values: AddLeadFormValues) => void) => {
-    return originalHandleSubmit(onSubmitFunction);
-  }
 
   const selectedPurposeName = watch("purpose");
   const selectedCategory = watch("category");
@@ -627,7 +572,7 @@ function AddLeadFormContent({ users, campaigns, settings, prefilledRawText }: Ad
             </Alert>
         )}
 
-        <Form {...form}>
+        <FormProvider {...form}>
         <form onSubmit={handleSubmit((values) => onSubmit(values, false))} className="space-y-6 max-w-2xl">
             <fieldset disabled={isFormDisabled} className="space-y-6">
                  <h3 className="text-lg font-semibold border-b pb-2 text-primary">Beneficiary Details</h3>
@@ -1074,7 +1019,7 @@ function AddLeadFormContent({ users, campaigns, settings, prefilledRawText }: Ad
                 </div>
             </fieldset>
         </form>
-        </Form>
+        </FormProvider>
         <AlertDialog open={!!duplicateWarning} onOpenChange={() => setDuplicateWarning(null)}>
             <AlertDialogContent>
                 <AlertDialogHeader>
@@ -1107,7 +1052,7 @@ function AddLeadFormContent({ users, campaigns, settings, prefilledRawText }: Ad
             </AlertDialogContent>
         </AlertDialog>
         <AlertDialog open={!!extractedDetails} onOpenChange={() => setExtractedDetails(null)}>
-            <AlertDialogContent>
+             <AlertDialogContent>
                 <AlertDialogHeader>
                     <AlertDialogTitle className="flex items-center gap-2">
                        <Bot className="h-6 w-6 text-primary" />
@@ -1149,9 +1094,21 @@ function AddLeadFormContent({ users, campaigns, settings, prefilledRawText }: Ad
 }
 
 export function AddLeadForm(props: AddLeadFormProps) {
+    const { settings, prefilledData } = props;
+    const formSchema = useMemo(() => createFormSchema(settings), [settings]);
+    const form = useForm<AddLeadFormValues>({
+        resolver: zodResolver(formSchema),
+        reValidateMode: "onBlur",
+        mode: "onBlur",
+        defaultValues: {
+            ...initialFormValues,
+            // Apply prefilled data if it exists
+        },
+    });
+
     return (
-        <Suspense fallback={<div>Loading form...</div>}>
+        <FormProvider {...form}>
             <AddLeadFormContent {...props} />
-        </Suspense>
+        </FormProvider>
     )
 }

@@ -6,12 +6,14 @@ import { createLead, getOpenLeadsByBeneficiaryId, updateLead } from "@/services/
 import { getUser, createUser, checkAvailability, updateUser } from "@/services/user-service";
 import { revalidatePath } from "next/cache";
 import type { Lead, LeadPurpose, User, DonationType, Campaign, LeadPriority, ExtractLeadDetailsOutput, ExtractBeneficiaryDetailsOutput, GenerateSummariesOutput } from "@/services/types";
-import { Timestamp } from "firebase/firestore";
+import { Timestamp, collection } from "firebase/firestore";
 import { getAppSettings } from "@/services/app-settings-service";
 import { extractLeadDetailsFromText as extractLeadDetailsFlow } from "@/ai/flows/extract-lead-details-from-text-flow";
 import { extractBeneficiaryDetails as extractBeneficiaryDetailsFlow } from "@/ai/flows/extract-beneficiary-details-flow";
 import { uploadFile } from "@/services/storage-service";
 import { generateSummaries as generateSummariesFlow } from "@/ai/flows/generate-summaries-flow";
+import { db } from "@/services/firebase";
+import { doc } from "firebase/firestore";
 
 interface FormState {
     success: boolean;
@@ -42,15 +44,16 @@ export async function handleAddLead(
       beneficiaryId: formData.get("beneficiaryId") as string | undefined,
       linkBeneficiaryLater: formData.get("linkBeneficiaryLater") === 'on',
       manualBeneficiaryName: formData.get("manualBeneficiaryName") as string | undefined,
-      newBeneficiaryUserId: formData.get("newBeneficiaryUserId") as string | undefined,
-      newBeneficiaryFirstName: formData.get("newBeneficiaryFirstName") as string | undefined,
-      newBeneficiaryMiddleName: formData.get("newBeneficiaryMiddleName") as string | undefined,
-      newBeneficiaryLastName: formData.get("newBeneficiaryLastName") as string | undefined,
-      newBeneficiaryFatherName: formData.get("newBeneficiaryFatherName") as string | undefined,
-      newBeneficiaryPhone: formData.get("newBeneficiaryPhone") as string | undefined,
-      newBeneficiaryEmail: formData.get("newBeneficiaryEmail") as string | undefined,
-      newBeneficiaryAadhaar: formData.get("newBeneficiaryAadhaar") as string | undefined,
-      gender: formData.get("gender") as 'Male' | 'Female' | 'Other' | undefined,
+      // New user fields are now prefixed
+      newBeneficiaryUserId: formData.get("newBeneficiary_userId") as string | undefined,
+      newBeneficiaryFirstName: formData.get("newBeneficiary_firstName") as string | undefined,
+      newBeneficiaryMiddleName: formData.get("newBeneficiary_middleName") as string | undefined,
+      newBeneficiaryLastName: formData.get("newBeneficiary_lastName") as string | undefined,
+      newBeneficiaryFatherName: formData.get("newBeneficiary_fatherName") as string | undefined,
+      newBeneficiaryPhone: formData.get("newBeneficiary_phone") as string | undefined,
+      newBeneficiaryEmail: formData.get("newBeneficiary_email") as string | undefined,
+      newBeneficiaryAadhaar: formData.get("newBeneficiary_aadhaarNumber") as string | undefined,
+      newBeneficiaryGender: formData.get("newBeneficiary_gender") as 'Male' | 'Female' | 'Other' | undefined,
       campaignId: formData.get("campaignId") as string | undefined,
       campaignName: formData.get("campaignName") as string | undefined,
       referredByUserId: formData.get("referredByUserId") as string | undefined,
@@ -117,9 +120,9 @@ export async function handleAddLead(
         leadName = rawFormData.manualBeneficiaryName;
     } else {
         if (rawFormData.beneficiaryType === 'new') {
-            const { newBeneficiaryUserId, newBeneficiaryFirstName, newBeneficiaryMiddleName, newBeneficiaryLastName, newBeneficiaryPhone, newBeneficiaryEmail, newBeneficiaryAadhaar, newBeneficiaryFatherName, gender, addressLine1, city, state, pincode, country } = rawFormData;
+            const { newBeneficiaryUserId, newBeneficiaryFirstName, newBeneficiaryMiddleName, newBeneficiaryLastName, newBeneficiaryPhone, newBeneficiaryEmail, newBeneficiaryAadhaar, newBeneficiaryFatherName, newBeneficiaryGender, addressLine1, city, state, pincode, country } = rawFormData;
             
-            if (!newBeneficiaryFirstName || !newBeneficiaryLastName || !newBeneficiaryPhone || !gender) {
+            if (!newBeneficiaryFirstName || !newBeneficiaryLastName || !newBeneficiaryPhone || !newBeneficiaryGender) {
                 return { success: false, error: "New beneficiary requires First Name, Last Name, Phone, and Gender." };
             }
             
@@ -133,7 +136,7 @@ export async function handleAddLead(
                 phone: newBeneficiaryPhone,
                 email: newBeneficiaryEmail || undefined,
                 aadhaarNumber: newBeneficiaryAadhaar || undefined,
-                gender: gender,
+                gender: newBeneficiaryGender,
                 roles: ['Beneficiary'],
                 isActive: true,
                 source: 'Manual Entry',
