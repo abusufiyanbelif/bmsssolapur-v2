@@ -1,10 +1,11 @@
+// src/app/admin/user-management/add/actions.ts
 
-'use server';
+"use server";
 
 import { createUser } from "@/services/user-service";
 import { revalidatePath } from "next/cache";
 import type { User, UserRole, ExtractBeneficiaryDetailsOutput } from "@/services/types";
-import { Timestamp } from "firebase/firestore";
+import { Timestamp, collection } from "firebase/firestore";
 import { uploadFile } from "@/services/storage-service";
 import { extractBeneficiaryDetails } from "@/ai/flows/extract-beneficiary-details-flow";
 
@@ -15,8 +16,7 @@ interface FormState {
 }
 
 export async function handleAddUser(
-  formData: FormData,
-  onProgress?: (progress: number) => void // Note: This won't work in a real server action like this
+  formData: FormData
 ): Promise<FormState> {
   const rawFormData = {
       userId: formData.get("userId") as string | undefined,
@@ -28,6 +28,7 @@ export async function handleAddUser(
       phone: formData.get("phone") as string,
       password: formData.get("password") as string | undefined,
       roles: formData.getAll("roles") as UserRole[],
+      createProfile: formData.get("createProfile") === 'on',
       isAnonymousAsBeneficiary: formData.get("isAnonymousAsBeneficiary") === 'on',
       isAnonymousAsDonor: formData.get("isAnonymousAsDonor") === 'on',
       gender: formData.get("gender") as 'Male' | 'Female' | 'Other' | undefined,
@@ -58,8 +59,6 @@ export async function handleAddUser(
       upiIds: formData.getAll("upiIds") as string[],
       
       aadhaarCard: formData.get("aadhaarCard") as File | null,
-      
-      createProfile: formData.get("createProfile") === 'on',
   };
   
   if (!rawFormData.firstName || !rawFormData.lastName || !rawFormData.phone || rawFormData.roles.length === 0) {

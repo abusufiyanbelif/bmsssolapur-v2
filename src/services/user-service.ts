@@ -126,7 +126,7 @@ export const getUserByUserId = async (userId: string): Promise<User | null> => {
 
 
 // Function to create or update a user
-export const createUser = async (userData: Partial<Omit<User, 'id' | 'createdAt' | 'updatedAt'>>) => {
+export const createUser = async (userData: Partial<Omit<User, 'id' | 'createdAt' | 'updatedAt'>>): Promise<User> => {
   const userRef = doc(collection(db, USERS_COLLECTION)); // Generate ID upfront
   
   try {
@@ -203,8 +203,8 @@ export const createUser = async (userData: Partial<Omit<User, 'id' | 'createdAt'
         groups: userData.groups || [],
         referredByUserId: userData.referredByUserId,
         referredByUserName: userData.referredByUserName,
-        createdAt: Timestamp.now(),
-        updatedAt: Timestamp.now(),
+        createdAt: new Date(),
+        updatedAt: new Date(),
         source: userData.source || 'Manual Entry',
     };
     
@@ -234,7 +234,7 @@ export const createUser = async (userData: Partial<Omit<User, 'id' | 'createdAt'
     await setDoc(userRef, dataToWrite);
     
     const finalUser = { ...finalUserData, id: userRef.id } as User;
-    return finalUser;
+    return JSON.parse(JSON.stringify(finalUser));
 
   } catch (error) {
     console.error('Error creating user: ', error);
