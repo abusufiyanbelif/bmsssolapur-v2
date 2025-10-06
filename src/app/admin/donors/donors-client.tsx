@@ -564,5 +564,3 @@ export function DonorsPageClient({ initialDonors, error }: { initialDonors: User
         </Suspense>
     )
 }
-
-    

@@ -551,8 +551,8 @@ function BeneficiariesPageContent({ initialBeneficiaries, error: initialError }:
         
          <Card>
             <CardHeader>
-                <CardTitle>All Beneficiaries</CardTitle>
-                <CardDescription>
+                <CardTitle className="text-primary">All Beneficiaries</CardTitle>
+                <CardDescription className="text-muted-foreground">
                     A list of all users in the system with the Beneficiary role.
                 </CardDescription>
             </CardHeader>

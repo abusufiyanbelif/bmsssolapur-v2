@@ -1,5 +1,4 @@
 
-
 // src/app/admin/beneficiaries/page.tsx
 import { Suspense } from "react";
 import { Loader2 } from "lucide-react";
@@ -11,7 +10,7 @@ async function BeneficiariesPageDataLoader() {
     const allUsers = await getAllUsers();
     // The getAllUsers function now correctly converts timestamps.
     const initialBeneficiaries = allUsers.filter(u => u.roles.includes('Beneficiary'));
-    return <BeneficiariesPageClient initialBeneficiaries={initialBeneficiaries} />;
+    return <BeneficiariesPageClient initialBeneficiaries={JSON.parse(JSON.stringify(initialBeneficiaries))} />;
   } catch (e) {
     const error = e instanceof Error ? e.message : "An unknown error occurred.";
     return <BeneficiariesPageClient initialBeneficiaries={[]} error={error} />;
@@ -25,5 +24,3 @@ export default function BeneficiariesPage() {
         </Suspense>
     )
 }
-
-    

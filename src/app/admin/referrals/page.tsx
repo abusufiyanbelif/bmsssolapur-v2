@@ -1,5 +1,4 @@
 
-
 // src/app/admin/referrals/page.tsx
 import { Suspense } from "react";
 import { Loader2 } from "lucide-react";
@@ -11,7 +10,7 @@ async function ReferralsPageDataLoader() {
     const allUsers = await getAllUsers();
      // The getAllUsers function now correctly converts timestamps.
     const initialReferrals = allUsers.filter(u => u.roles.includes('Referral'));
-    return <ReferralsPageClient initialReferrals={initialReferrals} />;
+    return <ReferralsPageClient initialReferrals={JSON.parse(JSON.stringify(initialReferrals))} />;
   } catch (e) {
     const error = e instanceof Error ? e.message : "An unknown error occurred.";
     return <ReferralsPageClient initialReferrals={[]} error={error} />;
@@ -25,5 +24,3 @@ export default function ReferralsPage() {
         </Suspense>
     )
 }
-
-    

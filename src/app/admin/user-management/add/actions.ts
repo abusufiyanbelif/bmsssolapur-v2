@@ -1,5 +1,4 @@
 
-
 'use server';
 
 import { createUser } from "@/services/user-service";
@@ -104,9 +103,19 @@ export async function handleAddUser(
   } catch (e) {
     const error = e instanceof Error ? e.message : "An unknown error occurred.";
     console.error("Error creating user:", error);
+
+    let helpfulError = `Failed to create user: ${error}`;
+    if (error.includes('already exists')) {
+        helpfulError += ` One of the unique fields (like Phone or Email) is already taken by another user.`
+    } else if (error.includes('UserKey')) {
+        helpfulError += ` Possible fix: Go to the user's profile and ensure their 'User Key' field is populated, or contact a Super Admin.`
+    } else if (error.includes('permission-denied') || error.includes(' Firestore ')){
+        helpfulError += ` This is likely a database permission issue. Please refer to the TROUBLESHOOTING.md guide.`
+    }
+    
     return {
       success: false,
-      error: `Failed to create user: ${error}`,
+      error: helpfulError,
     };
   }
 }
