@@ -1,9 +1,9 @@
 
+
 'use server';
 
 import { updateAppSettings, AppSettings, getAppSettings } from "@/services/app-settings-service";
 import { revalidatePath } from "next/cache";
-import { testRazorpayConnection } from "@/services/razorpay-service";
 
 interface FormState {
     success: boolean;
@@ -60,19 +60,4 @@ export async function handleUpdateGatewaySettings(
       error: error,
     };
   }
-}
-
-export async function testGatewayConnection(gatewayName: keyof AppSettings['paymentGateway']): Promise<{success: boolean, error?: string}> {
-    try {
-        if (gatewayName === 'razorpay') {
-            await testRazorpayConnection();
-            return { success: true };
-        }
-        // Add other gateway tests here
-        return { success: false, error: `Testing for ${gatewayName} is not yet implemented.` };
-    } catch (e) {
-        const error = e instanceof Error ? e.message : `An unknown error occurred while testing ${gatewayName}.`;
-        console.error(`Error testing ${gatewayName} connection:`, error);
-        return { success: false, error: error };
-    }
 }

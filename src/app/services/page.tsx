@@ -39,7 +39,7 @@ import { getAllLeads } from "@/services/lead-service";
 import { getAllDonations } from "@/services/donation-service";
 import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
-import { checkDatabaseConnection, testTwilioConnection, testNodemailerConnection, testGeminiConnection } from "./actions";
+import { checkDatabaseConnection, testTwilioConnection, testNodemailerConnection, testGeminiConnection, testGatewayConnection } from "./actions";
 import packageJson from '../../../package.json';
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipProvider, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
@@ -296,10 +296,7 @@ export default function ServicesPage() {
       icon: CreditCard,
       metric: "Configured",
       metricLabel: "Status",
-      action: async () => { 
-        const { testGatewayConnection } = await import('@/app/admin/payment-gateways/actions');
-        return testGatewayConnection('razorpay');
-       },
+      action: () => testGatewayConnection('razorpay'),
       status: null,
       version: `razorpay v${packageJson.dependencies.razorpay}`,
     },

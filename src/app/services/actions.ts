@@ -84,3 +84,18 @@ export async function testGeminiConnection(apiKey?: string): Promise<{success: b
         return { success: false, error: "An unknown error occurred while testing Gemini." };
     }
 }
+
+export async function testGatewayConnection(gatewayName: 'razorpay'): Promise<{success: boolean, error?: string}> {
+    const { testRazorpayConnection } = await import('@/services/razorpay-service');
+    try {
+        if (gatewayName === 'razorpay') {
+            await testRazorpayConnection();
+            return { success: true };
+        }
+        return { success: false, error: `Testing for ${gatewayName} is not yet implemented.` };
+    } catch (e) {
+        const error = e instanceof Error ? e.message : `An unknown error occurred while testing ${gatewayName}.`;
+        console.error(`Error testing ${gatewayName} connection:`, error);
+        return { success: false, error: error };
+    }
+}
