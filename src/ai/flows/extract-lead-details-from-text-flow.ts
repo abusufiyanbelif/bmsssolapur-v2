@@ -57,7 +57,7 @@ const extractLeadDetailsFromTextFlow = ai.defineFlow(
             If the text appears to be from an Aadhaar card (contains "Government of India", "Unique Identification Authority of India", "AADHAAR"):
             -   **Full Name**: Find the beneficiary's full name.
             -   **Name Parsing**: Split the full name into 'beneficiaryFirstName', 'beneficiaryMiddleName', and 'beneficiaryLastName'. The first word is the first name, the last is the last name, and anything in between is the middle name.
-            -   **Father's Name**: Look for "S/O" or "C/O" labels first. If not found, and the beneficiary has a middle name, you can assume the middle name is the father's name for the 'fatherName' field.
+            -   **Father's Name**: Look for "S/O" or "C/O" labels first. If not found, and if the beneficiary has a middle name, you can assume the middle name is the father's name for the 'fatherName' field.
             -   **Date of Birth & Gender**: Extract from "DOB", "Date of Birth", "जन्म तारीख", "Gender", or "पुरुष / MALE" labels. **The 'dateOfBirth' MUST be formatted as a full ISO 8601 string (YYYY-MM-DDTHH:mm:ss.sssZ).**
             -   **Address & Phone**: Extract the full address block and any 10-digit mobile number.
             -   **Aadhaar Number**: You MUST find the 12-digit number (often grouped in 4s).
