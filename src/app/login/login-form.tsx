@@ -32,7 +32,7 @@ export function LoginForm() {
 
   useEffect(() => {
     // This is to ensure the reCAPTCHA verifier is only initialized once.
-    if (!window.recaptchaVerifier) {
+    if (typeof window !== 'undefined' && !window.recaptchaVerifier) {
       window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
         'size': 'invisible',
       });
@@ -240,7 +240,7 @@ export function LoginForm() {
         <CardFooter className="flex-col gap-4 pt-6">
             <Separator />
             <div className="text-center text-sm text-muted-foreground">
-                <p>Don&apos;t have an account?</p>
+                <p>Don't have an account?</p>
                 <Button variant="link" asChild className="text-accent text-base">
                     <Link href="/register">
                          Register Now
