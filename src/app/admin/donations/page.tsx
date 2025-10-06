@@ -1,4 +1,5 @@
 
+      
 // src/app/admin/donations/page.tsx
 import { Suspense } from "react";
 import { Loader2 } from "lucide-react";
@@ -21,11 +22,11 @@ async function DonationsPageData() {
         ]);
         
         return <DonationsPageClient 
-            initialDonations={donations} 
-            initialUsers={users}
-            initialLeads={leads}
-            initialCampaigns={campaigns}
-            organization={organization}
+            initialDonations={JSON.parse(JSON.stringify(donations))}
+            initialUsers={JSON.parse(JSON.stringify(users))}
+            initialLeads={JSON.parse(JSON.stringify(leads))}
+            initialCampaigns={JSON.parse(JSON.stringify(campaigns))}
+            organization={JSON.parse(JSON.stringify(organization))}
         />
 
     } catch (e) {
@@ -49,3 +50,5 @@ export default function DonationsPage() {
         </Suspense>
     );
 }
+
+    
