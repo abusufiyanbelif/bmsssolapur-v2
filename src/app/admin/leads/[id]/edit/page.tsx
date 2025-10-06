@@ -1,5 +1,6 @@
 
 
+
 import { getLead } from "@/services/lead-service";
 import { notFound } from "next/navigation";
 import { EditLeadForm } from "./edit-lead-form";
@@ -37,7 +38,7 @@ export default async function EditLeadPage({ params }: { params: { id: string } 
                 </AlertDescription>
             </Alert>
             
-            <EditLeadForm lead={lead} campaigns={campaigns} users={users} />
+            <EditLeadForm lead={JSON.parse(JSON.stringify(lead))} campaigns={campaigns} users={users} />
         </div>
     );
 }

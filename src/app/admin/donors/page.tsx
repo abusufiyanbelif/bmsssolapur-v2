@@ -4,11 +4,12 @@
 import { Suspense } from "react";
 import { Loader2 } from "lucide-react";
 import { DonorsPageClient } from "./donors-client";
-import { getAllUsers } from "@/services/user-service";
+import { getAllUsers, User } from "@/services/user-service";
 
 async function DonorsPageDataLoader() {
   try {
     const allUsers = await getAllUsers();
+    // The getAllUsers function now correctly converts timestamps.
     const initialDonors = allUsers.filter(u => u.roles.includes('Donor'));
     return <DonorsPageClient initialDonors={initialDonors} />;
   } catch (e) {

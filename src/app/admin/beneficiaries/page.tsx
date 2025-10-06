@@ -1,14 +1,15 @@
 
+
 // src/app/admin/beneficiaries/page.tsx
 import { Suspense } from "react";
 import { Loader2 } from "lucide-react";
 import { BeneficiariesPageClient } from "./beneficiaries-client";
-import { getAllUsers } from "@/services/user-service";
-import type { User } from "@/services/types";
+import { getAllUsers, User } from "@/services/user-service";
 
 async function BeneficiariesPageDataLoader() {
   try {
     const allUsers = await getAllUsers();
+    // The getAllUsers function now correctly converts timestamps.
     const initialBeneficiaries = allUsers.filter(u => u.roles.includes('Beneficiary'));
     return <BeneficiariesPageClient initialBeneficiaries={initialBeneficiaries} />;
   } catch (e) {
