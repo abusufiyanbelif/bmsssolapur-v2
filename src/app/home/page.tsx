@@ -1,13 +1,14 @@
 
-
 'use client';
 
 import { Suspense, useEffect, useState } from "react";
 import { PublicHomePage } from "./public-home-page";
 import { Loader2 } from "lucide-react";
-import type { Quote, Lead, Campaign } from "@/services/types";
-import { getInspirationalQuotes, getOpenGeneralLeads, getPublicDashboardData } from "./actions";
+import type { Quote, Lead, Campaign, User } from "@/services/types";
+import { getInspirationalQuotes, getOpenGeneralLeads, getPublicDashboardData } from "./home/actions";
 import { useRouter } from 'next/navigation';
+import { getAllCampaigns } from "@/services/campaign-service";
+import { getAllLeads } from "@/services/lead-service";
 
 
 const LoadingState = () => (
@@ -24,6 +25,8 @@ export default function Page() {
     const [openLeads, setOpenLeads] = useState<Lead[]>([]);
     const [campaigns, setCampaigns] = useState<Campaign[]>([]);
     const [allLeads, setAllLeads] = useState<Lead[]>([]); // For campaign stats
+    const [allDonations, setAllDonations] = useState<Donation[]>([]);
+    const [allUsers, setAllUsers] = useState<User[]>([]);
     const router = useRouter();
 
     useEffect(() => {
@@ -48,6 +51,8 @@ export default function Page() {
                     );
                     setCampaigns(activeAndUpcomingCampaigns);
                     setAllLeads(publicData.leads || []);
+                    setAllDonations(publicData.donations || []);
+                    setAllUsers(publicData.users || []);
                 }
 
             } else {
@@ -88,7 +93,14 @@ export default function Page() {
     }
 
     if (activeRole === 'Guest') {
-        return <PublicHomePage quotes={quotes} initialLeads={openLeads} campaigns={campaigns} allLeads={allLeads} />;
+        return <PublicHomePage 
+            quotes={quotes} 
+            initialLeads={openLeads} 
+            campaigns={campaigns} 
+            allLeads={allLeads}
+            allDonations={allDonations}
+            allUsers={allUsers}
+         />;
     }
 
     return <LoadingState />;
