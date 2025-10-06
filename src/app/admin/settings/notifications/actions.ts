@@ -1,7 +1,7 @@
 
 "use server";
 
-import { updateAppSettings, AppSettings, getAppSettings } from "@/services/app-settings-service";
+import { updateAppSettings, AppSettings } from "@/services/app-settings-service";
 import { revalidatePath } from "next/cache";
 import { testTwilioConnection, testNodemailerConnection } from "@/app/services/actions";
 
@@ -11,66 +11,15 @@ interface FormState {
 }
 
 export async function handleUpdateNotificationSettings(
-  formData: FormData
+  newSettings: AppSettings['notificationSettings']
 ): Promise<FormState> {
   
   try {
-    const currentSettings = await getAppSettings();
-    const newSettings = JSON.parse(JSON.stringify(currentSettings.notificationSettings || {}));
+    const updates = {
+      notificationSettings: newSettings,
+    };
 
-    // Determine which form was submitted based on a unique field
-    if (formData.has("sms.provider")) {
-        newSettings.sms = {
-            ...newSettings.sms,
-            provider: formData.get("sms.provider") as 'twilio' | 'firebase'
-        };
-    }
-
-    if (formData.has("sms.twilio.accountSid") || formData.has("sms.twilio.enabled")) {
-      newSettings.sms.twilio = {
-          ...newSettings.sms.twilio,
-          enabled: formData.get("sms.twilio.enabled") === 'on',
-          accountSid: formData.get("sms.twilio.accountSid") as string,
-          authToken: formData.get("sms.twilio.authToken") as string,
-          verifySid: formData.get("sms.twilio.verifySid") as string,
-          fromNumber: formData.get("sms.twilio.fromNumber") as string,
-      };
-      // Also update whatsapp settings if they share credentials
-      newSettings.whatsapp.twilio = {
-        ...newSettings.whatsapp.twilio,
-        accountSid: formData.get("sms.twilio.accountSid") as string,
-        authToken: formData.get("sms.twilio.authToken") as string,
-      };
-    }
-    
-    if (formData.has("whatsapp.twilio.fromNumber") || formData.has("whatsapp.twilio.enabled")) {
-        if(!newSettings.whatsapp) {
-            newSettings.whatsapp = { provider: 'twilio', twilio: {} };
-        }
-        newSettings.whatsapp.twilio = {
-            ...newSettings.whatsapp.twilio,
-            enabled: formData.get("whatsapp.twilio.enabled") === 'on',
-            fromNumber: formData.get("whatsapp.twilio.fromNumber") as string,
-        };
-    }
-    
-    if (formData.has("email.nodemailer.host") || formData.has("email.nodemailer.enabled")) {
-        if(!newSettings.email) {
-            newSettings.email = { provider: 'nodemailer', nodemailer: {} };
-        }
-        newSettings.email.nodemailer = {
-            ...newSettings.email.nodemailer,
-            enabled: formData.get("email.nodemailer.enabled") === 'on',
-            host: formData.get("email.nodemailer.host") as string,
-            port: Number(formData.get("email.nodemailer.port")),
-            secure: formData.get("email.nodemailer.secure") === 'on',
-            user: formData.get("email.nodemailer.user") as string,
-            pass: formData.get("email.nodemailer.pass") as string,
-            from: formData.get("email.nodemailer.from") as string,
-        };
-    }
-    
-    await updateAppSettings({ notificationSettings: newSettings });
+    await updateAppSettings(updates);
     
     revalidatePath("/admin/settings/notifications");
 

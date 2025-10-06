@@ -1,5 +1,4 @@
 
-
 /**
  * @fileOverview Service for managing global application settings in Firestore.
  * This service should only be called from server-side components or server actions.
@@ -103,21 +102,21 @@ const defaultLeadPurposes: LeadPurpose[] = [
 const defaultSettings: Omit<AppSettings, 'id' | 'updatedAt'> = {
     loginMethods: {
         password: { enabled: true },
-        otp: { enabled: false },
+        otp: { enabled: true },
         google: { enabled: false },
     },
     notificationSettings: {
         sms: {
             provider: 'firebase',
-            twilio: { accountSid: '', authToken: '', verifySid: '', fromNumber: '' }
+            twilio: { enabled: false, accountSid: '', authToken: '', verifySid: '', fromNumber: '' }
         },
         whatsapp: {
             provider: 'twilio',
-            twilio: { accountSid: '', authToken: '', fromNumber: '' }
+            twilio: { enabled: false, accountSid: '', authToken: '', fromNumber: '' }
         },
         email: {
             provider: 'nodemailer',
-            nodemailer: { host: '', port: 587, secure: true, user: '', pass: '', from: '' }
+            nodemailer: { enabled: false, host: '', port: 587, secure: true, user: '', pass: '', from: '' }
         }
     },
     features: {
