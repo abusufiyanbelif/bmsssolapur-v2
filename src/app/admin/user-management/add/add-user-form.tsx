@@ -1,3 +1,4 @@
+
 // src/app/admin/user-management/add/add-user-form.tsx
 "use client";
 
@@ -16,13 +17,6 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect, useRef, useMemo, Suspense, useCallback } from "react";
@@ -32,7 +26,6 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { cn } from "@/lib/utils";
-import { format } from "date-fns";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -49,7 +42,7 @@ import { getRawTextFromImage } from '@/app/actions';
 import Image from "next/image";
 import { getUser, checkAvailability } from "@/services/user-service";
 import { useDebounce } from "@/hooks/use-debounce";
-import { useSearchParams, useRouter } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { Separator } from "@/components/ui/separator";
 import { handleAddUser, handleExtractUserDetailsFromText } from "./actions";
 import { Textarea } from "@/components/ui/textarea";
@@ -67,14 +60,6 @@ const normalAdminRoles: Exclude<UserRole, 'Guest' | 'Admin' | 'Super Admin' | 'F
     "Donor",
     "Beneficiary",
     "Referral",
-];
-
-const states = [
-    { name: "Andhra Pradesh", cities: ["Visakhapatnam", "Vijayawada", "Guntur"] },
-    { name: "Karnataka", cities: ["Bengaluru", "Mysuru", "Hubli"] },
-    { name: "Maharashtra", cities: ["Mumbai", "Pune", "Nagpur", "Solapur"] },
-    { name: "Tamil Nadu", cities: ["Chennai", "Coimbatore", "Madurai"] },
-    { name: "Telangana", cities: ["Hyderabad", "Warangal", "Nizamabad"] },
 ];
 
 const createFormSchema = (settings?: AppSettings) => z.object({
@@ -149,6 +134,13 @@ const createFormSchema = (settings?: AppSettings) => z.object({
 
 
 type AddUserFormValues = z.infer<ReturnType<typeof createFormSchema>>;
+
+interface AddUserFormProps {
+    settings?: AppSettings;
+    isSubForm?: boolean;
+    prefilledData?: ExtractBeneficiaryDetailsOutput;
+    onUserCreate?: (user: User) => void;
+}
 
 type AvailabilityState = {
     isChecking: boolean;
@@ -240,12 +232,6 @@ function AvailabilityFeedback({ state, fieldName, onSuggestionClick }: { state: 
     return null;
 }
 
-interface AddUserFormProps {
-    settings?: AppSettings;
-    isSubForm?: boolean;
-    prefilledData?: ExtractBeneficiaryDetailsOutput;
-    onUserCreate?: (user: User) => void;
-}
 
 function FormContent({ settings, isSubForm, prefilledData, onUserCreate }: AddUserFormProps) {
   const { control, formState, watch, setValue, trigger, reset, handleSubmit: originalHandleSubmit } = useFormContext<AddUserFormValues>();
@@ -423,7 +409,6 @@ function FormContent({ settings, isSubForm, prefilledData, onUserCreate }: AddUs
       setIsSubmitting(false);
   }
 
-  const selectedState = watch("state");
   const isBeneficiary = selectedRoles.includes('Beneficiary');
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -531,96 +516,170 @@ function FormContent({ settings, isSubForm, prefilledData, onUserCreate }: AddUs
     <>
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         <div className="space-y-6 pt-4">
-            <h3 className="text-lg font-semibold border-b pb-2 text-primary">Basic Information</h3>
-            <Accordion type="single" collapsible className="w-full">
-                <AccordionItem value="scan-id">
-                     <AccordionTrigger>
-                        <div className="flex items-center gap-2 text-primary">
-                            <ScanSearch className="h-5 w-5" />
-                            Scan ID Card (Optional)
-                        </div>
-                    </AccordionTrigger>
-                    <AccordionContent className="pt-4 space-y-4">
-                        <FormField
-                            control={control}
-                            name="aadhaarCard"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>ID Card File</FormLabel>
-                                    <FormControl>
-                                        <Input type="file" accept="image/*,application/pdf" onChange={handleFileChange} />
-                                    </FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-                        {filePreview && (
-                            <div className="relative group">
-                                <div className="relative w-full h-80 bg-gray-100 dark:bg-gray-800 rounded-md overflow-auto flex items-center justify-center">
-                                    {file?.type.startsWith('image/') ? (
-                                        <div className="relative w-full h-full cursor-zoom-in" onWheel={(e) => {e.preventDefault(); setZoom(prev => Math.max(0.5, Math.min(prev - e.deltaY * 0.001, 5)))}}>
-                                            <Image 
-                                            src={filePreview} 
-                                            alt="ID Preview" 
-                                            fill
-                                            className="object-contain transition-transform duration-100"
-                                            style={{ transform: `scale(${zoom}) rotate(${rotation}deg)` }}
-                                            />
-                                        </div>
-                                    ) : (
-                                        <div className="flex flex-col items-center gap-2 text-muted-foreground p-4">
-                                            <FileIcon className="h-16 w-16" />
-                                            <span className="text-sm font-semibold">{file?.name}</span>
-                                        </div>
+          <Accordion type="multiple" defaultValue={["basic", "roles"]} className="w-full space-y-4">
+              <AccordionItem value="basic" className="border rounded-lg">
+                <AccordionTrigger className="p-4 font-semibold text-primary"><h4 className="flex items-center gap-2"><UserIcon className="h-5 w-5"/>Basic Information</h4></AccordionTrigger>
+                <AccordionContent className="p-6 pt-2 space-y-6">
+                     <Accordion type="single" collapsible className="w-full">
+                        <AccordionItem value="scan-id">
+                            <AccordionTrigger>
+                                <div className="flex items-center gap-2 text-primary">
+                                    <ScanSearch className="h-5 w-5" />
+                                    Scan ID Card (Optional)
+                                </div>
+                            </AccordionTrigger>
+                            <AccordionContent className="pt-4 space-y-4">
+                                <FormField
+                                    control={control}
+                                    name="aadhaarCard"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>ID Card File</FormLabel>
+                                            <FormControl>
+                                                <Input type="file" accept="image/*,application/pdf" onChange={handleFileChange} />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
                                     )}
-                                </div>
-                                <div className="absolute top-2 right-2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity bg-background/80 p-1 rounded-md">
-                                    <Button type="button" size="icon" variant="ghost" className="h-7 w-7" onClick={() => setZoom(z => z * 1.2)}><ZoomIn className="h-4 w-4"/></Button>
-                                    <Button type="button" size="icon" variant="ghost" className="h-7 w-7" onClick={() => setZoom(z => Math.max(0.5, z / 1.2))}><ZoomOut className="h-4 w-4"/></Button>
-                                    <Button type="button" size="icon" variant="ghost" className="h-7 w-7" onClick={() => setRotation(r => r + 90)}><RotateCw className="h-4 w-4" /></Button>
-                                    <Button type="button" variant="destructive" size="icon" className="h-7 w-7" onClick={() => { setFile(null); setFilePreview(null); setRawText(null); setExtractedDetails(null); setZoom(1); setRotation(0); }}><X className="h-4 w-4"/></Button>
-                                </div>
-                            </div>
-                        )}
-                        {file && (
-                           <div className="flex flex-col sm:flex-row gap-2">
-                                <Button type="button" variant="outline" className="w-full" onClick={handleGetText} disabled={isExtractingText}>
-                                    {isExtractingText ? <Loader2 className="h-4 w-4 animate-spin"/> : <Text className="mr-2 h-4 w-4" />}
-                                    Get Text
-                                </Button>
-                                {rawText && (
-                                    <Button type="button" className="w-full" onClick={() => handleFetchUserData(false)} disabled={isAnalyzing}>
-                                        {isAnalyzing ? <Loader2 className="h-4 w-4 animate-spin"/> : <Bot className="mr-2 h-4 w-4" />}
-                                        Analyze with AI
-                                    </Button>
+                                />
+                                {filePreview && (
+                                    <div className="relative group p-2 border rounded-lg">
+                                        <div className="relative w-full h-80 bg-gray-100 dark:bg-gray-800 rounded-md overflow-auto flex items-center justify-center">
+                                            {file?.type.startsWith('image/') ? (
+                                                <div className="relative w-full h-full cursor-zoom-in" onWheel={(e) => {e.preventDefault(); setZoom(prev => Math.max(0.5, Math.min(prev - e.deltaY * 0.001, 5)))}}>
+                                                    <Image 
+                                                    src={filePreview} 
+                                                    alt="ID Preview" 
+                                                    fill
+                                                    className="object-contain transition-transform duration-100"
+                                                    style={{ transform: `scale(${zoom}) rotate(${rotation}deg)` }}
+                                                    />
+                                                </div>
+                                            ) : (
+                                                <div className="flex flex-col items-center gap-2 text-muted-foreground p-4">
+                                                    <FileIcon className="h-16 w-16" />
+                                                    <span className="text-sm font-semibold">{file?.name}</span>
+                                                </div>
+                                            )}
+                                        </div>
+                                        <div className="absolute top-2 right-2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity bg-background/80 p-1 rounded-md">
+                                            <Button type="button" size="icon" variant="ghost" className="h-7 w-7" onClick={() => setZoom(z => z * 1.2)}><ZoomIn className="h-4 w-4"/></Button>
+                                            <Button type="button" size="icon" variant="ghost" className="h-7 w-7" onClick={() => setZoom(z => Math.max(0.5, z / 1.2))}><ZoomOut className="h-4 w-4"/></Button>
+                                            <Button type="button" size="icon" variant="ghost" className="h-7 w-7" onClick={() => setRotation(r => r + 90)}><RotateCw className="h-4 w-4" /></Button>
+                                            <Button type="button" variant="destructive" size="icon" className="h-7 w-7" onClick={() => { setFile(null); setFilePreview(null); setRawText(null); setExtractedDetails(null); setZoom(1); setRotation(0); }}><X className="h-4 w-4"/></Button>
+                                        </div>
+                                    </div>
                                 )}
-                            </div>
-                        )}
-                        {rawText && (
-                             <div className="space-y-2">
-                                <Label htmlFor="rawTextOutput">Extracted Text</Label>
-                                <Textarea id="rawTextOutput" readOnly value={rawText} rows={8} className="text-xs font-mono" />
-                            </div>
-                        )}
+                                {file && (
+                                   <div className="flex flex-col sm:flex-row gap-2">
+                                        <Button type="button" variant="outline" className="w-full" onClick={handleGetText} disabled={isExtractingText}>
+                                            {isExtractingText ? <Loader2 className="h-4 w-4 animate-spin"/> : <Text className="mr-2 h-4 w-4" />}
+                                            Get Text
+                                        </Button>
+                                        {rawText && (
+                                            <Button type="button" className="w-full" onClick={() => handleFetchUserData(false)} disabled={isAnalyzing}>
+                                                {isAnalyzing ? <Loader2 className="h-4 w-4 animate-spin"/> : <Bot className="mr-2 h-4 w-4" />}
+                                                Analyze with AI
+                                            </Button>
+                                        )}
+                                    </div>
+                                )}
+                                {rawText && (
+                                     <div className="space-y-2">
+                                        <Label htmlFor="rawTextOutput">Extracted Text</Label>
+                                        <Textarea id="rawTextOutput" readOnly value={rawText} rows={8} className="text-xs font-mono" />
+                                    </div>
+                                )}
+                            </AccordionContent>
+                        </AccordionItem>
+                    </Accordion>
+                     <FormField control={control} name="fullName" render={({ field }) => ( <FormItem><FormLabel>Full Name</FormLabel><FormControl><Input placeholder="Enter user's full name" {...field} onChange={handleFullNameChange}/></FormControl><FormDescription>The fields below will be auto-populated from this.</FormDescription><FormMessage /></FormItem> )}/>
+                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <FormField control={control} name="firstName" render={({ field }) => ( <FormItem><FormLabel>First Name</FormLabel><FormControl><Input type="text" placeholder="Enter your first name" {...field} /></FormControl><FormMessage /></FormItem> )}/>
+                        <FormField control={control} name="middleName" render={({ field }) => ( <FormItem><FormLabel>Middle Name</FormLabel><FormControl><Input type="text" placeholder="Enter your middle name" {...field} /></FormControl><FormMessage /></FormItem> )}/>
+                        <FormField control={control} name="lastName" render={({ field }) => ( <FormItem><FormLabel>Last Name</FormLabel><FormControl><Input type="text" placeholder="Enter your last name" {...field} /></FormControl><FormMessage /></FormItem> )}/>
+                    </div>
+                     <FormField control={control} name="fatherName" render={({ field }) => ( <FormItem><FormLabel>Father&apos;s Name (Optional)</FormLabel><FormControl><Input placeholder="Enter father's name" {...field} /></FormControl><FormMessage /></FormItem> )}/>
+                     <FormField control={control} name="userId" render={({ field }) => ( <FormItem><FormLabel>User ID</FormLabel><FormControl><Input type="text" placeholder="Create a custom user ID" {...field} /></FormControl><AvailabilityFeedback state={userIdState} fieldName="User ID" onSuggestionClick={(s) => setValue('userId', s, { shouldValidate: true })} /><FormMessage /></FormItem> )}/>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                         <FormField control={control} name="email" render={({ field }) => ( <FormItem><FormLabel>Email Address (Optional)</FormLabel><FormControl><Input type="email" placeholder="you@example.com" {...field} /></FormControl><AvailabilityFeedback state={emailState} fieldName="email" /><FormMessage /></FormItem> )}/>
+                         <FormField control={control} name="phone" render={({ field }) => ( <FormItem><FormLabel>Phone Number</FormLabel><FormControl><Input type="tel" placeholder="10-digit number" maxLength={10} {...field} /></FormControl><AvailabilityFeedback state={phoneState} fieldName="phone number" /><FormMessage /></FormItem> )}/>
+                    </div>
+                     <FormField control={control} name="gender" render={({ field }) => ( <FormItem className="space-y-3"><FormLabel>Gender</FormLabel><FormControl><RadioGroup onValueChange={field.onChange} value={field.value} className="flex flex-row space-x-4 pt-2"><FormItem className="flex items-center space-x-2"><FormControl><RadioGroupItem value="Male" /></FormControl><FormLabel className="font-normal">Male</FormLabel></FormItem><FormItem className="flex items-center space-x-2"><FormControl><RadioGroupItem value="Female" /></FormControl><FormLabel className="font-normal">Female</FormLabel></FormItem></RadioGroup></FormControl><FormMessage /></FormItem> )}/>
+                     <FormField control={control} name="password" render={({ field }) => ( <FormItem><FormLabel>Password (Optional)</FormLabel><FormControl><Input type="password" placeholder="Min. 6 characters" {...field} /></FormControl><FormDescription>If not provided, user will only be able to log in via OTP.</FormDescription><FormMessage /></FormItem> )}/>
+                </AccordionContent>
+            </AccordionItem>
+
+            <AccordionItem value="roles" className="border rounded-lg">
+                <AccordionTrigger className="p-4 font-semibold text-primary"><h4 className="flex items-center gap-2">Account Roles & Settings</h4></AccordionTrigger>
+                <AccordionContent className="p-6 pt-2 space-y-6">
+                    <FormField control={control} name="roles" render={() => ( <FormItem><div className="mb-4"><FormLabel className="text-base">User Roles</FormLabel><FormDescription>Select all roles that apply to this user.</FormDescription></div><div className="grid grid-cols-2 md:grid-cols-3 gap-4">{allRoles.map((role) => (<FormField key={role} control={control} name="roles" render={({ field }) => { return (<FormItem key={role} className="flex flex-row items-start space-x-3 space-y-0"><FormControl><Checkbox checked={field.value?.includes(role)} onCheckedChange={(checked) => { return checked ? field.onChange([...(field.value || []), role]) : field.onChange( field.value?.filter( (value) => value !== role))}}/></FormControl><FormLabel className="font-normal">{role}</FormLabel></FormItem> )}}/>))}</div><FormMessage /></FormItem>)}/>
+                    {selectedRoles.includes("Beneficiary") && <FormField control={control} name="isAnonymousAsBeneficiary" render={({ field }) => ( <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4"><FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} /></FormControl><div className="space-y-1 leading-none"><FormLabel>Mark as Anonymous Beneficiary</FormLabel><FormDescription>If checked, their name will be hidden from public view.</FormDescription></div></FormItem>)} />}
+                    {selectedRoles.includes("Donor") && <FormField control={control} name="isAnonymousAsDonor" render={({ field }) => ( <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4"><FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} /></FormControl><div className="space-y-1 leading-none"><FormLabel>Mark as Anonymous Donor</FormLabel><FormDescription>If checked, their name will be hidden on the public donations list.</FormDescription></div></FormItem>)} />}
+                </AccordionContent>
+            </AccordionItem>
+
+            {isBeneficiary && (
+                <AccordionItem value="beneficiary" className="border rounded-lg">
+                    <AccordionTrigger className="p-4 font-semibold text-primary"><h4 className="flex items-center gap-2"><UserIcon className="h-5 w-5"/>Family & Occupation Details</h4></AccordionTrigger>
+                    <AccordionContent className="p-6 pt-2 space-y-6">
+                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <FormField control={control} name="occupation" render={({ field }) => (<FormItem><FormLabel>Occupation</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)}/>
+                            <FormField control={control} name="fatherOccupation" render={({ field }) => (<FormItem><FormLabel>Father&apos;s Occupation</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)}/>
+                            <FormField control={control} name="motherOccupation" render={({ field }) => (<FormItem><FormLabel>Mother&apos;s Occupation</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)}/>
+                            <FormField control={control} name="familyMembers" render={({ field }) => (<FormItem><FormLabel>Number of Family Members</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>)}/>
+                            <FormField control={control} name="earningMembers" render={({ field }) => (<FormItem><FormLabel>Earning Members</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>)}/>
+                            <FormField control={control} name="totalFamilyIncome" render={({ field }) => (<FormItem><FormLabel>Total Family Income (Monthly)</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>)}/>
+                        </div>
+                         <FormField control={control} name="beneficiaryType" render={({ field }) => (
+                             <FormItem>
+                                 <FormLabel>Beneficiary Type</FormLabel>
+                                 <FormControl>
+                                     <RadioGroup onValueChange={field.onChange} value={field.value} className="flex flex-row space-x-4 pt-2">
+                                        <FormItem className="flex items-center space-x-3 space-y-0"><RadioGroupItem value="Adult" id="type-adult"/><FormLabel className="font-normal" htmlFor="type-adult">Adult</FormLabel></FormItem>
+                                        <FormItem className="flex items-center space-x-3 space-y-0"><RadioGroupItem value="Old Age" id="type-old"/><FormLabel className="font-normal" htmlFor="type-old">Old Age</FormLabel></FormItem>
+                                        <FormItem className="flex items-center space-x-3 space-y-0"><RadioGroupItem value="Kid" id="type-kid"/><FormLabel className="font-normal" htmlFor="type-kid">Kid</FormLabel></FormItem>
+                                        <FormItem className="flex items-center space-x-3 space-y-0"><RadioGroupItem value="Family" id="type-family"/><FormLabel className="font-normal" htmlFor="type-family">Family</FormLabel></FormItem>
+                                     </RadioGroup>
+                                 </FormControl>
+                                 <FormMessage />
+                             </FormItem>
+                         )}/>
                     </AccordionContent>
                 </AccordionItem>
-            </Accordion>
-            
-            <FormField control={control} name="fullName" render={({ field }) => ( <FormItem><FormLabel>Full Name</FormLabel><FormControl><Input placeholder="Enter user's full name" {...field} onChange={handleFullNameChange}/></FormControl><FormDescription>The fields below will be auto-populated from this.</FormDescription><FormMessage /></FormItem> )}/>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <FormField control={control} name="firstName" render={({ field }) => ( <FormItem><FormLabel>First Name</FormLabel><FormControl><Input type="text" placeholder="Enter your first name" {...field} /></FormControl><FormMessage /></FormItem> )}/>
-                <FormField control={control} name="middleName" render={({ field }) => ( <FormItem><FormLabel>Middle Name</FormLabel><FormControl><Input type="text" placeholder="Enter your middle name" {...field} /></FormControl><FormMessage /></FormItem> )}/>
-                <FormField control={control} name="lastName" render={({ field }) => ( <FormItem><FormLabel>Last Name</FormLabel><FormControl><Input type="text" placeholder="Enter your last name" {...field} /></FormControl><FormMessage /></FormItem> )}/>
-            </div>
-            <FormField control={control} name="fatherName" render={({ field }) => ( <FormItem><FormLabel>Father&apos;s Name (Optional)</FormLabel><FormControl><Input placeholder="Enter father's name" {...field} /></FormControl><FormMessage /></FormItem> )}/>
-            <FormField control={control} name="userId" render={({ field }) => ( <FormItem><FormLabel>User ID</FormLabel><FormControl><Input type="text" placeholder="Create a custom user ID" {...field} /></FormControl><AvailabilityFeedback state={userIdState} fieldName="User ID" onSuggestionClick={(s) => setValue('userId', s, { shouldValidate: true })} /><FormMessage /></FormItem> )}/>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <FormField control={control} name="email" render={({ field }) => ( <FormItem><FormLabel>Email Address (Optional)</FormLabel><FormControl><Input type="email" placeholder="you@example.com" {...field} /></FormControl><AvailabilityFeedback state={emailState} fieldName="email" /><FormMessage /></FormItem> )}/>
-                <FormField control={control} name="phone" render={({ field }) => ( <FormItem><FormLabel>Phone Number</FormLabel><FormControl><Input type="tel" placeholder="10-digit number" maxLength={10} {...field} /></FormControl><AvailabilityFeedback state={phoneState} fieldName="phone number" /><FormMessage /></FormItem> )}/>
-            </div>
-            <FormField control={control} name="gender" render={({ field }) => ( <FormItem className="space-y-3"><FormLabel>Gender</FormLabel><FormControl><RadioGroup onValueChange={field.onChange} value={field.value} className="flex flex-row space-x-4 pt-2"><FormItem className="flex items-center space-x-2"><FormControl><RadioGroupItem value="Male" /></FormControl><FormLabel className="font-normal">Male</FormLabel></FormItem><FormItem className="flex items-center space-x-2"><FormControl><RadioGroupItem value="Female" /></FormControl><FormLabel className="font-normal">Female</FormLabel></FormItem></RadioGroup></FormControl><FormMessage /></FormItem> )}/>
-            <FormField control={control} name="password" render={({ field }) => ( <FormItem><FormLabel>Password (Optional)</FormLabel><FormControl><Input type="password" placeholder="Min. 6 characters" {...field} /></FormControl><FormDescription>If not provided, user will only be able to log in via OTP.</FormDescription><FormMessage /></FormItem> )}/>
+            )}
+
+            <AccordionItem value="payment" className="border rounded-lg">
+                <AccordionTrigger className="p-4 font-semibold text-primary"><h4 className="flex items-center gap-2"><CreditCard className="h-5 w-5"/>Verification &amp; Payment Details</h4></AccordionTrigger>
+                <AccordionContent className="p-6 pt-2 space-y-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <FormField control={control} name="panNumber" render={({ field }) => (<FormItem><FormLabel>PAN Number</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)}/>
+                        <FormField control={control} name="aadhaarNumber" render={({ field }) => (<FormItem><FormLabel>Aadhaar Number</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)}/>
+                    </div>
+                    <Separator />
+                    <h3 className="text-lg font-semibold">Bank Details</h3>
+                    <FormField control={control} name="bankAccountName" render={({ field }) => (<FormItem><FormLabel>Full Name as per Bank Account</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)}/>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <FormField control={control} name="bankAccountNumber" render={({ field }) => (<FormItem><FormLabel>Bank Account Number</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)}/>
+                        <FormField control={control} name="bankIfscCode" render={({ field }) => (<FormItem><FormLabel>IFSC Code</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)}/>
+                    </div>
+                    <FormField control={control} name="bankName" render={({ field }) => (<FormItem><FormLabel>Bank Name</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)}/>
+                    <Separator />
+                     <div className="space-y-4">
+                        <FormLabel>UPI Phone Numbers</FormLabel>
+                        {(control.getValues('upiPhoneNumbers') || []).map((field, index) => (<FormField control={control} key={field.id} name={`upiPhoneNumbers.${index}.value`} render={({ field }) => (<FormItem><div className="flex items-center gap-2"><FormControl><Input {...field} placeholder="e.g., 9876543210" type="tel" maxLength={10} /></FormControl><Button type="button" variant="ghost" size="icon"><Trash2 className="h-4 w-4 text-destructive" /></Button></div><FormMessage /></FormItem>)}/>))}
+                        <Button type="button" variant="outline" size="sm"><PlusCircle className="mr-2" />Add Phone</Button>
+                    </div>
+                     <div className="space-y-4">
+                        <FormLabel>UPI IDs</FormLabel>
+                         {(control.getValues('upiIds') || []).map((field, index) => (<FormField control={control} key={field.id} name={`upiIds.${index}.value`} render={({ field }) => (<FormItem><div className="flex items-center gap-2"><FormControl><Input {...field} placeholder="e.g., username@okhdfc" /></FormControl><Button type="button" variant="ghost" size="icon"><Trash2 className="h-4 w-4 text-destructive" /></Button></div><FormMessage /></FormItem>)}/>))}
+                        <Button type="button" variant="outline" size="sm"><PlusCircle className="mr-2" />Add UPI ID</Button>
+                    </div>
+                </AccordionContent>
+            </AccordionItem>
+          </Accordion>
         </div>
+        
         {isSubForm ? null : (
             <div className="flex items-center gap-4 mt-8">
                 <Button type="submit" disabled={isSubmitting}>
@@ -638,7 +697,7 @@ function FormContent({ settings, isSubForm, prefilledData, onUserCreate }: AddUs
         <AlertDialogContent>
             <AlertDialogHeader>
                 <AlertDialogTitle className="flex items-center gap-2">
-                    <Bot className="h-6 w-6 text-primary" />
+                   <Bot className="h-6 w-6 text-primary" />
                     Confirm Auto-fill Details
                 </AlertDialogTitle>
                 <AlertDialogDescription>
@@ -652,7 +711,7 @@ function FormContent({ settings, isSubForm, prefilledData, onUserCreate }: AddUs
                         <div key={key} className="flex justify-between border-b pb-1">
                             <span className="text-muted-foreground capitalize">{label}</span>
                             {value ? (
-                                <span className="font-semibold text-right">{value}</span>
+                                 <span className="font-semibold text-right">{value}</span>
                             ) : (
                                 <span className="text-destructive font-normal text-right">Not Found</span>
                             )}
@@ -661,7 +720,7 @@ function FormContent({ settings, isSubForm, prefilledData, onUserCreate }: AddUs
                 })}
             </div>
             <AlertDialogFooter>
-                    <Button variant="outline" onClick={() => handleFetchUserData(true)} disabled={isRefreshingDetails}>
+                 <Button variant="outline" onClick={() => handleFetchUserData(true)} disabled={isRefreshingDetails}>
                     {isRefreshingDetails ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <RefreshIcon className="mr-2 h-4 w-4" />}
                     Refresh
                 </Button>
@@ -678,7 +737,7 @@ function FormContent({ settings, isSubForm, prefilledData, onUserCreate }: AddUs
 
 
 export function AddUserForm(props: AddUserFormProps) {
-    const { settings } = props;
+    const { settings, prefilledData } = props;
     const formSchema = useMemo(() => createFormSchema(settings), [settings]);
     const form = useForm<AddUserFormValues>({
         resolver: zodResolver(formSchema),
@@ -686,7 +745,19 @@ export function AddUserForm(props: AddUserFormProps) {
         mode: "onBlur",
         defaultValues: {
             ...initialFormValues,
-            ...props.prefilledData,
+            // Apply prefilled data if it exists
+            firstName: prefilledData?.beneficiaryFirstName || "",
+            middleName: prefilledData?.beneficiaryMiddleName || "",
+            lastName: prefilledData?.beneficiaryLastName || "",
+            fatherName: prefilledData?.fatherName || "",
+            phone: prefilledData?.beneficiaryPhone?.replace(/\D/g, '').slice(-10) || "",
+            aadhaarNumber: prefilledData?.aadhaarNumber?.replace(/\D/g,'') || "",
+            addressLine1: prefilledData?.address || "",
+            city: prefilledData?.city || "Solapur",
+            state: prefilledData?.state || "Maharashtra",
+            country: prefilledData?.country || "India",
+            pincode: prefilledData?.pincode || "",
+            gender: prefilledData?.gender,
         },
     });
 
@@ -696,5 +767,3 @@ export function AddUserForm(props: AddUserFormProps) {
         </FormProvider>
     )
 }
-
-    
