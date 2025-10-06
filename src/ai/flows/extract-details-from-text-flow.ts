@@ -16,6 +16,7 @@ import {
     ExtractDonationDetailsOutput,
     ExtractDonationDetailsOutputSchema
 } from '@/ai/schemas';
+import { getSafeGeminiModel } from '@/services/gemini-service';
 
 
 export async function extractDetailsFromText(input: ExtractDetailsFromTextInput): Promise<ExtractDonationDetailsOutput> {
@@ -32,16 +33,16 @@ const extractDetailsFromTextFlow = ai.defineFlow(
   async (input) => {
     
     const modelCandidates = [
-        googleAI.model('gemini-1.5-flash-latest'),
-        googleAI.model('gemini-1.5-pro-latest'),
+        await getSafeGeminiModel('gemini-1.5-flash-latest'),
+        await getSafeGeminiModel('gemini-1.5-pro-latest'),
     ];
     let lastError: any;
 
-    for (const model of modelCandidates) {
+    for (const modelName of modelCandidates) {
         try {
-            console.log(`🔄 Trying ${model.name} for extractDetailsFromText...`);
+            console.log(`🔄 Trying ${modelName} for extractDetailsFromText...`);
             const llmResponse = await ai.generate({
-                model: model,
+                model: googleAI.model(modelName),
                 prompt: `You are an expert financial assistant specializing in parsing text from payment receipts. Analyze the provided block of raw text, which was extracted via OCR from a payment screenshot. Your task is to carefully extract the following details. Be precise. If a field is not present in the text, omit it entirely from the output. The text might have OCR errors, so be robust in your parsing.
 
                     **Primary Goal: Find UPI IDs. A UPI ID is any string containing an '@' symbol (e.g., username@okaxis).**
@@ -111,13 +112,13 @@ const extractDetailsFromTextFlow = ai.defineFlow(
             const output = llmResponse.output;
 
             if (!output) {
-            throw new Error("The AI model did not return any output from the text.");
+              throw new Error("The AI model did not return any output from the text.");
             }
-            console.log(`✅ Success with ${model.name}`);
+            console.log(`✅ Success with ${modelName}`);
             return output; // Success
         } catch (err) {
             lastError = err;
-            console.error(`❌ Error with ${model.name} for extractDetailsFromText:`, err instanceof Error ? err.message : String(err));
+            console.error(`❌ Error with ${modelName} for extractDetailsFromText:`, err instanceof Error ? err.message : String(err));
         }
     }
     

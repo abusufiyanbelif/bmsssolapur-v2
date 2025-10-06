@@ -16,7 +16,7 @@ export default async function AddTransferPage() {
             </Link>
             <Card>
                 <CardHeader>
-                    <CardTitle className="flex items-center gap-2 text-primary"><Ban className="text-destructive"/>Page Deprecated</CardTitle>
+                    <CardTitle className="flex items-center gap-2 text-destructive"><Ban className="text-destructive"/>Page Deprecated</CardTitle>
                     <CardDescription className="text-muted-foreground">
                        This page is no longer in use. Fund transfers should now be recorded directly from the Lead Details page.
                     </CardDescription>
@@ -36,6 +36,3 @@ export default async function AddTransferPage() {
         </div>
     );
 }
-
-
-    

@@ -98,6 +98,14 @@ export function AllTransfersPageClient({ initialTransfers, error: initialError }
         }
     };
 
+    useEffect(() => {
+        if(initialTransfers.length === 0 && !initialError) {
+            fetchData();
+        } else {
+            setLoading(false);
+        }
+    }, [initialTransfers, initialError]);
+
     const onBulkDeleteSuccess = () => {
         toast({
             title: "Transfers Deleted",
@@ -127,7 +135,7 @@ export function AllTransfersPageClient({ initialTransfers, error: initialError }
         let filtered = allTransfers.filter(transfer => {
             const searchMatch = appliedFilters.search === '' || 
                               transfer.leadName.toLowerCase().includes(appliedFilters.search.toLowerCase()) ||
-                              transfer.transferredByUserName.toLowerCase().includes(appliedFilters.search.toLowerCase()) ||
+                              (transfer.transferredByUserName && transfer.transferredByUserName.toLowerCase().includes(appliedFilters.search.toLowerCase())) ||
                               (transfer.transactionId && transfer.transactionId.toLowerCase().includes(appliedFilters.search.toLowerCase()));
 
             return searchMatch;
@@ -138,7 +146,9 @@ export function AllTransfersPageClient({ initialTransfers, error: initialError }
             const bValue = b[sortColumn];
 
             let comparison = 0;
-            // Handle date/timestamp objects
+            if (!aValue) return 1;
+            if (!bValue) return -1;
+
             if (aValue instanceof Date && bValue instanceof Date) {
                 comparison = aValue.getTime() - bValue.getTime();
             } else if (typeof aValue === 'number' && typeof bValue === 'number') {
@@ -259,7 +269,7 @@ export function AllTransfersPageClient({ initialTransfers, error: initialError }
                                 />
                             </TableCell>
                             <TableCell>{(currentPage - 1) * itemsPerPage + index + 1}</TableCell>
-                            <TableCell>{format(transfer.transferredAt, "dd MMM yyyy, p")}</TableCell>
+                            <TableCell>{format(new Date(transfer.transferredAt), "dd MMM yyyy, p")}</TableCell>
                             <TableCell>
                                 <Link href={`/admin/leads/${transfer.leadId}`} className="hover:underline text-primary font-medium">
                                     {transfer.leadName}
@@ -309,7 +319,7 @@ export function AllTransfersPageClient({ initialTransfers, error: initialError }
                                 </CardDescription>
                             </CardHeader>
                             <CardContent className="p-0 space-y-2 text-sm">
-                                <div className="flex justify-between"><span className="text-muted-foreground">Date</span><span>{format(transfer.transferredAt, "dd MMM yyyy, p")}</span></div>
+                                <div className="flex justify-between"><span className="text-muted-foreground">Date</span><span>{format(new Date(transfer.transferredAt), "dd MMM yyyy, p")}</span></div>
                                 <div className="flex justify-between"><span className="text-muted-foreground">By</span><span>{transfer.transferredByUserName}</span></div>
                                 <div className="flex justify-between items-center"><span className="text-muted-foreground">Txn ID</span><span className="font-mono text-xs">{transfer.transactionId || 'N/A'}</span></div>
                             </CardContent>

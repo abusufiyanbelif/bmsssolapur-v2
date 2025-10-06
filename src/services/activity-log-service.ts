@@ -66,7 +66,7 @@ export const getAllActivityLogs = async (): Promise<ActivityLog[]> => {
                     const data = doc.data();
                     fallbackActivities.push({ id: doc.id, ...data, timestamp: (data.timestamp as Timestamp)?.toDate() } as ActivityLog);
                 });
-                return fallbackActivities.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
+                return fallbackActivities.sort((a, b) => (b.timestamp as Date).getTime() - (a.timestamp as Date).getTime());
              } catch (fallbackError) {
                  console.error("Fallback query failed for getAllActivityLogs", fallbackError);
                  return [];

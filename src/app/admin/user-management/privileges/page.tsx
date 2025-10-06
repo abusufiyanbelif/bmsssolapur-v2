@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { KeySquare, Shield, UserCog, HandHeart, Users, User, CheckSquare, FileText, UserPlus, Trash2, DollarSign, BarChart2, Download, Settings, ChevronLeft, ChevronRight, FilePlus2 as RequestHelpIcon, Building, Megaphone, FilterX, Search, Database, Share2, BrainCircuit, ArrowUpDown, Banknote } from "lucide-react";
+import { KeySquare, Shield, UserCog, HandHeart, Users, User, CheckSquare, FileText, UserPlus, Trash2, DollarSign, BarChart2, Download, Settings, ChevronLeft, ChevronRight, FilePlus2 as RequestHelpIcon, Building, Megaphone, FilterX, Search, Database, Share2, BrainCircuit, ArrowUpDown, Banknote, History } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
@@ -57,6 +57,11 @@ const allPrivileges: Privilege[] = [
     { name: "canManageDonations", description: "Allows recording, editing, and managing all donation records.", icon: HandHeart, type: 'Manage', roles: [allRoles['Super Admin'], allRoles['Finance Admin']] },
     { name: "canVerifyDonations", description: "Allows changing a donation's status (e.g., from 'Pending' to 'Verified').", icon: DollarSign, type: 'Edit', roles: [allRoles['Super Admin'], allRoles['Finance Admin']] },
     { name: "canViewFinancials", description: "Allows viewing financial reports, dashboards, and analytics.", icon: BarChart2, type: 'View', roles: [allRoles['Super Admin'], allRoles['Finance Admin']] },
+    { name: "canViewAllAudit", description: "Grants access to the main, organization-wide audit trail.", icon: History, type: 'View', roles: [allRoles['Super Admin']] },
+    { name: "canViewUserAudit", description: "Allows viewing the change history on individual user profiles.", icon: History, type: 'View', roles: [allRoles['Admin'], allRoles['Super Admin']] },
+    { name: "canViewLeadAudit", description: "Allows viewing the activity feed on individual lead detail pages.", icon: History, type: 'View', roles: [allRoles['Admin'], allRoles['Super Admin']] },
+    { name: "canViewDonationAudit", description: "Allows viewing the activity feed on individual donation detail pages.", icon: History, type: 'View', roles: [allRoles['Finance Admin'], allRoles['Super Admin']] },
+    { name: "canViewTransferAudit", description: "Allows viewing the main fund transfer log.", icon: History, type: 'View', roles: [allRoles['Finance Admin'], allRoles['Super Admin']] },
     { name: "canExportData", description: "Allows exporting data from the system, like donation or user lists.", icon: Download, type: 'View', roles: [allRoles['Super Admin']] },
     { name: "canManageSettings", description: "Allows changing global application settings, like login methods or feature flags.", icon: Settings, type: 'Edit', roles: [allRoles['Super Admin']] },
     { name: "canSeedDatabase", description: "Allows running the database seeder to populate initial data. This is a destructive action.", icon: Database, type: 'Special', roles: [allRoles['Super Admin']] },
@@ -188,12 +193,12 @@ export default function UserPrivilegesPage() {
         <h2 className="text-3xl font-bold tracking-tight font-headline text-primary">User Privileges</h2>
         <Card>
             <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                    <KeySquare className="h-6 w-6 text-primary" />
+                <CardTitle className="flex items-center gap-2 text-primary">
+                    <KeySquare className="h-6 w-6" />
                     Manage Privileges
                 </CardTitle>
-                <CardDescription>
-                    Define granular permissions for individual actions within the application. This is a read-only view of the system's intended privilege structure.
+                <CardDescription className="text-muted-foreground">
+                    Define granular permissions for individual actions within the application. This is a read-only view of the system&apos;s intended privilege structure.
                 </CardDescription>
             </CardHeader>
             <CardContent>
@@ -246,7 +251,7 @@ export default function UserPrivilegesPage() {
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {paginatedPrivileges.map((privilege, index) => (
+                        {paginatedPrivileges.map((privilege) => (
                             <TableRow key={privilege.name}>
                                 <TableCell>
                                     <div className="font-medium flex items-center gap-2">

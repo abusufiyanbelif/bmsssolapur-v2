@@ -25,8 +25,8 @@ export const extractRawTextFlow = ai.defineFlow(
     const mediaParts = input.photoDataUris.map(uri => ({ media: { url: uri } }));
     
     const modelCandidates = [
-        await getSafeGeminiModel('models/gemini-1.5-flash-latest'),
-        await getSafeGeminiModel('models/gemini-1.5-pro-latest')
+        await getSafeGeminiModel('gemini-1.5-flash-latest'),
+        await getSafeGeminiModel('gemini-1.5-pro-latest')
     ];
     
     let lastError: any;
