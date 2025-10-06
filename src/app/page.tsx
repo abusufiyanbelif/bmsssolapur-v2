@@ -5,8 +5,8 @@
 import { Suspense, useEffect, useState } from "react";
 import { PublicHomePage } from "./home/public-home-page";
 import { Loader2 } from "lucide-react";
-import type { Quote, Lead, Campaign } from "@/services/types";
-import { getInspirationalQuotes, getOpenGeneralLeads, getPublicDashboardData } from "./home/actions";
+import type { Quote, Lead, Campaign, User, Donation } from "@/services/types";
+import { getOpenGeneralLeads, getPublicDashboardData, getQuotes } from "./home/actions";
 import { useRouter } from 'next/navigation';
 
 
@@ -24,6 +24,8 @@ export default function Page() {
     const [openLeads, setOpenLeads] = useState<Lead[]>([]);
     const [campaigns, setCampaigns] = useState<Campaign[]>([]);
     const [allLeads, setAllLeads] = useState<Lead[]>([]); // For campaign stats
+    const [allDonations, setAllDonations] = useState<Donation[]>([]);
+    const [allUsers, setAllUsers] = useState<User[]>([]);
     const router = useRouter();
 
     useEffect(() => {
@@ -35,19 +37,25 @@ export default function Page() {
             if (!role || !userId) {
                 setActiveRole('Guest');
                 // Fetch public data if guest
-                const [quotesData, leadsData, publicData] = await Promise.all([
-                    getQuotes(3),
-                    getOpenGeneralLeads(),
-                    getPublicDashboardData(),
-                ]);
-                setQuotes(quotesData);
-                setOpenLeads(leadsData);
-                if (publicData && !publicData.error) {
-                    const activeAndUpcomingCampaigns = (publicData.campaigns || []).filter(
-                        c => c.status === 'Active' || c.status === 'Upcoming'
-                    );
-                    setCampaigns(activeAndUpcomingCampaigns);
-                    setAllLeads(publicData.leads || []);
+                try {
+                    const [quotesData, leadsData, publicData] = await Promise.all([
+                        getQuotes(3),
+                        getOpenGeneralLeads(),
+                        getPublicDashboardData(),
+                    ]);
+                    setQuotes(quotesData);
+                    setOpenLeads(leadsData);
+                    if (publicData && !publicData.error) {
+                        const activeAndUpcomingCampaigns = (publicData.campaigns || []).filter(
+                            (c: Campaign) => c.status === 'Active' || c.status === 'Upcoming'
+                        );
+                        setCampaigns(activeAndUpcomingCampaigns);
+                        setAllLeads(publicData.leads || []);
+                        setAllDonations(publicData.donations || []);
+                        setAllUsers(publicData.users || []);
+                    }
+                } catch (e) {
+                    console.error("Failed to fetch public data", e);
                 }
 
             } else {
@@ -88,8 +96,16 @@ export default function Page() {
     }
 
     if (activeRole === 'Guest') {
-        return <PublicHomePage quotes={quotes} initialLeads={openLeads} campaigns={campaigns} allLeads={allLeads} />;
+        return <PublicHomePage 
+            quotes={quotes} 
+            initialLeads={openLeads} 
+            campaigns={campaigns} 
+            allLeads={allLeads}
+            allDonations={allDonations}
+            allUsers={allUsers}
+         />;
     }
 
     return <LoadingState />;
 }
+
