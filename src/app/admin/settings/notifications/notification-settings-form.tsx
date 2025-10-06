@@ -1,3 +1,4 @@
+
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -16,13 +17,14 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { handleUpdateNotificationSettings, testProviderConnection } from "./actions";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Loader2, Save, Wifi, MessageSquare, Smartphone } from "lucide-react";
 import type { AppSettings } from "@/services/types";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Badge } from "@/components/ui/badge";
 
 const formSchema = z.object({
   "sms.provider": z.enum(['twilio', 'firebase']).default('twilio'),
@@ -208,7 +210,7 @@ export function NotificationSettingsForm({ settings }: NotificationSettingsFormP
                             <FormField control={form.control} name="email.nodemailer.user" render={({field}) => ( <FormItem><FormLabel>SMTP User</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem> )} />
                             <FormField control={form.control} name="email.nodemailer.pass" render={({field}) => ( <FormItem><FormLabel>SMTP Password</FormLabel><FormControl><Input {...field} type="password" /></FormControl><FormMessage /></FormItem> )} />
                         </div>
-                        <FormField control={form.control} name="email.nodemailer.from" render={({field}) => ( <FormItem><FormLabel>From Email Address</FormLabel><FormControl><Input {...field} placeholder='"Your Org Name" &lt;email@your-domain.com&gt;' /></FormControl><FormMessage /></FormItem> )} />
+                        <FormField control={form.control} name="email.nodemailer.from" render={({field}) => ( <FormItem><FormLabel>From Email Address</FormLabel><FormControl><Input {...field} placeholder='"Your Org Name" <email@your-domain.com>' /></FormControl><FormMessage /></FormItem> )} />
                         <Button type="button" variant="secondary" onClick={() => handleTest('nodemailer')} disabled={testStatus['nodemailer'] === 'loading'}>
                             {testStatus['nodemailer'] === 'loading' ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Wifi className="mr-2 h-4 w-4"/>} Test Nodemailer Connection
                         </Button>
