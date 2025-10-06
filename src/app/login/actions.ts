@@ -1,5 +1,4 @@
 
-
 'use server';
 
 import { collection, query, where, getDocs, Timestamp, doc, writeBatch } from 'firebase/firestore';
@@ -22,26 +21,15 @@ export async function handleLogin(formData: FormData): Promise<LoginState> {
     const password = formData.get("password") as string;
 
     if (!identifier || !password) {
-        return { success: false, error: "Identifier and password are required." };
+        return { success: false, error: "User ID and password are required." };
     }
 
     try {
-        let user: User | null = null;
-        
-        const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(identifier);
-        const isPhone = /^[0-9]{10}$/.test(identifier);
-
-        if (isEmail) {
-            user = await getUserByEmail(identifier);
-        } else if (isPhone) {
-            user = await getUserByPhone(identifier);
-        } else {
-            // If not an email or phone, assume it's a User ID
-            user = await getUserByUserId(identifier);
-        }
+        // This action now ONLY logs in via a custom User ID.
+        const user = await getUserByUserId(identifier);
         
         if (!user) {
-            return { success: false, error: "User not found. Please check your User ID, email, or phone number." };
+            return { success: false, error: "User not found. Please check your User ID." };
         }
 
         // Check if the account is active. Super Admins can always log in.
@@ -255,7 +243,7 @@ export async function handleFirebaseOtpLogin(uid: string, phoneNumber: string | 
                 // **FIX:** Explicitly remove undefined fields before writing.
                 const cleanOldUserData: Record<string, any> = {};
                 for (const key in oldUserData) {
-                    if ((oldUserData as any)[key] !== undefined) {
+                    if ((oldUserData as any)[key] !== undefined && (oldUserData as any)[key] !== null) {
                         cleanOldUserData[key] = (oldUserData as any)[key];
                     }
                 }
@@ -301,5 +289,3 @@ export async function handleFirebaseOtpLogin(uid: string, phoneNumber: string | 
         return { success: false, error };
     }
 }
-
-    

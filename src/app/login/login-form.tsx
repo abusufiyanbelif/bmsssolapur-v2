@@ -30,11 +30,14 @@ export function LoginForm() {
   const [confirmationResult, setConfirmationResult] = useState<ConfirmationResult | null>(null);
 
   useEffect(() => {
-    // This is to ensure the reCAPTCHA verifier is only initialized once.
     if (typeof window !== 'undefined' && !window.recaptchaVerifier) {
-      window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
-        'size': 'invisible',
-      });
+      // Ensure the container exists before initializing
+      const recaptchaContainer = document.getElementById('recaptcha-container');
+      if (recaptchaContainer) {
+        window.recaptchaVerifier = new RecaptchaVerifier(auth, recaptchaContainer, {
+          'size': 'invisible',
+        });
+      }
     }
   }, []);
 
@@ -177,7 +180,6 @@ export function LoginForm() {
 
             <TabsContent value="otp">
                 <form className="space-y-6 pt-4" onSubmit={onVerifyOtpSubmit}>
-                    <div id="recaptcha-container"></div>
                     <div className="space-y-2">
                       <Label htmlFor="phone">Phone Number</Label>
                        <div className="flex items-center">
@@ -206,17 +208,19 @@ export function LoginForm() {
                             Login with OTP
                         </Button>
                     )}
+                    {/* This div is now inside the OTP tab and will be mounted when the tab is active */}
+                    <div id="recaptcha-container"></div>
                 </form>
             </TabsContent>
             <TabsContent value="password">
                  <form className="space-y-6 pt-4" onSubmit={onPasswordSubmit}>
                     <div className="space-y-2">
-                      <Label htmlFor="identifier">User ID, Email, or Phone</Label>
+                      <Label htmlFor="identifier">User ID</Label>
                       <Input 
                         id="identifier" 
                         name="identifier" 
                         type="text"
-                        placeholder="e.g., john.doe or user@example.com"
+                        placeholder="e.g., john.doe or admin"
                         required 
                       />
                     </div>
