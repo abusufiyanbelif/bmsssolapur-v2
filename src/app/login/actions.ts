@@ -8,6 +8,7 @@ import { User, getUserByPhone, getUserByEmail, getUser, getUserByUserId } from '
 import { sendOtp } from '@/ai/flows/send-otp-flow';
 import { verifyOtp } from '@/ai/flows/verify-otp-flow';
 import { logActivity } from '@/services/activity-log-service';
+import { getAppSettings } from '@/services/app-settings-service';
 
 interface LoginState {
     success: boolean;
@@ -80,26 +81,38 @@ export async function handleLogin(formData: FormData): Promise<LoginState> {
 
 interface OtpState {
     success: boolean;
+    provider?: 'firebase' | 'twilio';
     error?: string;
 }
 
 export async function handleSendOtp(phoneNumber: string): Promise<OtpState> {
     try {
-        // Basic validation: Check if user exists with the 10-digit number before sending OTP
-        const user = await getUserByPhone(phoneNumber); 
+        const user = await getUserByPhone(phoneNumber);
         if (!user) {
             return { success: false, error: "No user found with this phone number. Please register first or try a different number." };
         }
-        
-        // All Super Admins should always be treated as active.
-         if (!user.isActive && !user.roles.includes('Super Admin')) {
+
+        if (!user.isActive && !user.roles.includes('Super Admin')) {
             return { success: false, error: "This user account is inactive. Please contact an administrator." };
         }
-        
-        // Add country code only when sending to the external service
-        const fullPhoneNumber = `+91${phoneNumber}`;
-        const result = await sendOtp({ phoneNumber: fullPhoneNumber });
-        return result;
+
+        const settings = await getAppSettings();
+        const otpProvider = settings.notificationSettings?.sms.provider || 'twilio';
+
+        if (otpProvider === 'firebase') {
+            // For Firebase, we just confirm the user exists and tell the client to proceed.
+            // The actual OTP sending is handled by the client-side Firebase SDK.
+            return { success: true, provider: 'firebase' };
+        } else {
+            // For Twilio, we send the OTP from the server.
+            const fullPhoneNumber = `+91${phoneNumber}`;
+            const result = await sendOtp({ phoneNumber: fullPhoneNumber });
+            if (result.success) {
+                return { success: true, provider: 'twilio' };
+            } else {
+                return { success: false, error: result.error, provider: 'twilio' };
+            }
+        }
     } catch(e) {
         const error = e instanceof Error ? e.message : "An unknown error occurred.";
         return { success: false, error };
@@ -121,8 +134,9 @@ export async function handleVerifyOtp(formData: FormData): Promise<LoginState> {
         if (!user) {
              return { success: false, error: "User with this phone number not found." };
         }
-
-        // Add country code only when verifying with the external service
+        
+        // This server action is now only for Twilio verification.
+        // Firebase verification is handled client-side.
         const fullPhoneNumber = `+91${phoneNumber}`;
         const verificationResult = await verifyOtp({ phoneNumber: fullPhoneNumber, code });
         
@@ -221,4 +235,36 @@ export async function handleGoogleLogin(firebaseUser: {
     const error = e instanceof Error ? e.message : 'An unknown error occurred during login.';
     return { success: false, error };
   }
+}
+
+export async function handleFirebaseOtpLogin(userId: string): Promise<LoginState> {
+    try {
+        const user = await getUser(userId);
+        if (!user) {
+            return { success: false, error: 'Could not retrieve user data after sign-in.' };
+        }
+        
+        await logActivity({
+            userId: user.id!,
+            userName: user.name,
+            userEmail: user.email,
+            role: user.roles[0],
+            activity: 'User Logged In',
+            details: { method: 'otp (firebase)' },
+        });
+
+        const primaryRole = user.roles[0];
+        let redirectTo = '/home'; // Default fallback
+        if (primaryRole === 'Donor') redirectTo = '/donor';
+        if (primaryRole === 'Beneficiary') redirectTo = '/beneficiary';
+        if (primaryRole === 'Referral') redirectTo = '/referral';
+        if (['Admin', 'Super Admin', 'Finance Admin'].includes(primaryRole)) redirectTo = '/admin';
+
+        return { success: true, userId: user.id!, redirectTo: redirectTo };
+
+    } catch (e) {
+        console.error("Firebase OTP Login Finalization Error:", e);
+        const error = e instanceof Error ? e.message : "An unknown database error occurred.";
+        return { success: false, error };
+    }
 }

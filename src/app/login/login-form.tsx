@@ -10,9 +10,9 @@ import { KeyRound, LogIn, MessageSquare, Loader2, CheckCircle, User, Mail, Phone
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect } from "react";
-import { handleLogin, handleSendOtp, handleVerifyOtp, handleGoogleLogin } from "./actions";
+import { handleLogin, handleSendOtp, handleVerifyOtp, handleGoogleLogin, handleFirebaseOtpLogin } from "./actions";
 import { auth } from "@/services/firebase";
-import { GoogleAuthProvider, signInWithPopup, User as FirebaseUser } from "firebase/auth";
+import { GoogleAuthProvider, signInWithPopup, User as FirebaseUser, RecaptchaVerifier, signInWithPhoneNumber, ConfirmationResult } from "firebase/auth";
 import { Separator } from "@/components/ui/separator";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import Link from "next/link";
@@ -27,6 +27,17 @@ export function LoginForm() {
   const [isOtpSent, setIsOtpSent] = useState(false);
   const [otpPhoneNumber, setOtpPhoneNumber] = useState("");
   const [loginSuccessData, setLoginSuccessData] = useState<{userId?: string, redirectTo?: string} | null>(null);
+  const [otpProvider, setOtpProvider] = useState<'firebase' | 'twilio' | null>(null);
+  const [confirmationResult, setConfirmationResult] = useState<ConfirmationResult | null>(null);
+
+  useEffect(() => {
+    // This is to ensure the reCAPTCHA verifier is only initialized once.
+    if (!window.recaptchaVerifier) {
+      window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
+        'size': 'invisible',
+      });
+    }
+  }, []);
 
   useEffect(() => {
     if (loginSuccessData?.userId && loginSuccessData?.redirectTo) {
@@ -85,15 +96,29 @@ export function LoginForm() {
       setIsOtpSending(true);
 
       const result = await handleSendOtp(phoneNumber);
+      setOtpProvider(result.provider || null);
       
       if (result.success) {
-          toast({ 
-            variant: "success",
-            title: "OTP Sent", 
-            description: "An OTP has been sent to your phone.",
-            icon: <CheckCircle />
-          });
-          setIsOtpSent(true);
+          if (result.provider === 'firebase') {
+             try {
+                const fullPhoneNumber = `+91${phoneNumber}`;
+                const confirmation = await signInWithPhoneNumber(auth, fullPhoneNumber, window.recaptchaVerifier);
+                setConfirmationResult(confirmation);
+                setIsOtpSent(true);
+                toast({ variant: "success", title: "OTP Sent", description: "An OTP has been sent to your phone via Firebase."});
+            } catch (error) {
+                console.error("Firebase signInWithPhoneNumber error:", error);
+                toast({ variant: "destructive", title: "Firebase Error", description: "Could not send OTP via Firebase. Please check console." });
+            }
+          } else { // Twilio
+            toast({ 
+              variant: "success",
+              title: "OTP Sent", 
+              description: "An OTP has been sent to your phone.",
+              icon: <CheckCircle />
+            });
+            setIsOtpSent(true);
+          }
       } else {
           toast({ variant: "destructive", title: "Failed to Send OTP", description: result.error });
       }
@@ -104,26 +129,40 @@ export function LoginForm() {
   const onVerifyOtpSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
       event.preventDefault();
       setIsSubmitting(true);
-      const formData = new FormData(event.currentTarget);
-      formData.append('phone', otpPhoneNumber);
-      
-      const result = await handleVerifyOtp(formData);
 
-       if (result.success) {
+      const formData = new FormData(event.currentTarget);
+      const code = formData.get('otp') as string;
+      
+      if (otpProvider === 'firebase' && confirmationResult) {
+          try {
+              const result = await confirmationResult.confirm(code);
+              const user = result.user;
+              // Now we need to get our app-specific user ID
+              const loginResult = await handleFirebaseOtpLogin(user.uid);
+              if (loginResult.success) {
+                  setLoginSuccessData({ userId: loginResult.userId, redirectTo: loginResult.redirectTo });
+              } else {
+                  toast({ variant: "destructive", title: "Login Failed", description: loginResult.error });
+              }
+          } catch(error) {
+               toast({ variant: "destructive", title: "Firebase OTP Verification Failed", description: "The code you entered was incorrect. Please try again." });
+          }
+      } else if (otpProvider === 'twilio') {
+          formData.append('phone', otpPhoneNumber);
+          const result = await handleVerifyOtp(formData);
+          if (result.success) {
             setLoginSuccessData({userId: result.userId, redirectTo: result.redirectTo});
-        } else {
-            toast({
-                variant: "destructive",
-                title: "OTP Login Failed",
-                description: result.error || "An unknown error occurred.",
-            });
-        }
+          } else {
+            toast({ variant: "destructive", title: "OTP Login Failed", description: result.error || "An unknown error occurred." });
+          }
+      }
       
       setIsSubmitting(false);
   }
   
   return (
     <div className="flex items-center justify-center min-h-[calc(100vh-200px)]">
+      <div id="recaptcha-container"></div>
       <Card className="w-full max-w-sm">
         <CardHeader className="text-center">
           <CardTitle className="text-primary">Account Login</CardTitle>
@@ -207,4 +246,11 @@ export function LoginForm() {
       </Card>
     </div>
   );
+}
+
+// Add a declaration for the reCAPTCHA verifier on the window object
+declare global {
+  interface Window {
+    recaptchaVerifier: RecaptchaVerifier;
+  }
 }
