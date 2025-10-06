@@ -1,9 +1,8 @@
 
-
 "use client";
 
 import { useState, useEffect, useMemo, Suspense, Fragment } from "react";
-import { useSearchParams } from 'next/navigation'
+import { useSearchParams, useRouter } from 'next/navigation'
 import {
   Table,
   TableBody,
@@ -35,7 +34,6 @@ import { handleBulkUpdateLeadStatus, handleBulkDeleteLeads } from "./[id]/action
 import { getInspirationalQuotes } from "@/ai/flows/get-inspirational-quotes-flow";
 import { updateLead, getAllLeads } from "@/services/lead-service";
 import { getUser, getAllUsers } from "@/services/user-service";
-import { getAppSettings } from "@/app/admin/settings/actions";
 import { logActivity } from "@/services/activity-log-service";
 
 
@@ -126,7 +124,7 @@ export function LeadsPageClient({ initialLeads, initialUsers, initialSettings, e
     const [leads, setLeads] = useState<EnrichedLead[]>(initialLeads);
     const [users, setUsers] = useState<User[]>(initialUsers);
     const [settings, setSettings] = useState<AppSettings | null>(initialSettings);
-    const [loading, setLoading] = useState(true);
+    const [loading, setLoading] = useState(!initialSettings); // Only load if settings weren't passed
     const [error, setError] = useState<string | null>(initialError || null);
     const { toast } = useToast();
     const isMobile = useIsMobile();
@@ -166,31 +164,29 @@ export function LeadsPageClient({ initialLeads, initialUsers, initialSettings, e
             .map(p => p.name) || [];
     }, [settings]);
 
-    const fetchData = async () => {
+    const fetchData = useCallback(async () => {
         try {
             setLoading(true);
-            const [fetchedLeads, fetchedUsers, fetchedSettings] = await Promise.all([
+            const [fetchedLeads, fetchedUsers] = await Promise.all([
                 getAllLeads(),
                 getAllUsers(),
-                initialSettings ? Promise.resolve(initialSettings) : getAppSettings(), // Fetch settings only if not provided
             ]);
             setLeads(fetchedLeads);
             setUsers(fetchedUsers);
-            if(fetchedSettings) setSettings(fetchedSettings);
             setError(null);
         } catch (e) {
-            setError("Failed to fetch data. Please try again later.");
+            setError("Failed to refresh data. Please try again later.");
             console.error(e);
         } finally {
             setLoading(false);
         }
-    };
+    }, []);
 
     useEffect(() => {
         const storedAdminId = localStorage.getItem('userId');
         setAdminUserId(storedAdminId);
-        fetchData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+        // Data is now passed as props, so we can set loading to false.
+        setLoading(false);
     }, []);
 
     const usersById = useMemo(() => {
@@ -215,7 +211,7 @@ export function LeadsPageClient({ initialLeads, initialUsers, initialSettings, e
         });
     };
     
-    const handleSort = (column: SortableColumn) => {
+     const handleSort = (column: SortableColumn) => {
         if (sortColumn === column) {
             setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc');
         } else {
@@ -229,7 +225,7 @@ export function LeadsPageClient({ initialLeads, initialUsers, initialSettings, e
             const beneficiary = lead.beneficiaryId ? usersById[lead.beneficiaryId] : null;
             const nameMatch = appliedFilters.name === '' || 
                               lead.name.toLowerCase().includes(appliedFilters.name.toLowerCase()) ||
-                              lead.id?.toLowerCase().includes(appliedFilters.name.toLowerCase()) ||
+                              (lead.id && lead.id.toLowerCase().includes(appliedFilters.name.toLowerCase())) ||
                               (lead.beneficiaryId && lead.beneficiaryId.toLowerCase().includes(appliedFilters.name.toLowerCase()));
             const statusMatch = appliedFilters.status === 'all' || lead.caseStatus === appliedFilters.status;
             const verificationMatch = appliedFilters.verification === 'all' || lead.caseVerification === appliedFilters.verification;
@@ -500,11 +496,11 @@ Referral Phone:
                         <Checkbox
                             checked={paginatedLeads.length > 0 && selectedLeads.length === paginatedLeads.length}
                             onCheckedChange={(checked) => {
-                                const pageLeadIds = paginatedLeads.map(l => l.id!);
+                                const currentPageIds = paginatedLeads.map(l => l.id!);
                                 if (checked) {
-                                     setSelectedLeads(prev => [...new Set([...prev, ...pageLeadIds])]);
+                                     setSelectedLeads(prev => [...new Set([...prev, ...currentPageIds])]);
                                 } else {
-                                    setSelectedLeads(prev => prev.filter(id => !pageLeadIds.includes(id)));
+                                    setSelectedLeads(prev => prev.filter(id => !currentPageIds.includes(id)));
                                 }
                             }}
                             aria-label="Select all on current page"
@@ -629,7 +625,7 @@ Referral Phone:
 
     const renderMobileCards = () => (
     <div className="space-y-4">
-        {paginatedLeads.map((lead) => {
+        {paginatedLeads.map((lead, index) => {
             const verifConfig = verificationStatusConfig[lead.caseVerification] || defaultVerificationConfig;
             const StatusIcon = statusIcons[lead.caseStatus];
             return (
@@ -739,7 +735,7 @@ Referral Phone:
     );
 
     const renderContent = () => {
-        if (loading || !settings) {
+        if (loading) {
             return (
                 <div className="flex items-center justify-center py-10">
                     <Loader2 className="h-8 w-8 animate-spin text-primary" />

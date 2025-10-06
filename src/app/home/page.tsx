@@ -4,12 +4,9 @@
 import { Suspense, useEffect, useState } from "react";
 import { PublicHomePage } from "./public-home-page";
 import { Loader2 } from "lucide-react";
-import type { Quote, Lead, Campaign, User } from "@/services/types";
-import { getInspirationalQuotes, getOpenGeneralLeads, getPublicDashboardData } from "./home/actions";
+import type { Quote, Lead, Campaign, User, Donation } from "@/services/types";
+import { getInspirationalQuotes, getOpenGeneralLeads, getPublicDashboardData } from "./actions";
 import { useRouter } from 'next/navigation';
-import { getAllCampaigns } from "@/services/campaign-service";
-import { getAllLeads } from "@/services/lead-service";
-
 
 const LoadingState = () => (
     <div className="flex flex-col flex-1 items-center justify-center h-full">
@@ -38,21 +35,25 @@ export default function Page() {
             if (!role || !userId) {
                 setActiveRole('Guest');
                 // Fetch public data if guest
-                const [quotesData, leadsData, publicData] = await Promise.all([
-                    getQuotes(3),
-                    getOpenGeneralLeads(),
-                    getPublicDashboardData(),
-                ]);
-                setQuotes(quotesData);
-                setOpenLeads(leadsData);
-                if (publicData && !publicData.error) {
-                    const activeAndUpcomingCampaigns = (publicData.campaigns || []).filter(
-                        c => c.status === 'Active' || c.status === 'Upcoming'
-                    );
-                    setCampaigns(activeAndUpcomingCampaigns);
-                    setAllLeads(publicData.leads || []);
-                    setAllDonations(publicData.donations || []);
-                    setAllUsers(publicData.users || []);
+                try {
+                    const [quotesData, leadsData, publicData] = await Promise.all([
+                        getQuotes(3),
+                        getOpenGeneralLeads(),
+                        getPublicDashboardData(),
+                    ]);
+                    setQuotes(quotesData);
+                    setOpenLeads(leadsData);
+                    if (publicData && !publicData.error) {
+                        const activeAndUpcomingCampaigns = (publicData.campaigns || []).filter(
+                            (c: Campaign) => c.status === 'Active' || c.status === 'Upcoming'
+                        );
+                        setCampaigns(activeAndUpcomingCampaigns);
+                        setAllLeads(publicData.leads || []);
+                        setAllDonations(publicData.donations || []);
+                        setAllUsers(publicData.users || []);
+                    }
+                } catch (e) {
+                    console.error("Failed to fetch public data", e);
                 }
 
             } else {

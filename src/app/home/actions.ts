@@ -5,14 +5,22 @@ import { getAllDonations } from "@/services/donation-service";
 import { getAllLeads } from "@/services/lead-service";
 import { getAllUsers, updateUser as updateUserService, type User } from "@/services/user-service";
 import { getPublicCampaigns, getPublicLeads } from "@/services/public-data-service";
-import type { Quote, Lead } from '@/services/types';
+import type { Quote, Lead, Campaign, Donation } from '@/services/types';
 import { getInspirationalQuotes } from "@/ai/flows/get-inspirational-quotes-flow";
 
 export interface EnrichedLead extends Lead {
     beneficiary?: User;
 }
 
-export async function getPublicDashboardData() {
+interface PublicDashboardData {
+    donations: Donation[];
+    users: User[];
+    leads: Lead[];
+    campaigns: Campaign[];
+    error?: string;
+}
+
+export async function getPublicDashboardData(): Promise<PublicDashboardData> {
     try {
         const [donations, users, leads, campaigns] = await Promise.all([
             getAllDonations(),
@@ -21,14 +29,14 @@ export async function getPublicDashboardData() {
             getPublicCampaigns()
         ]);
         return {
-            donations,
-            users,
-            leads,
-            campaigns,
+            donations: JSON.parse(JSON.stringify(donations)),
+            users: JSON.parse(JSON.stringify(users)),
+            leads: JSON.parse(JSON.stringify(leads)),
+            campaigns: JSON.parse(JSON.stringify(campaigns)),
         };
     } catch (error) {
         console.error("Error fetching public dashboard data:", error);
-        return { error: "Failed to load dashboard data." };
+        return { donations: [], users: [], leads: [], campaigns: [], error: "Failed to load dashboard data." };
     }
 }
 
