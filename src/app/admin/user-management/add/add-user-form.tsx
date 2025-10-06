@@ -1,3 +1,4 @@
+
 // src/app/admin/user-management/add/add-user-form.tsx
 "use client";
 
@@ -354,6 +355,13 @@ function FormContent({ settings, isSubForm, prefilledData, onUserCreate }: AddUs
           setValue('fullName', fullNameFromParts, { shouldDirty: true });
       }
   }, [firstName, middleName, lastName, fullName, setValue]);
+  
+  useEffect(() => {
+    const suggestedId = `${(firstName || '').toLowerCase()}.${(lastName || '').toLowerCase()}`.replace(/[^a-z0-9.]/g, '');
+    if (suggestedId && suggestedId !== '.' && !formState.dirtyFields.userId) {
+        setValue('userId', suggestedId);
+    }
+  }, [firstName, lastName, setValue, formState.dirtyFields.userId]);
     
   const handleCancel = () => {
       reset(initialFormValues);

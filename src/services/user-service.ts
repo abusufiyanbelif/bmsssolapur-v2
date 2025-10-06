@@ -591,15 +591,17 @@ export const deleteUser = async (id: string, adminUser: User, isBulkOperation: b
         const donationsQuery = query(collection(db, 'donations'), where("donorId", "==", id));
         const donationsSnapshot = await getDocs(donationsQuery);
         
+        let anonymousDonor: User | null = null;
         if (!donationsSnapshot.empty) {
-            const anonymousDonor = await getUserByUserId('anonymous_donor');
+            anonymousDonor = await getUserByUserId('anonymous_donor');
             if (!anonymousDonor || !anonymousDonor.id) {
+                // If the anonymous donor doesn't exist, we can't reassign, so we must stop.
                 throw new Error("Could not find the 'anonymous_donor' system user to re-assign donations to. Please run the seeder.");
             }
             donationsSnapshot.forEach(donationDoc => {
                 batch.update(donationDoc.ref, { 
-                    donorId: anonymousDonor.id,
-                    donorName: anonymousDonor.name,
+                    donorId: anonymousDonor!.id,
+                    donorName: anonymousDonor!.name,
                     notes: arrayUnion(`Original donor (${userToDelete.name}, ID: ${id}) deleted by ${adminUser.name}.`)
                 });
             });
@@ -762,5 +764,3 @@ export async function checkAvailability(field: string, value: string): Promise<A
         return { isAvailable: false }; // Fail closed to prevent duplicates
     }
 }
-
-    
