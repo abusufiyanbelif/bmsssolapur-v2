@@ -350,10 +350,11 @@ function FormContent({ settings, isSubForm, prefilledData, onUserCreate }: AddUs
   }, [setValue, trigger]);
 
   useEffect(() => {
-      const fullNameFromParts = `${firstName || ''} ${middleName || ''} ${lastName || ''}`.replace(/\s+/g, ' ').trim();
-      if (fullNameFromParts !== fullName) {
-          setValue('fullName', fullNameFromParts, { shouldDirty: true });
-      }
+    const nameParts = [firstName, middleName, lastName].filter(Boolean);
+    const fullNameFromParts = nameParts.join(' ');
+    if (fullNameFromParts !== fullName) {
+      setValue('fullName', fullNameFromParts, { shouldDirty: true });
+    }
   }, [firstName, middleName, lastName, fullName, setValue]);
   
   useEffect(() => {
@@ -488,7 +489,7 @@ function FormContent({ settings, isSubForm, prefilledData, onUserCreate }: AddUs
                     case 'beneficiaryFirstName': setValue('firstName', value, { shouldDirty: true }); break;
                     case 'beneficiaryMiddleName': setValue('middleName', value, { shouldDirty: true }); break;
                     case 'beneficiaryLastName': setValue('lastName', value, { shouldDirty: true }); break;
-                    case 'fatherName': setValue('fatherName', value, { shouldDirty: true }); break;
+                    case 'fatherName': if (details.beneficiaryMiddleName) { setValue('fatherName', value, { shouldDirty: true }); } break;
                     case 'beneficiaryPhone': setValue('phone', value.replace(/\D/g, '').slice(-10), { shouldDirty: true, shouldValidate: true }); break;
                     case 'aadhaarNumber': setValue('aadhaarNumber', value.replace(/\D/g,''), { shouldDirty: true, shouldValidate: true }); break;
                     case 'address': setValue('addressLine1', value, { shouldDirty: true }); break;
@@ -624,7 +625,7 @@ function FormContent({ settings, isSubForm, prefilledData, onUserCreate }: AddUs
             </AccordionItem>
 
             <AccordionItem value="roles" className="border rounded-lg">
-                <AccordionTrigger className="p-4 font-semibold text-primary"><h4 className="flex items-center gap-2">Account Roles & Settings</h4></AccordionTrigger>
+                <AccordionTrigger className="p-4 font-semibold text-primary"><h4 className="flex items-center gap-2">Account Roles &amp; Settings</h4></AccordionTrigger>
                 <AccordionContent className="p-6 pt-2 space-y-6">
                     <FormField control={control} name="roles" render={() => ( <FormItem><div className="mb-4"><FormLabel className="text-base">User Roles</FormLabel><FormDescription>Select all roles that apply to this user.</FormDescription></div><div className="grid grid-cols-2 md:grid-cols-3 gap-4">{allRoles.map((role) => (<FormField key={role} control={control} name="roles" render={({ field }) => { return (<FormItem key={role} className="flex flex-row items-start space-x-3 space-y-0"><FormControl><Checkbox checked={field.value?.includes(role)} onCheckedChange={(checked) => { trigger('roles'); return checked ? field.onChange([...(field.value || []), role]) : field.onChange( field.value?.filter( (value) => value !== role))}}/></FormControl><FormLabel className="font-normal">{role}</FormLabel></FormItem> )}}/>))}</div><FormMessage /></FormItem>)}/>
                     {selectedRoles.includes("Beneficiary") && <FormField control={control} name="isAnonymousAsBeneficiary" render={({ field }) => ( <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4"><FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} /></FormControl><div className="space-y-1 leading-none"><FormLabel>Mark as Anonymous Beneficiary</FormLabel><FormDescription>If checked, their name will be hidden from public view.</FormDescription></div></FormItem>)} />}
@@ -634,7 +635,7 @@ function FormContent({ settings, isSubForm, prefilledData, onUserCreate }: AddUs
             
             {isBeneficiary && (
                  <AccordionItem value="beneficiary-details" className="border rounded-lg">
-                    <AccordionTrigger className="p-4 font-semibold text-primary"><h4 className="flex items-center gap-2"><UserIcon className="h-5 w-5"/>Family & Occupation Details</h4></AccordionTrigger>
+                    <AccordionTrigger className="p-4 font-semibold text-primary"><h4 className="flex items-center gap-2"><UserIcon className="h-5 w-5"/>Family &amp; Occupation Details</h4></AccordionTrigger>
                     <AccordionContent className="p-6 pt-2 space-y-6">
                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <FormField control={control} name="occupation" render={({ field }) => (<FormItem><FormLabel>Occupation</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)}/>
@@ -739,7 +740,7 @@ function FormContent({ settings, isSubForm, prefilledData, onUserCreate }: AddUs
                 </Button>
                 <div className='flex gap-2'>
                     <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction onClick={applyExtractedDetails}>Apply & Fill Form</AlertDialogAction>
+                    <AlertDialogAction onClick={applyExtractedDetails}>Apply &amp; Fill Form</AlertDialogAction>
                 </div>
             </AlertDialogFooter>
         </AlertDialogContent>
@@ -780,3 +781,5 @@ export function AddUserForm(props: AddUserFormProps) {
         </FormProvider>
     )
 }
+
+    
