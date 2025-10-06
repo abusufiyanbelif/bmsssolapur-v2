@@ -110,7 +110,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     
     const [user, setUser] = useState<UserType & { isLoggedIn: boolean; activeRole: string; initials: string; avatar: string; } | null>(null);
     
-    const initializeSession = useCallback(async () => {
+    const initializeSession = useCallback(async (isLoginEvent = false) => {
         const [permissionResult, orgData] = await Promise.all([
             performPermissionCheck(),
             getCurrentOrganization()
@@ -146,20 +146,36 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                     avatar: `https://placehold.co/100x100.png?text=${fetchedUser.name.split(' ').map(n => n[0]).join('').substring(0,2).toUpperCase()}`
                 };
                 setUser(userData);
+                setIsSessionReady(true);
                 
-                if (shouldShowRoleSwitcher && fetchedUser.roles.length > 1) {
-                    setIsRoleSwitcherOpen(true);
-                    localStorage.removeItem('showRoleSwitcher'); 
+                // Logic for redirection and role switcher
+                if (pathname === '/home') { // Only act if we are on the designated post-login page
+                    if (shouldShowRoleSwitcher && fetchedUser.roles.length > 1) {
+                        setIsRoleSwitcherOpen(true);
+                        localStorage.removeItem('showRoleSwitcher'); 
+                    } else {
+                        // Redirect to the correct dashboard based on the active role
+                        switch (activeRole) {
+                            case 'Donor': router.push('/donor'); break;
+                            case 'Beneficiary': router.push('/beneficiary'); break;
+                            case 'Referral': router.push('/referral'); break;
+                            case 'Admin':
+                            case 'Super Admin':
+                            case 'Finance Admin':
+                                router.push('/admin'); break;
+                            default: router.push('/'); break;
+                        }
+                    }
                 }
             } else {
                 handleLogout(false);
             }
         } else {
             setUser(guestUser);
+            setIsSessionReady(true);
         }
-        setIsSessionReady(true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
+    }, [pathname, router]);
 
     // Effect for fetching notification data separately
     useEffect(() => {
@@ -181,17 +197,20 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     useEffect(() => {
         const handleLoginSuccess = () => {
             setIsSessionReady(false); // Force re-initialization
-            initializeSession();
+            initializeSession(true);
         };
 
         window.addEventListener('loginSuccess', handleLoginSuccess);
 
-        initializeSession();
+        // Initial session check on component mount
+        if (!isSessionReady) {
+          initializeSession();
+        }
 
         return () => {
             window.removeEventListener('loginSuccess', handleLoginSuccess);
         };
-    }, [initializeSession]);
+    }, [initializeSession, isSessionReady]);
 
 
     const handleRoleChange = (newRole: string) => {
@@ -212,11 +231,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             });
         }
         
-        if(redirectUrl) {
-            window.location.href = redirectUrl;
-        } else {
-            window.location.href = '/home';
-        }
+        // This forces a reload of the app shell and ensures the correct dashboard is loaded
+        window.location.href = '/home';
     };
     
     const handleLogout = (shouldRedirect = true) => {
