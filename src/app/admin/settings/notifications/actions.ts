@@ -19,61 +19,55 @@ export async function handleUpdateNotificationSettings(
     const currentSettings = await getAppSettings();
     
     // Start with a deep copy of the existing settings to avoid overwriting nested objects
-    const newNotificationSettings = JSON.parse(JSON.stringify(currentSettings.notificationSettings || {}));
+    const newSettings = JSON.parse(JSON.stringify(currentSettings));
 
     // --- Update SMS Provider Choice ---
     if (formData.has("sms.provider")) {
         const smsProvider = formData.get("sms.provider") as 'twilio' | 'firebase';
-        // Ensure the sms object exists before trying to assign to its property
-        if (!newNotificationSettings.sms) {
-            newNotificationSettings.sms = {};
+        if (!newSettings.notificationSettings.sms) {
+            newSettings.notificationSettings.sms = {};
         }
-        newNotificationSettings.sms.provider = smsProvider;
+        newSettings.notificationSettings.sms.provider = smsProvider;
     }
 
     // --- Update Twilio SMS/OTP settings ---
-    // Check for a field unique to this form to determine if it was submitted
     if (formData.has("sms.twilio.accountSid")) {
-      newNotificationSettings.sms.twilio = {
-          accountSid: formData.get("sms.twilio.accountSid") as string || newNotificationSettings.sms?.twilio?.accountSid || '',
-          authToken: formData.get("sms.twilio.authToken") as string || newNotificationSettings.sms?.twilio?.authToken || '',
-          verifySid: formData.get("sms.twilio.verifySid") as string || newNotificationSettings.sms?.twilio?.verifySid || '',
-          fromNumber: formData.get("sms.twilio.fromNumber") as string || newNotificationSettings.sms?.twilio?.fromNumber || '',
+      newSettings.notificationSettings.sms.twilio = {
+          accountSid: formData.get("sms.twilio.accountSid") as string,
+          authToken: formData.get("sms.twilio.authToken") as string,
+          verifySid: formData.get("sms.twilio.verifySid") as string,
+          fromNumber: formData.get("sms.twilio.fromNumber") as string,
       };
     }
     
     // --- Update Twilio WhatsApp settings ---
     if (formData.has("whatsapp.twilio.fromNumber")) {
-        newNotificationSettings.whatsapp = {
-            provider: 'twilio',
-            twilio: {
-                accountSid: formData.get("whatsapp.twilio.accountSid") as string || newNotificationSettings.whatsapp?.twilio?.accountSid || '',
-                authToken: formData.get("whatsapp.twilio.authToken") as string || newNotificationSettings.whatsapp?.twilio?.authToken || '',
-                fromNumber: formData.get("whatsapp.twilio.fromNumber") as string || newNotificationSettings.whatsapp?.twilio?.fromNumber || '',
-            }
+        if(!newSettings.notificationSettings.whatsapp) {
+            newSettings.notificationSettings.whatsapp = { provider: 'twilio', twilio: {} };
+        }
+        newSettings.notificationSettings.whatsapp.twilio = {
+            accountSid: formData.get("whatsapp.twilio.accountSid") as string,
+            authToken: formData.get("whatsapp.twilio.authToken") as string,
+            fromNumber: formData.get("whatsapp.twilio.fromNumber") as string,
         };
     }
     
     // --- Update Nodemailer settings ---
     if (formData.has("email.nodemailer.host")) {
-        newNotificationSettings.email = {
-            provider: 'nodemailer',
-            nodemailer: {
-                host: formData.get("email.nodemailer.host") as string || newNotificationSettings.email?.nodemailer?.host || '',
-                port: Number(formData.get("email.nodemailer.port")) || newNotificationSettings.email?.nodemailer?.port || 587,
-                secure: formData.get("email.nodemailer.secure") === 'on',
-                user: formData.get("email.nodemailer.user") as string || newNotificationSettings.email?.nodemailer?.user || '',
-                pass: formData.get("email.nodemailer.pass") as string || newNotificationSettings.email?.nodemailer?.pass || '',
-                from: formData.get("email.nodemailer.from") as string || newNotificationSettings.email?.nodemailer?.from || '',
-            }
+        if(!newSettings.notificationSettings.email) {
+            newSettings.notificationSettings.email = { provider: 'nodemailer', nodemailer: {} };
+        }
+        newSettings.notificationSettings.email.nodemailer = {
+            host: formData.get("email.nodemailer.host") as string,
+            port: Number(formData.get("email.nodemailer.port")),
+            secure: formData.get("email.nodemailer.secure") === 'on',
+            user: formData.get("email.nodemailer.user") as string,
+            pass: formData.get("email.nodemailer.pass") as string,
+            from: formData.get("email.nodemailer.from") as string,
         };
     }
     
-    const updates = {
-      notificationSettings: newNotificationSettings
-    };
-
-    await updateAppSettings(updates);
+    await updateAppSettings({ notificationSettings: newSettings.notificationSettings });
     
     revalidatePath("/admin/settings/notifications");
 
