@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
@@ -162,7 +161,6 @@ export function LoginForm() {
   
   return (
     <div className="flex items-center justify-center min-h-[calc(100vh-200px)]">
-      <div id="recaptcha-container"></div>
       <Card className="w-full max-w-sm">
         <CardHeader className="text-center">
           <CardTitle className="text-primary">Account Login</CardTitle>
