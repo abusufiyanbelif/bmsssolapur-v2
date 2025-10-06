@@ -131,8 +131,8 @@ export const createUser = async (userData: Partial<Omit<User, 'id' | 'createdAt'
   
   try {
     const standardizedPhone = userData.phone?.replace(/\D/g, '').slice(-10) || '';
-    if (standardizedPhone.length !== 10) {
-        throw new Error("Invalid phone number provided. Must be 10 digits.");
+    if (!userData.firstName || !userData.lastName || !standardizedPhone || !userData.roles || userData.roles.length === 0) {
+        throw new Error("Critical fields are missing: First Name, Last Name, Phone, and Roles are required.");
     }
 
     if (userData.userId && (await getUserByUserId(userData.userId))) {
@@ -208,13 +208,8 @@ export const createUser = async (userData: Partial<Omit<User, 'id' | 'createdAt'
         source: userData.source || 'Manual Entry',
     };
     
-    const dataToWrite: any = { ...newUser };
-    Object.keys(dataToWrite).forEach(key => { if ((dataToWrite as any)[key] === undefined) delete (dataToWrite as any)[key]; });
-
-    await setDoc(userRef, dataToWrite);
-
     // --- Transactional File Upload ---
-    // Now that the user exists, try to upload files. If this fails, delete the user.
+    // First, upload files. If any upload fails, we stop before creating the user.
     const docUpdates: Partial<User> = {};
     const uploadPath = `users/${userKey}/documents/`;
     
@@ -225,16 +220,20 @@ export const createUser = async (userData: Partial<Omit<User, 'id' | 'createdAt'
 
         if (aadhaarUrl) docUpdates.aadhaarCardUrl = aadhaarUrl;
         
-        if (Object.keys(docUpdates).length > 0) {
-          await updateDoc(userRef, docUpdates);
-        }
     } catch (uploadError) {
-        console.error("File upload failed during user creation, rolling back user creation.", uploadError);
-        await deleteDoc(userRef); // Rollback: delete the created user
-        throw new Error("File upload failed, user creation was rolled back.");
+        console.error("File upload failed during user creation. User creation aborted.", uploadError);
+        throw new Error("File upload failed, user creation was aborted.");
     }
     
-    const finalUser = { ...newUser, ...docUpdates, id: userRef.id } as User;
+    // If file uploads succeed, proceed with creating the user document
+    const finalUserData = { ...newUser, ...docUpdates };
+
+    const dataToWrite: any = finalUserData;
+    Object.keys(dataToWrite).forEach(key => { if ((dataToWrite as any)[key] === undefined) delete (dataToWrite as any)[key]; });
+
+    await setDoc(userRef, dataToWrite);
+    
+    const finalUser = { ...finalUserData, id: userRef.id } as User;
     return finalUser;
 
   } catch (error) {

@@ -1,4 +1,5 @@
 
+
 'use server';
 
 import { createUser } from "@/services/user-service";
@@ -58,7 +59,6 @@ export async function handleAddUser(
       upiIds: formData.getAll("upiIds") as string[],
       
       aadhaarCard: formData.get("aadhaarCard") as File | null,
-      addressProof: formData.get("addressProof") as File | null,
       
       createProfile: formData.get("createProfile") === 'on',
   };
@@ -68,8 +68,6 @@ export async function handleAddUser(
   }
   
   try {
-    // The createUser function now handles the transactional creation, including file uploads.
-    // We can pass the file objects directly to the service.
     const createdUser = await createUser({
         ...rawFormData,
         name: `${rawFormData.firstName} ${rawFormData.middleName || ''} ${rawFormData.lastName}`.replace(/\s+/g, ' ').trim(),

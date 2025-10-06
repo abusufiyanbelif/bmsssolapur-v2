@@ -1,4 +1,3 @@
-
 // src/app/admin/user-management/add/add-user-form.tsx
 "use client";
 
@@ -352,10 +351,12 @@ function FormContent({ settings, isSubForm, prefilledData, onUserCreate }: AddUs
   useEffect(() => {
     const nameParts = [firstName, middleName, lastName].filter(Boolean);
     const fullNameFromParts = nameParts.join(' ');
-    if (fullNameFromParts !== fullName) {
+    if (fullNameFromParts !== fullName && formState.dirtyFields.fullName) {
+        // Only update if fullName was the field being edited
+    } else if (fullNameFromParts !== fullName) {
       setValue('fullName', fullNameFromParts, { shouldDirty: true });
     }
-  }, [firstName, middleName, lastName, fullName, setValue]);
+  }, [firstName, middleName, lastName, fullName, setValue, formState.dirtyFields.fullName]);
   
   useEffect(() => {
     const suggestedId = `${(firstName || '').toLowerCase()}.${(lastName || '').toLowerCase()}`.replace(/[^a-z0-9.]/g, '');
@@ -680,15 +681,15 @@ function FormContent({ settings, isSubForm, prefilledData, onUserCreate }: AddUs
                     <FormField control={control} name="bankName" render={({ field }) => (<FormItem><FormLabel>Bank Name</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)}/>
                     <Separator />
                      <div className="space-y-4">
-                        <FormLabel>UPI Phone Numbers</FormLabel>
+                        <FormLabel>UPI Phone Numbers (Optional)</FormLabel>
                         {upiPhoneFields.map((field, index) => (<FormField control={control} key={field.id} name={`upiPhoneNumbers.${index}.value`} render={({ field }) => (<FormItem><div className="flex items-center gap-2"><FormControl><Input {...field} placeholder="e.g., 9876543210" type="tel" maxLength={10} /></FormControl><Button type="button" variant="ghost" size="icon" onClick={() => removeUpiPhone(index)}><Trash2 className="h-4 w-4 text-destructive" /></Button></div><FormMessage /></FormItem>)}/>))}
                         <Button type="button" variant="outline" size="sm" onClick={() => appendUpiPhone({ value: "" })}><PlusCircle className="mr-2" />Add Phone</Button>
-                    </div>
+                     </div>
                      <div className="space-y-4">
-                        <FormLabel>UPI IDs</FormLabel>
+                        <FormLabel>UPI IDs (Optional)</FormLabel>
                          {upiIdFields.map((field, index) => (<FormField control={control} key={field.id} name={`upiIds.${index}.value`} render={({ field }) => (<FormItem><div className="flex items-center gap-2"><FormControl><Input {...field} placeholder="e.g., username@okhdfc" /></FormControl><Button type="button" variant="ghost" size="icon" onClick={() => removeUpiId(index)}><Trash2 className="h-4 w-4 text-destructive" /></Button></div><FormMessage /></FormItem>)}/>))}
                         <Button type="button" variant="outline" size="sm" onClick={() => appendUpiId({ value: "" })}><PlusCircle className="mr-2" />Add UPI ID</Button>
-                    </div>
+                     </div>
                 </AccordionContent>
             </AccordionItem>
           </Accordion>
@@ -781,5 +782,3 @@ export function AddUserForm(props: AddUserFormProps) {
         </FormProvider>
     )
 }
-
-    
