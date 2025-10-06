@@ -1,4 +1,3 @@
-
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -18,14 +17,15 @@ import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { handleUpdateNotificationSettings, testProviderConnection } from "./actions";
 import { useState } from "react";
-import { Loader2, Save, Wifi } from "lucide-react";
+import { Loader2, Save, Wifi, MessageSquare, Smartphone } from "lucide-react";
 import type { AppSettings } from "@/services/types";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
 const formSchema = z.object({
+  "sms.provider": z.enum(['twilio', 'firebase']).default('twilio'),
   // Twilio SMS
   "sms.twilio.accountSid": z.string().optional(),
   "sms.twilio.authToken": z.string().optional(),
@@ -60,6 +60,7 @@ export function NotificationSettingsForm({ settings }: NotificationSettingsFormP
   const form = useForm<SettingsFormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
+      "sms.provider": settings?.sms.provider ?? 'twilio',
       "sms.twilio.accountSid": settings?.sms.twilio?.accountSid ?? '',
       "sms.twilio.authToken": settings?.sms.twilio?.authToken ?? '',
       "sms.twilio.verifySid": settings?.sms.twilio?.verifySid ?? '',
@@ -76,7 +77,8 @@ export function NotificationSettingsForm({ settings }: NotificationSettingsFormP
     },
   });
 
-  const { formState: { isDirty }, handleSubmit } = form;
+  const { formState: { isDirty }, handleSubmit, watch } = form;
+  const smsProvider = watch('sms.provider');
 
   async function onSubmit(values: SettingsFormValues) {
     setIsSubmitting(true);
@@ -109,7 +111,7 @@ export function NotificationSettingsForm({ settings }: NotificationSettingsFormP
     }
   }
   
-  const handleTest = async (provider: 'twilio' | 'nodemailer') => {
+  const handleTest = async (provider: 'twilio' | 'nodemailer' | 'firebase') => {
     setTestStatus(prev => ({ ...prev, [provider]: 'loading' }));
     const result = await testProviderConnection(provider);
     if(result.success) {
@@ -126,12 +128,61 @@ export function NotificationSettingsForm({ settings }: NotificationSettingsFormP
     <Form {...form}>
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-12">
         
+        <Card>
+            <CardHeader>
+                <CardTitle className="text-primary">OTP Provider</CardTitle>
+                <CardDescription>Select which service to use for sending One-Time Passwords for phone login.</CardDescription>
+            </CardHeader>
+            <CardContent>
+                <FormField
+                    control={form.control}
+                    name="sms.provider"
+                    render={({ field }) => (
+                        <FormItem className="space-y-3">
+                        <FormControl>
+                            <RadioGroup
+                            onValueChange={field.onChange}
+                            defaultValue={field.value}
+                            className="flex flex-col space-y-2"
+                            >
+                                <FormItem className="flex items-center space-x-3 space-y-0 rounded-lg border p-4">
+                                    <FormControl><RadioGroupItem value="firebase" /></FormControl>
+                                    <FormLabel className="font-normal w-full">
+                                        <div className="flex items-center justify-between">
+                                            <div className="flex items-center gap-2">
+                                                <Smartphone className="h-5 w-5 text-primary"/>
+                                                Firebase Phone Authentication
+                                            </div>
+                                            <Badge variant="success">Recommended</Badge>
+                                        </div>
+                                        <FormDescription className="pt-2">Uses Firebase's built-in service. Includes a generous free tier (10,000/month). Requires enabling in the Firebase Console.</FormDescription>
+                                    </FormLabel>
+                                </FormItem>
+                                <FormItem className="flex items-center space-x-3 space-y-0 rounded-lg border p-4">
+                                    <FormControl><RadioGroupItem value="twilio" /></FormControl>
+                                    <FormLabel className="font-normal w-full">
+                                         <div className="flex items-center gap-2">
+                                            <MessageSquare className="h-5 w-5 text-primary"/>
+                                            Twilio SMS
+                                        </div>
+                                        <FormDescription className="pt-2">Uses your Twilio account. Requires separate billing and credentials below.</FormDescription>
+                                    </FormLabel>
+                                </FormItem>
+                            </RadioGroup>
+                        </FormControl>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                />
+            </CardContent>
+        </Card>
+
         <Accordion type="multiple" defaultValue={['sms', 'email']} className="w-full space-y-6">
             <AccordionItem value="sms" className="border rounded-lg">
-                 <AccordionTrigger className="p-4 font-semibold text-primary"><h4 className="flex items-center gap-2">Twilio for SMS (OTP)</h4></AccordionTrigger>
+                 <AccordionTrigger className="p-4 font-semibold text-primary"><h4 className="flex items-center gap-2">Twilio for SMS (OTP) &amp; WhatsApp</h4></AccordionTrigger>
                  <AccordionContent className="p-6 pt-0">
                     <div className="space-y-6">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <FormField control={form.control} name="sms.twilio.accountSid" render={({field}) => (<FormItem><FormLabel>Account SID</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
                             <FormField control={form.control} name="sms.twilio.authToken" render={({field}) => (<FormItem><FormLabel>Auth Token</FormLabel><FormControl><Input {...field} type="password" /></FormControl><FormMessage /></FormItem>)} />
                             <FormField control={form.control} name="sms.twilio.verifySid" render={({field}) => (<FormItem><FormLabel>Verify Service SID</FormLabel><FormControl><Input {...field} placeholder="VA..." /></FormControl><FormDescription>Where to find this? In your Twilio Console, navigate to **Verify -&gt; Services** and either create a new service or copy the SID (starts with &quot;VA...&quot;) from an existing one.</FormDescription><FormMessage /></FormItem>)} />
@@ -143,18 +194,7 @@ export function NotificationSettingsForm({ settings }: NotificationSettingsFormP
                     </div>
                 </AccordionContent>
             </AccordionItem>
-            <AccordionItem value="whatsapp" className="border rounded-lg">
-                 <AccordionTrigger className="p-4 font-semibold text-primary"><h4 className="flex items-center gap-2">Twilio for WhatsApp</h4></AccordionTrigger>
-                 <AccordionContent className="p-6 pt-0">
-                    <div className="space-y-6">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <FormField control={form.control} name="whatsapp.twilio.accountSid" render={({field}) => (<FormItem><FormLabel>Account SID</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
-                            <FormField control={form.control} name="whatsapp.twilio.authToken" render={({field}) => (<FormItem><FormLabel>Auth Token</FormLabel><FormControl><Input {...field} type="password" /></FormControl><FormMessage /></FormItem>)} />
-                            <FormField control={form.control} name="whatsapp.twilio.fromNumber" render={({field}) => (<FormItem><FormLabel>From WhatsApp Number</FormLabel><FormControl><Input {...field} placeholder="whatsapp:+1..." /></FormControl><FormMessage /></FormItem>)} />
-                        </div>
-                    </div>
-                </AccordionContent>
-            </AccordionItem>
+            
              <AccordionItem value="email" className="border rounded-lg">
                  <AccordionTrigger className="p-4 font-semibold text-primary"><h4 className="flex items-center gap-2">Nodemailer for Email</h4></AccordionTrigger>
                  <AccordionContent className="p-6 pt-0">
@@ -168,7 +208,7 @@ export function NotificationSettingsForm({ settings }: NotificationSettingsFormP
                             <FormField control={form.control} name="email.nodemailer.user" render={({field}) => ( <FormItem><FormLabel>SMTP User</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem> )} />
                             <FormField control={form.control} name="email.nodemailer.pass" render={({field}) => ( <FormItem><FormLabel>SMTP Password</FormLabel><FormControl><Input {...field} type="password" /></FormControl><FormMessage /></FormItem> )} />
                         </div>
-                        <FormField control={form.control} name="email.nodemailer.from" render={({field}) => ( <FormItem><FormLabel>From Email Address</FormLabel><FormControl><Input {...field} placeholder='"Your Org Name" <email@your-domain.com>' /></FormControl><FormMessage /></FormItem> )} />
+                        <FormField control={form.control} name="email.nodemailer.from" render={({field}) => ( <FormItem><FormLabel>From Email Address</FormLabel><FormControl><Input {...field} placeholder='"Your Org Name" &lt;email@your-domain.com&gt;' /></FormControl><FormMessage /></FormItem> )} />
                         <Button type="button" variant="secondary" onClick={() => handleTest('nodemailer')} disabled={testStatus['nodemailer'] === 'loading'}>
                             {testStatus['nodemailer'] === 'loading' ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Wifi className="mr-2 h-4 w-4"/>} Test Nodemailer Connection
                         </Button>

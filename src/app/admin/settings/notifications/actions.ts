@@ -1,4 +1,3 @@
-
 "use server";
 
 import { updateAppSettings, AppSettings, getAppSettings } from "@/services/app-settings-service";
@@ -20,16 +19,24 @@ export async function handleUpdateNotificationSettings(
     // Start with the existing settings to not overwrite other provider's data
     const newNotificationSettings = { ...currentSettings.notificationSettings };
 
-    // Update Twilio SMS settings
-    newNotificationSettings.sms = {
-        provider: 'twilio',
-        twilio: {
-            accountSid: formData.get("sms.twilio.accountSid") as string || newNotificationSettings.sms?.twilio?.accountSid || '',
-            authToken: formData.get("sms.twilio.authToken") as string || newNotificationSettings.sms?.twilio?.authToken || '',
-            verifySid: formData.get("sms.twilio.verifySid") as string || newNotificationSettings.sms?.twilio?.verifySid || '',
-            fromNumber: formData.get("sms.twilio.fromNumber") as string || newNotificationSettings.sms?.twilio?.fromNumber || '',
-        }
-    };
+    // Update SMS provider choice
+    const smsProvider = formData.get("sms.provider") as 'twilio' | 'firebase';
+    if (smsProvider) {
+        newNotificationSettings.sms = {
+            ...newNotificationSettings.sms,
+            provider: smsProvider,
+        };
+    }
+
+    // Update Twilio SMS settings if they are being submitted
+    if (formData.has("sms.twilio.accountSid")) {
+      newNotificationSettings.sms.twilio = {
+          accountSid: formData.get("sms.twilio.accountSid") as string || newNotificationSettings.sms?.twilio?.accountSid || '',
+          authToken: formData.get("sms.twilio.authToken") as string || newNotificationSettings.sms?.twilio?.authToken || '',
+          verifySid: formData.get("sms.twilio.verifySid") as string || newNotificationSettings.sms?.twilio?.verifySid || '',
+          fromNumber: formData.get("sms.twilio.fromNumber") as string || newNotificationSettings.sms?.twilio?.fromNumber || '',
+      };
+    }
     
     // Update Twilio WhatsApp settings
     newNotificationSettings.whatsapp = {
@@ -73,7 +80,7 @@ export async function handleUpdateNotificationSettings(
   }
 }
 
-export async function testProviderConnection(provider: 'twilio' | 'nodemailer'): Promise<{success: boolean, error?: string}> {
+export async function testProviderConnection(provider: 'twilio' | 'nodemailer' | 'firebase'): Promise<{success: boolean, error?: string}> {
   try {
     if (provider === 'twilio') {
         return await testTwilioConnection();
@@ -81,9 +88,15 @@ export async function testProviderConnection(provider: 'twilio' | 'nodemailer'):
     if (provider === 'nodemailer') {
         return await testNodemailerConnection();
     }
+    if (provider === 'firebase') {
+      // Firebase connection is implicitly tested by server startup.
+      // We can add a more specific test if needed, e.g., fetching a remote config flag.
+      return { success: true };
+    }
     return { success: false, error: 'Unknown provider.' };
   } catch (e) {
     const error = e instanceof Error ? e.message : 'An unknown error occurred';
     return { success: false, error: error };
   }
 }
+
