@@ -97,7 +97,7 @@ export async function handleSendOtp(phoneNumber: string): Promise<OtpState> {
         }
 
         const settings = await getAppSettings();
-        const otpProvider = settings?.notificationSettings?.sms.provider || 'twilio';
+        const otpProvider = settings?.notificationSettings?.sms.provider || 'firebase';
 
         if (otpProvider === 'firebase') {
             // For Firebase, we just confirm the user exists and tell the client to proceed.
@@ -298,5 +298,3 @@ export async function handleFirebaseOtpLogin(uid: string, phoneNumber: string | 
         return { success: false, error };
     }
 }
-
-    
