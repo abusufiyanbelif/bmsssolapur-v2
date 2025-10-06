@@ -25,6 +25,7 @@ import { Input } from "@/components/ui/input";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
 
 const otpProviderSchema = z.object({
   "sms.provider": z.enum(['twilio', 'firebase']).default('firebase'),
