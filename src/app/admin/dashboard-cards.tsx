@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
@@ -64,7 +65,7 @@ export const MainMetricsCard = ({ allDonations = [], allLeads = [] }: { allDonat
                 <CardWrapper href={metric.href} key={metric.title} isClickable={true}>
                     <Card className="h-full transition-all hover:shadow-md hover:border-primary/50">
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">{metric.title}</CardTitle>
+                        <CardTitle className="text-sm font-medium text-primary">{metric.title}</CardTitle>
                         <metric.icon className="h-4 w-4 text-muted-foreground" />
                         </CardHeader>
                         <CardContent>
@@ -88,7 +89,7 @@ export const FundsInHandCard = ({ allDonations = [], allLeads = [] }: { allDonat
         <Link href="/admin/donations">
             <Card className="h-full transition-all hover:shadow-md hover:border-primary/50 bg-primary/10">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Funds in Hand</CardTitle>
+                <CardTitle className="text-sm font-medium text-primary">Funds in Hand</CardTitle>
                 <Banknote className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
@@ -111,7 +112,7 @@ export const OrganizationFundsCard = ({ allDonations = [] }: { allDonations: Don
         <Link href="/admin/donations?purpose=To+Organization+Use">
             <Card className="h-full transition-all hover:shadow-md hover:border-accent/50 bg-accent/10">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Organization Support Funds</CardTitle>
+                    <CardTitle className="text-sm font-medium text-primary">Organization Support Funds</CardTitle>
                     <Building className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
@@ -137,7 +138,7 @@ export const MonthlyContributorsCard = ({ allUsers = [] }: { allUsers: User[] })
         <Link href="/admin/donors">
             <Card className="h-full transition-all hover:shadow-md hover:border-primary/50">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Monthly Contributors</CardTitle>
+                <CardTitle className="text-sm font-medium text-primary">Monthly Contributors</CardTitle>
                 <Repeat className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
@@ -163,7 +164,7 @@ export const MonthlyPledgeCard = ({ allUsers = [] }: { allUsers: User[] }) => {
          <Link href="/admin/donors">
             <Card className="h-full transition-all hover:shadow-md hover:border-primary/50">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Total Monthly Pledge</CardTitle>
+                <CardTitle className="text-sm font-medium text-primary">Total Monthly Pledge</CardTitle>
                 <DollarSign className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
@@ -355,7 +356,7 @@ export const TopDonorsCard = ({ allDonations = [] }: { allDonations: Donation[] 
     return (
         <Card className="col-span-4 md:col-span-3">
             <CardHeader>
-                <CardTitle className="font-headline">Top Donors</CardTitle>
+                <CardTitle className="font-headline text-primary">Top Donors</CardTitle>
                 <CardDescription>Our most generous supporters. Thank you for your contributions!</CardDescription>
             </CardHeader>
             <CardContent>
@@ -416,8 +417,8 @@ export const RecentCampaignsCard = ({ allCampaigns = [], allLeads = [] }: { allC
     return (
         <Card>
         <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-                <Megaphone className="text-primary"/>
+            <CardTitle className="flex items-center gap-2 text-primary">
+                <Megaphone/>
                 Active &amp; Recent Campaigns
             </CardTitle>
             <CardDescription>
@@ -517,7 +518,7 @@ export const LeadBreakdownCard = ({ allLeads }: { allLeads: Lead[] }) => {
     return (
         <Card className="col-span-3">
             <CardHeader>
-                <CardTitle className="flex items-center gap-2 font-headline">
+                <CardTitle className="flex items-center gap-2 font-headline text-primary">
                     <FileText />
                     Lead Purpose Breakdown
                 </CardTitle>
@@ -577,7 +578,7 @@ export const TopDonationsCard = ({ allDonations = [], isPublicView = false }: { 
     return (
         <Card>
             <CardHeader>
-                <CardTitle className="font-headline">Top Donations</CardTitle>
+                <CardTitle className="font-headline text-primary">Top Donations</CardTitle>
                 <CardDescription>The largest recent contributions to our cause.</CardDescription>
             </CardHeader>
             <CardContent>
@@ -667,7 +668,7 @@ export const BeneficiaryBreakdownCard = ({ allUsers, allLeads, isAdmin }: { allU
     return (
         <Card>
             <CardHeader>
-                <CardTitle className="font-headline flex items-center gap-2">
+                <CardTitle className="font-headline flex items-center gap-2 text-primary">
                     <Users /> Beneficiaries Helped
                 </CardTitle>
                  <CardDescription>Breakdown of unique beneficiaries who have received aid.</CardDescription>
@@ -710,7 +711,7 @@ export const CampaignBreakdownCard = ({ allCampaigns }: { allCampaigns: Campaign
     return (
         <Card>
             <CardHeader>
-                <CardTitle className="font-headline flex items-center gap-2">
+                <CardTitle className="font-headline flex items-center gap-2 text-primary">
                     <Megaphone /> Campaigns Overview
                 </CardTitle>
                  <CardDescription>A summary of our fundraising campaigns.</CardDescription>
@@ -758,7 +759,7 @@ export const DonationTypeCard = ({ donations: allDonations, isPublicView = false
     return (
         <Card className="col-span-3">
             <CardHeader>
-                <CardTitle className="font-headline flex items-center gap-2">
+                <CardTitle className="font-headline flex items-center gap-2 text-primary">
                     <HandHeart /> Donation Types Received
                 </CardTitle>
                 <CardDescription>Total amounts received per donation category.</CardDescription>
@@ -807,7 +808,7 @@ export const ReferralSummaryCard = ({ allUsers, allLeads, currentUser }: { allUs
     return (
          <Card>
             <CardHeader>
-                <CardTitle className="font-headline flex items-center gap-2">
+                <CardTitle className="font-headline flex items-center gap-2 text-primary">
                     <Users /> Referral Impact
                 </CardTitle>
                 <CardDescription>Summary of all beneficiaries referred to the organization.</CardDescription>

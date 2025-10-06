@@ -113,7 +113,7 @@ export function BeneficiaryDashboardContent({ cases, quotes, settings }: { cases
                     <TableHead>Purpose</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead className="w-[30%]">Funding Progress</TableHead>
-                    <TableHead className="text-right">Amount Requested</TableHead>
+                    <TableHead className="text-right">Amount Req.</TableHead>
                 </TableRow>
             </TableHeader>
             <TableBody>
@@ -124,7 +124,7 @@ export function BeneficiaryDashboardContent({ cases, quotes, settings }: { cases
                     const caseStatus = caseItem.caseStatus || 'Pending';
                     return (
                         <TableRow key={caseItem.id}>
-                            <TableCell>{format(caseItem.createdAt, "dd MMM yyyy")}</TableCell>
+                            <TableCell>{format(caseItem.dateCreated, "dd MMM yyyy")}</TableCell>
                             <TableCell>{caseItem.purpose}{caseItem.category && ` (${caseItem.category})`}</TableCell>
                             <TableCell>
                                 <Badge variant="outline" className={cn("capitalize", statusColors[caseStatus as LeadStatus])}>
@@ -161,7 +161,7 @@ export function BeneficiaryDashboardContent({ cases, quotes, settings }: { cases
                         <CardHeader>
                             <div className="flex justify-between items-start">
                                 <div>
-                                    <CardTitle className="text-lg">For: {caseItem.purpose}</CardTitle>
+                                    <CardTitle className="text-lg text-primary">For: {caseItem.purpose}</CardTitle>
                                     <CardDescription>Submitted: {format(caseItem.createdAt, "dd MMM yyyy")}</CardDescription>
                                 </div>
                                 <Badge variant="outline" className={cn("capitalize", statusColors[caseStatus as LeadStatus])}>
@@ -226,7 +226,7 @@ export function BeneficiaryDashboardContent({ cases, quotes, settings }: { cases
             <InspirationalQuotes quotes={quotes} loading={false} />
             <Card>
                 <CardHeader>
-                    <CardTitle>Organization Impact</CardTitle>
+                    <CardTitle className="text-primary">Organization Impact</CardTitle>
                     <CardDescription>A real-time overview of our collective efforts.</CardDescription>
                 </CardHeader>
                 <CardContent className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -238,7 +238,7 @@ export function BeneficiaryDashboardContent({ cases, quotes, settings }: { cases
                                 <div className="p-4 border rounded-lg h-full hover:bg-muted transition-colors">
                                     <metric.icon className="h-6 w-6 text-muted-foreground mb-2" />
                                     <p className="text-2xl font-bold">{metric.value}</p>
-                                    <p className="text-sm font-medium text-foreground">{metric.title}</p>
+                                    <p className="text-sm font-medium text-primary">{metric.title}</p>
                                 </div>
                             </Link>
                         ))
@@ -249,7 +249,7 @@ export function BeneficiaryDashboardContent({ cases, quotes, settings }: { cases
             {dashboardSettings?.beneficiarySummary?.visibleTo.includes('Beneficiary') && (
                 <Card>
                     <CardHeader>
-                        <CardTitle>My Personal Summary</CardTitle>
+                        <CardTitle className="text-primary">My Personal Summary</CardTitle>
                         <CardDescription>Your personal history and status with our organization.</CardDescription>
                     </CardHeader>
                     <CardContent className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -271,8 +271,8 @@ export function BeneficiaryDashboardContent({ cases, quotes, settings }: { cases
             <CardHeader>
                 <div className="flex justify-between items-start">
                     <div>
-                        <CardTitle className="flex items-center gap-2">
-                            <FileText className="text-primary" />
+                        <CardTitle className="flex items-center gap-2 text-primary">
+                            <FileText />
                             My Case History
                         </CardTitle>
                         <CardDescription>
@@ -324,8 +324,8 @@ function InspirationalQuotes({ quotes, loading }: { quotes: Quote[], loading: bo
         return (
              <Card>
                 <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                        <QuoteIcon className="text-primary" />
+                    <CardTitle className="flex items-center gap-2 text-primary">
+                        <QuoteIcon />
                         Wisdom & Reflection
                     </CardTitle>
                 </CardHeader>
@@ -343,17 +343,17 @@ function InspirationalQuotes({ quotes, loading }: { quotes: Quote[], loading: bo
     return (
         <Card>
             <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                    <QuoteIcon className="text-primary" />
+                <CardTitle className="flex items-center gap-2 text-primary">
+                    <QuoteIcon />
                     Wisdom & Reflection
                 </CardTitle>
             </CardHeader>
             <CardContent>
                 <div className="space-y-6">
                     {quotes.map((quote, index) => (
-                        <blockquote key={index} className="border-l-2 pl-4 italic text-sm">
+                        <blockquote key={index} className="border-l-2 pl-4 italic text-sm text-muted-foreground">
                             <p>&quot;{quote.text}&quot;</p>
-                            <cite className="block text-right not-italic text-xs text-muted-foreground mt-1">— {quote.source}</cite>
+                            <cite className="block text-right not-italic text-xs mt-1">— {quote.source}</cite>
                         </blockquote>
                     ))}
                 </div>
