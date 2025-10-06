@@ -10,7 +10,8 @@ import { Progress } from '@/components/ui/progress';
 import { useEffect, useState, useMemo } from "react";
 import { useRouter } from 'next/navigation';
 import { getQuotes, getOpenGeneralLeads, getPublicDashboardData } from "./actions";
-import { RecentCampaignsCard, PublicMainMetricsCard, TopDonationsCard, BeneficiaryBreakdownCard, CampaignBreakdownCard, DonationTypeCard } from "@/app/admin/dashboard-cards";
+import { RecentCampaignsCard, TopDonationsCard, BeneficiaryBreakdownCard, CampaignBreakdownCard, DonationTypeCard } from "@/app/admin/dashboard-cards";
+import { PublicMainMetricsCard } from "./public-dashboard-cards";
 
 
 function InspirationalQuotes({ quotes }: { quotes: Quote[] }) {
