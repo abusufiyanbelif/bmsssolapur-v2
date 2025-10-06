@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
@@ -180,8 +179,13 @@ export function LoginForm() {
             <TabsContent value="otp">
                 <form className="space-y-6 pt-4" onSubmit={onVerifyOtpSubmit}>
                     <div className="space-y-2">
-                      <Label htmlFor="phone">Phone Number (10 digits)</Label>
-                      <Input id="phone" name="phone" type="tel" placeholder="9876543210" maxLength={10} required disabled={isOtpSent || isOtpSending} />
+                      <Label htmlFor="phone">Phone Number</Label>
+                       <div className="flex items-center">
+                        <span className="inline-flex items-center px-3 rounded-l-md border border-r-0 border-input bg-background text-muted-foreground sm:text-sm h-10">
+                            +91
+                        </span>
+                        <Input id="phone" name="phone" type="tel" placeholder="9876543210" maxLength={10} required disabled={isOtpSent || isOtpSending} className="rounded-l-none" />
+                       </div>
                     </div>
                     
                     {isOtpSent && (
