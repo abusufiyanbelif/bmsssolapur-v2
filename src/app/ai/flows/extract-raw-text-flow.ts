@@ -1,3 +1,4 @@
+
 'use server';
 /**
  * @fileOverview A Genkit flow for extracting raw text from an image or PDF.
@@ -23,12 +24,16 @@ export const extractRawTextFlow = ai.defineFlow(
   async (input) => {
     
     const mediaParts = input.photoDataUris.map(uri => ({ media: { url: uri } }));
-    
-    // Use flash model for speed and cost-effectiveness in OCR tasks.
-    const modelName = await getSafeGeminiModel('models/gemini-1.5-flash-latest');
+
+    // Determine the best model based on the content type.
+    // Use gemini-1.5-pro for PDFs as it's better for complex documents, and flash for images for speed.
+    const isPdf = input.photoDataUris.some(uri => uri.startsWith('data:application/pdf'));
+    const modelName = await getSafeGeminiModel(
+      isPdf ? 'gemini-1.5-pro-latest' : 'gemini-1.5-flash-latest'
+    );
     
     try {
-        console.log(`🔄 Trying ${modelName} for extractRawText...`);
+        console.log(`🔄 Trying ${modelName} for extractRawText on ${isPdf ? 'PDF' : 'Image'}...`);
         const llmResponse = await ai.generate({
             model: googleAI.model(modelName),
             prompt: [

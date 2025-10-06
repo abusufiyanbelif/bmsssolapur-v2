@@ -1,5 +1,4 @@
 
-
 "use server";
 
 import { updateCampaign, getCampaign, createCampaign } from "@/services/campaign-service";
@@ -7,7 +6,7 @@ import { revalidatePath } from "next/cache";
 import { CampaignStatus, DonationType, Lead, User, Campaign } from "@/services/types";
 import { updatePublicCampaign, enrichCampaignWithPublicStats } from "@/services/public-data-service";
 import { uploadFile } from "@/services/storage-service";
-import { createLead } from "@/services/lead-service";
+import { createLead as createLeadService } from "@/services/lead-service";
 import { getUser } from "@/services/user-service";
 import { writeBatch } from "firebase/firestore";
 import { db } from "@/services/firebase";
@@ -93,9 +92,7 @@ export async function handleUpdateCampaign(campaignId: string, formData: FormDat
                 helpRequested: fixedAmountPerBeneficiary > 0 ? fixedAmountPerBeneficiary : 0,
                 caseDetails: `This case was automatically generated for the "${campaignUpdateData.name}" campaign.`,
             };
-            // Create a ref for the new lead doc to add to the batch
-            const newLeadRef = doc(db, "leads", `${beneficiary.userKey}_${Math.random().toString(36).substring(2, 7)}_${new Date().toISOString().split('T')[0]}`);
-            batch.set(newLeadRef, newLeadData);
+            await createLeadService(newLeadData, adminUser);
         }
 
         await batch.commit();

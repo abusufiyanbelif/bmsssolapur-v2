@@ -17,21 +17,23 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { handleUpdateNotificationSettings, testProviderConnection } from "./actions";
-import { useState } from "react";
-import { Loader2, Save, Wifi, MessageSquare, Smartphone, CheckCircle, Edit, X } from "lucide-react";
+import { useState, useMemo } from "react";
+import { Loader2, Save, Wifi, MessageSquare, Smartphone, CheckCircle, Edit, X, AlertTriangle } from "lucide-react";
 import type { AppSettings } from "@/services/types";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
+
+// Define Zod schemas for each section
 const otpSchema = z.object({ "sms.provider": z.enum(['twilio', 'firebase']) });
 const twilioSmsSchema = z.object({
   "sms.twilio.enabled": z.boolean().default(false),
   "sms.twilio.accountSid": z.string().optional(),
   "sms.twilio.authToken": z.string().optional(),
   "sms.twilio.verifySid": z.string().optional(),
-  "sms.twilio.fromNumber": z.string().optional(),
 });
 const twilioWhatsappSchema = z.object({
   "whatsapp.twilio.enabled": z.boolean().default(false),
@@ -48,6 +50,7 @@ const nodemailerSchema = z.object({
 });
 
 
+// A generic component for each settings section
 interface SectionFormProps<T extends z.ZodType<any, any>> {
     title: string;
     description?: string;
@@ -56,9 +59,10 @@ interface SectionFormProps<T extends z.ZodType<any, any>> {
     children: (form: UseFormReturn<z.infer<T>>) => React.ReactNode;
     onSave: (data: z.infer<T>) => Promise<void>;
     testAction?: () => Promise<void>;
+    isOtpLoginEnabled?: boolean;
 }
 
-function SectionForm<T extends z.ZodType<any, any>>({ title, description, schema, defaultValues, children, onSave, testAction }: SectionFormProps<T>) {
+function SectionForm<T extends z.ZodType<any, any>>({ title, description, schema, defaultValues, children, onSave, testAction, isOtpLoginEnabled }: SectionFormProps<T>) {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isTesting, setIsTesting] = useState(false);
     
@@ -72,7 +76,7 @@ function SectionForm<T extends z.ZodType<any, any>>({ title, description, schema
     const onSubmit = async (values: z.infer<T>) => {
         setIsSubmitting(true);
         await onSave(values);
-        reset(values); // Reset dirty state after successful save
+        reset(values);
         setIsSubmitting(false);
     };
 
@@ -92,6 +96,16 @@ function SectionForm<T extends z.ZodType<any, any>>({ title, description, schema
                         {description && <CardDescription>{description}</CardDescription>}
                     </CardHeader>
                     <CardContent className="space-y-6">
+                        {/* Special warning for OTP Provider section */}
+                        {title === "OTP Provider" && isOtpLoginEnabled === false && (
+                            <Alert variant="warning">
+                                <AlertTriangle className="h-4 w-4" />
+                                <AlertTitle>Master Switch Disabled</AlertTitle>
+                                <AlertDescription>
+                                    The main &quot;OTP (SMS) Login&quot; feature is currently disabled. Your selection here will have no effect until you enable it in <Link href="/admin/settings" className="font-semibold underline">General Settings</Link>.
+                                </AlertDescription>
+                            </Alert>
+                        )}
                         {children(form)}
                     </CardContent>
                     <CardFooter className="gap-2">
@@ -114,12 +128,15 @@ function SectionForm<T extends z.ZodType<any, any>>({ title, description, schema
     );
 }
 
+
 interface NotificationSettingsFormProps {
-    settings?: AppSettings['notificationSettings'];
+    settings: AppSettings;
 }
 
 export function NotificationSettingsForm({ settings }: NotificationSettingsFormProps) {
   const { toast } = useToast();
+  const notificationSettings = settings?.notificationSettings || {};
+  const isOtpLoginEnabled = settings?.loginMethods?.otp.enabled;
 
   const handleSave = async (data: any) => {
     const formData = new FormData();
@@ -158,15 +175,15 @@ export function NotificationSettingsForm({ settings }: NotificationSettingsFormP
       }
   }
 
-
   return (
     <div className="space-y-12">
         <SectionForm
             title="OTP Provider"
             description="Select which service to use for sending One-Time Passwords for phone logins."
             schema={otpSchema}
-            defaultValues={{ "sms.provider": settings?.sms?.provider || 'firebase' }}
+            defaultValues={{ "sms.provider": notificationSettings.sms?.provider || 'firebase' }}
             onSave={handleSave}
+            isOtpLoginEnabled={isOtpLoginEnabled}
         >
           {(form) => (
             <FormField control={form.control} name="sms.provider" render={({ field }) => (
@@ -181,14 +198,15 @@ export function NotificationSettingsForm({ settings }: NotificationSettingsFormP
         </SectionForm>
 
         <SectionForm
-            title="Twilio for SMS (OTP)"
-            schema={twilioSmsSchema}
+            title="Twilio for SMS & WhatsApp"
+            schema={twilioSmsSchema.merge(twilioWhatsappSchema)}
             defaultValues={{
-                "sms.twilio.enabled": settings?.sms?.twilio?.enabled ?? false,
-                "sms.twilio.accountSid": settings?.sms?.twilio?.accountSid ?? '',
-                "sms.twilio.authToken": settings?.sms?.twilio?.authToken ?? '',
-                "sms.twilio.verifySid": settings?.sms?.twilio?.verifySid ?? '',
-                "sms.twilio.fromNumber": settings?.sms?.twilio?.fromNumber ?? '',
+                "sms.twilio.enabled": notificationSettings.sms?.twilio?.enabled ?? false,
+                "sms.twilio.accountSid": notificationSettings.sms?.twilio?.accountSid ?? '',
+                "sms.twilio.authToken": notificationSettings.sms?.twilio?.authToken ?? '',
+                "sms.twilio.verifySid": notificationSettings.sms?.twilio?.verifySid ?? '',
+                "whatsapp.twilio.enabled": notificationSettings.whatsapp?.twilio?.enabled ?? false,
+                "whatsapp.twilio.fromNumber": notificationSettings.whatsapp?.twilio?.fromNumber ?? '',
             }}
             onSave={handleSave}
             testAction={() => handleTest('twilio')}
@@ -201,29 +219,13 @@ export function NotificationSettingsForm({ settings }: NotificationSettingsFormP
                         <FormField control={form.control} name="sms.twilio.accountSid" render={({field}) => (<FormItem><FormLabel>Account SID</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
                         <FormField control={form.control} name="sms.twilio.authToken" render={({field}) => (<FormItem><FormLabel>Auth Token</FormLabel><FormControl><Input {...field} type="password" /></FormControl><FormMessage /></FormItem>)} />
                         <FormField control={form.control} name="sms.twilio.verifySid" render={({field}) => (<FormItem><FormLabel>Verify Service SID</FormLabel><FormControl><Input {...field} placeholder="VA..." /></FormControl><FormDescription>Found under **Verify &gt; Services** in your Twilio Console.</FormDescription><FormMessage /></FormItem>)} />
-                        <FormField control={form.control} name="sms.twilio.fromNumber" render={({field}) => (<FormItem><FormLabel>From Phone Number (for OTP)</FormLabel><FormControl><Input {...field} placeholder="+1..." /></FormControl><FormMessage /></FormItem>)} />
                     </div>
                 </fieldset>
-             </>
-          )}
-        </SectionForm>
-        
-        <SectionForm
-            title="Twilio for WhatsApp"
-            schema={twilioWhatsappSchema}
-            defaultValues={{
-                "whatsapp.twilio.enabled": settings?.whatsapp?.twilio?.enabled ?? false,
-                "whatsapp.twilio.fromNumber": settings?.whatsapp?.twilio?.fromNumber ?? '',
-            }}
-            onSave={handleSave}
-            testAction={() => handleTest('twilio')}
-        >
-          {(form) => (
-             <>
-                 <FormField control={form.control} name="whatsapp.twilio.enabled" render={({ field }) => (<FormItem className="flex flex-row items-center justify-between rounded-lg border p-4"><div className="space-y-0.5"><FormLabel className="text-base">Enable Twilio for WhatsApp</FormLabel></div><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>)} />
-                  <fieldset disabled={!form.watch('whatsapp.twilio.enabled')} className="space-y-6">
-                      <FormField control={form.control} name="whatsapp.twilio.fromNumber" render={({field}) => (<FormItem><FormLabel>From WhatsApp Number</FormLabel><FormControl><Input {...field} placeholder="whatsapp:+1..." /></FormControl><FormMessage /></FormItem>)} />
-                 </fieldset>
+                <Separator />
+                <FormField control={form.control} name="whatsapp.twilio.enabled" render={({ field }) => (<FormItem className="flex flex-row items-center justify-between rounded-lg border p-4"><div className="space-y-0.5"><FormLabel className="text-base">Enable Twilio for WhatsApp</FormLabel></div><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>)} />
+                 <fieldset disabled={!form.watch('whatsapp.twilio.enabled')} className="space-y-6">
+                     <FormField control={form.control} name="whatsapp.twilio.fromNumber" render={({field}) => (<FormItem><FormLabel>From WhatsApp Number</FormLabel><FormControl><Input {...field} placeholder="whatsapp:+1..." /></FormControl><FormMessage /></FormItem>)} />
+                </fieldset>
              </>
           )}
         </SectionForm>
@@ -232,13 +234,13 @@ export function NotificationSettingsForm({ settings }: NotificationSettingsFormP
             title="Nodemailer for Email"
             schema={nodemailerSchema}
             defaultValues={{
-                "email.nodemailer.enabled": settings?.email?.nodemailer?.enabled ?? false,
-                "email.nodemailer.host": settings?.email?.nodemailer?.host ?? '',
-                "email.nodemailer.port": settings?.email?.nodemailer?.port ?? 587,
-                "email.nodemailer.secure": settings?.email?.nodemailer?.secure ?? true,
-                "email.nodemailer.user": settings?.email?.nodemailer?.user ?? '',
-                "email.nodemailer.pass": settings?.email?.nodemailer?.pass ?? '',
-                "email.nodemailer.from": settings?.email?.nodemailer?.from ?? '',
+                "email.nodemailer.enabled": notificationSettings.email?.nodemailer?.enabled ?? false,
+                "email.nodemailer.host": notificationSettings.email?.nodemailer?.host ?? '',
+                "email.nodemailer.port": notificationSettings.email?.nodemailer?.port ?? 587,
+                "email.nodemailer.secure": notificationSettings.email?.nodemailer?.secure ?? true,
+                "email.nodemailer.user": notificationSettings.email?.nodemailer?.user ?? '',
+                "email.nodemailer.pass": notificationSettings.email?.nodemailer?.pass ?? '',
+                "email.nodemailer.from": notificationSettings.email?.nodemailer?.from ?? '',
             }}
             onSave={handleSave}
             testAction={() => handleTest('nodemailer')}

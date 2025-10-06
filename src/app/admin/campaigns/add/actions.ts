@@ -6,12 +6,12 @@
 import { createCampaign, getCampaign } from "@/services/campaign-service";
 import { revalidatePath } from "next/cache";
 import { CampaignStatus, DonationType, Lead, Donation, Campaign, User } from "@/services/types";
-import { Timestamp, writeBatch } from "firebase/firestore";
+import { Timestamp, writeBatch, collection } from "firebase/firestore";
 import { db } from "@/services/firebase";
 import { doc } from "firebase/firestore";
 import { updatePublicCampaign, enrichCampaignWithPublicStats } from '@/services/public-data-service';
 import { uploadFile } from "@/services/storage-service";
-import { createLead } from "@/services/lead-service";
+import { createLead as createLeadService } from "@/services/lead-service";
 import { getUser } from "@/services/user-service";
 
 
@@ -99,9 +99,8 @@ export async function handleCreateCampaign(formData: FormData): Promise<FormStat
               helpRequested: fixedAmountPerBeneficiary > 0 ? fixedAmountPerBeneficiary : 0,
               caseDetails: `This case was automatically generated for the "${newCampaign.name}" campaign.`,
           };
-          const newLeadRef = doc(collection(db, "leads"));
-          batch.set(newLeadRef, leadData);
-          linkedLeadIds.push(newLeadRef.id);
+          const createdLead = await createLeadService(leadData, adminUser);
+          linkedLeadIds.push(createdLead.id); // Add the new lead ID to the list
       }
     }
     // --- End auto lead creation ---
@@ -149,7 +148,7 @@ export async function handleCreateCampaign(formData: FormData): Promise<FormStat
     // Return the clean, specific error message from the service
     return {
       success: false,
-      error: error,
+      error: error.message,
     };
   }
 }

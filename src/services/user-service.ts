@@ -1,5 +1,4 @@
 
-
 /**
  * @fileOverview User service for interacting with Firestore.
  */
@@ -586,6 +585,15 @@ export const deleteUser = async (id: string, adminUser: User, isBulkOperation: b
             throw new Error("The 'Anonymous Donor' system user cannot be deleted.");
         }
         
+        const leadsQuery = query(collection(db, 'leads'), where("beneficiaryId", "==", id));
+        const leadsSnapshot = await getDocs(leadsQuery);
+        if (!leadsSnapshot.empty) {
+            const hasFundedLeads = leadsSnapshot.docs.some(doc => doc.data().helpGiven > 0);
+            if (hasFundedLeads) {
+                throw new Error(`User ${userToDelete.name} cannot be deleted because they are a beneficiary on at least one lead that has received funds. Please resolve the fund transfers first.`);
+            }
+        }
+        
         // 1. Reassign donations from this user to "Anonymous Donor"
         const donationsQuery = query(collection(db, 'donations'), where("donorId", "==", id));
         const donationsSnapshot = await getDocs(donationsQuery);
@@ -594,8 +602,7 @@ export const deleteUser = async (id: string, adminUser: User, isBulkOperation: b
         if (!donationsSnapshot.empty) {
             anonymousDonor = await getUserByUserId('anonymous_donor');
             if (!anonymousDonor || !anonymousDonor.id) {
-                // If the anonymous donor doesn't exist, we can't reassign, so we must stop.
-                throw new Error("Could not find the 'anonymous_donor' system user to re-assign donations to. Please run the seeder.");
+                throw new Error("Could not find the 'anonymous_donor' system user to re-assign donations to. Please run the initial seeder.");
             }
             donationsSnapshot.forEach(donationDoc => {
                 batch.update(donationDoc.ref, { 
@@ -611,7 +618,7 @@ export const deleteUser = async (id: string, adminUser: User, isBulkOperation: b
         const referredLeadsSnapshot = await getDocs(referredLeadsQuery);
         referredLeadsSnapshot.forEach(leadDoc => {
             batch.update(leadDoc.ref, {
-                referredByUserId: null,
+                referredByUserId: FieldValue.delete(),
                 referredByUserName: 'Deleted User',
             });
         });
@@ -620,7 +627,7 @@ export const deleteUser = async (id: string, adminUser: User, isBulkOperation: b
         const createdLeadsQuery = query(collection(db, 'leads'), where("adminAddedBy.id", "==", id));
         const createdLeadsSnapshot = await getDocs(createdLeadsQuery);
         createdLeadsSnapshot.forEach(leadDoc => {
-            const anonymousAdmin = { id: 'SYSTEM', name: 'Deleted Admin' }; // Using a generic placeholder
+            const anonymousAdmin = { id: 'SYSTEM', name: 'Deleted Admin' };
             batch.update(leadDoc.ref, {
                 'adminAddedBy.id': anonymousAdmin.id,
                 'adminAddedBy.name': anonymousAdmin.name
