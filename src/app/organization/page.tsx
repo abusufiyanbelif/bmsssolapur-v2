@@ -6,7 +6,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import Image from "next/image";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import type { User, Organization } from "@/services/types";
-import { QrCodeDialog } from "@/components/qr-code-dialog";
+import { OrganizationQrCodeDialog } from "@/components/organization-qr-code-dialog";
 import { getAllUsers } from "@/services/user-service";
 import { getPublicOrganization } from "@/services/public-data-service";
 import { getCurrentOrganization } from "../admin/settings/actions";
@@ -142,7 +142,7 @@ export default async function OrganizationPage() {
                             </div>
                         </div>
                         {organization.qrCodeUrl && (
-                             <QrCodeDialog organization={organization}>
+                             <OrganizationQrCodeDialog organization={organization}>
                                 <div className="flex flex-col items-center justify-center gap-4 p-4 border rounded-lg bg-muted/50 cursor-pointer hover:bg-muted transition-colors">
                                     <div className="relative w-56 h-56">
                                         <Image src={organization.qrCodeUrl} alt="UPI QR Code" fill className="object-contain rounded-md" data-ai-hint="qr code" />
@@ -152,7 +152,7 @@ export default async function OrganizationPage() {
                                         Scan with any UPI App or click to view options.
                                     </p>
                                 </div>
-                            </QrCodeDialog>
+                            </OrganizationQrCodeDialog>
                         )}
                     </div>
                      <div className="mt-8 pt-6 border-t">
@@ -242,5 +242,3 @@ export default async function OrganizationPage() {
         </div>
     );
 }
-
-    
