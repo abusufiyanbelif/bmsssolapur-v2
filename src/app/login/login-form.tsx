@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
@@ -137,7 +138,7 @@ export function LoginForm() {
               const result = await confirmationResult.confirm(code);
               const user = result.user;
               // Now we need to get our app-specific user ID
-              const loginResult = await handleFirebaseOtpLogin(user.uid);
+              const loginResult = await handleFirebaseOtpLogin(user.uid, user.phoneNumber);
               if (loginResult.success) {
                   setLoginSuccessData({ userId: loginResult.userId, redirectTo: loginResult.redirectTo });
               } else {

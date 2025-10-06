@@ -4,7 +4,7 @@
 
 import { collection, query, where, getDocs, Timestamp } from 'firebase/firestore';
 import { db } from '@/services/firebase';
-import { User, getUserByPhone, getUserByEmail, getUser, getUserByUserId, updateUser } from '@/services/user-service';
+import { User, getUserByPhone, getUserByEmail, getUser, getUserByUserId, updateUser, createUser } from '@/services/user-service';
 import { sendOtp } from '@/ai/flows/send-otp-flow';
 import { verifyOtp } from '@/ai/flows/verify-otp-flow';
 import { logActivity } from '@/services/activity-log-service';
@@ -237,24 +237,19 @@ export async function handleGoogleLogin(firebaseUser: {
   }
 }
 
-export async function handleFirebaseOtpLogin(firebaseUser: { uid: string, phoneNumber: string | null }): Promise<LoginState> {
+export async function handleFirebaseOtpLogin(uid: string, phoneNumber: string | null): Promise<LoginState> {
     try {
-        // First, try to find the user by their Firebase UID. This works for all subsequent logins.
-        let user = await getUser(firebaseUser.uid);
+        let user: User | null = await getUser(uid);
         
-        // If not found (first-time login), find them by their phone number and link the accounts.
-        if (!user && firebaseUser.phoneNumber) {
-            const phone = firebaseUser.phoneNumber.replace('+91', '');
+        // Fallback for first-time OTP login: find user by phone and link accounts.
+        if (!user && phoneNumber) {
+            const phone = phoneNumber.replace('+91', '');
             user = await getUserByPhone(phone);
             if (user && user.id) {
-                // This is the key step: link the Firebase UID to our existing Firestore user document.
-                // We are updating the Firestore document ID to match the Firebase Auth UID.
-                // This requires deleting the old doc and creating a new one. This is a complex operation
-                // and for simplicity, we will just update the user record with the UID.
-                // A better approach would be to have a dedicated 'firebaseUid' field.
-                // For now, let's assume `updateUser` can handle this.
-                // Note: The original prompt doesn't have a `firebaseUid` field, so we'll skip direct updates
-                // and just rely on phone number matching for now. A more robust solution would add this field.
+                // Link the Firebase UID to the existing user document.
+                await updateUser(user.id, { id: uid });
+                // Re-fetch with the UID to confirm link.
+                user = await getUser(uid);
             }
         }
         

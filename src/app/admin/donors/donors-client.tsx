@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState, useEffect, useMemo, Suspense } from "react";
@@ -52,6 +53,7 @@ function DonorsPageContent({ initialDonors, error: initialError }: { initialDono
     const [error, setError] = useState<string | null>(initialError || null);
     const { toast } = useToast();
     const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+    const [adminUserId, setAdminUserId] = useState<string | null>(null);
     const [popoverOpen, setPopoverOpen] = useState(false);
     const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
 
@@ -104,6 +106,7 @@ function DonorsPageContent({ initialDonors, error: initialError }: { initialDono
     useEffect(() => {
         const storedUserId = localStorage.getItem('userId');
         setCurrentUserId(storedUserId);
+        setAdminUserId(storedUserId);
     }, []);
     
     const onUserDeleted = () => {
@@ -234,7 +237,10 @@ function DonorsPageContent({ initialDonors, error: initialError }: { initialDono
                     <DeleteConfirmationDialog
                         itemType="user"
                         itemName={user.name}
-                        onDelete={() => handleDeleteUser(user.id!)}
+                        onDelete={async () => {
+                            if (!adminUserId) return { success: false, error: 'Admin user ID not found.' };
+                            return await handleDeleteUser(user.id!, adminUserId);
+                        }}
                         onSuccess={onUserDeleted}
                     >
                          <DropdownMenuItem disabled={isProtectedUser} onSelect={(e) => e.preventDefault()} className="text-destructive focus:text-destructive">
@@ -463,7 +469,7 @@ function DonorsPageContent({ initialDonors, error: initialError }: { initialDono
 
         return (
             <>
-                 {selectedUsers.length > 0 && (
+                 {selectedUsers.length > 0 && adminUserId && (
                     <div className="flex items-center gap-4 mb-4 p-4 border rounded-lg bg-muted/50">
                         <p className="text-sm font-medium">
                             {selectedUsers.length} item(s) selected.
@@ -471,7 +477,7 @@ function DonorsPageContent({ initialDonors, error: initialError }: { initialDono
                          <DeleteConfirmationDialog
                             itemType={`${selectedUsers.length} user(s)`}
                             itemName="the selected items"
-                            onDelete={() => handleBulkDeleteUsers(selectedUsers)}
+                            onDelete={() => handleBulkDeleteUsers(selectedUsers, adminUserId)}
                             onSuccess={onBulkUsersDeleted}
                         >
                             <Button variant="destructive">

@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -176,7 +177,7 @@ export function NotificationSettingsForm({ settings }: NotificationSettingsFormP
                         <FormLabel className="font-normal w-full">
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-2"><Smartphone className="h-5 w-5 text-primary"/>Firebase Phone Authentication</div>
-                                <Badge variant="success">Recommended</Badge>
+                                <Badge variant="default">Recommended</Badge>
                             </div>
                             <FormDescription className="pt-2">Uses Firebase's built-in service. Includes a generous free tier (10,000/month). Requires enabling in the Firebase Console.</FormDescription>
                         </FormLabel>
@@ -224,12 +225,12 @@ export function NotificationSettingsForm({ settings }: NotificationSettingsFormP
         title="Nodemailer for Email"
         schema={nodemailerSchema}
         defaultValues={{
-            "email.nodemailer.host": settings?.email.nodemailer?.host ?? '',
-            "email.nodemailer.port": settings?.email.nodemailer?.port ?? 587,
-            "email.nodemailer.secure": settings?.email.nodemailer?.secure ?? true,
-            "email.nodemailer.user": settings?.email.nodemailer?.user ?? '',
-            "email.nodemailer.pass": settings?.email.nodemailer?.pass ?? '',
-            "email.nodemailer.from": settings?.email.nodemailer?.from ?? '',
+            "email.nodemailer.host": settings?.email?.nodemailer?.host ?? '',
+            "email.nodemailer.port": settings?.email?.nodemailer?.port ?? 587,
+            "email.nodemailer.secure": settings?.email?.nodemailer?.secure ?? true,
+            "email.nodemailer.user": settings?.email?.nodemailer?.user ?? '',
+            "email.nodemailer.pass": settings?.email?.nodemailer?.pass ?? '',
+            "email.nodemailer.from": settings?.email?.nodemailer?.from ?? '',
         }}
         onSave={handleSave}
         onTest={() => handleTest('nodemailer')}
