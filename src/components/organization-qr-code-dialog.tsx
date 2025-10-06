@@ -8,6 +8,10 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
+  DialogProps,
+  DialogFooter,
+  DialogClose,
+  DialogTrigger,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
