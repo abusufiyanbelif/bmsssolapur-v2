@@ -115,21 +115,24 @@ const createFormSchema = (settings?: AppSettings) => z.object({
     // Dynamic mandatory fields based on Beneficiary role
     const isBeneficiary = data.roles.includes('Beneficiary');
     const beneficiarySettings = settings?.userConfiguration?.Beneficiary;
-    if (isBeneficiary && beneficiarySettings) {
-        if (beneficiarySettings.isAadhaarMandatory && !data.aadhaarNumber) {
-            ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Aadhaar Number is required for Beneficiaries.", path: ["aadhaarNumber"] });
-        }
-        if (beneficiarySettings.isAddressMandatory && !data.addressLine1) {
-            ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Address is required for Beneficiaries.", path: ["addressLine1"] });
-        }
-        if (beneficiarySettings.isPanMandatory && !data.panNumber) {
-            ctx.addIssue({ code: z.ZodIssueCode.custom, message: "PAN Number is required for Beneficiaries.", path: ["panNumber"] });
-        }
-        if (beneficiarySettings.isBankAccountMandatory && !data.bankAccountNumber) {
-             ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Bank Account Number is required for Beneficiaries.", path: ["bankAccountNumber"] });
-        }
+    if (isBeneficiary) {
         if (!data.beneficiaryType) {
-             ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Beneficiary Type is required when the Beneficiary role is selected.", path: ["beneficiaryType"] });
+            ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Beneficiary Type is required when the Beneficiary role is selected.", path: ["beneficiaryType"] });
+        }
+
+        if (beneficiarySettings) {
+            if (beneficiarySettings.isAadhaarMandatory && !data.aadhaarNumber) {
+                ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Aadhaar Number is required for Beneficiaries.", path: ["aadhaarNumber"] });
+            }
+            if (beneficiarySettings.isAddressMandatory && !data.addressLine1) {
+                ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Address is required for Beneficiaries.", path: ["addressLine1"] });
+            }
+            if (beneficiarySettings.isPanMandatory && !data.panNumber) {
+                ctx.addIssue({ code: z.ZodIssueCode.custom, message: "PAN Number is required for Beneficiaries.", path: ["panNumber"] });
+            }
+            if (beneficiarySettings.isBankAccountMandatory && !data.bankAccountNumber) {
+                 ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Bank Account Number is required for Beneficiaries.", path: ["bankAccountNumber"] });
+            }
         }
     }
 });
@@ -236,7 +239,7 @@ function AvailabilityFeedback({ state, fieldName, onSuggestionClick }: { state: 
 
 
 function FormContent({ settings, isSubForm, prefilledData, onUserCreate }: AddUserFormProps) {
-  const { control, formState, watch, setValue, trigger, reset, handleSubmit: originalHandleSubmit } = useFormContext<AddUserFormValues>();
+  const { control, formState, watch, setValue, trigger, reset, handleSubmit } = useFormContext<AddUserFormValues>();
   const { toast } = useToast();
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -321,7 +324,7 @@ function FormContent({ settings, isSubForm, prefilledData, onUserCreate }: AddUs
           if (beneficiaryFirstName) setValue('firstName', beneficiaryFirstName);
           if (beneficiaryMiddleName) setValue('middleName', beneficiaryMiddleName);
           if (beneficiaryLastName) setValue('lastName', beneficiaryLastName);
-          if (fatherName) setValue('fatherName', fatherName);
+          if (fatherName && beneficiaryMiddleName) setValue('fatherName', fatherName); // Only fill if middle name exists
           if (beneficiaryPhone) setValue('phone', beneficiaryPhone.replace(/\D/g, '').slice(-10));
           if (aadhaarNumber) setValue('aadhaarNumber', aadhaarNumber.replace(/\D/g, ''));
           if (address) setValue('addressLine1', address);
@@ -351,9 +354,8 @@ function FormContent({ settings, isSubForm, prefilledData, onUserCreate }: AddUs
   useEffect(() => {
     const nameParts = [firstName, middleName, lastName].filter(Boolean);
     const fullNameFromParts = nameParts.join(' ');
-    if (fullNameFromParts !== fullName && formState.dirtyFields.fullName) {
-        // Only update if fullName was the field being edited
-    } else if (fullNameFromParts !== fullName) {
+    // Only update fullName if it wasn't the field the user was just editing
+    if (fullNameFromParts !== fullName && !formState.dirtyFields.fullName) {
       setValue('fullName', fullNameFromParts, { shouldDirty: true });
     }
   }, [firstName, middleName, lastName, fullName, setValue, formState.dirtyFields.fullName]);
@@ -371,24 +373,6 @@ function FormContent({ settings, isSubForm, prefilledData, onUserCreate }: AddUs
       setFilePreview(null);
       setRawText(null);
       setExtractedDetails(null);
-  };
-  
-   const handleSubmit = (onSubmitFunction: (values: AddUserFormValues) => void) => {
-      return async (e: React.BaseSyntheticEvent) => {
-          e.preventDefault();
-          const isValid = await trigger(); 
-      
-          if (!isValid) {
-              const errorContent = Object.values(formState.errors).map((err, i) => <li key={i}>{err.message}</li>).filter(Boolean);
-              toast({
-                  variant: "destructive",
-                  title: "Please correct the errors below",
-                  description: <ul className="list-disc pl-5">{errorContent}</ul>
-              });
-              return;
-          }
-          originalHandleSubmit(onSubmitFunction)(e);
-      };
   };
 
   async function onSubmit(values: AddUserFormValues) {
@@ -416,7 +400,7 @@ function FormContent({ settings, isSubForm, prefilledData, onUserCreate }: AddUs
               router.push('/admin/user-management');
           }
       } else {
-          toast({ variant: "destructive", title: "Error Creating User", description: result.error });
+          toast({ variant: "destructive", title: "Error Creating User", description: result.error, duration: 8000 });
       }
       setIsSubmitting(false);
   }
@@ -764,7 +748,7 @@ export function AddUserForm(props: AddUserFormProps) {
             firstName: prefilledData?.beneficiaryFirstName || "",
             middleName: prefilledData?.beneficiaryMiddleName || "",
             lastName: prefilledData?.beneficiaryLastName || "",
-            fatherName: prefilledData?.fatherName || "",
+            fatherName: (prefilledData?.beneficiaryMiddleName && prefilledData?.fatherName) ? prefilledData.fatherName : "",
             phone: prefilledData?.beneficiaryPhone?.replace(/\D/g, '').slice(-10) || "",
             aadhaarNumber: prefilledData?.aadhaarNumber?.replace(/\D/g,'') || "",
             addressLine1: prefilledData?.address || "",

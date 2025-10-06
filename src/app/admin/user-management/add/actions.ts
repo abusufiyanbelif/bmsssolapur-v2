@@ -62,7 +62,10 @@ export async function handleAddUser(
   };
   
   if (!rawFormData.firstName || !rawFormData.lastName || !rawFormData.phone || rawFormData.roles.length === 0) {
-      return { success: false, error: "Missing required fields: First Name, Last Name, Phone, and Role." };
+      return { success: false, error: "Missing required fields: First Name, Last Name, Phone, and Role are required." };
+  }
+   if (rawFormData.roles.includes('Beneficiary') && !rawFormData.beneficiaryType) {
+      return { success: false, error: "Beneficiary Type is required when the Beneficiary role is selected." };
   }
   
   try {
@@ -97,7 +100,7 @@ export async function handleAddUser(
 
     return {
       success: true,
-      user: createdUser,
+      user: JSON.parse(JSON.stringify(createdUser)),
     };
   } catch (e) {
     const error = e instanceof Error ? e.message : "An unknown error occurred.";
