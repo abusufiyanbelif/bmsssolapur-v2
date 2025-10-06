@@ -1,5 +1,6 @@
 
 
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { AddDonationForm } from "./add-donation-form";
 import { getAllUsers } from "@/services/user-service";
@@ -7,16 +8,25 @@ import { getAllLeads } from "@/services/lead-service";
 import { getAllCampaigns } from "@/services/campaign-service";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
+import { getAppSettings } from "@/services/app-settings-service";
 
 export default async function AddDonationPage() {
-    const [users, leads, campaigns] = await Promise.all([
+    const [users, leads, campaigns, settings] = await Promise.all([
         getAllUsers(),
         getAllLeads(),
         getAllCampaigns(),
+        getAppSettings(),
     ]);
 
-    const linkableLeads = leads.filter(l => l.caseStatus !== 'Closed' && l.caseStatus !== 'Cancelled');
-    const linkableCampaigns = campaigns.filter(c => c.status !== 'Completed' && c.status !== 'Cancelled');
+    // Filter for leads that can be assigned to a campaign
+    const linkableLeads = leads.filter(l => 
+        l.caseStatus !== 'Closed' && l.caseStatus !== 'Cancelled'
+    );
+
+    // Filter for donations that can be assigned
+    const linkableCampaigns = campaigns.filter(c => 
+        c.status !== 'Completed' && c.status !== 'Cancelled'
+    );
     
     return (
         <div className="flex-1 space-y-4">
@@ -26,13 +36,18 @@ export default async function AddDonationPage() {
             </Link>
             <Card>
                 <CardHeader>
-                    <CardTitle>Add Donation Manually</CardTitle>
-                    <CardDescription>
+                    <CardTitle className="text-primary">Add Donation Manually</CardTitle>
+                    <CardDescription className="text-muted-foreground">
                        Upload a payment proof to auto-fill details, or enter them manually below.
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <AddDonationForm users={users} leads={linkableLeads} campaigns={linkableCampaigns} />
+                    <AddDonationForm 
+                        users={users} 
+                        leads={linkableLeads} 
+                        campaigns={linkableCampaigns}
+                        settings={settings}
+                    />
                 </CardContent>
             </Card>
         </div>

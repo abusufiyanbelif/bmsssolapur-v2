@@ -1,5 +1,6 @@
 
 
+
 import { getDonation } from "@/services/donation-service";
 import { notFound } from "next/navigation";
 import Link from "next/link";
@@ -12,6 +13,7 @@ import { getAllLeads } from "@/services/lead-service";
 import { getAllCampaigns } from "@/services/campaign-service";
 import { AddDonationForm } from "@/app/admin/donations/add/add-donation-form";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { getAppSettings } from "@/services/app-settings-service";
 
 export default async function EditDonationPage({ params }: { params: { id: string } }) {
     const donation = await getDonation(decodeURIComponent(params.id));
@@ -21,12 +23,13 @@ export default async function EditDonationPage({ params }: { params: { id: strin
     }
     
     // Fetch associated data
-    const [donor, activityLogs, allLeads, allCampaigns, allUsers] = await Promise.all([
+    const [donor, activityLogs, allLeads, allCampaigns, allUsers, settings] = await Promise.all([
         getUser(donation.donorId),
         getDonationActivity(donation.id!),
         getAllLeads(),
         getAllCampaigns(),
         getAllUsers(),
+        getAppSettings(),
     ]);
 
     const linkableLeads = allLeads.filter(l => l.caseStatus !== 'Closed' && l.caseStatus !== 'Cancelled');
@@ -44,8 +47,8 @@ export default async function EditDonationPage({ params }: { params: { id: strin
                 <div className="lg:col-span-2 space-y-6">
                     <Card>
                         <CardHeader>
-                            <CardTitle>Edit Donation</CardTitle>
-                            <CardDescription>Update the details for this donation record.</CardDescription>
+                            <CardTitle className="text-primary">Edit Donation</CardTitle>
+                            <CardDescription className="text-muted-foreground">Update the details for this donation record.</CardDescription>
                         </CardHeader>
                         <CardContent>
                              <AddDonationForm 
@@ -54,6 +57,7 @@ export default async function EditDonationPage({ params }: { params: { id: strin
                                 campaigns={linkableCampaigns} 
                                 existingDonation={donation}
                                 currentUser={currentUser}
+                                settings={settings}
                             />
                         </CardContent>
                     </Card>

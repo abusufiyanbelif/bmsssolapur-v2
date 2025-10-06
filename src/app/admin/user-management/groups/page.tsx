@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -120,7 +121,10 @@ export default function UserGroupsPage() {
         <h2 className="text-3xl font-bold tracking-tight font-headline text-primary">User Groups</h2>
         <Card>
             <CardHeader>
-                <CardTitle className="text-primary">Manage User Groups</CardTitle>
+                <CardTitle className="text-primary flex items-center gap-2">
+                    <Group className="h-6 w-6" />
+                    Manage User Groups
+                </CardTitle>
                  <CardDescription className="text-muted-foreground">
                        In this application, Roles define a user&apos;s function (e.g., Admin, Donor), while Groups define their organizational title or team (e.g., Founder, Finance).
                   </CardDescription>

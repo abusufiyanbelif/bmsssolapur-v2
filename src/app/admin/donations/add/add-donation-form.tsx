@@ -1,3 +1,4 @@
+
 // src/app/admin/donations/add/add-donation-form.tsx
 "use client";
 
@@ -608,7 +609,7 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation, set
                                   Get Text from Image
                               </Button>
                               {rawText && (
-                                  <Button type="button" onClick={handleAutoFill} disabled={isExtracting} className="w-full">
+                                  <Button type="button" onClick={handleAutoFill} disabled={isExtracting}>
                                       {isExtracting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Bot className="mr-2 h-4 w-4" />}
                                       Auto-fill Form
                                   </Button>

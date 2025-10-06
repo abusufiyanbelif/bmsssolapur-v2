@@ -1,9 +1,10 @@
 
 
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { AddUserForm } from "./add-user-form";
 import { getAppSettings } from "@/services/app-settings-service";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
 import { Suspense } from "react";
 import { Loader2 } from "lucide-react";
@@ -36,8 +37,8 @@ async function AddUserPageLoader() {
                 </Alert>
                 <Card>
                     <CardHeader>
-                        <CardTitle>User Details</CardTitle>
-                        <CardDescription>
+                        <CardTitle className="text-primary">User Details</CardTitle>
+                        <CardDescription className="text-muted-foreground">
                             Fill in the form below to create a new user account. You can also scan an ID document to auto-fill the form.
                         </CardDescription>
                     </CardHeader>
@@ -52,8 +53,8 @@ async function AddUserPageLoader() {
     return (
         <Card>
             <CardHeader>
-                <CardTitle>User Details</CardTitle>
-                <CardDescription>
+                <CardTitle className="text-primary">User Details</CardTitle>
+                <CardDescription className="text-muted-foreground">
                     Fill in the form below to create a new user account. You can also scan an ID document to auto-fill the form.
                 </CardDescription>
             </CardHeader>
