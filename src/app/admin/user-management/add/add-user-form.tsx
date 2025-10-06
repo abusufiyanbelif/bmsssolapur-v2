@@ -20,7 +20,7 @@ import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect, useRef, useMemo, Suspense, useCallback } from "react";
-import { Loader2, UserPlus, Users, Info, CalendarIcon, AlertTriangle, ChevronsUpDown, Check, Banknote, X, Lock, Clipboard, Text, Bot, FileUp, ZoomIn, ZoomOut, FileIcon, ScanSearch, UserSearch, UserRoundPlus, XCircle, PlusCircle, Paperclip, RotateCw, RefreshCw as RefreshIcon, BookOpen, Sparkles, CreditCard, Fingerprint, MapPin, Trash2, CheckCircle } from "lucide-react";
+import { Loader2, UserPlus, Users, Info, CalendarIcon, AlertTriangle, ChevronsUpDown, Check, Banknote, X, Lock, Clipboard, Text, Bot, FileUp, ZoomIn, ZoomOut, FileIcon, ScanSearch, UserSearch, UserRoundPlus, XCircle, PlusCircle, Paperclip, RotateCw, RefreshCw as RefreshIcon, BookOpen, Sparkles, CreditCard, Fingerprint, MapPin, Trash2, CheckCircle, User as UserIcon } from "lucide-react";
 import type { User, UserRole, AppSettings, ExtractBeneficiaryDetailsOutput, GenerateSummariesOutput } from "@/services/types";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
@@ -46,6 +46,7 @@ import { useRouter } from 'next/navigation';
 import { Separator } from "@/components/ui/separator";
 import { handleAddUser, handleExtractUserDetailsFromText } from "./actions";
 import { Textarea } from "@/components/ui/textarea";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 const allRoles: Exclude<UserRole, 'Guest'>[] = [
     "Donor",
@@ -653,26 +654,26 @@ function FormContent({ settings, isSubForm, prefilledData, onUserCreate }: AddUs
                 <AccordionTrigger className="p-4 font-semibold text-primary"><h4 className="flex items-center gap-2"><CreditCard className="h-5 w-5"/>Verification &amp; Payment Details</h4></AccordionTrigger>
                 <AccordionContent className="p-6 pt-2 space-y-6">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <FormField control={control} name="panNumber" render={({ field }) => (<FormItem><FormLabel>PAN Number</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)}/>
-                        <FormField control={control} name="aadhaarNumber" render={({ field }) => (<FormItem><FormLabel>Aadhaar Number</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)}/>
+                        <FormField control={control} name="panNumber" render={({ field }) => (<FormItem><FormLabel>PAN Number</FormLabel><FormControl><Input {...field} /></FormControl><AvailabilityFeedback state={panState} fieldName="PAN Number" /><FormMessage /></FormItem>)}/>
+                        <FormField control={control} name="aadhaarNumber" render={({ field }) => (<FormItem><FormLabel>Aadhaar Number</FormLabel><FormControl><Input {...field} /></FormControl><AvailabilityFeedback state={aadhaarState} fieldName="Aadhaar Number" /><FormMessage /></FormItem>)}/>
                     </div>
                     <Separator />
                     <h3 className="text-lg font-semibold">Bank Details</h3>
                     <FormField control={control} name="bankAccountName" render={({ field }) => (<FormItem><FormLabel>Full Name as per Bank Account</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)}/>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <FormField control={control} name="bankAccountNumber" render={({ field }) => (<FormItem><FormLabel>Bank Account Number</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)}/>
+                        <FormField control={control} name="bankAccountNumber" render={({ field }) => (<FormItem><FormLabel>Bank Account Number</FormLabel><FormControl><Input {...field} /></FormControl><AvailabilityFeedback state={bankAccountState} fieldName="Bank Account Number" /><FormMessage /></FormItem>)}/>
                         <FormField control={control} name="bankIfscCode" render={({ field }) => (<FormItem><FormLabel>IFSC Code</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)}/>
                     </div>
                     <FormField control={control} name="bankName" render={({ field }) => (<FormItem><FormLabel>Bank Name</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)}/>
                     <Separator />
                      <div className="space-y-4">
                         <FormLabel>UPI Phone Numbers</FormLabel>
-                        {(control.getValues('upiPhoneNumbers') || []).map((field, index) => (<FormField control={control} key={field.id} name={`upiPhoneNumbers.${index}.value`} render={({ field }) => (<FormItem><div className="flex items-center gap-2"><FormControl><Input {...field} placeholder="e.g., 9876543210" type="tel" maxLength={10} /></FormControl><Button type="button" variant="ghost" size="icon"><Trash2 className="h-4 w-4 text-destructive" /></Button></div><FormMessage /></FormItem>)}/>))}
+                        {watch('upiPhoneNumbers')?.map((field, index) => (<FormField control={control} key={field.id} name={`upiPhoneNumbers.${index}.value`} render={({ field }) => (<FormItem><div className="flex items-center gap-2"><FormControl><Input {...field} placeholder="e.g., 9876543210" type="tel" maxLength={10} /></FormControl><Button type="button" variant="ghost" size="icon"><Trash2 className="h-4 w-4 text-destructive" /></Button></div><FormMessage /></FormItem>)}/>))}
                         <Button type="button" variant="outline" size="sm"><PlusCircle className="mr-2" />Add Phone</Button>
                     </div>
                      <div className="space-y-4">
                         <FormLabel>UPI IDs</FormLabel>
-                         {(control.getValues('upiIds') || []).map((field, index) => (<FormField control={control} key={field.id} name={`upiIds.${index}.value`} render={({ field }) => (<FormItem><div className="flex items-center gap-2"><FormControl><Input {...field} placeholder="e.g., username@okhdfc" /></FormControl><Button type="button" variant="ghost" size="icon"><Trash2 className="h-4 w-4 text-destructive" /></Button></div><FormMessage /></FormItem>)}/>))}
+                         {watch('upiIds')?.map((field, index) => (<FormField control={control} key={field.id} name={`upiIds.${index}.value`} render={({ field }) => (<FormItem><div className="flex items-center gap-2"><FormControl><Input {...field} placeholder="e.g., username@okhdfc" /></FormControl><Button type="button" variant="ghost" size="icon"><Trash2 className="h-4 w-4 text-destructive" /></Button></div><FormMessage /></FormItem>)}/>))}
                         <Button type="button" variant="outline" size="sm"><PlusCircle className="mr-2" />Add UPI ID</Button>
                     </div>
                 </AccordionContent>
@@ -693,7 +694,7 @@ function FormContent({ settings, isSubForm, prefilledData, onUserCreate }: AddUs
             </div>
         )}
     </form>
-    <AlertDialog open={!!extractedDetails} onOpenChange={() => setExtractedDetails(null)}>
+    <AlertDialog open={!!extractedDetails} onOpenChange={()={() => setExtractedDetails(null)}>
         <AlertDialogContent>
             <AlertDialogHeader>
                 <AlertDialogTitle className="flex items-center gap-2">
@@ -767,3 +768,4 @@ export function AddUserForm(props: AddUserFormProps) {
         </FormProvider>
     )
 }
+
