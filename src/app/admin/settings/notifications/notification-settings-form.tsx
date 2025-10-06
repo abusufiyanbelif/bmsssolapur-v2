@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -28,10 +27,11 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Badge } from "@/components/ui/badge";
 
 const otpProviderSchema = z.object({
-  "sms.provider": z.enum(['twilio', 'firebase']).default('twilio'),
+  "sms.provider": z.enum(['twilio', 'firebase']).default('firebase'),
 });
 
 const twilioSmsSchema = z.object({
+  "sms.twilio.enabled": z.boolean().default(false),
   "sms.twilio.accountSid": z.string().optional(),
   "sms.twilio.authToken": z.string().optional(),
   "sms.twilio.verifySid": z.string().optional(),
@@ -39,12 +39,12 @@ const twilioSmsSchema = z.object({
 });
 
 const twilioWhatsappSchema = z.object({
-  "whatsapp.twilio.accountSid": z.string().optional(),
-  "whatsapp.twilio.authToken": z.string().optional(),
+  "whatsapp.twilio.enabled": z.boolean().default(false),
   "whatsapp.twilio.fromNumber": z.string().optional(),
 });
 
 const nodemailerSchema = z.object({
+  "email.nodemailer.enabled": z.boolean().default(false),
   "email.nodemailer.host": z.string().optional(),
   "email.nodemailer.port": z.coerce.number().optional(),
   "email.nodemailer.secure": z.boolean().default(true),
@@ -166,7 +166,7 @@ export function NotificationSettingsForm({ settings }: NotificationSettingsFormP
         title="OTP Provider"
         description="Select which service to use for sending One-Time Passwords for phone login."
         schema={otpProviderSchema}
-        defaultValues={{ "sms.provider": settings?.sms.provider ?? 'twilio' }}
+        defaultValues={{ "sms.provider": settings?.sms.provider ?? 'firebase' }}
         onSave={handleSave}
       >
         {(form) => (
@@ -195,15 +195,15 @@ export function NotificationSettingsForm({ settings }: NotificationSettingsFormP
       </SectionForm>
 
       <SectionForm
-        title="Twilio for SMS (OTP) & WhatsApp"
+        title="Twilio for SMS & WhatsApp"
         schema={twilioSmsSchema.merge(twilioWhatsappSchema)}
         defaultValues={{
+            "sms.twilio.enabled": settings?.sms.twilio?.enabled ?? false,
             "sms.twilio.accountSid": settings?.sms.twilio?.accountSid ?? '',
             "sms.twilio.authToken": settings?.sms.twilio?.authToken ?? '',
             "sms.twilio.verifySid": settings?.sms.twilio?.verifySid ?? '',
             "sms.twilio.fromNumber": settings?.sms.twilio?.fromNumber ?? '',
-            "whatsapp.twilio.accountSid": settings?.whatsapp?.twilio?.accountSid ?? '',
-            "whatsapp.twilio.authToken": settings?.whatsapp?.twilio?.authToken ?? '',
+            "whatsapp.twilio.enabled": settings?.whatsapp?.twilio?.enabled ?? false,
             "whatsapp.twilio.fromNumber": settings?.whatsapp?.twilio?.fromNumber ?? '',
         }}
         onSave={handleSave}
@@ -211,12 +211,21 @@ export function NotificationSettingsForm({ settings }: NotificationSettingsFormP
         testStatus={testStatus['twilio']}
       >
         {(form) => (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <FormField control={form.control} name="sms.twilio.accountSid" render={({field}) => (<FormItem><FormLabel>Account SID</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
-                <FormField control={form.control} name="sms.twilio.authToken" render={({field}) => (<FormItem><FormLabel>Auth Token</FormLabel><FormControl><Input {...field} type="password" /></FormControl><FormMessage /></FormItem>)} />
-                <FormField control={form.control} name="sms.twilio.verifySid" render={({field}) => (<FormItem><FormLabel>Verify Service SID</FormLabel><FormControl><Input {...field} placeholder="VA..." /></FormControl><FormDescription>Where to find this? In your Twilio Console, navigate to **Verify -&gt; Services** and either create a new service or copy the SID (starts with &quot;VA...&quot;) from an existing one.</FormDescription><FormMessage /></FormItem>)} />
-                <FormField control={form.control} name="sms.twilio.fromNumber" render={({field}) => (<FormItem><FormLabel>From Phone Number</FormLabel><FormControl><Input {...field} placeholder="+1..." /></FormControl><FormMessage /></FormItem>)} />
-                <FormField control={form.control} name="whatsapp.twilio.fromNumber" render={({field}) => (<FormItem><FormLabel>From WhatsApp Number</FormLabel><FormControl><Input {...field} placeholder="whatsapp:+1..." /></FormControl><FormMessage /></FormItem>)} />
+            <div className="space-y-6">
+                <FormField control={form.control} name="sms.twilio.enabled" render={({ field }) => (<FormItem className="flex flex-row items-center justify-between rounded-lg border p-4"><div className="space-y-0.5"><FormLabel className="text-base">Enable Twilio for SMS</FormLabel></div><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>)} />
+                <fieldset disabled={!form.watch('sms.twilio.enabled')} className="space-y-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <FormField control={form.control} name="sms.twilio.accountSid" render={({field}) => (<FormItem><FormLabel>Account SID</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
+                        <FormField control={form.control} name="sms.twilio.authToken" render={({field}) => (<FormItem><FormLabel>Auth Token</FormLabel><FormControl><Input {...field} type="password" /></FormControl><FormMessage /></FormItem>)} />
+                        <FormField control={form.control} name="sms.twilio.verifySid" render={({field}) => (<FormItem><FormLabel>Verify Service SID</FormLabel><FormControl><Input {...field} placeholder="VA..." /></FormControl><FormDescription>Where to find this? In your Twilio Console, navigate to **Verify -&gt; Services** and either create a new service or copy the SID (starts with &quot;VA...&quot;) from an existing one.</FormDescription><FormMessage /></FormItem>)} />
+                        <FormField control={form.control} name="sms.twilio.fromNumber" render={({field}) => (<FormItem><FormLabel>From Phone Number (for OTP)</FormLabel><FormControl><Input {...field} placeholder="+1..." /></FormControl><FormMessage /></FormItem>)} />
+                    </div>
+                </fieldset>
+                <Separator />
+                <FormField control={form.control} name="whatsapp.twilio.enabled" render={({ field }) => (<FormItem className="flex flex-row items-center justify-between rounded-lg border p-4"><div className="space-y-0.5"><FormLabel className="text-base">Enable Twilio for WhatsApp</FormLabel></div><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>)} />
+                 <fieldset disabled={!form.watch('whatsapp.twilio.enabled')} className="space-y-6">
+                     <FormField control={form.control} name="whatsapp.twilio.fromNumber" render={({field}) => (<FormItem><FormLabel>From WhatsApp Number</FormLabel><FormControl><Input {...field} placeholder="whatsapp:+1..." /></FormControl><FormMessage /></FormItem>)} />
+                </fieldset>
             </div>
         )}
       </SectionForm>
@@ -225,6 +234,7 @@ export function NotificationSettingsForm({ settings }: NotificationSettingsFormP
         title="Nodemailer for Email"
         schema={nodemailerSchema}
         defaultValues={{
+            "email.nodemailer.enabled": settings?.email?.nodemailer?.enabled ?? false,
             "email.nodemailer.host": settings?.email?.nodemailer?.host ?? '',
             "email.nodemailer.port": settings?.email?.nodemailer?.port ?? 587,
             "email.nodemailer.secure": settings?.email?.nodemailer?.secure ?? true,
@@ -238,16 +248,19 @@ export function NotificationSettingsForm({ settings }: NotificationSettingsFormP
       >
         {(form) => (
             <div className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <FormField control={form.control} name="email.nodemailer.host" render={({field}) => ( <FormItem><FormLabel>SMTP Host</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem> )} />
-                    <FormField control={form.control} name="email.nodemailer.port" render={({field}) => ( <FormItem><FormLabel>SMTP Port</FormLabel><FormControl><Input {...field} type="number" /></FormControl><FormMessage /></FormItem> )} />
-                </div>
-                <FormField control={form.control} name="email.nodemailer.secure" render={({field}) => (<FormItem className="flex flex-row items-center justify-between rounded-lg border p-4"><div className="space-y-0.5"><FormLabel className="text-base">Use SSL/TLS (Secure)</FormLabel></div><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>)} />
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <FormField control={form.control} name="email.nodemailer.user" render={({field}) => ( <FormItem><FormLabel>SMTP User</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem> )} />
-                    <FormField control={form.control} name="email.nodemailer.pass" render={({field}) => ( <FormItem><FormLabel>SMTP Password</FormLabel><FormControl><Input {...field} type="password" /></FormControl><FormMessage /></FormItem> )} />
-                </div>
-                <FormField control={form.control} name="email.nodemailer.from" render={({field}) => ( <FormItem><FormLabel>From Email Address</FormLabel><FormControl><Input {...field} placeholder='"Your Org Name" <email@your-domain.com>' /></FormControl><FormMessage /></FormItem> )} />
+                <FormField control={form.control} name="email.nodemailer.enabled" render={({ field }) => (<FormItem className="flex flex-row items-center justify-between rounded-lg border p-4"><div className="space-y-0.5"><FormLabel className="text-base">Enable Nodemailer</FormLabel></div><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>)} />
+                <fieldset disabled={!form.watch('email.nodemailer.enabled')} className="space-y-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <FormField control={form.control} name="email.nodemailer.host" render={({field}) => ( <FormItem><FormLabel>SMTP Host</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem> )} />
+                        <FormField control={form.control} name="email.nodemailer.port" render={({field}) => ( <FormItem><FormLabel>SMTP Port</FormLabel><FormControl><Input {...field} type="number" /></FormControl><FormMessage /></FormItem> )} />
+                    </div>
+                    <FormField control={form.control} name="email.nodemailer.secure" render={({field}) => (<FormItem className="flex flex-row items-center justify-between rounded-lg border p-4"><div className="space-y-0.5"><FormLabel className="text-base">Use SSL/TLS (Secure)</FormLabel></div><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>)} />
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <FormField control={form.control} name="email.nodemailer.user" render={({field}) => ( <FormItem><FormLabel>SMTP User</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem> )} />
+                        <FormField control={form.control} name="email.nodemailer.pass" render={({field}) => ( <FormItem><FormLabel>SMTP Password</FormLabel><FormControl><Input {...field} type="password" /></FormControl><FormMessage /></FormItem> )} />
+                    </div>
+                    <FormField control={form.control} name="email.nodemailer.from" render={({field}) => ( <FormItem><FormLabel>From Email Address</FormLabel><FormControl><Input {...field} placeholder='"Your Org Name" <email@your-domain.com>' /></FormControl><FormMessage /></FormItem> )} />
+                </fieldset>
             </div>
         )}
       </SectionForm>

@@ -1,5 +1,4 @@
 
-
 /**
  * @fileOverview Centralized type definitions for the application's data models.
  */
@@ -453,8 +452,9 @@ export interface AppSettings {
     };
     notificationSettings?: {
         sms: {
-            provider: 'twilio';
+            provider: 'twilio' | 'firebase';
             twilio: {
+                enabled: boolean;
                 accountSid: string;
                 authToken: string;
                 verifySid: string;
@@ -464,6 +464,7 @@ export interface AppSettings {
         whatsapp: {
             provider: 'twilio';
             twilio: {
+                enabled: boolean;
                 accountSid: string;
                 authToken: string;
                 fromNumber: string;
@@ -472,6 +473,7 @@ export interface AppSettings {
         email: {
             provider: 'nodemailer';
             nodemailer: {
+                enabled: boolean;
                 host: string;
                 port: number;
                 secure: boolean;
