@@ -32,7 +32,7 @@ export default async function NotificationSettingsPage() {
                         Manage Notification Providers
                     </CardTitle>
                     <CardDescription className="text-muted-foreground">
-                       Configure credentials for external notification services. After saving your settings, use the &quot;Test Connection&quot; button within each section to verify your setup.
+                        Configure credentials for external notification services. After saving your settings, use the &quot;Test Connection&quot; button within each section to verify your setup.
                     </CardDescription>
                 </CardHeader>
                 <CardContent>

@@ -23,43 +23,62 @@ import type { Organization } from "@/services/types";
 import { Textarea } from "@/components/ui/textarea";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Separator } from "@/components/ui/separator";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
 
 const socialPlatformSchema = z.enum(["Facebook", "Instagram", "Twitter"]);
 
-const formSchema = z.object({
-  // Organization Info
+const orgInfoSchema = z.object({
   "orgInfo.titleLine1": z.string().min(1, "This field is required."),
   "orgInfo.titleLine2": z.string().min(1, "This field is required."),
   "orgInfo.titleLine3": z.string().min(1, "This field is required."),
   "orgInfo.description": z.string().min(10, "Description is required."),
   "orgInfo.registrationInfo": z.string().min(1, "Registration info is required."),
   "orgInfo.taxInfo": z.string().min(1, "Tax info is required."),
-  // Contact Us
+});
+
+const contactUsSchema = z.object({
   "contactUs.title": z.string().min(1, "This field is required."),
   "contactUs.address": z.string().min(1, "Address is required."),
   "contactUs.email": z.string().email(),
-  // Key Contacts
+});
+
+const keyContactsSchema = z.object({
   "keyContacts.title": z.string().min(1, "This field is required."),
   keyContacts: z.array(z.object({
       name: z.string().min(1, "Name is required."),
       phone: z.string().min(10, "Phone number must be at least 10 digits."),
   })),
-  // Connect With Us
+});
+
+const connectWithUsSchema = z.object({
   "connectWithUs.title": z.string().min(1, "This field is required."),
   socialLinks: z.array(z.object({
       platform: socialPlatformSchema,
       url: z.string().url("Must be a valid URL."),
   })),
-  // Our Commitment
+});
+
+const commitmentSchema = z.object({
   "ourCommitment.title": z.string().min(1, "This field is required."),
   "ourCommitment.text": z.string().min(1, "This field is required."),
   "ourCommitment.linkText": z.string().min(1, "This field is required."),
   "ourCommitment.linkUrl": z.string().min(1, "This field is required."),
-  // Copyright
+});
+
+const copyrightSchema = z.object({
   "copyright.text": z.string().min(1, "This field is required."),
 });
 
-type FormValues = z.infer<typeof formSchema>;
+const fullFormSchema = orgInfoSchema.merge(contactUsSchema).merge(keyContactsSchema).merge(connectWithUsSchema).merge(commitmentSchema).merge(copyrightSchema);
+type FormValues = z.infer<typeof fullFormSchema>;
+
 
 interface LayoutSettingsFormProps {
     organization: Organization;
@@ -80,7 +99,7 @@ export function LayoutSettingsForm({ organization }: LayoutSettingsFormProps) {
   };
 
   const form = useForm<FormValues>({
-    resolver: zodResolver(formSchema),
+    resolver: zodResolver(fullFormSchema),
     defaultValues: {
       "orgInfo.titleLine1": defaultFooter.organizationInfo.titleLine1,
       "orgInfo.titleLine2": defaultFooter.organizationInfo.titleLine2,
@@ -108,14 +127,13 @@ export function LayoutSettingsForm({ organization }: LayoutSettingsFormProps) {
   const { fields: socialLinkFields, append: appendSocialLink, remove: removeSocialLink } = useFieldArray({ control, name: "socialLinks" });
 
   const handleCancel = () => {
-    reset(); // Reset to default values
+    reset();
     setIsEditing(false);
   };
   
   async function onSubmit(values: FormValues) {
     setIsSubmitting(true);
     const formData = new FormData();
-    // Flatten the values to FormData
     Object.entries(values).forEach(([key, value]) => {
         if (key === 'keyContacts' || key === 'socialLinks') {
             formData.append(key, JSON.stringify(value));
@@ -129,7 +147,7 @@ export function LayoutSettingsForm({ organization }: LayoutSettingsFormProps) {
     if (result.success) {
       toast({ title: "Settings Saved", description: "The footer layout has been updated." });
       setIsEditing(false);
-      reset(values); // Reset to new values to make form not dirty
+      reset(values);
     } else {
       toast({ variant: "destructive", title: "Error", description: result.error });
     }

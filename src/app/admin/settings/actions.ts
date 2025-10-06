@@ -1,5 +1,4 @@
 
-
 "use server";
 
 import { updateAppSettings as updateSettingsService, AppSettings, getAppSettings as getSettingsService } from "@/services/app-settings-service";
@@ -18,19 +17,19 @@ export async function handleUpdateAppSettings(
   try {
     const updates: Partial<AppSettings> = {
       loginMethods: {
-        password: { enabled: formData.get("login.password") === 'on' },
-        otp: { enabled: formData.get("login.otp") === 'on' },
-        google: { enabled: formData.get("login.google") === 'on' },
+        password: { enabled: formData.has("login.password") },
+        otp: { enabled: formData.has("login.otp") },
+        google: { enabled: formData.has("login.google") },
       },
       features: {
-        directPaymentToBeneficiary: { enabled: formData.get("feature.directPayment") === 'on' },
-        onlinePaymentsEnabled: formData.get("feature.onlinePayments") === 'on',
+        directPaymentToBeneficiary: { enabled: formData.has("feature.directPayment") },
+        onlinePaymentsEnabled: formData.has("feature.onlinePayments"),
       },
       paymentMethods: {
-        bankTransfer: { enabled: formData.get("payment.bankTransfer") === 'on' },
-        cash: { enabled: formData.get("payment.cash") === 'on' },
-        upi: { enabled: formData.get("payment.upi") === 'on' },
-        other: { enabled: formData.get("payment.other") === 'on' },
+        bankTransfer: { enabled: formData.has("payment.bankTransfer") },
+        cash: { enabled: formData.has("payment.cash") },
+        upi: { enabled: formData.has("payment.upi") },
+        other: { enabled: formData.has("payment.other") },
       },
     };
 
