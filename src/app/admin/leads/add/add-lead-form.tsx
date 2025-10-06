@@ -2,7 +2,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm, useFieldArray, FormProvider } from "react-hook-form";
+import { useForm, useFieldArray, FormProvider, useFormContext } from "react-hook-form";
 import * as z from "zod";
 import Link from 'next/link';
 import { Button } from "@/components/ui/button";
@@ -239,7 +239,7 @@ function AddLeadFormContent({ users, campaigns, settings, prefilledRawText }: Ad
       setCaseRawText("");
   };
 
-  const { formState, setValue, watch, getValues, control, trigger, reset, handleSubmit } = form;
+  const { formState, setValue, watch, getValues, control, trigger, reset, handleSubmit: originalHandleSubmit } = form;
   
 
   const selectedPurposeName = watch("purpose");
@@ -354,7 +354,7 @@ function AddLeadFormContent({ users, campaigns, settings, prefilledRawText }: Ad
 
     setIsCaseTextExtracting(true);
     const formData = new FormData();
-    otherDocs.forEach(file => formData.append("otherDocuments", file));
+    otherDocs.forEach((file, index) => formData.append(`file_${index}`, file));
 
     try {
       const result = await getRawTextFromImage(formData);
@@ -523,12 +523,12 @@ function AddLeadFormContent({ users, campaigns, settings, prefilledRawText }: Ad
             if (value) {
                 switch(key) {
                     case 'beneficiaryFullName': setValue('manualBeneficiaryName', value, { shouldDirty: true }); break;
-                    case 'beneficiaryFirstName': setValue('newBeneficiaryFirstName', value, { shouldDirty: true }); break;
-                    case 'beneficiaryMiddleName': setValue('newBeneficiaryMiddleName', value, { shouldDirty: true }); break;
-                    case 'beneficiaryLastName': setValue('newBeneficiaryLastName', value, { shouldDirty: true }); break;
-                    case 'fatherName': setValue('newBeneficiaryFatherName', value, { shouldDirty: true }); break;
-                    case 'beneficiaryPhone': setValue('newBeneficiaryPhone', value.replace(/\D/g, '').slice(-10), { shouldDirty: true, shouldValidate: true }); break;
-                    case 'aadhaarNumber': setValue('newBeneficiaryAadhaar', value.replace(/\D/g,''), { shouldDirty: true, shouldValidate: true }); break;
+                    case 'beneficiaryFirstName': setValue('newBeneficiary_firstName', value, { shouldDirty: true }); break;
+                    case 'beneficiaryMiddleName': setValue('newBeneficiary_middleName', value, { shouldDirty: true }); break;
+                    case 'beneficiaryLastName': setValue('newBeneficiary_lastName', value, { shouldDirty: true }); break;
+                    case 'fatherName': setValue('newBeneficiary_fatherName', value, { shouldDirty: true }); break;
+                    case 'beneficiaryPhone': setValue('newBeneficiary_phone', value.replace(/\D/g, '').slice(-10), { shouldDirty: true, shouldValidate: true }); break;
+                    case 'aadhaarNumber': setValue('newBeneficiary_aadhaarNumber', value.replace(/\D/g,''), { shouldDirty: true, shouldValidate: true }); break;
                     case 'address': setValue('addressLine1', value, { shouldDirty: true }); break;
                     case 'city': setValue('city', value, { shouldDirty: true }); break;
                     case 'pincode': setValue('pincode', value, { shouldDirty: true }); break;
@@ -844,41 +844,54 @@ function AddLeadFormContent({ users, campaigns, settings, prefilledRawText }: Ad
                                      <div className="space-y-4">
                                         <Label>File Previews</Label>
                                         <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                                            {otherDocs.map((file, index) => (
-                                                <div key={index} className="relative group p-2 border rounded-lg bg-background space-y-2">
-                                                    <div className="w-full h-32 overflow-auto flex items-center justify-center">
-                                                            {file.type.startsWith('image/') ? (
-                                                            <div className="relative w-full h-full" onWheel={(e) => handleWheel(e, index)}>
-                                                                <Image
-                                                                    src={URL.createObjectURL(file)}
-                                                                    alt={`Preview ${index + 1}`}
-                                                                    fill
-                                                                    className="object-contain transition-transform duration-300"
-                                                                     style={{ transform: `scale(${zoomLevels[index] || 1}) rotate(${rotation}deg)` }}
-                                                                />
-                                                            </div>
-                                                            ) : (
-                                                                <FileIcon className="w-16 h-16 text-muted-foreground" />
-                                                            )}
+                                            {otherDocs.map((file, index) => {
+                                                const isImage = file.type.startsWith('image/');
+                                                const zoom = zoomLevels[index] || 1;
+                                                return (
+                                                    <div key={index} className="relative group p-2 border rounded-lg bg-background space-y-2">
+                                                        <div className="w-full h-32 overflow-auto flex items-center justify-center">
+                                                                {isImage ? (
+                                                                <div className="relative w-full h-full" onWheel={(e) => handleWheel(e, index)}>
+                                                                    <Image
+                                                                        src={URL.createObjectURL(file)}
+                                                                        alt={`Preview ${index + 1}`}
+                                                                        fill
+                                                                        className="object-contain transition-transform duration-300"
+                                                                         style={{ transform: `scale(${zoom}) rotate(${rotation}deg)` }}
+                                                                    />
+                                                                </div>
+                                                                ) : (
+                                                                    <FileIcon className="w-16 h-16 text-muted-foreground" />
+                                                                )}
+                                                        </div>
+                                                        <p className="text-xs text-muted-foreground truncate">{file.name}</p>
+                                                        <div className="absolute top-1 right-1 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity bg-background/80 rounded-md">
+                                                            <Button type="button" size="icon" variant="ghost" className="h-6 w-6" onClick={() => setZoomLevels(z => ({...z, [index]: (z[index] || 1) * 1.2}))}><ZoomIn className="h-4 w-4"/></Button>
+                                                            <Button type="button" size="icon" variant="ghost" className="h-6 w-6" onClick={() => setZoomLevels(z => ({...z, [index]: Math.max(0.5, (z[index] || 1) / 1.2)}))}><ZoomOut className="h-4 w-4"/></Button>
+                                                            <Button type="button" size="icon" variant="ghost" className="h-6 w-6" onClick={() => setRotation(r => r + 90)}><RotateCw className="h-4 w-4" /></Button>
+                                                            <Button type="button" size="icon" variant="ghost" className="h-6 w-6 text-destructive hover:bg-destructive/10" onClick={() => {
+                                                                setOtherDocs(docs => docs.filter((_, i) => i !== index));
+                                                                setZoomLevels(prev => {
+                                                                    const newLevels = {...prev};
+                                                                    delete newLevels[index];
+                                                                    return newLevels;
+                                                                });
+                                                            }}>
+                                                                <XCircle className="h-4 w-4"/>
+                                                            </Button>
+                                                        </div>
                                                     </div>
-                                                    <p className="text-xs text-muted-foreground truncate">{file.name}</p>
-                                                    <div className="absolute top-1 right-1 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity bg-background/80 rounded-md">
-                                                        <Button type="button" size="icon" variant="ghost" className="h-6 w-6" onClick={() => setZoomLevels(z => ({...z, [index]: (z[index] || 1) * 1.2}))}><ZoomIn className="h-4 w-4"/></Button>
-                                                        <Button type="button" size="icon" variant="ghost" className="h-6 w-6" onClick={() => setZoomLevels(z => ({...z, [index]: Math.max(0.5, (z[index] || 1) / 1.2)}))}><ZoomOut className="h-4 w-4"/></Button>
-                                                        <Button type="button" size="icon" variant="ghost" className="h-6 w-6" onClick={() => setRotation(r => r + 90)}><RotateCw className="h-4 w-4" /></Button>
-                                                        <Button type="button" size="icon" variant="ghost" className="h-6 w-6 text-destructive hover:bg-destructive/10" onClick={() => {
-                                                            setOtherDocs(docs => docs.filter((_, i) => i !== index));
-                                                            setZoomLevels(prev => {
-                                                                const newLevels = {...prev};
-                                                                delete newLevels[index];
-                                                                return newLevels;
-                                                            });
-                                                        }}>
-                                                            <XCircle className="h-4 w-4"/>
-                                                        </Button>
-                                                    </div>
-                                                </div>
-                                            ))}
+                                                )
+                                            })}
+                                             <Button
+                                                type="button"
+                                                variant="outline"
+                                                className="h-48 flex-col gap-2 border-dashed"
+                                                onClick={() => otherDocsInputRef.current?.click()}
+                                            >
+                                                <PlusCircle className="h-8 w-8 text-muted-foreground" />
+                                                <span className="text-muted-foreground">Add More Files</span>
+                                            </Button>
                                         </div>
                                      </div>
                                 )}
@@ -1095,15 +1108,12 @@ function AddLeadFormContent({ users, campaigns, settings, prefilledRawText }: Ad
 
 export function AddLeadForm(props: AddLeadFormProps) {
     const { settings, prefilledData } = props;
+    const isAadhaarMandatory = settings?.userConfiguration?.Beneficiary?.isAadhaarMandatory || false;
     const formSchema = useMemo(() => createFormSchema(settings), [settings]);
     const form = useForm<AddLeadFormValues>({
         resolver: zodResolver(formSchema),
         reValidateMode: "onBlur",
         mode: "onBlur",
-        defaultValues: {
-            ...initialFormValues,
-            // Apply prefilled data if it exists
-        },
     });
 
     return (

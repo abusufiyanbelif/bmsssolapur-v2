@@ -320,9 +320,9 @@ export default function RequestHelpPage() {
                                             />
                                          </div>
                                     ) : (
-                                        <div className="flex flex-col items-center gap-2 text-muted-foreground">
-                                            <FileIcon className="h-16 w-16" />
-                                            <span className="text-sm font-semibold">{file?.name}</span>
+                                        <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
+                                            <FileIcon className="h-12 w-12" />
+                                            <p className="mt-2 text-sm font-semibold">{file?.name}</p>
                                         </div>
                                     )}
                                 </div>
@@ -347,7 +347,7 @@ export default function RequestHelpPage() {
                     )}
 
                     <Button type="submit" disabled={isSubmitting}>
-                    {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <HandHeart className="mr-2 h-4 w-4" />}
                     Submit for Review
                     </Button>
                 </form>
@@ -388,7 +388,7 @@ export default function RequestHelpPage() {
                 )}
                  <AlertDialogFooter>
                     <AlertDialogAction asChild className="w-full">
-                        <Link href="/my-cases">OK</Link>
+                        <Button onClick={handleDialogClose}>OK</Button>
                     </AlertDialogAction>
                 </AlertDialogFooter>
             </AlertDialogContent>

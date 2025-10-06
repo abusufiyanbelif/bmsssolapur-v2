@@ -263,7 +263,7 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation, set
     } : initialFormValues,
   });
   
-  const { watch, setValue, reset, getValues, control, handleSubmit } = form;
+  const { watch, setValue, reset, getValues, control, handleSubmit: originalHandleSubmit, trigger } = form;
   const includeTip = watch("includeTip");
   const totalTransactionAmount = watch("totalTransactionAmount");
   const tipAmount = watch("tipAmount");
@@ -323,6 +323,23 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation, set
   }, []);
   
   const donorUsers = users.filter(u => u.roles.includes('Donor'));
+  
+  const handleSubmit = (onSubmitFunction: (values: AddDonationFormValues) => void) => {
+      return async (e: React.BaseSyntheticEvent) => {
+          e.preventDefault();
+          const isValid = await trigger(); 
+          if (!isValid) {
+              const errorContent = Object.values(form.formState.errors).map((err, i) => <li key={i}>{err.message}</li>).filter(Boolean);
+              toast({
+                  variant: "destructive",
+                  title: "Please correct the errors below",
+                  description: <ul className="list-disc pl-5">{errorContent}</ul>
+              });
+              return;
+          }
+          originalHandleSubmit(onSubmitFunction)(e);
+      };
+  };
 
   async function onSubmit(values: AddDonationFormValues) {
     if (!adminUserId) {
@@ -527,6 +544,16 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation, set
      const getFieldClass = (fieldName: string) => {
         return autoFilledFields.has(fieldName) ? "bg-green-100 dark:bg-green-900/50" : "";
     };
+    
+    const transactionIdLabel = useMemo(() => {
+        if (paymentMethod === 'Bank Transfer') return 'UTR Number';
+        switch (paymentApp) {
+            case 'PhonePe': return 'Transaction ID';
+            case 'Paytm': return 'UPI Ref. No';
+            case 'Google Pay': return 'UPI Transaction ID';
+            default: return 'Primary Transaction ID';
+        }
+    }, [paymentApp, paymentMethod]);
 
 
   return (

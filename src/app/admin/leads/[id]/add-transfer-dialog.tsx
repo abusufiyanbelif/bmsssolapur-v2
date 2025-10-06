@@ -1,4 +1,4 @@
-
+// src/app/admin/leads/[id]/add-transfer-dialog.tsx
 "use client";
 
 import {
@@ -18,7 +18,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useRef, useEffect, useMemo } from "react";
 import { useForm } from "react-hook-form";
-import { Loader2, FileUp, ScanEye, AlertTriangle, FileText, TextSelect, Bot, Text, ZoomIn, ZoomOut, X, RotateCw } from "lucide-react";
+import { Loader2, FileUp, ScanEye, AlertTriangle, FileText, TextSelect, Bot, Text, ZoomIn, ZoomOut, X, RotateCw, RefreshCw as RefreshIcon } from "lucide-react";
 import { handleFundTransfer } from "./actions";
 import { useRouter } from "next/navigation";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
@@ -27,7 +27,7 @@ import Image from "next/image";
 import { FormDescription, FormField, FormControl, FormItem, FormLabel, FormMessage, Form } from "@/components/ui/form";
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from "@/components/ui/select";
 import type { PaymentMethod } from "@/services/types";
-import { getRawTextFromImage } from "@/app/actions";
+import { getRawTextFromImage } from '@/app/actions';
 import { handleExtractDonationDetails } from "@/app/admin/donations/add/actions";
 import { cn } from "@/lib/utils";
 
@@ -113,7 +113,7 @@ export function AddTransferDialog({ leadId }: AddTransferDialogProps) {
     if (!file) return;
     setIsExtractingText(true);
     const formData = new FormData();
-    formData.append("proof", file);
+    formData.append("file_0", file);
     const result = await getRawTextFromImage(formData);
     if (result.success && result.rawText) {
       setRawText(result.rawText);
