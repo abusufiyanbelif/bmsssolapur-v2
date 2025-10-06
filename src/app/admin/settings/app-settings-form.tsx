@@ -2,7 +2,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
+import { useForm, UseFormReturn } from "react-hook-form";
 import * as z from "zod";
 import { Button } from "@/components/ui/button";
 import {
@@ -45,7 +45,16 @@ interface AppSettingsFormProps {
     settings: AppSettings;
 }
 
-function SectionForm<T extends z.ZodType<any, any>>({ title, description, schema, defaultValues, children, onSave }: { title: string, description: string, schema: T, defaultValues: z.infer<T>, children: React.ReactNode, onSave: (data: z.infer<T>) => Promise<void> }) {
+interface SectionFormProps<T extends z.ZodType<any, any>> {
+    title: string;
+    description: string;
+    schema: T;
+    defaultValues: z.infer<T>;
+    children: (form: UseFormReturn<z.infer<T>>) => React.ReactNode;
+    onSave: (data: z.infer<T>) => Promise<void>;
+}
+
+function SectionForm<T extends z.ZodType<any, any>>({ title, description, schema, defaultValues, children, onSave }: SectionFormProps<T>) {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const form = useForm<z.infer<T>>({
         resolver: zodResolver(schema),
@@ -70,7 +79,7 @@ function SectionForm<T extends z.ZodType<any, any>>({ title, description, schema
                         <CardDescription>{description}</CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-6">
-                        {children}
+                        {children(form)}
                     </CardContent>
                     {isDirty && (
                         <CardFooter>
@@ -126,9 +135,13 @@ export function AppSettingsForm({ settings }: AppSettingsFormProps) {
             }}
             onSave={(data) => handleSave('login', data)}
         >
-             <FormField control={form.control} name="loginPassword" render={({ field }) => (<FormItem className="flex flex-row items-center justify-between rounded-lg border p-4"><div className="space-y-0.5"><FormLabel className="text-base">Password Login</FormLabel><FormDescription>Allow users to log in with a username/email/phone and password.</FormDescription></div><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>)}/>
-             <FormField control={form.control} name="loginOtp" render={({ field }) => (<FormItem className="flex flex-row items-center justify-between rounded-lg border p-4"><div className="space-y-0.5"><FormLabel className="text-base">OTP (SMS) Login</FormLabel><FormDescription>Allow users to log in using a one-time password sent via SMS.</FormDescription></div><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>)}/>
-             <FormField control={form.control} name="loginGoogle" render={({ field }) => (<FormItem className="flex flex-row items-center justify-between rounded-lg border p-4"><div className="space-y-0.5"><FormLabel className="text-base">Google Sign-In</FormLabel><FormDescription>Allow users to log in using their Google account.</FormDescription></div><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>)}/>
+          {(form) => (
+            <>
+              <FormField control={form.control} name="loginPassword" render={({ field }) => (<FormItem className="flex flex-row items-center justify-between rounded-lg border p-4"><div className="space-y-0.5"><FormLabel className="text-base">Password Login</FormLabel><FormDescription>Allow users to log in with a username/email/phone and password.</FormDescription></div><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>)}/>
+              <FormField control={form.control} name="loginOtp" render={({ field }) => (<FormItem className="flex flex-row items-center justify-between rounded-lg border p-4"><div className="space-y-0.5"><FormLabel className="text-base">OTP (SMS) Login</FormLabel><FormDescription>Allow users to log in using a one-time password sent via SMS.</FormDescription></div><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>)}/>
+              <FormField control={form.control} name="loginGoogle" render={({ field }) => (<FormItem className="flex flex-row items-center justify-between rounded-lg border p-4"><div className="space-y-0.5"><FormLabel className="text-base">Google Sign-In</FormLabel><FormDescription>Allow users to log in using their Google account.</FormDescription></div><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>)}/>
+            </>
+          )}
         </SectionForm>
         
         <SectionForm
@@ -143,10 +156,14 @@ export function AppSettingsForm({ settings }: AppSettingsFormProps) {
             }}
             onSave={(data) => handleSave('payment', data)}
         >
-            <FormField control={form.control} name="paymentUpi" render={({ field }) => ( <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4"><div className="space-y-0.5"><FormLabel className="text-base">UPI / QR Code</FormLabel><FormDescription>Allow recording donations made via UPI.</FormDescription></div><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>)}/>
-            <FormField control={form.control} name="paymentBankTransfer" render={({ field }) => ( <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4"><div className="space-y-0.5"><FormLabel className="text-base">Bank Transfer</FormLabel><FormDescription>Allow recording donations made via bank transfer.</FormDescription></div><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>)}/>
-            <FormField control={form.control} name="paymentCash" render={({ field }) => ( <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4"><div className="space-y-0.5"><FormLabel className="text-base">Cash</FormLabel><FormDescription>Allow recording cash donations.</FormDescription></div><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>)}/>
-            <FormField control={form.control} name="paymentOther" render={({ field }) => ( <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4"><div className="space-y-0.5"><FormLabel className="text-base">Other</FormLabel><FormDescription>Allow recording donations from other methods.</FormDescription></div><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>)}/>
+           {(form) => (
+            <>
+              <FormField control={form.control} name="paymentUpi" render={({ field }) => ( <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4"><div className="space-y-0.5"><FormLabel className="text-base">UPI / QR Code</FormLabel><FormDescription>Allow recording donations made via UPI.</FormDescription></div><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>)}/>
+              <FormField control={form.control} name="paymentBankTransfer" render={({ field }) => ( <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4"><div className="space-y-0.5"><FormLabel className="text-base">Bank Transfer</FormLabel><FormDescription>Allow recording donations made via bank transfer.</FormDescription></div><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>)}/>
+              <FormField control={form.control} name="paymentCash" render={({ field }) => ( <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4"><div className="space-y-0.5"><FormLabel className="text-base">Cash</FormLabel><FormDescription>Allow recording cash donations.</FormDescription></div><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>)}/>
+              <FormField control={form.control} name="paymentOther" render={({ field }) => ( <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4"><div className="space-y-0.5"><FormLabel className="text-base">Other</FormLabel><FormDescription>Allow recording donations from other methods.</FormDescription></div><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>)}/>
+            </>
+           )}
         </SectionForm>
 
         <SectionForm
@@ -159,8 +176,12 @@ export function AppSettingsForm({ settings }: AppSettingsFormProps) {
             }}
             onSave={(data) => handleSave('feature', data)}
         >
-             <FormField control={form.control} name="onlinePaymentsEnabled" render={({ field }) => (<FormItem className="flex flex-row items-center justify-between rounded-lg border p-4"><div className="space-y-0.5"><FormLabel className="text-base">Online Payment Gateways</FormLabel><FormDescription>This is a master switch for all online payment gateways (e.g., Razorpay).</FormDescription></div><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>)}/>
-             <FormField control={form.control} name="featureDirectPayment" render={({ field }) => (<FormItem className="flex flex-row items-center justify-between rounded-lg border p-4"><div className="space-y-0.5"><FormLabel className="text-base">Direct Payment to Beneficiary</FormLabel><FormDescription>If enabled, donors will see an option to pay a beneficiary directly.</FormDescription></div><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>)}/>
+           {(form) => (
+            <>
+              <FormField control={form.control} name="onlinePaymentsEnabled" render={({ field }) => (<FormItem className="flex flex-row items-center justify-between rounded-lg border p-4"><div className="space-y-0.5"><FormLabel className="text-base">Online Payment Gateways</FormLabel><FormDescription>This is a master switch for all online payment gateways (e.g., Razorpay).</FormDescription></div><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>)}/>
+              <FormField control={form.control} name="featureDirectPayment" render={({ field }) => (<FormItem className="flex flex-row items-center justify-between rounded-lg border p-4"><div className="space-y-0.5"><FormLabel className="text-base">Direct Payment to Beneficiary</FormLabel><FormDescription>If enabled, donors will see an option to pay a beneficiary directly.</FormDescription></div><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>)}/>
+            </>
+           )}
         </SectionForm>
     </div>
   );
