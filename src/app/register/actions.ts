@@ -3,7 +3,7 @@
 "use server";
 
 import { createUser } from '@/services/user-service';
-import type { User } from '@/services/types';
+import type { User, UserRole } from '@/services/types';
 import { isConfigValid } from '@/services/firebase';
 import { Timestamp } from 'firebase/firestore';
 
@@ -49,7 +49,8 @@ export async function handleRegister(formData: FormData): Promise<RegisterState>
       roles: ['Donor'], // Default role for new registrations
       isActive: true, // New users are active by default
       createdAt: Timestamp.now(),
-      gender: 'Other',
+      gender: 'Other', // A default value, user can change in profile
+      aadhaarNumber: formData.get("aadhaarNumber") as string || undefined,
       bankAccountName: formData.get("bankAccountName") as string || undefined,
       bankName: formData.get("bankName") as string || undefined,
       bankAccountNumber: formData.get("bankAccountNumber") as string || undefined,
