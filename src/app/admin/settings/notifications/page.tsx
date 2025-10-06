@@ -1,5 +1,4 @@
 
-
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { getAppSettings } from "@/services/app-settings-service";
 import { NotificationSettingsForm } from "./notification-settings-form";
@@ -33,7 +32,7 @@ export default async function NotificationSettingsPage() {
                         Manage Notification Providers
                     </CardTitle>
                     <CardDescription className="text-muted-foreground">
-                       Configure credentials for external notification services like Twilio and Nodemailer. After saving your settings, you can test the connection on the <Link href="/services" className="underline hover:text-primary">Services Summary</Link> page.
+                       Configure credentials for external notification services. After saving your settings, use the &quot;Test Connection&quot; button within each section to verify your setup.
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -43,6 +42,3 @@ export default async function NotificationSettingsPage() {
         </div>
     );
 }
-
-
-    

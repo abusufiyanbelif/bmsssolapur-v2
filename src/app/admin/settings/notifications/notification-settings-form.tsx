@@ -15,13 +15,12 @@ import {
 } from "@/components/ui/form";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
-import { handleUpdateNotificationSettings } from "./actions";
+import { handleUpdateNotificationSettings, testProviderConnection } from "./actions";
 import { useState } from "react";
-import { Loader2, Save } from "lucide-react";
+import { Loader2, Save, Wifi } from "lucide-react";
 import type { AppSettings } from "@/services/types";
-import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Separator } from "@/components/ui/separator";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 
 
@@ -55,6 +54,7 @@ interface NotificationSettingsFormProps {
 export function NotificationSettingsForm({ settings }: NotificationSettingsFormProps) {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [testStatus, setTestStatus] = useState<Record<string, 'idle' | 'loading' | 'success' | 'error'>>({});
 
   const form = useForm<SettingsFormValues>({
     resolver: zodResolver(formSchema),
@@ -107,65 +107,72 @@ export function NotificationSettingsForm({ settings }: NotificationSettingsFormP
       });
     }
   }
+  
+  const handleTest = async (provider: 'twilio' | 'nodemailer') => {
+    setTestStatus(prev => ({ ...prev, [provider]: 'loading' }));
+    const result = await testProviderConnection(provider);
+    if(result.success) {
+      setTestStatus(prev => ({...prev, [provider]: 'success' }));
+      toast({ variant: 'success', title: `${provider.charAt(0).toUpperCase() + provider.slice(1)} Test Successful`});
+    } else {
+      setTestStatus(prev => ({...prev, [provider]: 'error' }));
+      toast({ variant: 'destructive', title: `Test Failed`, description: result.error});
+    }
+     setTimeout(() => setTestStatus(prev => ({...prev, [provider]: 'idle' })), 3000);
+  }
 
   return (
     <Form {...form}>
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-12">
         
-        <Accordion type="multiple" className="w-full space-y-6">
-            <AccordionItem value="sms">
-                 <Card className="border-primary/50">
-                    <AccordionTrigger className="p-6">
-                        <CardTitle>Twilio for SMS (OTP)</CardTitle>
-                    </AccordionTrigger>
-                    <AccordionContent className="p-6 pt-0">
-                        <div className="space-y-6">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <FormField control={form.control} name="sms.twilio.accountSid" render={({field}) => (<FormItem><FormLabel>Account SID</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
-                                <FormField control={form.control} name="sms.twilio.authToken" render={({field}) => (<FormItem><FormLabel>Auth Token</FormLabel><FormControl><Input {...field} type="password" /></FormControl><FormMessage /></FormItem>)} />
-                                <FormField control={form.control} name="sms.twilio.verifySid" render={({field}) => (<FormItem><FormLabel>Verify Service SID</FormLabel><FormControl><Input {...field} placeholder="VA..." /></FormControl><FormMessage /></FormItem>)} />
-                                <FormField control={form.control} name="sms.twilio.fromNumber" render={({field}) => (<FormItem><FormLabel>From Phone Number</FormLabel><FormControl><Input {...field} placeholder="+1..." /></FormControl><FormMessage /></FormItem>)} />
-                            </div>
+        <Accordion type="multiple" defaultValue={['sms', 'email']} className="w-full space-y-6">
+            <AccordionItem value="sms" className="border rounded-lg">
+                 <AccordionTrigger className="p-4 font-semibold text-primary"><h4 className="flex items-center gap-2">Twilio for SMS (OTP)</h4></AccordionTrigger>
+                 <AccordionContent className="p-6 pt-0">
+                    <div className="space-y-6">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <FormField control={form.control} name="sms.twilio.accountSid" render={({field}) => (<FormItem><FormLabel>Account SID</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
+                            <FormField control={form.control} name="sms.twilio.authToken" render={({field}) => (<FormItem><FormLabel>Auth Token</FormLabel><FormControl><Input {...field} type="password" /></FormControl><FormMessage /></FormItem>)} />
+                            <FormField control={form.control} name="sms.twilio.verifySid" render={({field}) => (<FormItem><FormLabel>Verify Service SID</FormLabel><FormControl><Input {...field} placeholder="VA..." /></FormControl><FormDescription>Where to find this? In your Twilio Console, navigate to **Verify -&gt; Services** and either create a new service or copy the SID (starts with &quot;VA...&quot;) from an existing one.</FormDescription><FormMessage /></FormItem>)} />
+                            <FormField control={form.control} name="sms.twilio.fromNumber" render={({field}) => (<FormItem><FormLabel>From Phone Number</FormLabel><FormControl><Input {...field} placeholder="+1..." /></FormControl><FormMessage /></FormItem>)} />
                         </div>
-                    </AccordionContent>
-                </Card>
+                        <Button type="button" variant="secondary" onClick={() => handleTest('twilio')} disabled={testStatus['twilio'] === 'loading'}>
+                            {testStatus['twilio'] === 'loading' ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Wifi className="mr-2 h-4 w-4"/>} Test Twilio Connection
+                        </Button>
+                    </div>
+                </AccordionContent>
             </AccordionItem>
-            <AccordionItem value="whatsapp">
-                 <Card>
-                    <AccordionTrigger className="p-6">
-                        <CardTitle>Twilio for WhatsApp</CardTitle>
-                    </AccordionTrigger>
-                    <AccordionContent className="p-6 pt-0">
-                        <div className="space-y-6">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <FormField control={form.control} name="whatsapp.twilio.accountSid" render={({field}) => (<FormItem><FormLabel>Account SID</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
-                                <FormField control={form.control} name="whatsapp.twilio.authToken" render={({field}) => (<FormItem><FormLabel>Auth Token</FormLabel><FormControl><Input {...field} type="password" /></FormControl><FormMessage /></FormItem>)} />
-                                <FormField control={form.control} name="whatsapp.twilio.fromNumber" render={({field}) => (<FormItem><FormLabel>From WhatsApp Number</FormLabel><FormControl><Input {...field} placeholder="whatsapp:+1..." /></FormControl><FormMessage /></FormItem>)} />
-                            </div>
+            <AccordionItem value="whatsapp" className="border rounded-lg">
+                 <AccordionTrigger className="p-4 font-semibold text-primary"><h4 className="flex items-center gap-2">Twilio for WhatsApp</h4></AccordionTrigger>
+                 <AccordionContent className="p-6 pt-0">
+                    <div className="space-y-6">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <FormField control={form.control} name="whatsapp.twilio.accountSid" render={({field}) => (<FormItem><FormLabel>Account SID</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
+                            <FormField control={form.control} name="whatsapp.twilio.authToken" render={({field}) => (<FormItem><FormLabel>Auth Token</FormLabel><FormControl><Input {...field} type="password" /></FormControl><FormMessage /></FormItem>)} />
+                            <FormField control={form.control} name="whatsapp.twilio.fromNumber" render={({field}) => (<FormItem><FormLabel>From WhatsApp Number</FormLabel><FormControl><Input {...field} placeholder="whatsapp:+1..." /></FormControl><FormMessage /></FormItem>)} />
                         </div>
-                    </AccordionContent>
-                </Card>
+                    </div>
+                </AccordionContent>
             </AccordionItem>
-             <AccordionItem value="email">
-                 <Card>
-                    <AccordionTrigger className="p-6">
-                        <CardTitle>Nodemailer for Email</CardTitle>
-                    </AccordionTrigger>
-                    <AccordionContent className="p-6 pt-0">
-                        <div className="space-y-6">
-                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <FormField control={form.control} name="email.nodemailer.host" render={({field}) => ( <FormItem><FormLabel>SMTP Host</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem> )} />
-                                <FormField control={form.control} name="email.nodemailer.port" render={({field}) => ( <FormItem><FormLabel>SMTP Port</FormLabel><FormControl><Input {...field} type="number" /></FormControl><FormMessage /></FormItem> )} />
-                            </div>
-                            <FormField control={form.control} name="email.nodemailer.secure" render={({field}) => (<FormItem className="flex flex-row items-center justify-between rounded-lg border p-4"><div className="space-y-0.5"><FormLabel className="text-base">Use SSL/TLS (Secure)</FormLabel></div><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>)} />
-                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <FormField control={form.control} name="email.nodemailer.user" render={({field}) => ( <FormItem><FormLabel>SMTP User</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem> )} />
-                                <FormField control={form.control} name="email.nodemailer.pass" render={({field}) => ( <FormItem><FormLabel>SMTP Password</FormLabel><FormControl><Input {...field} type="password" /></FormControl><FormMessage /></FormItem> )} />
-                            </div>
-                            <FormField control={form.control} name="email.nodemailer.from" render={({field}) => ( <FormItem><FormLabel>From Email Address</FormLabel><FormControl><Input {...field} placeholder='"Your Org Name" <email@your-domain.com>' /></FormControl><FormMessage /></FormItem> )} />
+             <AccordionItem value="email" className="border rounded-lg">
+                 <AccordionTrigger className="p-4 font-semibold text-primary"><h4 className="flex items-center gap-2">Nodemailer for Email</h4></AccordionTrigger>
+                 <AccordionContent className="p-6 pt-0">
+                    <div className="space-y-6">
+                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <FormField control={form.control} name="email.nodemailer.host" render={({field}) => ( <FormItem><FormLabel>SMTP Host</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem> )} />
+                            <FormField control={form.control} name="email.nodemailer.port" render={({field}) => ( <FormItem><FormLabel>SMTP Port</FormLabel><FormControl><Input {...field} type="number" /></FormControl><FormMessage /></FormItem> )} />
                         </div>
-                    </AccordionContent>
-                </Card>
+                        <FormField control={form.control} name="email.nodemailer.secure" render={({field}) => (<FormItem className="flex flex-row items-center justify-between rounded-lg border p-4"><div className="space-y-0.5"><FormLabel className="text-base">Use SSL/TLS (Secure)</FormLabel></div><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>)} />
+                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <FormField control={form.control} name="email.nodemailer.user" render={({field}) => ( <FormItem><FormLabel>SMTP User</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem> )} />
+                            <FormField control={form.control} name="email.nodemailer.pass" render={({field}) => ( <FormItem><FormLabel>SMTP Password</FormLabel><FormControl><Input {...field} type="password" /></FormControl><FormMessage /></FormItem> )} />
+                        </div>
+                        <FormField control={form.control} name="email.nodemailer.from" render={({field}) => ( <FormItem><FormLabel>From Email Address</FormLabel><FormControl><Input {...field} placeholder='"Your Org Name" <email@your-domain.com>' /></FormControl><FormMessage /></FormItem> )} />
+                        <Button type="button" variant="secondary" onClick={() => handleTest('nodemailer')} disabled={testStatus['nodemailer'] === 'loading'}>
+                            {testStatus['nodemailer'] === 'loading' ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Wifi className="mr-2 h-4 w-4"/>} Test Nodemailer Connection
+                        </Button>
+                    </div>
+                </AccordionContent>
             </AccordionItem>
         </Accordion>
 
