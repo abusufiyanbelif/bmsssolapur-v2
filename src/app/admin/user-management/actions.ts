@@ -1,12 +1,11 @@
 // src/app/admin/user-management/actions.ts
 "use server";
 
-import { deleteUser as deleteUserService, updateUser } from "@/services/user-service";
+import { deleteUser as deleteUserService, updateUser, getUser, getUserByUserId } from "@/services/user-service";
 import { revalidatePath } from "next/cache";
 import { writeBatch, doc } from "firebase/firestore";
 import { db } from "@/services/firebase";
 import { logActivity } from "@/services/activity-log-service";
-import { getUser } from "@/services/user-service";
 
 export async function handleDeleteUser(userId: string, adminUserId: string) {
     try {
