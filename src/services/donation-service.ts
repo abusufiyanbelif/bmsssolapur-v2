@@ -36,12 +36,16 @@ const LEADS_COLLECTION = 'leads';
 
 // Function to create a donation
 export const createDonation = async (
-    donation: Omit<Donation, 'id' | 'createdAt'>, 
+    donation: Partial<Omit<Donation, 'id' | 'createdAt'>>, 
     adminUserId: string,
     adminUserName: string,
     adminUserEmail: string | undefined,
 ) => {
   try {
+    if (!donation.donorId || !donation.donorName) {
+        throw new Error("Donor ID and Name are required to create a donation.");
+    }
+
     const [donorUser, adminUser] = await Promise.all([
         getDoc(doc(db, 'users', donation.donorId)),
         getDoc(doc(db, 'users', adminUserId)),
