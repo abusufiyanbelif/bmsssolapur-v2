@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import { useEffect, useState } from "react";
@@ -10,12 +9,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { format, formatDistanceToNow } from "date-fns";
 import { Timestamp } from "firebase/firestore";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { ActivityDetailDialog } from "@/app/admin/leads/[id]/activity-detail-dialog";
 
 interface ActivityFeedProps {
   userId: string;
 }
 
-const ActivityItem = ({ log }: { log: ActivityLog }) => {
+const ActivityItem = ({ log, onSelect }: { log: ActivityLog, onSelect: () => void }) => {
   let timeAgo = "Just now";
   let fullDate = "Pending timestamp...";
 
@@ -27,10 +27,13 @@ const ActivityItem = ({ log }: { log: ActivityLog }) => {
      fullDate = format(log.timestamp, 'PPP p');
   }
   
-  const changes = log.details.changes || {};
+  const hasChanges = log.details.changes && Object.keys(log.details.changes).length > 0;
 
   return (
-    <div className="flex items-start gap-4">
+    <div 
+      className={`flex items-start gap-4 ${hasChanges ? 'cursor-pointer hover:bg-muted/50 p-2 -m-2 rounded-lg' : ''}`}
+      onClick={hasChanges ? onSelect : undefined}
+    >
       <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 mt-1">
         <ListChecks className="h-4 w-4 text-primary" />
       </div>
@@ -41,26 +44,7 @@ const ActivityItem = ({ log }: { log: ActivityLog }) => {
         <p className="text-xs text-muted-foreground" title={fullDate}>
           As <span className="font-semibold">{log.role}</span> &middot; {timeAgo}
         </p>
-        <div className="mt-2 border rounded-lg overflow-hidden">
-             <Table>
-                <TableHeader>
-                    <TableRow>
-                        <TableHead className="bg-muted/50">Field</TableHead>
-                        <TableHead className="bg-muted/50">Previous Value</TableHead>
-                        <TableHead className="bg-muted/50">New Value</TableHead>
-                    </TableRow>
-                </TableHeader>
-                <TableBody>
-                    {Object.entries(changes).map(([key, value]: [string, any]) => (
-                         <TableRow key={key}>
-                            <TableCell className="font-medium capitalize text-xs">{key.replace(/([A-Z])/g, ' $1')}</TableCell>
-                            <TableCell className="text-muted-foreground text-xs">{String(value.from)}</TableCell>
-                            <TableCell className="text-foreground font-semibold text-xs">{String(value.to)}</TableCell>
-                        </TableRow>
-                    ))}
-                </TableBody>
-            </Table>
-        </div>
+        {hasChanges && <p className="text-xs text-blue-600 mt-1">Click to see details</p>}
       </div>
     </div>
   );
@@ -70,6 +54,7 @@ export function UserProfileAuditTrail({ userId }: ActivityFeedProps) {
   const [activities, setActivities] = useState<ActivityLog[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [selectedLog, setSelectedLog] = useState<ActivityLog | null>(null);
 
   useEffect(() => {
     const fetchActivities = async () => {
@@ -122,13 +107,14 @@ export function UserProfileAuditTrail({ userId }: ActivityFeedProps) {
     return (
       <div className="space-y-6">
         {activities.map((log) => (
-          <ActivityItem key={log.id} log={log} />
+          <ActivityItem key={log.id} log={log} onSelect={() => setSelectedLog(log)} />
         ))}
       </div>
     );
   }
 
   return (
+    <>
      <Card>
         <CardHeader>
             <CardTitle className="flex items-center gap-2 text-primary">
@@ -141,5 +127,13 @@ export function UserProfileAuditTrail({ userId }: ActivityFeedProps) {
            {renderContent()}
         </CardContent>
     </Card>
+    {selectedLog && (
+        <ActivityDetailDialog
+            log={selectedLog}
+            open={!!selectedLog}
+            onOpenChange={(isOpen) => !isOpen && setSelectedLog(null)}
+        />
+    )}
+    </>
   )
 }
