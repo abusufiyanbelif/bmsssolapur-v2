@@ -208,8 +208,7 @@ export function LoginForm() {
                             Login with OTP
                         </Button>
                     )}
-                    {/* This div is now inside the OTP tab and will be mounted when the tab is active */}
-                    <div id="recaptcha-container"></div>
+                     <div id="recaptcha-container"></div>
                 </form>
             </TabsContent>
             <TabsContent value="password">
