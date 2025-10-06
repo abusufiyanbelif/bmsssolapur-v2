@@ -15,7 +15,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Button } from "@/components/ui/button";
 import { ActivityLog } from "@/services/activity-log-service";
 import { format, formatDistanceToNow } from "date-fns";
-import { Loader2, AlertCircle, FilterX, ChevronLeft, ChevronRight, Search, ArrowUpDown } from "lucide-react";
+import { Loader2, AlertCircle, FilterX, ChevronLeft, ChevronRight, Search, ArrowUpDown, History } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
@@ -272,7 +272,10 @@ export function AuditTrailClient({ initialLogs, error: initialError }: AuditTrai
         <h2 className="text-3xl font-bold tracking-tight font-headline text-primary">Audit Trail</h2>
         <Card>
             <CardHeader>
-                <CardTitle className="text-primary">User Activity Logs</CardTitle>
+                <CardTitle className="flex items-center gap-2 text-primary">
+                    <History />
+                    User Activity Logs
+                </CardTitle>
                 <CardDescription className="text-muted-foreground">
                     A chronological record of all significant actions taken by users across the application.
                 </CardDescription>
@@ -305,6 +308,3 @@ export function AuditTrailClient({ initialLogs, error: initialError }: AuditTrai
     </div>
   )
 }
-
-    
-    

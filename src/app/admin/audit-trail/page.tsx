@@ -1,5 +1,4 @@
 
-
 import { AuditTrailClient } from "./audit-trail-client";
 import { getAllActivityLogs } from "@/services/activity-log-service";
 
