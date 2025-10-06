@@ -18,19 +18,13 @@ export async function handleUpdateNotificationSettings(
   try {
     const currentSettings = await getAppSettings();
     
-    // Start with a deep copy of the existing settings to avoid overwriting nested objects
     const newSettings = JSON.parse(JSON.stringify(currentSettings));
 
-    // --- Update SMS Provider Choice ---
+    // Determine which form was submitted based on a unique field
     if (formData.has("sms.provider")) {
-        const smsProvider = formData.get("sms.provider") as 'twilio' | 'firebase';
-        if (!newSettings.notificationSettings.sms) {
-            newSettings.notificationSettings.sms = {};
-        }
-        newSettings.notificationSettings.sms.provider = smsProvider;
+        newSettings.notificationSettings.sms.provider = formData.get("sms.provider") as 'twilio' | 'firebase';
     }
 
-    // --- Update Twilio SMS/OTP settings ---
     if (formData.has("sms.twilio.accountSid")) {
       newSettings.notificationSettings.sms.twilio = {
           accountSid: formData.get("sms.twilio.accountSid") as string,
@@ -40,7 +34,6 @@ export async function handleUpdateNotificationSettings(
       };
     }
     
-    // --- Update Twilio WhatsApp settings ---
     if (formData.has("whatsapp.twilio.fromNumber")) {
         if(!newSettings.notificationSettings.whatsapp) {
             newSettings.notificationSettings.whatsapp = { provider: 'twilio', twilio: {} };
@@ -52,7 +45,6 @@ export async function handleUpdateNotificationSettings(
         };
     }
     
-    // --- Update Nodemailer settings ---
     if (formData.has("email.nodemailer.host")) {
         if(!newSettings.notificationSettings.email) {
             newSettings.notificationSettings.email = { provider: 'nodemailer', nodemailer: {} };

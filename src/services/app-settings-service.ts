@@ -108,7 +108,7 @@ const defaultSettings: Omit<AppSettings, 'id' | 'updatedAt'> = {
     },
     notificationSettings: {
         sms: {
-            provider: 'twilio',
+            provider: 'firebase',
             twilio: { accountSid: '', authToken: '', verifySid: '', fromNumber: '' }
         },
         whatsapp: {
