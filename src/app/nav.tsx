@@ -7,7 +7,7 @@ import {
     Home, Settings, Share2, ShieldCheck, UserCog, HandHeart, Users,
     FileCheck, FileText, Banknote, UserPlus, BookText,
     Wrench, Download, Eye, Megaphone, Info, LogIn, Server, BrainCircuit, FilePlus2,
-    Database, Building, Award, ChevronDown, Shield, KeySquare, Group, BookOpenCheck, ArrowRightLeft, LayoutDashboard, Workflow, UserSearch, CreditCard, BellRing, MessageSquare, Newspaper, ScanSearch, PlusCircle, Binary, Palette
+    Database, Building, Award, ChevronDown, Shield, KeySquare, Group, BookOpenCheck, ArrowRightLeft, LayoutDashboard, Workflow, UserSearch, CreditCard, BellRing, MessageSquare, Newspaper, ScanSearch, PlusCircle, Binary, Palette, History
 } from "lucide-react"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { cn } from "@/lib/utils"
@@ -41,8 +41,6 @@ const allNavItems: NavItem[] = [
     
     // Donor
     { href: "/donate", label: "Donate Now", icon: HandHeart, allowedRoles: ["Donor"] },
-    { href: "/public-leads", label: "General Cases", icon: Users, allowedRoles: ["Donor"] },
-    { href: "/campaigns", label: "Campaigns", icon: Megaphone, allowedRoles: ["Donor"] },
     { href: "/my-donations", label: "My Donations", icon: HandHeart, allowedRoles: ["Donor"] },
     { href: "/my-uploads", label: "My Uploads", icon: ScanSearch, allowedRoles: ["Donor"] },
 
@@ -156,7 +154,7 @@ const allNavItems: NavItem[] = [
         icon: BrainCircuit, 
         allowedRoles: ["Super Admin", "Finance Admin"],
         subItems: [
-            { href: "/admin/data-analytics", label: "Analytics Dashboard", icon: LayoutDashboard },
+            { href: "/admin/data-analytics", label: "Analytics Dashboard", icon: LayoutDashboard, allowedRoles: ["Super Admin", "Finance Admin"] },
             { href: "/admin/data-analytics/configuration", label: "Configuration", icon: Settings, allowedRoles: ["Super Admin"] },
         ]
     },
@@ -167,24 +165,25 @@ const allNavItems: NavItem[] = [
         icon: Settings, 
         allowedRoles: ["Super Admin"],
         subItems: [
-            { href: "/admin/settings", label: "General Settings" },
-            { href: "/admin/settings/theme", label: "Theme Settings", icon: Palette },
-            { href: "/admin/dashboard-settings", label: "Dashboard Settings", icon: LayoutDashboard },
-            { href: "/admin/payment-gateways", label: "Payment Gateways", icon: CreditCard },
-            { href: "/admin/settings/notifications", label: "Notification Settings", icon: BellRing },
-            { href: "/admin/seed", label: "Seed Database", icon: Database },
+            { href: "/admin/settings", label: "General Settings", allowedRoles: ["Super Admin"] },
+            { href: "/admin/settings/theme", label: "Theme Settings", icon: Palette, allowedRoles: ["Super Admin"] },
+            { href: "/admin/dashboard-settings", label: "Dashboard Settings", icon: LayoutDashboard, allowedRoles: ["Super Admin"] },
+            { href: "/admin/payment-gateways", label: "Payment Gateways", icon: CreditCard, allowedRoles: ["Super Admin"] },
+            { href: "/admin/settings/notifications", label: "Notification Settings", icon: BellRing, allowedRoles: ["Super Admin"] },
+            { href: "/admin/audit-trail", label: "Audit Trail", icon: History, allowedRoles: ["Super Admin"] },
+            { href: "/admin/seed", label: "Seed Database", icon: Database, allowedRoles: ["Super Admin"] },
             { 
                 label: "Diagnostics", 
                 icon: Wrench,
                 allowedRoles: ["Super Admin"],
                 subItems: [
-                    { href: "/services", label: "Services Summary", icon: Server },
-                    { href: "/dependencies", label: "Dependency Map", icon: Share2 },
-                    { href: "/validator", label: "Configuration Validator", icon: ShieldCheck },
-                    { href: "/admin/diagnostics/models", label: "Available AI Models", icon: Binary },
+                    { href: "/services", label: "Services Summary", icon: Server, allowedRoles: ["Super Admin"] },
+                    { href: "/dependencies", label: "Dependency Map", icon: Share2, allowedRoles: ["Super Admin"] },
+                    { href: "/validator", label: "Configuration Validator", icon: ShieldCheck, allowedRoles: ["Super Admin"] },
+                    { href: "/admin/diagnostics/models", label: "Available AI Models", icon: Binary, allowedRoles: ["Super Admin"] },
                 ]
             },
-            { href: "/personas", label: "AI Personas", icon: BrainCircuit },
+            { href: "/personas", label: "AI Personas", icon: BrainCircuit, allowedRoles: ["Super Admin"] },
         ]
     },
     
