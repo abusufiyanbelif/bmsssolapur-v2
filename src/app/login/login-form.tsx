@@ -177,6 +177,7 @@ export function LoginForm() {
 
             <TabsContent value="otp">
                 <form className="space-y-6 pt-4" onSubmit={onVerifyOtpSubmit}>
+                    <div id="recaptcha-container"></div>
                     <div className="space-y-2">
                       <Label htmlFor="phone">Phone Number</Label>
                        <div className="flex items-center">
