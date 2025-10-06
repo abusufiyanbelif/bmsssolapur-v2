@@ -1,6 +1,6 @@
 
 
-'use server';
+"use server";
 
 import { updateAppSettings, AppSettings, getAppSettings } from "@/services/app-settings-service";
 import { revalidatePath } from "next/cache";

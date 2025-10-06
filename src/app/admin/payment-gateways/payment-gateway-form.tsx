@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/form";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
-import { handleUpdateGatewaySettings, testGatewayConnection } from "./actions";
+import { handleUpdateGatewaySettings } from "./actions";
 import { useState, useEffect } from "react";
 import { Loader2, Save, Wifi, WifiOff } from "lucide-react";
 import { AppSettings } from "@/services/app-settings-service";
@@ -26,6 +26,7 @@ import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { testGatewayConnection } from "@/app/services/actions";
 
 // Base schema for a single gateway's settings
 const gatewaySchema = z.object({
@@ -89,7 +90,7 @@ function GatewayForm({ gatewayName, gatewayTitle, settings }: GatewayFormProps) 
 
     const onTestConnection = async () => {
         setIsTesting(true);
-        const result = await testGatewayConnection(gatewayName);
+        const result = await testGatewayConnection(gatewayName as 'razorpay');
         if (result.success) {
             toast({ variant: 'success', title: "Connection Successful!", description: `Successfully connected to ${gatewayTitle}.` });
         } else {
