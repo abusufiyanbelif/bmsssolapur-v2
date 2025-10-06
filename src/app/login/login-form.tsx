@@ -58,10 +58,8 @@ export function LoginForm() {
       // Dispatch event to notify AppShell immediately
       window.dispatchEvent(new CustomEvent('loginSuccess'));
 
-      // Use a short timeout to allow the AppShell to process the event before redirecting.
-      setTimeout(() => {
-        router.push(redirectPath);
-      }, 100); 
+      // Use a full page reload to ensure all state is correctly initialized
+      window.location.href = redirectPath;
     }
   }, [loginSuccessData, toast, router]);
   
@@ -114,7 +112,6 @@ export function LoginForm() {
       });
       setIsSubmitting(false);
     }
-    // No longer setting isSubmitting to false here, the page will redirect
   };
   
   const onSendOtp = async (event: React.MouseEvent<HTMLButtonElement>) => {
@@ -207,6 +204,7 @@ export function LoginForm() {
 
             <TabsContent value="otp">
                 <form className="space-y-6 pt-4" onSubmit={onVerifyOtpSubmit}>
+                    <div id="recaptcha-container"></div>
                     <div className="space-y-2">
                       <Label htmlFor="phone">Phone Number</Label>
                        <div className="flex items-center">
@@ -266,7 +264,6 @@ export function LoginForm() {
           </Tabs>
         </CardContent>
         <CardFooter className="flex-col gap-4 pt-6">
-            <div id="recaptcha-container"></div>
             <Separator />
             <div className="text-center text-sm text-muted-foreground">
                 <p>Don't have an account?</p>
