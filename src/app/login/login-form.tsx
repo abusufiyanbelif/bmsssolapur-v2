@@ -30,18 +30,7 @@ export function LoginForm() {
   const [confirmationResult, setConfirmationResult] = useState<ConfirmationResult | null>(null);
 
   useEffect(() => {
-    if (typeof window !== 'undefined' && !window.recaptchaVerifier) {
-      // Ensure the container exists before initializing
-      const recaptchaContainer = document.getElementById('recaptcha-container');
-      if (recaptchaContainer) {
-        window.recaptchaVerifier = new RecaptchaVerifier(auth, recaptchaContainer, {
-          'size': 'invisible',
-        });
-      }
-    }
-  }, []);
-
-  useEffect(() => {
+    // This effect runs when loginSuccessData is updated by any login method
     if (loginSuccessData?.userId && loginSuccessData?.redirectTo) {
       toast({
         variant: "success",
@@ -64,6 +53,24 @@ export function LoginForm() {
       router.push(redirectPath);
     }
   }, [loginSuccessData, toast, router]);
+  
+  useEffect(() => {
+    if (typeof window !== 'undefined' && !window.recaptchaVerifier) {
+      const recaptchaContainer = document.getElementById('recaptcha-container');
+      if (recaptchaContainer) {
+        window.recaptchaVerifier = new RecaptchaVerifier(auth, recaptchaContainer, {
+          'size': 'invisible',
+          'callback': (response: any) => {
+            // reCAPTCHA solved, allow signInWithPhoneNumber.
+          },
+          'expired-callback': () => {
+            // Response expired. Ask user to solve reCAPTCHA again.
+          }
+        });
+      }
+    }
+  }, []);
+
 
   const onPasswordSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -101,7 +108,7 @@ export function LoginForm() {
       setOtpProvider(result.provider || null);
       
       if (result.success) {
-          if (result.provider === 'firebase') {
+          if (result.provider === 'firebase' && window.recaptchaVerifier) {
              try {
                 const fullPhoneNumber = `+91${phoneNumber}`;
                 const confirmation = await signInWithPhoneNumber(auth, fullPhoneNumber, window.recaptchaVerifier);
@@ -112,7 +119,7 @@ export function LoginForm() {
                 console.error("Firebase signInWithPhoneNumber error:", error);
                 toast({ variant: "destructive", title: "Firebase Error", description: "Could not send OTP via Firebase. Please check console." });
             }
-          } else { // Twilio
+          } else if (result.provider === 'twilio') {
             toast({ 
               variant: "success",
               title: "OTP Sent", 
@@ -208,7 +215,7 @@ export function LoginForm() {
                             Login with OTP
                         </Button>
                     )}
-                     <div id="recaptcha-container"></div>
+                    <div id="recaptcha-container"></div>
                 </form>
             </TabsContent>
             <TabsContent value="password">
