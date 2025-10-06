@@ -26,6 +26,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { cn } from "@/lib/utils";
+import { format } from "date-fns";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -47,6 +48,7 @@ import { Separator } from "@/components/ui/separator";
 import { handleAddUser, handleExtractUserDetailsFromText } from "./actions";
 import { Textarea } from "@/components/ui/textarea";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+
 
 const allRoles: Exclude<UserRole, 'Guest'>[] = [
     "Donor",
@@ -614,7 +616,7 @@ function FormContent({ settings, isSubForm, prefilledData, onUserCreate }: AddUs
             <AccordionItem value="roles" className="border rounded-lg">
                 <AccordionTrigger className="p-4 font-semibold text-primary"><h4 className="flex items-center gap-2">Account Roles & Settings</h4></AccordionTrigger>
                 <AccordionContent className="p-6 pt-2 space-y-6">
-                    <FormField control={control} name="roles" render={() => ( <FormItem><div className="mb-4"><FormLabel className="text-base">User Roles</FormLabel><FormDescription>Select all roles that apply to this user.</FormDescription></div><div className="grid grid-cols-2 md:grid-cols-3 gap-4">{allRoles.map((role) => (<FormField key={role} control={control} name="roles" render={({ field }) => { return (<FormItem key={role} className="flex flex-row items-start space-x-3 space-y-0"><FormControl><Checkbox checked={field.value?.includes(role)} onCheckedChange={(checked) => { return checked ? field.onChange([...(field.value || []), role]) : field.onChange( field.value?.filter( (value) => value !== role))}}/></FormControl><FormLabel className="font-normal">{role}</FormLabel></FormItem> )}}/>))}</div><FormMessage /></FormItem>)}/>
+                    <FormField control={control} name="roles" render={() => ( <FormItem><div className="mb-4"><FormLabel className="text-base">User Roles</FormLabel><FormDescription>Select all roles that apply to this user.</FormDescription></div><div className="grid grid-cols-2 md:grid-cols-3 gap-4">{allRoles.map((role) => (<FormField key={role} control={control} name="roles" render={({ field }) => { return (<FormItem key={role} className="flex flex-row items-start space-x-3 space-y-0"><FormControl><Checkbox checked={field.value?.includes(role)} onCheckedChange={(checked) => { trigger('roles'); return checked ? field.onChange([...(field.value || []), role]) : field.onChange( field.value?.filter( (value) => value !== role))}}/></FormControl><FormLabel className="font-normal">{role}</FormLabel></FormItem> )}}/>))}</div><FormMessage /></FormItem>)}/>
                     {selectedRoles.includes("Beneficiary") && <FormField control={control} name="isAnonymousAsBeneficiary" render={({ field }) => ( <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4"><FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} /></FormControl><div className="space-y-1 leading-none"><FormLabel>Mark as Anonymous Beneficiary</FormLabel><FormDescription>If checked, their name will be hidden from public view.</FormDescription></div></FormItem>)} />}
                     {selectedRoles.includes("Donor") && <FormField control={control} name="isAnonymousAsDonor" render={({ field }) => ( <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4"><FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} /></FormControl><div className="space-y-1 leading-none"><FormLabel>Mark as Anonymous Donor</FormLabel><FormDescription>If checked, their name will be hidden on the public donations list.</FormDescription></div></FormItem>)} />}
                 </AccordionContent>
@@ -694,7 +696,7 @@ function FormContent({ settings, isSubForm, prefilledData, onUserCreate }: AddUs
             </div>
         )}
     </form>
-    <AlertDialog open={!!extractedDetails} onOpenChange={()={() => setExtractedDetails(null)}>
+    <AlertDialog open={!!extractedDetails} onOpenChange={() => setExtractedDetails(null)}>
         <AlertDialogContent>
             <AlertDialogHeader>
                 <AlertDialogTitle className="flex items-center gap-2">
@@ -769,3 +771,4 @@ export function AddUserForm(props: AddUserFormProps) {
     )
 }
 
+    
