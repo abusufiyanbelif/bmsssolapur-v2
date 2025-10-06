@@ -100,7 +100,7 @@ function SectionForm<T extends z.ZodType<any, any>>({ title, description, schema
 export function AppSettingsForm({ settings }: AppSettingsFormProps) {
   const { toast } = useToast();
 
-  const handleSave = async (section: 'login' | 'payment' | 'feature', values: any) => {
+  const handleSave = async (values: any) => {
     const formData = new FormData();
     Object.entries(values).forEach(([key, value]) => {
       const formKey = key.replace(/([A-Z])/g, (g) => `.${g[0].toLowerCase()}`);
@@ -134,7 +134,7 @@ export function AppSettingsForm({ settings }: AppSettingsFormProps) {
                 loginOtp: settings.loginMethods.otp.enabled,
                 loginGoogle: settings.loginMethods.google.enabled,
             }}
-            onSave={(data) => handleSave('login', data)}
+            onSave={(data) => handleSave(data)}
         >
           {(form) => (
             <>
@@ -155,7 +155,7 @@ export function AppSettingsForm({ settings }: AppSettingsFormProps) {
                 paymentUpi: settings.paymentMethods?.upi.enabled ?? true,
                 paymentOther: settings.paymentMethods?.other.enabled ?? true,
             }}
-            onSave={(data) => handleSave('payment', data)}
+            onSave={(data) => handleSave(data)}
         >
            {(form) => (
             <>
@@ -175,7 +175,7 @@ export function AppSettingsForm({ settings }: AppSettingsFormProps) {
                 featureDirectPayment: settings.features.directPaymentToBeneficiary.enabled,
                 onlinePaymentsEnabled: settings.features.onlinePaymentsEnabled,
             }}
-            onSave={(data) => handleSave('feature', data)}
+            onSave={(data) => handleSave(data)}
         >
            {(form) => (
             <>

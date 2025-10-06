@@ -1,4 +1,5 @@
 
+
 "use server";
 
 import { updateAppSettings as updateSettingsService, AppSettings, getAppSettings as getSettingsService } from "@/services/app-settings-service";
@@ -15,23 +16,21 @@ export async function handleUpdateAppSettings(
 ): Promise<FormState> {
   
   try {
-    const updates: Partial<AppSettings> = {
-      loginMethods: {
-        password: { enabled: formData.has("login.password") },
-        otp: { enabled: formData.has("login.otp") },
-        google: { enabled: formData.has("login.google") },
-      },
-      features: {
-        directPaymentToBeneficiary: { enabled: formData.has("feature.directPayment") },
-        onlinePaymentsEnabled: formData.has("feature.onlinePayments"),
-      },
-      paymentMethods: {
-        bankTransfer: { enabled: formData.has("payment.bankTransfer") },
-        cash: { enabled: formData.has("payment.cash") },
-        upi: { enabled: formData.has("payment.upi") },
-        other: { enabled: formData.has("payment.other") },
-      },
-    };
+    const currentSettings = await getSettingsService();
+    const updates: Partial<AppSettings> = JSON.parse(JSON.stringify(currentSettings));
+
+    if (formData.has('login.password')) updates.loginMethods!.password.enabled = formData.get('login.password') === 'on';
+    if (formData.has('login.otp')) updates.loginMethods!.otp.enabled = formData.get('login.otp') === 'on';
+    if (formData.has('login.google')) updates.loginMethods!.google.enabled = formData.get('login.google') === 'on';
+
+    if (formData.has('feature.directPayment')) updates.features!.directPaymentToBeneficiary.enabled = formData.get('feature.directPayment') === 'on';
+    if (formData.has('feature.onlinePayments')) updates.features!.onlinePaymentsEnabled = formData.get('feature.onlinePayments') === 'on';
+    
+    if (formData.has('payment.bankTransfer')) updates.paymentMethods!.bankTransfer.enabled = formData.get('payment.bankTransfer') === 'on';
+    if (formData.has('payment.cash')) updates.paymentMethods!.cash.enabled = formData.get('payment.cash') === 'on';
+    if (formData.has('payment.upi')) updates.paymentMethods!.upi.enabled = formData.get('payment.upi') === 'on';
+    if (formData.has('payment.other')) updates.paymentMethods!.other.enabled = formData.get('payment.other') === 'on';
+
 
     await updateSettingsService(updates);
     
