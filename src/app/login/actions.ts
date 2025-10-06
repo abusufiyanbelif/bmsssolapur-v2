@@ -2,7 +2,7 @@
 
 'use server';
 
-import { collection, query, where, getDocs, Timestamp } from 'firebase/firestore';
+import { collection, query, where, getDocs, Timestamp, doc, writeBatch } from 'firebase/firestore';
 import { db } from '@/services/firebase';
 import { User, getUserByPhone, getUserByEmail, getUser, getUserByUserId, updateUser, createUser } from '@/services/user-service';
 import { sendOtp } from '@/ai/flows/send-otp-flow';
@@ -241,15 +241,32 @@ export async function handleFirebaseOtpLogin(uid: string, phoneNumber: string | 
     try {
         let user: User | null = await getUser(uid);
         
-        // Fallback for first-time OTP login: find user by phone and link accounts.
+        // If user not found by UID, this is likely a first-time OTP login for a pre-existing user.
+        // We need to find their profile by phone number and migrate their document ID to match the Firebase UID.
         if (!user && phoneNumber) {
             const phone = phoneNumber.replace('+91', '');
-            user = await getUserByPhone(phone);
-            if (user && user.id) {
-                // Link the Firebase UID to the existing user document.
-                await updateUser(user.id, { id: uid });
-                // Re-fetch with the UID to confirm link.
-                user = await getUser(uid);
+            const existingUserByPhone = await getUserByPhone(phone);
+            
+            if (existingUserByPhone && existingUserByPhone.id) {
+                // Found the user by phone. Now, we perform a migration.
+                const batch = writeBatch(db);
+                
+                // 1. Create a new document with the Firebase UID as the ID
+                const newUserRef = doc(db, 'users', uid);
+                const oldUserData = { ...existingUserByPhone };
+                delete (oldUserData as any).id; // Don't copy the old ID field
+                batch.set(newUserRef, oldUserData);
+                
+                // 2. Delete the old document that was referenced by phone number
+                const oldUserRef = doc(db, 'users', existingUserByPhone.id);
+                batch.delete(oldUserRef);
+                
+                await batch.commit();
+
+                // 3. Set the 'user' variable to the newly created user data
+                user = { ...oldUserData, id: uid } as User;
+                
+                console.log(`Successfully migrated user from old ID ${existingUserByPhone.id} to new Firebase UID ${uid}.`);
             }
         }
         
@@ -281,3 +298,5 @@ export async function handleFirebaseOtpLogin(uid: string, phoneNumber: string | 
         return { success: false, error };
     }
 }
+
+    
