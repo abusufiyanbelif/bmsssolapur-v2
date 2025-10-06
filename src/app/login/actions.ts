@@ -241,29 +241,32 @@ export async function handleFirebaseOtpLogin(uid: string, phoneNumber: string | 
     try {
         let user: User | null = await getUser(uid);
         
-        // If user not found by UID, this is likely a first-time OTP login for a pre-existing user.
-        // We need to find their profile by phone number and migrate their document ID to match the Firebase UID.
         if (!user && phoneNumber) {
             const phone = phoneNumber.replace('+91', '');
             const existingUserByPhone = await getUserByPhone(phone);
             
             if (existingUserByPhone && existingUserByPhone.id) {
-                // Found the user by phone. Now, we perform a migration.
                 const batch = writeBatch(db);
                 
-                // 1. Create a new document with the Firebase UID as the ID
                 const newUserRef = doc(db, 'users', uid);
                 const oldUserData = { ...existingUserByPhone };
-                delete (oldUserData as any).id; // Don't copy the old ID field
-                batch.set(newUserRef, oldUserData);
+                delete (oldUserData as any).id;
+
+                // **FIX:** Explicitly remove undefined fields before writing.
+                const cleanOldUserData: Record<string, any> = {};
+                for (const key in oldUserData) {
+                    if ((oldUserData as any)[key] !== undefined) {
+                        cleanOldUserData[key] = (oldUserData as any)[key];
+                    }
+                }
                 
-                // 2. Delete the old document that was referenced by phone number
+                batch.set(newUserRef, cleanOldUserData);
+                
                 const oldUserRef = doc(db, 'users', existingUserByPhone.id);
                 batch.delete(oldUserRef);
                 
                 await batch.commit();
 
-                // 3. Set the 'user' variable to the newly created user data
                 user = { ...oldUserData, id: uid } as User;
                 
                 console.log(`Successfully migrated user from old ID ${existingUserByPhone.id} to new Firebase UID ${uid}.`);
