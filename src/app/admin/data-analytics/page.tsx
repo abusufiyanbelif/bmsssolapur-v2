@@ -1,5 +1,4 @@
 
-
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Suspense } from "react";
 import { getAllCampaigns } from "@/services/campaign-service";
@@ -13,8 +12,10 @@ import { UsersChart } from "./users-chart";
 import { DonationsChart } from "../donations-chart";
 import { DataGrowthChart } from "./data-growth-chart";
 import { Accordion, AccordionItem, AccordionContent, AccordionTrigger } from "@/components/ui/accordion";
-import { HandCoins, TrendingUp, Users as UsersIcon, BarChart3, LineChart, Info } from "lucide-react";
+import { HandCoins, TrendingUp, Users as UsersIcon, BarChart3, LineChart, Info, LogIn } from "lucide-react";
 import { LeadBreakdownCard, CampaignBreakdownCard } from "@/app/admin/dashboard-cards";
+import { getAllActivityLogs } from "@/services/activity-log-service";
+import { LoginAnalyticsChart } from "./login-analytics-chart";
 
 
 const CardSkeleton = () => (
@@ -43,11 +44,12 @@ const ChartSkeleton = () => (
 
 
 export default async function DataAnalyticsPage() {
-  const [allDonations, allCampaigns, allUsers, allLeads] = await Promise.all([
+  const [allDonations, allCampaigns, allUsers, allLeads, allActivityLogs] = await Promise.all([
       getAllDonations(),
       getAllCampaigns(),
       getAllUsers(),
-      getAllLeads()
+      getAllLeads(),
+      getAllActivityLogs()
   ]);
 
   return (
@@ -79,6 +81,22 @@ export default async function DataAnalyticsPage() {
                         <Separator />
                         <Suspense fallback={<div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4"><CardSkeleton /><CardSkeleton /><CardSkeleton /><CardSkeleton /></div>}>
                             <SystemHealthCards allUsers={allUsers} allLeads={allLeads} allDonations={allDonations} />
+                        </Suspense>
+                    </AccordionContent>
+                </AccordionItem>
+                <AccordionItem value="login-activity" className="border rounded-lg">
+                    <AccordionTrigger className="p-4 hover:no-underline">
+                        <div className="flex items-center gap-3 text-lg font-semibold text-primary">
+                           <LogIn className="h-6 w-6" />
+                            <div>
+                                <h3 className="font-semibold text-lg">Login & User Activity</h3>
+                                <p className="text-sm font-normal text-muted-foreground text-left">Analyze user login methods and frequency.</p>
+                            </div>
+                        </div>
+                    </AccordionTrigger>
+                    <AccordionContent className="p-4 pt-0">
+                         <Suspense fallback={<ChartSkeleton />}>
+                            <LoginAnalyticsChart allActivityLogs={allActivityLogs} />
                         </Suspense>
                     </AccordionContent>
                 </AccordionItem>
