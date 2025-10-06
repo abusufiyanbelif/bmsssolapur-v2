@@ -501,8 +501,8 @@ function DonorsPageContent({ initialDonors, error: initialError }: { initialDono
         
          <Card>
             <CardHeader>
-                <CardTitle>All Donors</CardTitle>
-                <CardDescription>
+                <CardTitle className="text-primary">All Donors</CardTitle>
+                <CardDescription className="text-muted-foreground">
                     A list of all users in the system with the Donor role.
                 </CardDescription>
             </CardHeader>

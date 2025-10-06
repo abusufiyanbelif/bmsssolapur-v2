@@ -471,8 +471,8 @@ function ReferralsPageContent({ initialReferrals, error: initialError }: { initi
         
          <Card>
             <CardHeader>
-                <CardTitle>All Referrals</CardTitle>
-                <CardDescription>
+                <CardTitle className="text-primary">All Referrals</CardTitle>
+                <CardDescription className="text-muted-foreground">
                     A list of all users in the system with the Referral role.
                 </CardDescription>
             </CardHeader>
