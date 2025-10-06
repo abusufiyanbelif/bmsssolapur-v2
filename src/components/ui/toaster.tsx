@@ -1,5 +1,4 @@
 
-
 "use client"
 
 import { useToast } from "@/hooks/use-toast"
@@ -12,7 +11,7 @@ import {
   ToastViewport,
 } from "@/components/ui/toast"
 import { Button } from "./button"
-import { Copy, Check, CheckCircle } from "lucide-react"
+import { Copy, Check } from "lucide-react"
 import { useState } from "react"
 import { ScrollArea } from "./scroll-area"
 
@@ -21,15 +20,20 @@ function CopyButton({ text }: { text: React.ReactNode }) {
     const [hasCopied, setHasCopied] = useState(false);
 
     const onCopy = () => {
-        if (typeof text === 'string') {
-            navigator.clipboard.writeText(text);
+        // Create a temporary element to extract text content
+        const tempDiv = document.createElement("div");
+        tempDiv.innerHTML = text as string;
+        const textToCopy = tempDiv.textContent || tempDiv.innerText || "";
+        
+        if (textToCopy) {
+            navigator.clipboard.writeText(textToCopy);
             setHasCopied(true);
             setTimeout(() => setHasCopied(false), 2000);
         } else {
              toast({
                 variant: "destructive",
                 title: "Copy Failed",
-                description: "Cannot copy non-text content.",
+                description: "Cannot copy empty content.",
             });
         }
     };
