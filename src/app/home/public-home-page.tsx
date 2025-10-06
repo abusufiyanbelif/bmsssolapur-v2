@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
@@ -15,13 +14,11 @@ import { RecentCampaignsCard, TopDonationsCard, BeneficiaryBreakdownCard, Campai
 import { PublicMainMetricsCard } from "./public-dashboard-cards";
 
 
-function InspirationalQuotes({ quotes }: { quotes: Quote[] }) {
-    const [loading, setLoading] = useState(quotes.length === 0);
-    const [_quotes, setQuotes] = useState<Quote[]>(quotes);
+function InspirationalQuotes() {
+    const [loading, setLoading] = useState(true);
+    const [quotes, setQuotes] = useState<Quote[]>([]);
 
     useEffect(() => {
-        if(quotes.length > 0) return;
-
         const fetchQuotes = async () => {
              setLoading(true);
              const fetchedQuotes = await getQuotes(3);
@@ -29,8 +26,7 @@ function InspirationalQuotes({ quotes }: { quotes: Quote[] }) {
              setLoading(false);
         }
         fetchQuotes();
-    }, [quotes]);
-
+    }, []);
 
     if (loading) {
         return (
@@ -48,7 +44,7 @@ function InspirationalQuotes({ quotes }: { quotes: Quote[] }) {
         )
     }
 
-    if (_quotes.length === 0) {
+    if (quotes.length === 0) {
         return null;
     }
 
@@ -62,7 +58,7 @@ function InspirationalQuotes({ quotes }: { quotes: Quote[] }) {
             </CardHeader>
             <CardContent>
                 <div className="space-y-6">
-                    {_quotes.map((quote, index) => (
+                    {quotes.map((quote, index) => (
                         <blockquote key={index} className="border-l-2 pl-4 italic text-sm text-muted-foreground">
                             <p>&quot;{quote.text}&quot;</p>
                             <cite className="block text-right not-italic text-xs mt-1">— {quote.source}</cite>
@@ -74,8 +70,41 @@ function InspirationalQuotes({ quotes }: { quotes: Quote[] }) {
     );
 }
 
-export function PublicHomePage({ quotes, initialLeads, campaigns, allLeads, allDonations, allUsers }: { quotes: Quote[], initialLeads: Lead[], campaigns: Campaign[], allLeads: Lead[], allDonations: Donation[], allUsers: User[] }) {
+export function PublicHomePage() {
   const router = useRouter();
+  const [initialLeads, setOpenLeads] = useState<Lead[]>([]);
+  const [campaigns, setCampaigns] = useState<Campaign[]>([]);
+  const [allLeads, setAllLeads] = useState<Lead[]>([]);
+  const [allDonations, setAllDonations] = useState<Donation[]>([]);
+  const [allUsers, setAllUsers] = useState<User[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchPublicData = async () => {
+        setLoading(true);
+        try {
+            const [leadsData, publicData] = await Promise.all([
+                getOpenGeneralLeads(),
+                getPublicDashboardData(),
+            ]);
+            setOpenLeads(leadsData);
+            if (publicData && !publicData.error) {
+                const activeAndUpcomingCampaigns = (publicData.campaigns || []).filter(
+                    (c: Campaign) => c.status === 'Active' || c.status === 'Upcoming'
+                );
+                setCampaigns(activeAndUpcomingCampaigns);
+                setAllLeads(publicData.leads || []);
+                setAllDonations(publicData.donations || []);
+                setAllUsers(publicData.users || []);
+            }
+        } catch (e) {
+            console.error("Failed to fetch public data", e);
+        } finally {
+            setLoading(false);
+        }
+    };
+    fetchPublicData();
+  }, []);
   
   const handleDonateClick = (leadId?: string) => {
     const userId = localStorage.getItem('userId');
@@ -88,9 +117,17 @@ export function PublicHomePage({ quotes, initialLeads, campaigns, allLeads, allD
     }
   }
 
+  if (loading) {
+      return (
+          <div className="flex flex-col flex-1 items-center justify-center h-full">
+              <Loader2 className="animate-spin rounded-full h-16 w-16 text-primary" />
+              <p className="mt-4 text-muted-foreground">Loading Dashboard...</p>
+          </div>
+      );
+  }
+
   return (
     <div className="flex-1 space-y-8">
-      {/* Hero Section */}
       <Card className="text-center shadow-lg bg-primary/5">
         <CardHeader>
         <CardTitle className="text-4xl md:text-5xl font-extrabold font-headline text-primary">Empowering Our Community, One Act of Kindness at a Time.</CardTitle>
@@ -109,9 +146,8 @@ export function PublicHomePage({ quotes, initialLeads, campaigns, allLeads, allD
       
       <PublicMainMetricsCard allDonations={allDonations} allLeads={allLeads} />
 
-      <InspirationalQuotes quotes={quotes} />
+      <InspirationalQuotes />
 
-      {/* Open Cases */}
       <Card>
           <CardHeader>
               <CardTitle className="text-primary">General Help Cases</CardTitle>

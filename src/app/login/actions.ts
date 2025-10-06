@@ -27,40 +27,31 @@ export async function handleLogin(formData: FormData): Promise<LoginState> {
     try {
         let user: User | null = null;
         
-        // This action now ONLY logs in via a custom User ID.
         user = await getUserByUserId(identifier);
         
         if (!user) {
             return { success: false, error: "User not found. Please check your User ID." };
         }
 
-        // Check if the account is active. Super Admins can always log in.
         if (!user.isActive && !user.roles.includes('Super Admin')) {
             return { success: false, error: "This user account is inactive. Please contact an administrator." };
         }
 
-        // Check the stored password.
         if (password !== user.password) {
             return { success: false, error: "Incorrect password. Please try again." };
         }
         
-        const primaryRole = user.roles[0];
-        let redirectTo = '/home'; // Default fallback
-        if (primaryRole === 'Donor') redirectTo = '/donor';
-        if (primaryRole === 'Beneficiary') redirectTo = '/beneficiary';
-        if (primaryRole === 'Referral') redirectTo = '/referral';
-        if (['Admin', 'Super Admin', 'Finance Admin'].includes(primaryRole)) redirectTo = '/admin';
-
         await logActivity({
             userId: user.id!,
             userName: user.name,
             userEmail: user.email,
-            role: primaryRole,
+            role: user.roles[0],
             activity: 'User Logged In',
             details: { method: 'password' },
         });
 
-        return { success: true, userId: user.id, redirectTo };
+        // Always redirect to /home. The /home page will handle role-based routing.
+        return { success: true, userId: user.id, redirectTo: '/home' };
 
     } catch (e) {
         console.error("Login error:", e);
@@ -90,11 +81,8 @@ export async function handleSendOtp(phoneNumber: string): Promise<OtpState> {
         const otpProvider = settings?.notificationSettings?.sms.provider || 'firebase';
 
         if (otpProvider === 'firebase') {
-            // For Firebase, we just confirm the user exists and tell the client to proceed.
-            // The actual OTP sending is handled by the client-side Firebase SDK.
             return { success: true, provider: 'firebase' };
         } else {
-            // For Twilio, we send the OTP from the server.
             const fullPhoneNumber = `+91${phoneNumber}`;
             const result = await sendOtp({ phoneNumber: fullPhoneNumber });
             if (result.success) {
@@ -119,14 +107,11 @@ export async function handleVerifyOtp(formData: FormData): Promise<LoginState> {
     }
 
     try {
-        // Find user by the plain 10-digit phone number first
         const user = await getUserByPhone(phoneNumber); 
         if (!user) {
              return { success: false, error: "User with this phone number not found." };
         }
         
-        // This server action is now only for Twilio verification.
-        // Firebase verification is handled client-side.
         const fullPhoneNumber = `+91${phoneNumber}`;
         const verificationResult = await verifyOtp({ phoneNumber: fullPhoneNumber, code });
         
@@ -134,23 +119,17 @@ export async function handleVerifyOtp(formData: FormData): Promise<LoginState> {
             return { success: false, error: verificationResult.error || "Invalid OTP code. Please try again." };
         }
         
-        const primaryRole = user.roles[0];
-        let redirectTo = '/home'; // Default fallback
-        if (primaryRole === 'Donor') redirectTo = '/donor';
-        if (primaryRole === 'Beneficiary') redirectTo = '/beneficiary';
-        if (primaryRole === 'Referral') redirectTo = '/referral';
-        if (['Admin', 'Super Admin', 'Finance Admin'].includes(primaryRole)) redirectTo = '/admin';
-
         await logActivity({
             userId: user.id!,
             userName: user.name,
             userEmail: user.email,
-            role: primaryRole,
+            role: user.roles[0],
             activity: 'User Logged In',
             details: { method: 'otp' },
         });
 
-        return { success: true, userId: user.id!, redirectTo };
+        // Always redirect to /home.
+        return { success: true, userId: user.id!, redirectTo: '/home' };
 
     } catch (e) {
         const error = e instanceof Error ? e.message : "An unknown error occurred.";
@@ -173,8 +152,7 @@ export async function handleFirebaseOtpLogin(uid: string, phoneNumber: string | 
                 const newUserRef = doc(db, 'users', uid);
                 const oldUserData = { ...existingUserByPhone };
                 delete (oldUserData as any).id;
-
-                // **FIX:** Explicitly remove undefined fields before writing.
+                
                 const cleanOldUserData: Record<string, any> = {};
                 for (const key in oldUserData) {
                     if ((oldUserData as any)[key] !== undefined) {
@@ -208,14 +186,8 @@ export async function handleFirebaseOtpLogin(uid: string, phoneNumber: string | 
             details: { method: 'otp (firebase)' },
         });
 
-        const primaryRole = user.roles[0];
-        let redirectTo = '/home'; // Default fallback
-        if (primaryRole === 'Donor') redirectTo = '/donor';
-        if (primaryRole === 'Beneficiary') redirectTo = '/beneficiary';
-        if (primaryRole === 'Referral') redirectTo = '/referral';
-        if (['Admin', 'Super Admin', 'Finance Admin'].includes(primaryRole)) redirectTo = '/admin';
-
-        return { success: true, userId: user.id!, redirectTo: redirectTo };
+        // Always redirect to /home.
+        return { success: true, userId: user.id!, redirectTo: '/home' };
 
     } catch (e) {
         console.error("Firebase OTP Login Finalization Error:", e);
