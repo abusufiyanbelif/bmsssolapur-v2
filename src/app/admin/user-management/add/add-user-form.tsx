@@ -1,4 +1,3 @@
-
 // src/app/admin/user-management/add/add-user-form.tsx
 "use client";
 
@@ -21,7 +20,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect, useRef, useMemo, Suspense, useCallback } from "react";
 import { Loader2, UserPlus, Users, Info, CalendarIcon, AlertTriangle, ChevronsUpDown, Check, Banknote, X, Lock, Clipboard, Text, Bot, FileUp, ZoomIn, ZoomOut, FileIcon, ScanSearch, UserSearch, UserRoundPlus, XCircle, PlusCircle, Paperclip, RotateCw, RefreshCw as RefreshIcon, BookOpen, Sparkles, CreditCard, Fingerprint, MapPin, Trash2, CheckCircle, User as UserIcon } from "lucide-react";
-import type { User, UserRole, AppSettings, ExtractBeneficiaryDetailsOutput, GenerateSummariesOutput } from "@/services/types";
+import type { User, LeadPurpose, Campaign, Lead, DonationType, LeadPriority, AppSettings, ExtractBeneficiaryDetailsOutput, GenerateSummariesOutput } from "@/services/types";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -432,7 +431,7 @@ function FormContent({ settings, isSubForm, prefilledData, onUserCreate }: AddUs
     if (!file) return;
     setIsExtractingText(true);
     const formData = new FormData();
-    formData.append("file", file);
+    formData.append("file_0", file);
     const result = await getRawTextFromImage(formData);
     if (result.success && result.rawText) {
       setRawText(result.rawText);
@@ -513,6 +512,9 @@ function FormContent({ settings, isSubForm, prefilledData, onUserCreate }: AddUs
         { key: 'pincode', label: 'Pincode' },
         { key: 'country', label: 'Country' },
     ];
+    
+    const { fields: upiIdFields, append: appendUpiId, remove: removeUpiId } = useFieldArray({ control, name: "upiIds" });
+    const { fields: upiPhoneFields, append: appendUpiPhone, remove: removeUpiPhone } = useFieldArray({ control, name: "upiPhoneNumbers" });
 
 
   return (
@@ -621,9 +623,9 @@ function FormContent({ settings, isSubForm, prefilledData, onUserCreate }: AddUs
                     {selectedRoles.includes("Donor") && <FormField control={control} name="isAnonymousAsDonor" render={({ field }) => ( <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4"><FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} /></FormControl><div className="space-y-1 leading-none"><FormLabel>Mark as Anonymous Donor</FormLabel><FormDescription>If checked, their name will be hidden on the public donations list.</FormDescription></div></FormItem>)} />}
                 </AccordionContent>
             </AccordionItem>
-
+            
             {isBeneficiary && (
-                <AccordionItem value="beneficiary" className="border rounded-lg">
+                 <AccordionItem value="beneficiary-details" className="border rounded-lg">
                     <AccordionTrigger className="p-4 font-semibold text-primary"><h4 className="flex items-center gap-2"><UserIcon className="h-5 w-5"/>Family & Occupation Details</h4></AccordionTrigger>
                     <AccordionContent className="p-6 pt-2 space-y-6">
                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -670,13 +672,13 @@ function FormContent({ settings, isSubForm, prefilledData, onUserCreate }: AddUs
                     <Separator />
                      <div className="space-y-4">
                         <FormLabel>UPI Phone Numbers</FormLabel>
-                        {watch('upiPhoneNumbers')?.map((field, index) => (<FormField control={control} key={field.id} name={`upiPhoneNumbers.${index}.value`} render={({ field }) => (<FormItem><div className="flex items-center gap-2"><FormControl><Input {...field} placeholder="e.g., 9876543210" type="tel" maxLength={10} /></FormControl><Button type="button" variant="ghost" size="icon"><Trash2 className="h-4 w-4 text-destructive" /></Button></div><FormMessage /></FormItem>)}/>))}
-                        <Button type="button" variant="outline" size="sm"><PlusCircle className="mr-2" />Add Phone</Button>
+                        {upiPhoneFields.map((field, index) => (<FormField control={control} key={field.id} name={`upiPhoneNumbers.${index}.value`} render={({ field }) => (<FormItem><div className="flex items-center gap-2"><FormControl><Input {...field} placeholder="e.g., 9876543210" type="tel" maxLength={10} /></FormControl><Button type="button" variant="ghost" size="icon" onClick={() => removeUpiPhone(index)}><Trash2 className="h-4 w-4 text-destructive" /></Button></div><FormMessage /></FormItem>)}/>))}
+                        <Button type="button" variant="outline" size="sm" onClick={() => appendUpiPhone({ value: "" })}><PlusCircle className="mr-2" />Add Phone</Button>
                     </div>
                      <div className="space-y-4">
                         <FormLabel>UPI IDs</FormLabel>
-                         {watch('upiIds')?.map((field, index) => (<FormField control={control} key={field.id} name={`upiIds.${index}.value`} render={({ field }) => (<FormItem><div className="flex items-center gap-2"><FormControl><Input {...field} placeholder="e.g., username@okhdfc" /></FormControl><Button type="button" variant="ghost" size="icon"><Trash2 className="h-4 w-4 text-destructive" /></Button></div><FormMessage /></FormItem>)}/>))}
-                        <Button type="button" variant="outline" size="sm"><PlusCircle className="mr-2" />Add UPI ID</Button>
+                         {upiIdFields.map((field, index) => (<FormField control={control} key={field.id} name={`upiIds.${index}.value`} render={({ field }) => (<FormItem><div className="flex items-center gap-2"><FormControl><Input {...field} placeholder="e.g., username@okhdfc" /></FormControl><Button type="button" variant="ghost" size="icon" onClick={() => removeUpiId(index)}><Trash2 className="h-4 w-4 text-destructive" /></Button></div><FormMessage /></FormItem>)}/>))}
+                        <Button type="button" variant="outline" size="sm" onClick={() => appendUpiId({ value: "" })}><PlusCircle className="mr-2" />Add UPI ID</Button>
                     </div>
                 </AccordionContent>
             </AccordionItem>
@@ -744,7 +746,7 @@ export function AddUserForm(props: AddUserFormProps) {
     const formSchema = useMemo(() => createFormSchema(settings), [settings]);
     const form = useForm<AddUserFormValues>({
         resolver: zodResolver(formSchema),
-        reValidateMode: "onChange",
+        reValidateMode: "onBlur",
         mode: "onBlur",
         defaultValues: {
             ...initialFormValues,
@@ -770,5 +772,3 @@ export function AddUserForm(props: AddUserFormProps) {
         </FormProvider>
     )
 }
-
-    
