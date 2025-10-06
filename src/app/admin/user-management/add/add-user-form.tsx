@@ -1,4 +1,3 @@
-
 // src/app/admin/user-management/add/add-user-form.tsx
 "use client";
 
@@ -254,6 +253,16 @@ function FormContent({ settings, isSubForm, prefilledData, onUserCreate }: AddUs
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [adminUser, setAdminUser] = useState<User | null>(null);
+  
+  const [file, setFile] = useState<File | null>(null);
+  const [filePreview, setFilePreview] = useState<string | null>(null);
+  const [rawText, setRawText] = useState<string | null>(null);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [isExtractingText, setIsExtractingText] = useState(false);
+  const [isRefreshingDetails, setIsRefreshingDetails] = useState(false);
+  const [zoom, setZoom] = useState(1);
+  const [rotation, setRotation] = useState(0);
+  const [extractedDetails, setExtractedDetails] = useState<ExtractBeneficiaryDetailsOutput | null>(null);
 
   useEffect(() => {
     const storedUserId = localStorage.getItem('userId');
@@ -360,6 +369,10 @@ function FormContent({ settings, isSubForm, prefilledData, onUserCreate }: AddUs
     
   const handleCancel = () => {
       reset(initialFormValues);
+      setFile(null);
+      setFilePreview(null);
+      setRawText(null);
+      setExtractedDetails(null);
   };
   
    const handleSubmit = (onSubmitFunction: (values: AddUserFormValues) => void) => {
@@ -388,6 +401,8 @@ function FormContent({ settings, isSubForm, prefilledData, onUserCreate }: AddUs
               value.forEach(role => formData.append('roles', role));
           } else if ((key === 'upiIds' || key === 'upiPhoneNumbers') && Array.isArray(value)) {
               value.forEach(item => item.value && formData.append(key, item.value));
+          } else if (value instanceof File) {
+              formData.append(key, value);
           } else if (value) {
               formData.append(key, String(value));
           }
@@ -409,11 +424,188 @@ function FormContent({ settings, isSubForm, prefilledData, onUserCreate }: AddUs
   }
 
   const selectedState = watch("state");
+  const isBeneficiary = selectedRoles.includes('Beneficiary');
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const selectedFile = e.target.files?.[0] || null;
+    setValue('aadhaarCard', selectedFile, { shouldValidate: true });
+    setFile(selectedFile);
+    if (filePreview) {
+      URL.revokeObjectURL(filePreview);
+    }
+    if (selectedFile) {
+      setFilePreview(URL.createObjectURL(selectedFile));
+    } else {
+      setFilePreview(null);
+    }
+  };
+
+  const handleGetText = async () => {
+    if (!file) return;
+    setIsExtractingText(true);
+    const formData = new FormData();
+    formData.append("file", file);
+    const result = await getRawTextFromImage(formData);
+    if (result.success && result.rawText) {
+      setRawText(result.rawText);
+      toast({ variant: 'success', title: 'Text Extracted', description: 'Raw text is available for analysis.' });
+    } else {
+      toast({ variant: 'destructive', title: 'Extraction Failed', description: result.error });
+    }
+    setIsExtractingText(false);
+  };
+  
+    const handleFetchUserData = async (isRefresh = false) => {
+        if (!rawText) return;
+        
+        const loadingSetter = isRefresh ? setIsRefreshingDetails : setIsAnalyzing;
+        loadingSetter(true);
+        
+        let missingFields: (keyof ExtractBeneficiaryDetailsOutput)[] = [];
+        if (isRefresh && extractedDetails) {
+            missingFields = Object.keys(extractedDetails).filter(key => !extractedDetails[key as keyof ExtractBeneficiaryDetailsOutput]) as (keyof ExtractBeneficiaryDetailsOutput)[];
+        }
+
+        const result = await handleExtractUserDetailsFromText(rawText, missingFields.length > 0 ? missingFields : undefined);
+
+        if (result.success && result.details) {
+             if (isRefresh && extractedDetails) {
+                // Merge new results with existing ones
+                const mergedDetails = { ...extractedDetails, ...result.details };
+                setExtractedDetails(mergedDetails);
+                toast({ variant: 'success', title: 'Refresh Complete', description: 'AI tried to find the missing details.' });
+            } else {
+                setExtractedDetails(result.details);
+            }
+        } else {
+            toast({ variant: 'destructive', title: 'Analysis Failed', description: result.error });
+        }
+        loadingSetter(false);
+    };
+
+    const applyExtractedDetails = () => {
+        if (!extractedDetails) return;
+        const details = extractedDetails;
+        Object.entries(details).forEach(([key, value]) => {
+            if (value) {
+                switch(key) {
+                    case 'beneficiaryFullName': setValue('fullName', value, { shouldDirty: true }); break;
+                    case 'beneficiaryFirstName': setValue('firstName', value, { shouldDirty: true }); break;
+                    case 'beneficiaryMiddleName': setValue('middleName', value, { shouldDirty: true }); break;
+                    case 'beneficiaryLastName': setValue('lastName', value, { shouldDirty: true }); break;
+                    case 'fatherName': setValue('fatherName', value, { shouldDirty: true }); break;
+                    case 'beneficiaryPhone': setValue('phone', value.replace(/\D/g, '').slice(-10), { shouldDirty: true, shouldValidate: true }); break;
+                    case 'aadhaarNumber': setValue('aadhaarNumber', value.replace(/\D/g,''), { shouldDirty: true, shouldValidate: true }); break;
+                    case 'address': setValue('addressLine1', value, { shouldDirty: true }); break;
+                    case 'city': setValue('city', value, { shouldDirty: true }); break;
+                    case 'pincode': setValue('pincode', value, { shouldDirty: true }); break;
+                    case 'country': setValue('country', value, { shouldDirty: true }); break;
+                    case 'gender':
+                        const genderValue = value as 'Male' | 'Female' | 'Other';
+                        if (['Male', 'Female', 'Other'].includes(genderValue)) {
+                            setValue('gender', genderValue, { shouldDirty: true });
+                        }
+                        break;
+                }
+            }
+        });
+        toast({ variant: 'success', title: 'Auto-fill Complete', description: 'User details have been populated. Please review.' });
+        setExtractedDetails(null);
+    }
+    
+    const dialogFields: { key: keyof ExtractBeneficiaryDetailsOutput; label: string }[] = [
+        { key: 'beneficiaryFullName', label: 'Full Name' },
+        { key: 'fatherName', label: "Father's Name" },
+        { key: 'dateOfBirth', label: 'Date of Birth' },
+        { key: 'gender', label: 'Gender' },
+        { key: 'beneficiaryPhone', label: 'Phone' },
+        { key: 'aadhaarNumber', label: 'Aadhaar Number' },
+        { key: 'address', label: 'Address' },
+        { key: 'city', label: 'City' },
+        { key: 'pincode', label: 'Pincode' },
+        { key: 'country', label: 'Country' },
+    ];
+
 
   return (
+    <>
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         <div className="space-y-6 pt-4">
             <h3 className="text-lg font-semibold border-b pb-2 text-primary">Basic Information</h3>
+            <Accordion type="single" collapsible className="w-full">
+                <AccordionItem value="scan-id">
+                     <AccordionTrigger>
+                        <div className="flex items-center gap-2 text-primary">
+                            <ScanSearch className="h-5 w-5" />
+                            Scan ID Card (Optional)
+                        </div>
+                    </AccordionTrigger>
+                    <AccordionContent className="pt-4 space-y-4">
+                        <FormField
+                            control={control}
+                            name="aadhaarCard"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>ID Card File</FormLabel>
+                                    <FormControl>
+                                        <Input type="file" accept="image/*,application/pdf" onChange={handleFileChange} />
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                        {filePreview && (
+                            <div className="relative group">
+                                <div className="relative w-full h-80 bg-gray-100 dark:bg-gray-800 rounded-md overflow-auto flex items-center justify-center">
+                                    {file?.type.startsWith('image/') ? (
+                                        <div className="relative w-full h-full cursor-zoom-in" onWheel={(e) => {e.preventDefault(); setZoom(prev => Math.max(0.5, Math.min(prev - e.deltaY * 0.001, 5)))}}>
+                                            <Image 
+                                            src={filePreview} 
+                                            alt="ID Preview" 
+                                            fill
+                                            className="object-contain transition-transform duration-100"
+                                            style={{ transform: `scale(${zoom}) rotate(${rotation}deg)` }}
+                                            />
+                                        </div>
+                                    ) : (
+                                        <div className="flex flex-col items-center gap-2 text-muted-foreground p-4">
+                                            <FileIcon className="h-16 w-16" />
+                                            <span className="text-sm font-semibold">{file?.name}</span>
+                                        </div>
+                                    )}
+                                </div>
+                                <div className="absolute top-2 right-2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity bg-background/80 p-1 rounded-md">
+                                    <Button type="button" size="icon" variant="ghost" className="h-7 w-7" onClick={() => setZoom(z => z * 1.2)}><ZoomIn className="h-4 w-4"/></Button>
+                                    <Button type="button" size="icon" variant="ghost" className="h-7 w-7" onClick={() => setZoom(z => Math.max(0.5, z / 1.2))}><ZoomOut className="h-4 w-4"/></Button>
+                                    <Button type="button" size="icon" variant="ghost" className="h-7 w-7" onClick={() => setRotation(r => r + 90)}><RotateCw className="h-4 w-4" /></Button>
+                                    <Button type="button" variant="destructive" size="icon" className="h-7 w-7" onClick={() => { setFile(null); setFilePreview(null); setRawText(null); setExtractedDetails(null); setZoom(1); setRotation(0); }}><X className="h-4 w-4"/></Button>
+                                </div>
+                            </div>
+                        )}
+                        {file && (
+                           <div className="flex flex-col sm:flex-row gap-2">
+                                <Button type="button" variant="outline" className="w-full" onClick={handleGetText} disabled={isExtractingText}>
+                                    {isExtractingText ? <Loader2 className="h-4 w-4 animate-spin"/> : <Text className="mr-2 h-4 w-4" />}
+                                    Get Text
+                                </Button>
+                                {rawText && (
+                                    <Button type="button" className="w-full" onClick={() => handleFetchUserData(false)} disabled={isAnalyzing}>
+                                        {isAnalyzing ? <Loader2 className="h-4 w-4 animate-spin"/> : <Bot className="mr-2 h-4 w-4" />}
+                                        Analyze with AI
+                                    </Button>
+                                )}
+                            </div>
+                        )}
+                        {rawText && (
+                             <div className="space-y-2">
+                                <Label htmlFor="rawTextOutput">Extracted Text</Label>
+                                <Textarea id="rawTextOutput" readOnly value={rawText} rows={8} className="text-xs font-mono" />
+                            </div>
+                        )}
+                    </AccordionContent>
+                </AccordionItem>
+            </Accordion>
+            
             <FormField control={control} name="fullName" render={({ field }) => ( <FormItem><FormLabel>Full Name</FormLabel><FormControl><Input placeholder="Enter user's full name" {...field} onChange={handleFullNameChange}/></FormControl><FormDescription>The fields below will be auto-populated from this.</FormDescription><FormMessage /></FormItem> )}/>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <FormField control={control} name="firstName" render={({ field }) => ( <FormItem><FormLabel>First Name</FormLabel><FormControl><Input type="text" placeholder="Enter your first name" {...field} /></FormControl><FormMessage /></FormItem> )}/>
@@ -426,7 +618,8 @@ function FormContent({ settings, isSubForm, prefilledData, onUserCreate }: AddUs
                 <FormField control={control} name="email" render={({ field }) => ( <FormItem><FormLabel>Email Address (Optional)</FormLabel><FormControl><Input type="email" placeholder="you@example.com" {...field} /></FormControl><AvailabilityFeedback state={emailState} fieldName="email" /><FormMessage /></FormItem> )}/>
                 <FormField control={control} name="phone" render={({ field }) => ( <FormItem><FormLabel>Phone Number</FormLabel><FormControl><Input type="tel" placeholder="10-digit number" maxLength={10} {...field} /></FormControl><AvailabilityFeedback state={phoneState} fieldName="phone number" /><FormMessage /></FormItem> )}/>
             </div>
-            <FormField control={control} name="gender" render={({ field }) => ( <FormItem className="space-y-3"><FormLabel>Gender</FormLabel><FormControl><RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="flex flex-row space-x-4 pt-2"><FormItem className="flex items-center space-x-2"><FormControl><RadioGroupItem value="Male" /></FormControl><FormLabel className="font-normal">Male</FormLabel></FormItem><FormItem className="flex items-center space-x-2"><FormControl><RadioGroupItem value="Female" /></FormControl><FormLabel className="font-normal">Female</FormLabel></FormItem></RadioGroup></FormControl><FormMessage /></FormItem> )}/>
+            <FormField control={control} name="gender" render={({ field }) => ( <FormItem className="space-y-3"><FormLabel>Gender</FormLabel><FormControl><RadioGroup onValueChange={field.onChange} value={field.value} className="flex flex-row space-x-4 pt-2"><FormItem className="flex items-center space-x-2"><FormControl><RadioGroupItem value="Male" /></FormControl><FormLabel className="font-normal">Male</FormLabel></FormItem><FormItem className="flex items-center space-x-2"><FormControl><RadioGroupItem value="Female" /></FormControl><FormLabel className="font-normal">Female</FormLabel></FormItem></RadioGroup></FormControl><FormMessage /></FormItem> )}/>
+            <FormField control={control} name="password" render={({ field }) => ( <FormItem><FormLabel>Password (Optional)</FormLabel><FormControl><Input type="password" placeholder="Min. 6 characters" {...field} /></FormControl><FormDescription>If not provided, user will only be able to log in via OTP.</FormDescription><FormMessage /></FormItem> )}/>
         </div>
         {isSubForm ? null : (
             <div className="flex items-center gap-4 mt-8">
@@ -441,6 +634,45 @@ function FormContent({ settings, isSubForm, prefilledData, onUserCreate }: AddUs
             </div>
         )}
     </form>
+    <AlertDialog open={!!extractedDetails} onOpenChange={() => setExtractedDetails(null)}>
+        <AlertDialogContent>
+            <AlertDialogHeader>
+                <AlertDialogTitle className="flex items-center gap-2">
+                    <Bot className="h-6 w-6 text-primary" />
+                    Confirm Auto-fill Details
+                </AlertDialogTitle>
+                <AlertDialogDescription>
+                    The AI has extracted the following details from the document. Please review them before applying to the form.
+                </AlertDialogDescription>
+            </AlertDialogHeader>
+            <div className="max-h-80 overflow-y-auto p-4 bg-muted/50 rounded-lg space-y-2 text-sm">
+                {dialogFields.map(({ key, label }) => {
+                    const value = extractedDetails?.[key as keyof ExtractBeneficiaryDetailsOutput] as string | undefined;
+                    return (
+                        <div key={key} className="flex justify-between border-b pb-1">
+                            <span className="text-muted-foreground capitalize">{label}</span>
+                            {value ? (
+                                <span className="font-semibold text-right">{value}</span>
+                            ) : (
+                                <span className="text-destructive font-normal text-right">Not Found</span>
+                            )}
+                        </div>
+                    )
+                })}
+            </div>
+            <AlertDialogFooter>
+                    <Button variant="outline" onClick={() => handleFetchUserData(true)} disabled={isRefreshingDetails}>
+                    {isRefreshingDetails ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <RefreshIcon className="mr-2 h-4 w-4" />}
+                    Refresh
+                </Button>
+                <div className='flex gap-2'>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={applyExtractedDetails}>Apply & Fill Form</AlertDialogAction>
+                </div>
+            </AlertDialogFooter>
+        </AlertDialogContent>
+    </AlertDialog>
+    </>
   );
 }
 
