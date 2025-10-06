@@ -137,6 +137,7 @@ These pages are for the highest level of system administration and configuration
 | **Dashboard Settings** | `/admin/dashboard-settings` | Configure visibility for all dashboard cards. |
 | **Payment Gateways** | `/admin/payment-gateways` | Configure credentials for payment gateways like Razorpay. |
 | **Notification Settings** | `/admin/settings/notifications`| Configure credentials for SMS and email providers. |
+| **Audit Trail** | `/admin/audit-trail` | A complete, searchable log of all significant user and system actions. |
 | **Seed Database** | `/admin/seed` | A utility page to populate the database with initial or sample data. |
 | **Services Summary** | `/services` | An overview of all connected services and their status. |
 | **Dependency Map** | `/dependencies` | A visual diagram of how services are interconnected. |
