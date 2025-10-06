@@ -34,61 +34,61 @@ export function LoginForm() {
   const [otpProvider, setOtpProvider] = useState<'firebase' | 'twilio' | null>(null);
   const [confirmationResult, setConfirmationResult] = useState<ConfirmationResult | null>(null);
 
-  // This is the unified state that will trigger the final redirect effect
-  const [loginSuccessData, setLoginSuccessData] = useState<{userId: string; redirectTo: string;} | null>(null);
+  const handleLoginSuccess = (userId: string, redirectTo: string) => {
+    toast({
+      variant: "success",
+      title: "Login Successful",
+      description: "Welcome! Redirecting you...",
+      icon: <CheckCircle />,
+    });
+    
+    // Clear previous role and set the new user ID
+    localStorage.removeItem('activeRole'); 
+    localStorage.setItem('userId', userId);
+    localStorage.setItem('showRoleSwitcher', 'true');
+    
+    const redirectPath = sessionStorage.getItem('redirectAfterLogin') || redirectTo;
+    sessionStorage.removeItem('redirectAfterLogin');
 
-  // This effect runs ONLY when loginSuccessData is set by ANY login method.
-  useEffect(() => {
-    if (loginSuccessData?.userId && loginSuccessData?.redirectTo) {
-      toast({
-        variant: "success",
-        title: "Login Successful",
-        description: "Welcome! Redirecting you...",
-        icon: <CheckCircle />,
-      });
-      
-      // Clear previous role and set the new user ID
-      localStorage.removeItem('activeRole'); 
-      localStorage.setItem('userId', loginSuccessData.userId);
-      localStorage.setItem('showRoleSwitcher', 'true');
-      
-      const redirectPath = sessionStorage.getItem('redirectAfterLogin') || loginSuccessData.redirectTo;
-      sessionStorage.removeItem('redirectAfterLogin');
-
-      // Dispatch event to notify AppShell immediately
-      window.dispatchEvent(new CustomEvent('loginSuccess'));
-
-      // Use a full page reload to ensure all state is correctly initialized
-      window.location.href = redirectPath;
-    }
-  }, [loginSuccessData, toast, router]);
+    // Use a full page reload to ensure all state is correctly initialized
+    window.location.href = redirectPath;
+  };
   
   const initializeRecaptcha = useCallback(() => {
-    if (typeof window !== 'undefined' && !window.recaptchaVerifier) {
-      const recaptchaContainer = document.getElementById('recaptcha-container');
-      if (recaptchaContainer) {
-        window.recaptchaVerifier = new RecaptchaVerifier(auth, recaptchaContainer, {
-          'size': 'invisible',
-          'callback': () => {},
-          'expired-callback': () => {
-            // Recaptcha expired, re-initialize if needed.
-            if(window.recaptchaVerifier) {
-              window.recaptchaVerifier.clear();
+    // This function will only run on the client side
+    if (typeof window !== 'undefined') {
+        // To avoid re-creating the verifier, we clear the old one if it exists,
+        // especially important for dev environments with hot-reloading.
+        if (window.recaptchaVerifier) {
+            window.recaptchaVerifier.clear();
+        }
+
+        const recaptchaContainer = document.getElementById('recaptcha-container');
+        if (recaptchaContainer) {
+            try {
+                window.recaptchaVerifier = new RecaptchaVerifier(auth, recaptchaContainer, {
+                    'size': 'invisible',
+                    'callback': () => {},
+                    'expired-callback': () => {
+                        console.log("reCAPTCHA expired. Re-initializing...");
+                        initializeRecaptcha(); // Re-initialize on expiration
+                    }
+                });
+                window.recaptchaVerifier.render().catch((error) => {
+                    console.error("reCAPTCHA render error:", error);
+                    toast({
+                        variant: "destructive",
+                        title: "reCAPTCHA Error",
+                        description: "Could not initialize reCAPTCHA. Please refresh the page.",
+                    });
+                });
+            } catch (error) {
+                console.error("Error creating RecaptchaVerifier:", error);
             }
-            initializeRecaptcha();
-          }
-        });
-        window.recaptchaVerifier.render().catch((error) => {
-            console.error("reCAPTCHA render error:", error);
-            toast({
-                variant: "destructive",
-                title: "reCAPTCHA Error",
-                description: "Could not initialize reCAPTCHA. Please refresh the page.",
-            });
-        });
-      }
+        }
     }
   }, [toast]);
+
 
   useEffect(() => {
       initializeRecaptcha();
@@ -103,7 +103,7 @@ export function LoginForm() {
     const result = await handleLogin(formData);
 
     if (result.success && result.userId && result.redirectTo) {
-      setLoginSuccessData({userId: result.userId, redirectTo: result.redirectTo});
+      handleLoginSuccess(result.userId, result.redirectTo);
     } else {
       toast({
         variant: "destructive",
@@ -171,7 +171,7 @@ export function LoginForm() {
               const user = result.user;
               const loginResult = await handleFirebaseOtpLogin(user.uid, user.phoneNumber);
               if (loginResult.success && loginResult.userId && loginResult.redirectTo) {
-                  setLoginSuccessData({ userId: loginResult.userId, redirectTo: loginResult.redirectTo });
+                  handleLoginSuccess(loginResult.userId, loginResult.redirectTo);
               } else {
                   toast({ variant: "destructive", title: "Login Failed", description: loginResult.error });
                   setIsSubmitting(false);
