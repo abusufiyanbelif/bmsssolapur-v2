@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
@@ -448,7 +447,7 @@ export const RecentCampaignsCard = ({ allCampaigns = [], allLeads = [] }: { allC
                                     </div>
                                     <div className="flex-grow">
                                         <div className="flex justify-between items-start">
-                                            <p className="font-semibold">{campaign.name}</p>
+                                            <p className="font-semibold text-primary">{campaign.name}</p>
                                             <Badge variant="outline" className={cn("capitalize text-xs", campaignStatusColors[campaign.status])}>{campaign.status}</Badge>
                                         </div>
                                         <p className="text-xs text-muted-foreground">{format(new Date(campaign.startDate), "dd MMM")} - {format(new Date(campaign.endDate), "dd MMM yyyy")}</p>
@@ -830,3 +829,5 @@ export const ReferralSummaryCard = ({ allUsers, allLeads, currentUser }: { allUs
         </Card>
     )
 }
+
+    
