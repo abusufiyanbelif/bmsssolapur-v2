@@ -2,13 +2,14 @@
 import { Suspense } from "react";
 import { Loader2 } from "lucide-react";
 import { DonorsPageClient } from "./donors-client";
-import { getAllUsers, User } from "@/services/user-service";
+import { getAllUsers } from "@/services/user-service";
+import type { User } from "@/services/types";
 
 async function DonorsPageDataLoader() {
   try {
     const allUsers = await getAllUsers();
-    // The getAllUsers function now correctly converts timestamps.
     const initialDonors = allUsers.filter(u => u.roles.includes('Donor'));
+    // The data is already serializable from the service
     return <DonorsPageClient initialDonors={JSON.parse(JSON.stringify(initialDonors))} />;
   } catch (e) {
     const error = e instanceof Error ? e.message : "An unknown error occurred.";

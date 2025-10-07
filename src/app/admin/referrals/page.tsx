@@ -2,7 +2,8 @@
 import { Suspense } from "react";
 import { Loader2 } from "lucide-react";
 import { ReferralsPageClient } from "./referrals-client";
-import { getAllUsers, User } from "@/services/user-service";
+import { getAllUsers } from "@/services/user-service";
+import type { User } from "@/services/types";
 
 async function ReferralsPageDataLoader() {
   try {

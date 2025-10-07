@@ -53,7 +53,7 @@ import { getRawTextFromImage } from '@/app/actions';
 import Image from "next/image";
 import { getUser, checkAvailability } from "@/services/user-service";
 import { useDebounce } from "@/hooks/use-debounce";
-import { useSearchParams, useRouter } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { Separator } from "@/components/ui/separator";
 import { AddUserForm } from "@/app/admin/user-management/add/add-user-form";
 
@@ -153,7 +153,6 @@ function AddLeadFormContent({ users, campaigns, settings, prefilledRawText }: Ad
   const [popoverOpen, setPopoverOpen] = useState(false);
   const [referralPopoverOpen, setReferralPopoverOpen] = useState(false);
   const [selectedReferralDetails, setSelectedReferralDetails] = useState<User | null>(null);
-  const searchParams = useSearchParams();
   const router = useRouter();
   
   const [isCaseTextExtracting, setIsCaseTextExtracting] = useState(false);
@@ -188,8 +187,10 @@ function AddLeadFormContent({ users, campaigns, settings, prefilledRawText }: Ad
   const userHasOverridePermission = adminUser?.roles.includes('Super Admin');
   const isFormDisabled = approvalProcessDisabled && !userHasOverridePermission;
   
-  const { formState, setValue, watch, getValues, control, trigger, reset, handleSubmit } = form;
+  const { formState, setValue, watch, getValues, control, trigger, reset, handleSubmit: originalHandleSubmit } = form;
 
+  const handleSubmit = originalHandleSubmit;
+  
   const leadPurposes = useMemo(() => 
     (leadConfiguration.purposes || []).filter(p => p.enabled)
   , [leadConfiguration.purposes]);
@@ -576,10 +577,10 @@ function AddLeadFormContent({ users, campaigns, settings, prefilledRawText }: Ad
                     <FormItem className="space-y-3">
                         <FormControl>
                         <RadioGroup onValueChange={(value) => { field.onChange(value as 'existing' | 'new'); setValue('beneficiaryId', undefined); }} value={field.value} className="grid grid-cols-2 gap-4">
-                            <FormItem className="flex items-center space-x-3 space-y-0">
-                                    <Button type="button" variant={field.value === 'existing' ? 'default' : 'outline'} className="w-full h-20 flex-col gap-2" onClick={() => field.onChange('existing')}><UserSearch className="h-6 w-6"/><span>Search Existing</span></Button>
+                            <FormItem>
+                                <Button type="button" variant={field.value === 'existing' ? 'default' : 'outline'} className="w-full h-20 flex-col gap-2" onClick={() => field.onChange('existing')}><UserSearch className="h-6 w-6"/><span>Search Existing</span></Button>
                             </FormItem>
-                             <FormItem className="flex items-center space-x-3 space-y-0">
+                             <FormItem>
                                      <Button type="button" variant={field.value === 'new' ? 'default' : 'outline'} className="w-full h-20 flex-col gap-2" onClick={() => field.onChange('new')}>
                                         <UserRoundPlus className="h-6 w-6"/><span>Create New</span>
                                     </Button>
@@ -791,7 +792,7 @@ function AddLeadFormContent({ users, campaigns, settings, prefilledRawText }: Ad
                                  <FormField
                                     control={control}
                                     name="otherDocuments"
-                                    render={({ field }) => (
+                                    render={() => (
                                         <FormItem>
                                             <FormLabel>Case Documents</FormLabel>
                                             <FormControl>
@@ -1075,7 +1076,7 @@ function AddLeadFormContent({ users, campaigns, settings, prefilledRawText }: Ad
 }
 
 export function AddLeadForm(props: AddLeadFormProps) {
-    const { settings } = props;
+    const { settings, prefilledData } = props;
     const formSchema = useMemo(() => createFormSchema(settings), [settings]);
     const form = useForm<AddLeadFormValues>({
         resolver: zodResolver(formSchema),
@@ -1090,8 +1091,8 @@ export function AddLeadForm(props: AddLeadFormProps) {
             acceptableDonationTypes: [],
             isHistoricalRecord: false,
             isLoan: false,
-            upiPhoneNumbers: [{value: ''}],
-            upiIds: [{value: ''}],
+            // upiPhoneNumbers: [{value: ''}],
+            // upiIds: [{value: ''}],
         }
     });
 
