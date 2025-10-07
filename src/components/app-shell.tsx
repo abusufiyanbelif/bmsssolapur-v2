@@ -171,7 +171,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             }
         } else {
             setUser(guestUser);
-            if (pathname !== '/') {
+            if (pathname !== '/' && pathname !== '/login' && pathname !== '/register') {
               router.push('/');
             }
         }

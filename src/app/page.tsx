@@ -14,18 +14,23 @@ const LoadingState = () => (
     </div>
 );
 
+// This page is now exclusively for guest users.
+// The AppShell handles redirecting logged-in users to /home.
 export default function Page() {
+    const [isClient, setIsClient] = useState(false);
     const router = useRouter();
 
     useEffect(() => {
-        // This effect ensures that on the very first load, we check for a session.
-        // If a session exists, we go to the central /home router.
-        // If not, we stay here to show the public page.
-        const userId = localStorage.getItem('userId');
-        if (userId) {
+        setIsClient(true);
+        // This is a failsafe. The main redirection logic is in AppShell.
+        if (localStorage.getItem('userId')) {
             router.push('/home');
         }
     }, [router]);
+
+    if (!isClient) {
+        return <LoadingState />;
+    }
 
     return (
       <Suspense fallback={<LoadingState />}>

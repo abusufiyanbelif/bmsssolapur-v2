@@ -1,10 +1,9 @@
 
 'use client';
 
-import { Suspense, useEffect, useState } from "react";
-import { PublicHomePage } from "./public-home-page";
 import { Loader2 } from "lucide-react";
-import { useRouter } from 'next/navigation';
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 
 const LoadingState = () => (
     <div className="flex flex-col flex-1 items-center justify-center h-full">
@@ -13,30 +12,18 @@ const LoadingState = () => (
     </div>
 );
 
-export default function Page() {
-    const [isClient, setIsClient] = useState(false);
-    const [isLoggedIn, setIsLoggedIn] = useState<boolean | null>(null);
+// This page is now a simple landing spot after login.
+// The AppShell is responsible for all redirection logic based on the user's role.
+export default function HomePage() {
+  const router = useRouter();
 
-    useEffect(() => {
-        setIsClient(true);
-        const userId = localStorage.getItem('userId');
-        setIsLoggedIn(!!userId);
-    }, []);
-
-    if (!isClient) {
-        return <LoadingState />;
+  useEffect(() => {
+    // If for some reason a guest lands here, send them back to the public page.
+    const userId = localStorage.getItem('userId');
+    if (!userId) {
+      router.push('/');
     }
-
-    if (isLoggedIn) {
-        // If logged in, this page is just a loading placeholder.
-        // The actual redirection and role-switching is handled by the AppShell.
-        return <LoadingState />;
-    }
-
-    // If not logged in, show the public home page.
-    return (
-      <Suspense fallback={<LoadingState />}>
-        <PublicHomePage />
-      </Suspense>
-    );
+  }, [router]);
+  
+  return <LoadingState />;
 }
