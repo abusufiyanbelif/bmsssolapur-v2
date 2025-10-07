@@ -39,7 +39,11 @@ export function LoginForm() {
   };
   
   const initializeRecaptcha = useCallback(() => {
-    if (typeof window !== 'undefined' && auth && !window.recaptchaVerifier?.['id']) {
+    if (typeof window !== 'undefined' && auth) {
+      // If a verifier already exists, clear it before creating a new one.
+      if (window.recaptchaVerifier) {
+        window.recaptchaVerifier.clear();
+      }
       const recaptchaContainer = document.getElementById('recaptcha-container');
       if (recaptchaContainer) {
         try {
@@ -47,7 +51,7 @@ export function LoginForm() {
             'size': 'invisible',
             'callback': () => {},
           });
-          window.recaptchaVerifier.render();
+          window.recaptchaVerifier.render(); // This is the problematic call
         } catch (error) {
           console.error("Error creating RecaptchaVerifier:", error);
         }
@@ -95,7 +99,7 @@ export function LoginForm() {
     
     if (result.success && result.provider === 'firebase') {
       try {
-        if (!window.recaptchaVerifier) {
+        if (!window.recaptchaVerifier?.['id']) {
           initializeRecaptcha();
         }
         const fullPhoneNumber = `+91${phoneNumber}`;
