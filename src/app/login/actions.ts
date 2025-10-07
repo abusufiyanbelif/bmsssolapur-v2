@@ -1,5 +1,4 @@
 
-
 'use server';
 
 import { collection, query, where, getDocs, Timestamp, doc, writeBatch } from 'firebase/firestore';
@@ -14,7 +13,7 @@ interface LoginState {
     success: boolean;
     error?: string;
     userId?: string;
-    redirectTo?: string;
+    // No longer returns redirectTo. The client will handle this.
 }
 
 export async function handleLogin(formData: FormData): Promise<LoginState> {
@@ -51,8 +50,8 @@ export async function handleLogin(formData: FormData): Promise<LoginState> {
             details: { method: 'password' },
         });
 
-        // Always redirect to /home. The AppShell and /home page will handle role-based routing.
-        return { success: true, userId: user.id, redirectTo: '/home' };
+        // The client will handle the redirect.
+        return { success: true, userId: user.id };
 
     } catch (e) {
         console.error("Login error:", e);
@@ -129,8 +128,8 @@ export async function handleVerifyOtp(formData: FormData): Promise<LoginState> {
             details: { method: 'otp' },
         });
 
-        // Always redirect to /home.
-        return { success: true, userId: user.id!, redirectTo: '/home' };
+        // Return userId for the client to handle session and redirection.
+        return { success: true, userId: user.id! };
 
     } catch (e) {
         const error = e instanceof Error ? e.message : "An unknown error occurred.";
@@ -149,11 +148,7 @@ export async function handleFirebaseOtpLogin(uid: string, phoneNumber: string | 
             const existingUserByPhone = await getUserByPhone(phone);
             
             if (existingUserByPhone && existingUserByPhone.id) {
-                // This is a complex operation: migrate data from old user doc to new user doc (with Firebase UID)
-                // For now, let's just log this case. A more robust solution would be a migration script or transaction.
                 console.warn(`Potential user migration needed. Firebase UID: ${uid}, existing user ID: ${existingUserByPhone.id} for phone: ${phone}`);
-                
-                // Let's attempt a simple update for now, which is to find the user by phone and use their data.
                 user = existingUserByPhone;
             }
         }
@@ -171,8 +166,8 @@ export async function handleFirebaseOtpLogin(uid: string, phoneNumber: string | 
             details: { method: 'otp (firebase)' },
         });
 
-        // Always redirect to /home.
-        return { success: true, userId: user.id!, redirectTo: '/home' };
+        // Return userId for the client to handle session and redirection.
+        return { success: true, userId: user.id! };
 
     } catch (e) {
         console.error("Firebase OTP Login Finalization Error:", e);

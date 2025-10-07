@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
@@ -26,14 +25,13 @@ declare global {
 
 export function LoginForm() {
   const { toast } = useToast();
-  const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isOtpSending, setIsOtpSending] = useState(false);
   const [isOtpSent, setIsOtpSent] = useState(false);
   const [otpPhoneNumber, setOtpPhoneNumber] = useState("");
   const [otpProvider, setOtpProvider] = useState<'firebase' | 'twilio' | null>(null);
 
-  const handleLoginSuccess = (userId: string, redirectTo: string) => {
+  const handleLoginSuccess = (userId: string) => {
     toast({
       variant: "success",
       title: "Login Successful",
@@ -41,12 +39,12 @@ export function LoginForm() {
       icon: <CheckCircle />,
     });
     
-    // This is the key part: save the user ID and set a flag to show the role switcher.
+    // Key change: Save userId and set a flag to show the role switcher.
     localStorage.setItem('userId', userId);
     localStorage.setItem('showRoleSwitcher', 'true');
     
-    // Redirect to the central /home page, which will now handle routing.
-    window.location.href = redirectTo;
+    // Key change: Use a hard redirect to ensure AppShell re-initializes.
+    window.location.href = '/home';
   };
   
   const initializeRecaptcha = useCallback(() => {
@@ -76,8 +74,8 @@ export function LoginForm() {
     const formData = new FormData(event.currentTarget);
     const result = await handleLogin(formData);
 
-    if (result.success && result.userId && result.redirectTo) {
-      handleLoginSuccess(result.userId, result.redirectTo);
+    if (result.success && result.userId) {
+      handleLoginSuccess(result.userId);
     } else {
       toast({
         variant: "destructive",
@@ -140,8 +138,8 @@ export function LoginForm() {
         const result = await window.confirmationResult.confirm(code);
         const user = result.user;
         const loginResult = await handleFirebaseOtpLogin(user.uid, user.phoneNumber);
-        if (loginResult.success && loginResult.userId && loginResult.redirectTo) {
-          handleLoginSuccess(loginResult.userId, loginResult.redirectTo);
+        if (loginResult.success && loginResult.userId) {
+          handleLoginSuccess(loginResult.userId);
         } else {
           toast({ variant: "destructive", title: "Login Finalization Failed", description: loginResult.error });
           setIsSubmitting(false);
