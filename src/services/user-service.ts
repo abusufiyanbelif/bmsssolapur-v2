@@ -99,7 +99,7 @@ export const getUserByUserId = async (userId: string): Promise<User | null> => {
     if (userId === 'admin') return hardcodedSuperAdmin;
 
     try {
-        const q = query(collection(adminDb, USERS_COLLECTION), where("userId", "==", userId), limit(1));
+        const q = query(adminDb.collection(USERS_COLLECTION), where("userId", "==", userId), limit(1));
         const querySnapshot = await getDocs(q);
         if (!querySnapshot.empty) {
             const userDoc = querySnapshot.docs[0];

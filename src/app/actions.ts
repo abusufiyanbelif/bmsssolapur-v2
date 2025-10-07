@@ -2,7 +2,10 @@
 'use server';
 
 import { getAdminDb } from '@/services/firebase-admin';
-import { extractRawTextFlow } from '@/ai/flows/extract-raw-text-flow';
+import { getUser as getUserService, type User } from '@/services/user-service';
+import { getAllLeads as getAllLeadsService, type Lead } from '@/services/lead-service';
+import { getAllDonations as getAllDonationsService, type Donation } from '@/services/donation-service';
+
 
 /**
  * Performs a lightweight, low-cost read operation against Firestore using the Admin SDK
@@ -31,55 +34,48 @@ export async function performPermissionCheck(): Promise<{success: boolean, error
     }
 };
 
-interface RawTextScanResult {
-    success: boolean;
-    rawText?: string;
-    error?: string;
+/**
+ * A server action to securely fetch the current user's data.
+ * This function is safe to be called from client components.
+ * @param userId The ID of the user to fetch.
+ * @returns The user object or null if not found.
+ */
+export async function getCurrentUser(userId: string | null): Promise<User | null> {
+    if (!userId) return null;
+    try {
+        const user = await getUserService(userId);
+        // Ensure the returned object is serializable
+        return user ? JSON.parse(JSON.stringify(user)) : null;
+    } catch (error) {
+        console.error("Error in getCurrentUser server action:", error);
+        return null;
+    }
 }
 
-// This function is now correctly placed in a server context and will be called by client components.
-export async function getRawTextFromImage(formData: FormData): Promise<RawTextScanResult> {
-    const files: File[] = [];
-    // Iterate over all entries in the FormData to find the files.
-    for (const value of formData.values()) {
-        if (value instanceof File) {
-            files.push(value);
-        }
-    }
-
-    if (files.length === 0) {
-        return { success: false, error: "No image or PDF file was provided or it was empty." };
-    }
-    
-    let dataUris: string[] = [];
+/**
+ * A server action to securely fetch notification data for admins.
+ * This function is safe to be called from client components.
+ * @returns An object containing arrays of pending leads and donations.
+ */
+export async function getAdminNotificationData(): Promise<{ pendingLeads: Lead[], readyToPublishLeads: Lead[], pendingDonations: Donation[] }> {
     try {
-        for (const file of files) {
-            if (file.size === 0) continue;
-            const arrayBuffer = await file.arrayBuffer();
-            const base64 = Buffer.from(arrayBuffer).toString('base64');
-            dataUris.push(`data:${file.type};base64,${base64}`);
-        }
-    } catch (e) {
-         console.error("Failed to read image file:", e);
-         return { success: false, error: "Failed to read the uploaded file." };
-    }
-    
-    try {
-        const textResult = await extractRawTextFlow({ photoDataUris: dataUris });
+        const [allLeads, allDonations] = await Promise.all([
+            getAllLeadsService(),
+            getAllDonationsService()
+        ]);
+        
+        const pendingLeads = allLeads.filter(l => l.caseVerification === 'Pending');
+        const readyToPublishLeads = allLeads.filter(l => l.caseAction === 'Ready For Help');
+        const pendingDonations = allDonations.filter(d => d.status === 'Pending verification' || d.status === 'Pending');
 
-        if (!textResult?.rawText) {
-            throw new Error("Failed to extract text from the document. The document might be unreadable.");
-        }
+        return { 
+            pendingLeads: JSON.parse(JSON.stringify(pendingLeads)), 
+            readyToPublishLeads: JSON.parse(JSON.stringify(readyToPublishLeads)),
+            pendingDonations: JSON.parse(JSON.stringify(pendingDonations)) 
+        };
 
-        return { success: true, rawText: textResult.rawText };
-
-    } catch (e) {
-        const lastError = e instanceof Error ? e.message : "An unexpected error occurred during text extraction.";
-        // Check for the specific API key error message
-        if(lastError.includes("API key not valid")) {
-            return { success: false, error: "The Gemini API Key is invalid or missing. Please refer to the Troubleshooting Guide to fix this." };
-        }
-        console.error(`Full scanning process failed:`, lastError);
-        return { success: false, error: lastError };
+    } catch (error) {
+        console.error("Error fetching admin notification data:", error);
+        return { pendingLeads: [], readyToPublishLeads: [], pendingDonations: [] };
     }
 }

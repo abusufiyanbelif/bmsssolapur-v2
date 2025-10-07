@@ -21,15 +21,12 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Nav } from "../app/nav";
 import type { User as UserType, Lead as LeadType, Donation as DonationType, Organization } from "@/services/types";
-import { getUser } from "@/services/user-service";
-import { getAllLeads } from "@/services/lead-service";
-import { getAllDonations } from "@/services/donation-service";
 import { formatDistanceToNow } from "date-fns";
 import { Logo } from "./logo";
-import { AppSettings, getAppSettings, getCurrentOrganization } from "@/app/admin/settings/actions";
+import { AppSettings, getCurrentOrganization } from "@/app/admin/settings/actions";
 import { Alert, AlertDescription, AlertTitle } from "./ui/alert";
 import { Card, CardHeader, CardContent, CardTitle, CardDescription } from "@/components/ui/card";
-import { performPermissionCheck } from "@/app/actions";
+import { performPermissionCheck, getCurrentUser, getAdminNotificationData } from "@/app/actions";
 import { useToast } from "@/hooks/use-toast";
 
 const PermissionErrorState = ({ error }: { error: string }) => {
@@ -145,7 +142,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                     return; // Return after redirecting
                 }
             } else {
-                let fetchedUser = await getUser(storedUserId);
+                let fetchedUser = await getCurrentUser(storedUserId);
 
                 if (fetchedUser) {
                     const savedRole = localStorage.getItem('activeRole');
@@ -200,13 +197,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     useEffect(() => {
         if (sessionUser?.isLoggedIn && sessionUser.roles.some(r => ['Admin', 'Super Admin', 'Finance Admin'].includes(r))) {
             const fetchNotifications = async () => {
-                const [allLeads, allDonations] = await Promise.all([
-                    getAllLeads(),
-                    getAllDonations()
-                ]);
-                setPendingLeads(allLeads.filter(l => l.caseVerification === 'Pending'));
-                setReadyToPublishLeads(allLeads.filter(l => l.caseAction === 'Ready For Help'));
-                setPendingDonations(allDonations.filter(d => d.status === 'Pending verification' || d.status === 'Pending'));
+                // Call server action instead of directly importing server-only functions
+                const { pendingLeads, readyToPublishLeads, pendingDonations } = await getAdminNotificationData();
+                setPendingLeads(pendingLeads);
+                setReadyToPublishLeads(readyToPublishLeads);
+                setPendingDonations(pendingDonations);
             };
             fetchNotifications();
         }
