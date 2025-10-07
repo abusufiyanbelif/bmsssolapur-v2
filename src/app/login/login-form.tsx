@@ -46,9 +46,14 @@ export function LoginForm() {
     const recaptchaContainer = document.getElementById('recaptcha-container');
     if (!recaptchaContainer) return;
     
-    // If a verifier already exists on the window object, clear it first
-    if (window.recaptchaVerifier && typeof window.recaptchaVerifier.clear === 'function') {
-        window.recaptchaVerifier.clear();
+    // If a verifier already exists on the window object, try to clear it first.
+    // This can fail if the verifier has expired, so we wrap it in a try/catch.
+    try {
+      if (window.recaptchaVerifier && typeof window.recaptchaVerifier.clear === 'function') {
+          window.recaptchaVerifier.clear();
+      }
+    } catch (e) {
+      console.error("Error clearing old reCAPTCHA verifier:", e);
     }
     
     // Empty the container to prevent the "already rendered" error
@@ -106,9 +111,13 @@ export function LoginForm() {
     
     if (result.success && result.provider === 'firebase') {
       try {
-        if (!window.recaptchaVerifier?.['id']) {
-          initializeRecaptcha();
+        if (!window.recaptchaVerifier || !window.recaptchaVerifier.render) {
+            console.log("reCAPTCHA not ready, re-initializing...");
+            initializeRecaptcha();
+            // Give it a moment to render before proceeding
+            await new Promise(resolve => setTimeout(resolve, 500));
         }
+        
         const fullPhoneNumber = `+91${phoneNumber}`;
         const confirmation = await signInWithPhoneNumber(auth, fullPhoneNumber, window.recaptchaVerifier);
         window.confirmationResult = confirmation;
