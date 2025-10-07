@@ -39,23 +39,30 @@ export function LoginForm() {
   };
   
   const initializeRecaptcha = useCallback(() => {
-    if (typeof window !== 'undefined' && auth) {
-      // If a verifier already exists, clear it before creating a new one.
-      if (window.recaptchaVerifier) {
+    // Ensure this only runs on the client
+    if (typeof window === 'undefined' || !auth) return;
+
+    // Get the container for reCAPTCHA
+    const recaptchaContainer = document.getElementById('recaptcha-container');
+    if (!recaptchaContainer) return;
+    
+    // If a verifier already exists on the window object, clear it first
+    if (window.recaptchaVerifier && typeof window.recaptchaVerifier.clear === 'function') {
         window.recaptchaVerifier.clear();
-      }
-      const recaptchaContainer = document.getElementById('recaptcha-container');
-      if (recaptchaContainer) {
-        try {
-          window.recaptchaVerifier = new RecaptchaVerifier(auth, recaptchaContainer, {
+    }
+    
+    // Empty the container to prevent the "already rendered" error
+    recaptchaContainer.innerHTML = '';
+    
+    try {
+        // Create and render a new verifier
+        window.recaptchaVerifier = new RecaptchaVerifier(auth, recaptchaContainer, {
             'size': 'invisible',
             'callback': () => {},
-          });
-          window.recaptchaVerifier.render(); // This is the problematic call
-        } catch (error) {
-          console.error("Error creating RecaptchaVerifier:", error);
-        }
-      }
+        });
+        window.recaptchaVerifier.render();
+    } catch (error) {
+        console.error("Error creating or rendering RecaptchaVerifier:", error);
     }
   }, []);
 
@@ -151,7 +158,6 @@ export function LoginForm() {
   
   return (
     <div className="flex items-center justify-center min-h-[calc(100vh-200px)]">
-      <div id="recaptcha-container"></div>
       <Card className="w-full max-w-sm">
         <CardHeader className="text-center">
           <CardTitle className="text-primary">Account Login</CardTitle>
