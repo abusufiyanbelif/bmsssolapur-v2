@@ -79,6 +79,14 @@ const PermissionErrorState = ({ error }: { error: string }) => {
     );
 };
 
+const LoadingState = () => (
+    <div className="flex flex-col flex-1 items-center justify-center h-full">
+        <Loader2 className="animate-spin rounded-full h-16 w-16 text-primary" />
+        <p className="mt-4 text-muted-foreground">Initializing your session...</p>
+    </div>
+)
+
+const allowedGuestPaths = ['/', '/login', '/register', '/public-leads', '/campaigns', '/organization'];
 
 export function AppShell({ children }: { children: React.ReactNode }) {
     const [isRoleSwitcherOpen, setIsRoleSwitcherOpen] = useState(false);
@@ -125,9 +133,15 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         }
 
         const storedUserId = localStorage.getItem('userId');
-        const shouldShowRoleSwitcher = localStorage.getItem('showRoleSwitcher') === 'true';
+        const isGuestPath = allowedGuestPaths.some(p => pathname === p || (p !== '/' && pathname.startsWith(p)));
 
-        if (storedUserId) {
+        if (!storedUserId) {
+            setUser(guestUser);
+            // If user is not logged in and not on a guest path, redirect to home.
+            if (!isGuestPath) {
+                router.push('/');
+            }
+        } else {
             let fetchedUser = await getUser(storedUserId);
 
             if (fetchedUser) {
@@ -147,8 +161,16 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 };
                 setUser(userData);
                 
-                // Logic for redirection and role switcher
-                if (pathname === '/home') { 
+                // --- REDIRECTION LOGIC ---
+                // If a logged-in user is on a guest path, redirect them to /home
+                if (isGuestPath) {
+                    router.push('/home');
+                    return; // Stop further execution
+                }
+                
+                // If user lands on /home, check if role switcher or dashboard redirect is needed
+                if (pathname === '/home') {
+                    const shouldShowRoleSwitcher = localStorage.getItem('showRoleSwitcher') === 'true';
                     if (shouldShowRoleSwitcher && fetchedUser.roles.length > 1) {
                         setIsRoleSwitcherOpen(true);
                         localStorage.removeItem('showRoleSwitcher'); 
@@ -158,9 +180,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                             case 'Donor': router.push('/donor'); break;
                             case 'Beneficiary': router.push('/beneficiary'); break;
                             case 'Referral': router.push('/referral'); break;
-                            case 'Admin':
-                            case 'Super Admin':
-                            case 'Finance Admin':
+                            case 'Admin': case 'Super Admin': case 'Finance Admin':
                                 router.push('/admin'); break;
                             default: router.push('/'); break;
                         }
@@ -169,18 +189,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             } else {
                 handleLogout(false);
             }
-        } else {
-            setUser(guestUser);
-            const allowedGuestPaths = ['/', '/login', '/register', '/public-leads', '/campaigns', '/organization'];
-            if (!allowedGuestPaths.some(p => pathname.startsWith(p))) {
-                router.push('/');
-            }
         }
         setIsSessionReady(true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [pathname, router]);
 
-    // Effect for fetching notification data separately
     useEffect(() => {
         if (user?.isLoggedIn && user.roles.some(r => ['Admin', 'Super Admin', 'Finance Admin'].includes(r))) {
             const fetchNotifications = async () => {
@@ -196,17 +209,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         }
     }, [user]);
 
-
     useEffect(() => {
         initializeSession();
     }, [initializeSession]);
 
-
     const handleRoleChange = (newRole: string) => {
         if (!user || !user.isLoggedIn) return;
-
         const previousRole = user.activeRole;
-        
         localStorage.setItem('activeRole', newRole);
 
         if (user.isLoggedIn) {
@@ -219,8 +228,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 details: { from: previousRole, to: newRole },
             });
         }
-        
-        // This forces a reload of the app shell and ensures the correct dashboard is loaded
         window.location.href = '/home';
     };
     
@@ -236,13 +243,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
     const handleOpenRoleSwitcher = (requiredRole: string | null = null, redirect?: string) => {
         setRequiredRole(requiredRole);
-        setRedirectUrl(redirect || null); // Store the URL to redirect to after switch
+        setRedirectUrl(redirect || null);
         setIsRoleSwitcherOpen(true);
     };
     
     const handleNotificationClick = (requiredRole: string, href: string) => {
         if (!user || !user.isLoggedIn) return;
-        
         const hasSufficientRole = ['Admin', 'Super Admin', 'Finance Admin'].includes(user.activeRole);
 
         if(hasSufficientRole) {
@@ -259,46 +265,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     }
 
     const handleOpenChange = (open: boolean) => {
-        if (!open && isMandatory) {
-            return; 
-        }
         setIsRoleSwitcherOpen(open);
         if (!open) {
             setRequiredRole(null);
-            if (isMandatory) setIsSessionReady(true);
         }
     };
     
-    const isMandatory = !!user && user.isLoggedIn && !isSessionReady && user.roles.length > 1;
-
-    const childrenWithProps = Children.map(children, child => {
-        if (isValidElement(child)) {
-            return cloneElement(child as React.ReactElement<any>, { user, activeRole: user?.activeRole, organization });
-        }
-        return child;
-    });
-    
-    const LoadingState = () => (
-        <div className="flex flex-col flex-1 items-center justify-center h-full">
-            <Loader2 className="animate-spin rounded-full h-16 w-16 text-primary" />
-            <p className="mt-4 text-muted-foreground">Initializing your session...</p>
-        </div>
-    )
-
-    if (permissionError) {
-        return <PermissionErrorState error={permissionError} />;
-    }
-
-    if (!user || !isSessionReady) {
-        return <LoadingState />
-    }
-
-    const activeRole = user.activeRole;
-    const hasAdminAccess = user.roles.some(r => ['Admin', 'Super Admin', 'Finance Admin'].includes(r));
-    const leadsNotificationCount = hasAdminAccess ? (pendingLeads.length + readyToPublishLeads.length) : 0;
-    const donationsNotificationCount = hasAdminAccess ? pendingDonations.length : 0;
-    const transfersNotificationCount = 0; // Placeholder for now
-
     const HeaderTitle = () => (
         <Link href="/" className="flex items-center gap-3" title="Baitul Mal Samajik Sanstha (Solapur)">
             <Logo className="h-14 w-14" logoUrl={organization?.logoUrl} />
@@ -310,6 +282,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </Link>
     );
 
+    if (permissionError) return <PermissionErrorState error={permissionError} />;
+    if (!isSessionReady || !user) return <LoadingState />;
+
+    const activeRole = user.activeRole;
+    const hasAdminAccess = user.roles.some(r => ['Admin', 'Super Admin', 'Finance Admin'].includes(r));
+    const leadsNotificationCount = hasAdminAccess ? (pendingLeads.length + readyToPublishLeads.length) : 0;
+    const donationsNotificationCount = hasAdminAccess ? pendingDonations.length : 0;
+
     return (
         <div className="grid min-h-screen w-full md:grid-cols-[220px_1fr] lg:grid-cols-[280px_1fr]">
             <div className="hidden border-r bg-card md:block">
@@ -317,16 +297,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                     <div className="flex h-[72px] items-center border-b px-4 lg:px-6">
                         <HeaderTitle />
                     </div>
-                    {isSessionReady && (
-                        <div className="flex-1 overflow-y-auto">
-                            <Nav 
-                                userRoles={user.roles} 
-                                userPrivileges={user.privileges || []}
-                                activeRole={activeRole}
-                                onRoleSwitchRequired={(role) => handleOpenRoleSwitcher(role)}
-                            />
-                        </div>
-                    )}
+                    <div className="flex-1 overflow-y-auto">
+                        <Nav 
+                            userRoles={user.roles} 
+                            userPrivileges={user.privileges || []}
+                            activeRole={activeRole}
+                            onRoleSwitchRequired={(role) => handleOpenRoleSwitcher(role)}
+                        />
+                    </div>
                 </div>
             </div>
             <div className="flex flex-col">
@@ -348,7 +326,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                                <SheetTitle className="sr-only">Main Menu</SheetTitle>
                                <SheetDescription className="sr-only">Navigation links for the application.</SheetDescription>
                             </SheetHeader>
-                           {isSessionReady && (
                              <div className="flex-1 overflow-y-auto pt-4">
                                 <Nav 
                                     userRoles={user.roles} 
@@ -357,7 +334,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                                     onRoleSwitchRequired={(role) => handleOpenRoleSwitcher(role)}
                                 />
                              </div>
-                           )}
                         </SheetContent>
                     </Sheet>
                     <div className="md:hidden">
@@ -496,7 +472,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                     </div>
                 </header>
                 <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6">
-                    {childrenWithProps}
+                    {children}
                 </main>
                 <Footer organization={organization} />
             </div>
@@ -508,7 +484,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                     onRoleChange={handleRoleChange}
                     currentUserRole={user.activeRole}
                     requiredRole={requiredRole}
-                    isMandatory={isMandatory}
                 />
             )}
         </div>
