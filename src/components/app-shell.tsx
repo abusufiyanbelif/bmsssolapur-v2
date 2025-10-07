@@ -110,7 +110,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     
     const [user, setUser] = useState<UserType & { isLoggedIn: boolean; activeRole: string; initials: string; avatar: string; } | null>(null);
     
-    const initializeSession = useCallback(async (isLoginEvent = false) => {
+    const initializeSession = useCallback(async () => {
         const [permissionResult, orgData] = await Promise.all([
             performPermissionCheck(),
             getCurrentOrganization()
@@ -146,10 +146,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                     avatar: `https://placehold.co/100x100.png?text=${fetchedUser.name.split(' ').map(n => n[0]).join('').substring(0,2).toUpperCase()}`
                 };
                 setUser(userData);
-                setIsSessionReady(true);
                 
                 // Logic for redirection and role switcher
-                if (pathname === '/home') { // Only act if we are on the designated post-login page
+                if (pathname === '/home') { 
                     if (shouldShowRoleSwitcher && fetchedUser.roles.length > 1) {
                         setIsRoleSwitcherOpen(true);
                         localStorage.removeItem('showRoleSwitcher'); 
@@ -172,8 +171,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             }
         } else {
             setUser(guestUser);
-            setIsSessionReady(true);
+            if (pathname !== '/') {
+              router.push('/');
+            }
         }
+        setIsSessionReady(true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [pathname, router]);
 
@@ -195,22 +197,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
 
     useEffect(() => {
-        const handleLoginSuccess = () => {
-            setIsSessionReady(false); // Force re-initialization
-            initializeSession(true);
-        };
-
-        window.addEventListener('loginSuccess', handleLoginSuccess);
-
-        // Initial session check on component mount
-        if (!isSessionReady) {
-          initializeSession();
-        }
-
-        return () => {
-            window.removeEventListener('loginSuccess', handleLoginSuccess);
-        };
-    }, [initializeSession, isSessionReady]);
+        initializeSession();
+    }, [initializeSession]);
 
 
     const handleRoleChange = (newRole: string) => {
@@ -241,7 +229,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         setUser(guestUser);
         setIsSessionReady(true);
         if (shouldRedirect) {
-             router.push('/');
+             window.location.href = '/';
         }
     }
 
@@ -332,6 +320,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                         <div className="flex-1 overflow-y-auto">
                             <Nav 
                                 userRoles={user.roles} 
+                                userPrivileges={user.privileges || []}
                                 activeRole={activeRole}
                                 onRoleSwitchRequired={(role) => handleOpenRoleSwitcher(role)}
                             />
@@ -362,6 +351,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                              <div className="flex-1 overflow-y-auto pt-4">
                                 <Nav 
                                     userRoles={user.roles} 
+                                    userPrivileges={user.privileges || []}
                                     activeRole={activeRole}
                                     onRoleSwitchRequired={(role) => handleOpenRoleSwitcher(role)}
                                 />

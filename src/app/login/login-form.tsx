@@ -32,18 +32,9 @@ export function LoginForm() {
   const [otpProvider, setOtpProvider] = useState<'firebase' | 'twilio' | null>(null);
 
   const handleLoginSuccess = (userId: string) => {
-    toast({
-      variant: "success",
-      title: "Login Successful",
-      description: "Welcome! Redirecting you...",
-      icon: <CheckCircle />,
-    });
-    
-    // Key change: Save userId and set a flag to show the role switcher.
     localStorage.setItem('userId', userId);
     localStorage.setItem('showRoleSwitcher', 'true');
-    
-    // Key change: Use a hard redirect to ensure AppShell re-initializes.
+    // Force a full page reload to ensure AppShell re-initializes with the new session
     window.location.href = '/home';
   };
   

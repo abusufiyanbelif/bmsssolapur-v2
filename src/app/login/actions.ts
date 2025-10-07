@@ -13,7 +13,6 @@ interface LoginState {
     success: boolean;
     error?: string;
     userId?: string;
-    // No longer returns redirectTo. The client will handle this.
 }
 
 export async function handleLogin(formData: FormData): Promise<LoginState> {
@@ -27,18 +26,33 @@ export async function handleLogin(formData: FormData): Promise<LoginState> {
     try {
         let user: User | null = null;
         
-        user = await getUserByUserId(identifier);
+        // Robust user lookup: Check by email, then phone, then custom userId.
+        if (identifier.includes('@')) {
+             user = await getUserByEmail(identifier);
+        } else if (/^[0-9]{10}$/.test(identifier)) {
+             user = await getUserByPhone(identifier);
+        } else {
+            user = await getUserByUserId(identifier);
+        }
         
         if (!user) {
-            return { success: false, error: "User not found. Please check your User ID." };
+            return { success: false, error: "User not found. Please check your credentials." };
         }
+        
+        // Special case for the 'admin' user with a hardcoded password check
+        if (user.userId === 'admin' && user.id === 'ADMIN_USER_ID') {
+            if (password !== user.password) {
+                 return { success: false, error: "Incorrect password. Please try again." };
+            }
+        } else {
+             if (password !== user.password) {
+                return { success: false, error: "Incorrect password. Please try again." };
+            }
+        }
+
 
         if (!user.isActive && !user.roles.includes('Super Admin')) {
             return { success: false, error: "This user account is inactive. Please contact an administrator." };
-        }
-
-        if (password !== user.password) {
-            return { success: false, error: "Incorrect password. Please try again." };
         }
         
         await logActivity({
