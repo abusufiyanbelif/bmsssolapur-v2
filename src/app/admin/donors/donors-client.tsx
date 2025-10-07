@@ -1,3 +1,4 @@
+
 // src/app/admin/donors/donors-client.tsx
 "use client";
 
@@ -24,14 +25,13 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import type { User, UserRole } from "@/services/types";
-import { handleDeleteUser, handleToggleUserStatus, handleBulkDeleteUsers } from "../user-management/actions";
+import { handleDeleteUser, handleToggleUserStatus, handleBulkDeleteUsers, getAllUsersAction } from "../user-management/actions";
 import { DeleteConfirmationDialog } from "@/components/delete-confirmation-dialog";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { useSearchParams } from "next/navigation";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { getAllUsers } from "@/services/user-service";
 
 
 type StatusFilter = 'all' | 'active' | 'inactive';
@@ -89,7 +89,7 @@ function DonorsPageContent({ initialDonors, error: initialError }: { initialDono
     const fetchUsers = async () => {
         try {
             setLoading(true);
-            const allUsers = await getAllUsers();
+            const allUsers = await getAllUsersAction();
             const donorUsers = allUsers.filter(u => u.roles.includes('Donor'));
             setDonors(donorUsers);
             setError(null);
@@ -560,10 +560,4 @@ function DonorsPageContent({ initialDonors, error: initialError }: { initialDono
   )
 }
 
-export function DonorsPageClient({ initialDonors, error }: { initialDonors: User[], error?: string }) {
-    return (
-        <Suspense fallback={<div className="flex items-center justify-center p-8"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>}>
-            <DonorsPageContent initialDonors={initialDonors} error={error} />
-        </Suspense>
-    )
-}
+    

@@ -2,11 +2,17 @@
 // src/app/admin/user-management/actions.ts
 "use server";
 
-import { deleteUser as deleteUserService, updateUser, getUser, getUserByUserId } from "@/services/user-service";
+import { deleteUser as deleteUserService, updateUser, getUser, getAllUsers as getAllUsersService } from "@/services/user-service";
 import { revalidatePath } from "next/cache";
 import { writeBatch, doc } from "firebase/firestore";
 import { db } from "@/services/firebase";
 import { logActivity } from "@/services/activity-log-service";
+
+export async function getAllUsersAction() {
+    // This server action wraps the server-only service function.
+    const users = await getAllUsersService();
+    return JSON.parse(JSON.stringify(users));
+}
 
 export async function handleDeleteUser(userId: string, adminUserId: string) {
     try {
@@ -69,3 +75,5 @@ export async function handleToggleUserStatus(userId: string, isActive: boolean) 
         return { success: false, error: `Failed to update user status: ${error}` };
     }
 }
+
+    

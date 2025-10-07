@@ -1,3 +1,4 @@
+
 // src/app/admin/referrals/referrals-client.tsx
 "use client";
 
@@ -24,12 +25,11 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import type { User, UserRole } from "@/services/types";
-import { handleDeleteUser, handleToggleUserStatus, handleBulkDeleteUsers } from "../user-management/actions";
+import { handleDeleteUser, handleToggleUserStatus, handleBulkDeleteUsers, getAllUsersAction } from "../user-management/actions";
 import { DeleteConfirmationDialog } from "@/components/delete-confirmation-dialog";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Checkbox } from "@/components/ui/checkbox";
-import { getAllUsers } from "@/services/user-service";
 
 
 type StatusFilter = 'all' | 'active' | 'inactive';
@@ -77,7 +77,7 @@ function ReferralsPageContent({ initialReferrals, error: initialError }: { initi
     const fetchUsers = async () => {
         try {
             setLoading(true);
-            const allUsers = await getAllUsers();
+            const allUsers = await getAllUsersAction();
             const referralUsers = allUsers.filter(u => u.roles.includes('Referral'));
             setReferrals(referralUsers);
             setError(null);
@@ -516,10 +516,4 @@ function ReferralsPageContent({ initialReferrals, error: initialError }: { initi
   )
 }
 
-export function ReferralsPageClient({ initialReferrals, error }: { initialReferrals: User[], error?: string }) {
-    return (
-        <Suspense fallback={<div className="flex items-center justify-center p-8"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>}>
-            <ReferralsPageContent initialReferrals={initialReferrals} error={error} />
-        </Suspense>
-    )
-}
+    

@@ -13,7 +13,6 @@ import {
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
 import { Button } from "@/components/ui/button";
-import { getAllUsers } from "@/services/user-service";
 import { format } from "date-fns";
 import { Loader2, AlertCircle, PlusCircle, Trash2, FilterX, ChevronLeft, ChevronRight, MoreHorizontal, Search, UserCheck, UserX, EyeOff, ArrowUpDown, Check, ChevronsUpDown, Edit } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -24,7 +23,7 @@ import { cn } from "@/lib/utils";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { DeleteConfirmationDialog } from "@/components/delete-confirmation-dialog";
-import { handleDeleteUser, handleToggleUserStatus, handleBulkDeleteUsers } from "./actions";
+import { handleDeleteUser, handleToggleUserStatus, handleBulkDeleteUsers, getAllUsersAction } from "./actions";
 import type { User, UserRole } from "@/services/types";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -47,7 +46,7 @@ interface UserManagementPageClientProps {
 
 export function UserManagementPageClient({ initialUsers, error: initialError }: UserManagementPageClientProps) {
     const [users, setUsers] = useState<User[]>(initialUsers);
-    const [loading, setLoading] = useState(initialUsers.length === 0 && !initialError);
+    const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(initialError || null);
     const { toast } = useToast();
     const isMobile = useIsMobile();
@@ -81,7 +80,7 @@ export function UserManagementPageClient({ initialUsers, error: initialError }: 
     const fetchUsers = async () => {
         try {
             setLoading(true);
-            const fetchedUsers = await getAllUsers();
+            const fetchedUsers = await getAllUsersAction();
             setUsers(fetchedUsers);
             setError(null);
         } catch (e) {
@@ -522,7 +521,7 @@ export function UserManagementPageClient({ initialUsers, error: initialError }: 
 
         return (
             <>
-                 {selectedUsers.length > 0 && (
+                 {selectedUsers.length > 0 && adminUserId && (
                     <div className="flex items-center gap-4 mb-4 p-4 border rounded-lg bg-muted/50">
                         <p className="text-sm font-medium">
                             {selectedUsers.length} item(s) selected.
@@ -530,10 +529,7 @@ export function UserManagementPageClient({ initialUsers, error: initialError }: 
                          <DeleteConfirmationDialog
                             itemType={`${selectedUsers.length} user(s)`}
                             itemName="the selected items"
-                            onDelete={async () => {
-                                if (!adminUserId) return { success: false, error: "Admin user ID not found."};
-                                return await handleBulkDeleteUsers(selectedUsers, adminUserId);
-                            }}
+                            onDelete={() => handleBulkDeleteUsers(selectedUsers, adminUserId)}
                             onSuccess={onBulkUsersDeleted}
                         >
                             <Button variant="destructive">
@@ -630,3 +626,5 @@ export function UserManagementPageClient({ initialUsers, error: initialError }: 
     </div>
   )
 }
+
+    
