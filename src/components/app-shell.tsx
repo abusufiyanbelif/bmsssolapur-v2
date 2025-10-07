@@ -36,7 +36,7 @@ const PermissionErrorState = ({ error }: { error: string }) => {
     const isPermissionDenied = error === 'permission-denied';
 
     return (
-        <div className="flex flex-col flex-1 items-center justify-center h-full p-4 bg-background">
+        <div className="flex flex-col flex-1 items-center justify-center h-screen p-4 bg-background">
             <Card className="w-full max-w-2xl text-center shadow-2xl border-destructive">
                 <CardHeader>
                     <div className="mx-auto bg-destructive text-destructive-foreground rounded-full p-3 w-fit">
@@ -80,18 +80,17 @@ const PermissionErrorState = ({ error }: { error: string }) => {
 };
 
 const LoadingState = () => (
-    <div className="flex flex-col flex-1 items-center justify-center h-full">
+    <div className="flex flex-col flex-1 items-center justify-center h-screen bg-background">
         <Loader2 className="animate-spin rounded-full h-16 w-16 text-primary" />
         <p className="mt-4 text-muted-foreground">Initializing your session...</p>
     </div>
-)
+);
 
 const allowedGuestPaths = ['/', '/login', '/register', '/public-leads', '/campaigns', '/organization'];
 
 export function AppShell({ children }: { children: React.ReactNode }) {
     const [isRoleSwitcherOpen, setIsRoleSwitcherOpen] = useState(false);
     const [requiredRole, setRequiredRole] = useState<string | null>(null);
-    const [isSessionReady, setIsSessionReady] = useState(false);
     const [permissionError, setPermissionError] = useState<string | null>(null);
     const [pendingLeads, setPendingLeads] = useState<LeadType[]>([]);
     const [readyToPublishLeads, setReadyToPublishLeads] = useState<LeadType[]>([]);
@@ -101,6 +100,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     const pathname = usePathname();
     const router = useRouter();
     const { toast } = useToast();
+
+    // New state management for the session
+    const [sessionState, setSessionState] = useState<'loading' | 'ready' | 'error'>('loading');
+    const [sessionUser, setSessionUser] = useState<UserType & { isLoggedIn: boolean; activeRole: string; initials: string; avatar: string; } | null>(null);
 
     const guestUser: UserType & { isLoggedIn: boolean; activeRole: string; initials: string; avatar: string; } = {
         isLoggedIn: false,
@@ -116,89 +119,86 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         createdAt: new Date() as any,
     };
     
-    const [user, setUser] = useState<UserType & { isLoggedIn: boolean; activeRole: string; initials: string; avatar: string; } | null>(null);
-    
-    const initializeSession = useCallback(async () => {
-        const [permissionResult, orgData] = await Promise.all([
-            performPermissionCheck(),
-            getCurrentOrganization()
-        ]);
+    // This is the core session initialization and redirection logic.
+    useEffect(() => {
+        const initializeSession = async () => {
+            const [permissionResult, orgData] = await Promise.all([
+                performPermissionCheck(),
+                getCurrentOrganization()
+            ]);
 
-        setOrganization(orgData);
+            setOrganization(orgData);
 
-        if (!permissionResult.success && permissionResult.error) {
-            setPermissionError(permissionResult.error);
-            setIsSessionReady(true);
-            return;
-        }
-
-        const storedUserId = localStorage.getItem('userId');
-        const isGuestPath = allowedGuestPaths.some(p => pathname === p || (p !== '/' && pathname.startsWith(p)));
-
-        if (!storedUserId) {
-            setUser(guestUser);
-             if (!isGuestPath && pathname !== '/login' && pathname !== '/register') {
-                router.push('/');
+            if (!permissionResult.success && permissionResult.error) {
+                setPermissionError(permissionResult.error);
+                setSessionState('error');
+                return;
             }
-        } else {
-            let fetchedUser = await getUser(storedUserId);
 
-            if (fetchedUser) {
-                const savedRole = localStorage.getItem('activeRole');
-                const activeRole = (savedRole && fetchedUser.roles.includes(savedRole as any)) ? savedRole : fetchedUser.roles[0];
-                
-                if (localStorage.getItem('activeRole') !== activeRole) {
-                    localStorage.setItem('activeRole', activeRole);
-                }
-                
-                const userData = {
-                    ...fetchedUser,
-                    isLoggedIn: true,
-                    activeRole: activeRole,
-                    initials: fetchedUser.name.split(' ').map(n => n[0]).join('').substring(0,2).toUpperCase(),
-                    avatar: `https://placehold.co/100x100.png?text=${fetchedUser.name.split(' ').map(n => n[0]).join('').substring(0,2).toUpperCase()}`
-                };
-                setUser(userData);
-                
-                // --- REDIRECTION LOGIC ---
-                // If a logged-in user is on a public-only path, redirect them to /home
-                if (isGuestPath) {
-                    router.push('/home');
-                    return; // Stop further execution
-                }
-                
-                // If user lands on /home, check if role switcher or dashboard redirect is needed
-                if (pathname === '/home') {
-                    const shouldShowRoleSwitcher = localStorage.getItem('showRoleSwitcher') === 'true';
-                    if (shouldShowRoleSwitcher && fetchedUser.roles.length > 1) {
-                        setIsRoleSwitcherOpen(true);
-                        localStorage.removeItem('showRoleSwitcher'); 
-                    } else {
-                        // Redirect to the correct dashboard based on the active role
-                        switch (activeRole) {
-                            case 'Donor': router.push('/donor'); break;
-                            case 'Beneficiary': router.push('/beneficiary'); break;
-                            case 'Referral': router.push('/referral'); break;
-                            case 'Admin': case 'Super Admin': case 'Finance Admin':
-                                router.push('/admin'); break;
-                            default: router.push('/'); break;
-                        }
-                    }
+            const storedUserId = localStorage.getItem('userId');
+            const isGuestPath = allowedGuestPaths.some(p => pathname === p || (p !== '/' && pathname.startsWith(p)));
+
+            if (!storedUserId) {
+                setSessionUser(guestUser);
+                 if (!isGuestPath && pathname !== '/login' && pathname !== '/register') {
+                    router.push('/');
+                    return; // Return after redirecting
                 }
             } else {
-                handleLogout(false);
+                let fetchedUser = await getUser(storedUserId);
+
+                if (fetchedUser) {
+                    const savedRole = localStorage.getItem('activeRole');
+                    const activeRole = (savedRole && fetchedUser.roles.includes(savedRole as any)) ? savedRole : fetchedUser.roles[0];
+                    
+                    if (localStorage.getItem('activeRole') !== activeRole) {
+                        localStorage.setItem('activeRole', activeRole);
+                    }
+                    
+                    const userData = {
+                        ...fetchedUser,
+                        isLoggedIn: true,
+                        activeRole: activeRole,
+                        initials: fetchedUser.name.split(' ').map(n => n[0]).join('').substring(0,2).toUpperCase(),
+                        avatar: `https://placehold.co/100x100.png?text=${fetchedUser.name.split(' ').map(n => n[0]).join('').substring(0,2).toUpperCase()}`
+                    };
+                    setSessionUser(userData);
+                    
+                    // --- REDIRECTION LOGIC ---
+                    if (isGuestPath) {
+                        router.push('/home');
+                        return; // Stop further execution
+                    }
+                    
+                    if (pathname === '/home') {
+                        const shouldShowRoleSwitcher = localStorage.getItem('showRoleSwitcher') === 'true';
+                        if (shouldShowRoleSwitcher && fetchedUser.roles.length > 1) {
+                            setIsRoleSwitcherOpen(true);
+                            localStorage.removeItem('showRoleSwitcher'); 
+                        } else {
+                            switch (activeRole) {
+                                case 'Donor': router.push('/donor'); break;
+                                case 'Beneficiary': router.push('/beneficiary'); break;
+                                case 'Referral': router.push('/referral'); break;
+                                case 'Admin': case 'Super Admin': case 'Finance Admin':
+                                    router.push('/admin'); break;
+                                default: router.push('/'); break;
+                            }
+                        }
+                    }
+                } else {
+                    handleLogout(false);
+                }
             }
-        }
-        setIsSessionReady(true);
+            setSessionState('ready');
+        };
+
+        initializeSession();
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [pathname]);
 
     useEffect(() => {
-        initializeSession();
-    }, [initializeSession]);
-
-    useEffect(() => {
-        if (user?.isLoggedIn && user.roles.some(r => ['Admin', 'Super Admin', 'Finance Admin'].includes(r))) {
+        if (sessionUser?.isLoggedIn && sessionUser.roles.some(r => ['Admin', 'Super Admin', 'Finance Admin'].includes(r))) {
             const fetchNotifications = async () => {
                 const [allLeads, allDonations] = await Promise.all([
                     getAllLeads(),
@@ -210,19 +210,19 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             };
             fetchNotifications();
         }
-    }, [user]);
+    }, [sessionUser]);
 
 
     const handleRoleChange = (newRole: string) => {
-        if (!user || !user.isLoggedIn) return;
-        const previousRole = user.activeRole;
+        if (!sessionUser || !sessionUser.isLoggedIn) return;
+        const previousRole = sessionUser.activeRole;
         localStorage.setItem('activeRole', newRole);
 
-        if (user.isLoggedIn) {
+        if (sessionUser.isLoggedIn) {
             logActivity({
-                userId: user.id!,
-                userName: user.name,
-                userEmail: user.email,
+                userId: sessionUser.id!,
+                userName: sessionUser.name,
+                userEmail: sessionUser.email,
                 role: newRole,
                 activity: "Switched Role",
                 details: { from: previousRole, to: newRole },
@@ -234,8 +234,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     const handleLogout = (shouldRedirect = true) => {
         localStorage.removeItem('userId');
         localStorage.removeItem('activeRole');
-        setUser(guestUser);
-        setIsSessionReady(true);
+        setSessionUser(guestUser);
         if (shouldRedirect) {
              window.location.href = '/';
         }
@@ -248,12 +247,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     };
     
     const handleNotificationClick = (requiredRole: string, href: string) => {
-        if (!user || !user.isLoggedIn) return;
-        const hasSufficientRole = ['Admin', 'Super Admin', 'Finance Admin'].includes(user.activeRole);
+        if (!sessionUser || !sessionUser.isLoggedIn) return;
+        const hasSufficientRole = ['Admin', 'Super Admin', 'Finance Admin'].includes(sessionUser.activeRole);
 
         if(hasSufficientRole) {
             router.push(href);
-        } else if (user.roles.includes(requiredRole as any)) {
+        } else if (sessionUser.roles.includes(requiredRole as any)) {
             handleOpenRoleSwitcher(requiredRole, href);
         } else {
             toast({
@@ -283,10 +282,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     );
 
     if (permissionError) return <PermissionErrorState error={permissionError} />;
-    if (!isSessionReady || !user) return <LoadingState />;
+    if (sessionState === 'loading' || !sessionUser) return <LoadingState />;
 
-    const activeRole = user.activeRole;
-    const hasAdminAccess = user.roles.some(r => ['Admin', 'Super Admin', 'Finance Admin'].includes(r));
+    const activeRole = sessionUser.activeRole;
+    const hasAdminAccess = sessionUser.roles.some(r => ['Admin', 'Super Admin', 'Finance Admin'].includes(r));
     const leadsNotificationCount = hasAdminAccess ? (pendingLeads.length + readyToPublishLeads.length) : 0;
     const donationsNotificationCount = hasAdminAccess ? pendingDonations.length : 0;
 
@@ -299,8 +298,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                     </div>
                     <div className="flex-1 overflow-y-auto">
                         <Nav 
-                            userRoles={user.roles} 
-                            userPrivileges={user.privileges || []}
+                            userRoles={sessionUser.roles} 
+                            userPrivileges={sessionUser.privileges || []}
                             activeRole={activeRole}
                             onRoleSwitchRequired={(role) => handleOpenRoleSwitcher(role)}
                         />
@@ -328,8 +327,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                             </SheetHeader>
                              <div className="flex-1 overflow-y-auto pt-4">
                                 <Nav 
-                                    userRoles={user.roles} 
-                                    userPrivileges={user.privileges || []}
+                                    userRoles={sessionUser.roles} 
+                                    userPrivileges={sessionUser.privileges || []}
                                     activeRole={activeRole}
                                     onRoleSwitchRequired={(role) => handleOpenRoleSwitcher(role)}
                                 />
@@ -340,7 +339,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                         <HeaderTitle />
                     </div>
                      <div className="w-full flex-1 flex justify-end items-center gap-4">
-                        {user.isLoggedIn ? (
+                        {sessionUser.isLoggedIn ? (
                             <>
                             {hasAdminAccess && (
                                 <>
@@ -416,17 +415,17 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                                 <DropdownMenuTrigger asChild>
                                     <Button variant="ghost" className="relative h-8 w-8 rounded-full">
                                         <Avatar className="h-9 w-9">
-                                            <AvatarImage src={user.avatar} alt={user.name} data-ai-hint="female portrait" />
-                                            <AvatarFallback>{user.initials}</AvatarFallback>
+                                            <AvatarImage src={sessionUser.avatar} alt={sessionUser.name} data-ai-hint="female portrait" />
+                                            <AvatarFallback>{sessionUser.initials}</AvatarFallback>
                                         </Avatar>
                                     </Button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent className="w-56" align="end" forceMount>
                                     <DropdownMenuLabel className="font-normal">
                                         <div className="flex flex-col space-y-1">
-                                            <p className="text-sm font-medium leading-none">{user.name}</p>
+                                            <p className="text-sm font-medium leading-none">{sessionUser.name}</p>
                                             <p className="text-xs leading-none text-muted-foreground">
-                                                ID: {user.userId}
+                                                ID: {sessionUser.userId}
                                             </p>
                                         </div>
                                     </DropdownMenuLabel>
@@ -443,10 +442,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                                             <span>Profile</span>
                                         </Link>
                                     </DropdownMenuItem>
-                                     {user.roles.length > 1 && (
+                                     {sessionUser.roles.length > 1 && (
                                         <DropdownMenuItem onClick={() => handleOpenRoleSwitcher()}>
                                             <UsersIcon className="mr-2 h-4 w-4" />
-                                            <span>Switch Role ({user.activeRole})</span>
+                                            <span>Switch Role ({sessionUser.activeRole})</span>
                                         </DropdownMenuItem>
                                      )}
                                     <DropdownMenuSeparator />
@@ -476,16 +475,16 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 </main>
                 <Footer organization={organization} />
             </div>
-            {user.isLoggedIn && (
+            {sessionUser.isLoggedIn && (
                  <RoleSwitcherDialog 
                     open={isRoleSwitcherOpen} 
                     onOpenChange={handleOpenChange} 
-                    availableRoles={user.roles}
+                    availableRoles={sessionUser.roles}
                     onRoleChange={handleRoleChange}
-                    currentUserRole={user.activeRole}
+                    currentUserRole={sessionUser.activeRole}
                     requiredRole={requiredRole}
                 />
             )}
         </div>
-    )
+    );
 }
