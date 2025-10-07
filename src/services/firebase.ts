@@ -28,6 +28,13 @@ const auth: Auth = getAuth(clientApp);
 const db: Firestore = getFirestore(clientApp);
 const storage = getStorage(clientApp);
 
+// This is the key change to fix the network request failed error on localhost.
+// It disables the app verification for testing environments.
+if (typeof window !== 'undefined' && window.location.hostname === 'localhost') {
+    auth.settings.appVerificationDisabledForTesting = true;
+}
+
+
 const isConfigValid = !!(
   firebaseConfig.apiKey &&
   firebaseConfig.authDomain &&
