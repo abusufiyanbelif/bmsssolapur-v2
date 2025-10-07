@@ -31,7 +31,9 @@ const storage = getStorage(clientApp);
 // This is the key change to fix the network request failed error on localhost.
 // It disables the app verification for testing environments.
 if (typeof window !== 'undefined' && window.location.hostname === 'localhost') {
-    auth.settings.appVerificationDisabledForTesting = true;
+    // This property does not exist on the Auth type definition by default.
+    // We cast to any to set it. It's a valid Firebase JS SDK property.
+    (auth.settings as any).appVerificationDisabledForTesting = true;
 }
 
 
