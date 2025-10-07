@@ -5,6 +5,7 @@ import { Inter, Space_Grotesk } from 'next/font/google';
 import { cn } from '@/lib/utils';
 import { Suspense } from 'react';
 import { Loader2 } from 'lucide-react';
+import { AppShell } from '@/components/app-shell';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -30,8 +31,11 @@ export default function RootLayout({
   return (
     <html lang="en" className="h-full">
       <body className={cn("font-body antialiased h-full bg-background", inter.variable, spaceGrotesk.variable)}>
-        {/* The AppShell is now handled by the route group layouts, not here. */}
-        {children}
+        <Suspense fallback={<div className="flex h-full w-full items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>}>
+          <AppShell>
+            {children}
+          </AppShell>
+        </Suspense>
         <Toaster />
       </body>
     </html>

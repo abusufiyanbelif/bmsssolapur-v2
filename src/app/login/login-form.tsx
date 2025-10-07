@@ -39,15 +39,11 @@ export function LoginForm() {
   };
   
   const initializeRecaptcha = useCallback(() => {
-    // Ensure this only runs on the client
     if (typeof window === 'undefined' || !auth) return;
 
-    // Get the container for reCAPTCHA
     const recaptchaContainer = document.getElementById('recaptcha-container');
     if (!recaptchaContainer) return;
     
-    // If a verifier already exists on the window object, try to clear it first.
-    // This can fail if the verifier has expired, so we wrap it in a try/catch.
     try {
       if (window.recaptchaVerifier && typeof window.recaptchaVerifier.clear === 'function') {
           window.recaptchaVerifier.clear();
@@ -56,11 +52,9 @@ export function LoginForm() {
       console.error("Error clearing old reCAPTCHA verifier:", e);
     }
     
-    // Empty the container to prevent the "already rendered" error
     recaptchaContainer.innerHTML = '';
     
     try {
-        // Create and render a new verifier
         window.recaptchaVerifier = new RecaptchaVerifier(auth, recaptchaContainer, {
             'size': 'invisible',
             'callback': () => {},
@@ -111,10 +105,9 @@ export function LoginForm() {
     
     if (result.success && result.provider === 'firebase') {
       try {
-        if (!window.recaptchaVerifier || !window.recaptchaVerifier.render) {
+        if (!window.recaptchaVerifier || typeof window.recaptchaVerifier.render !== 'function') {
             console.log("reCAPTCHA not ready, re-initializing...");
             initializeRecaptcha();
-            // Give it a moment to render before proceeding
             await new Promise(resolve => setTimeout(resolve, 500));
         }
         
@@ -127,7 +120,11 @@ export function LoginForm() {
         console.error("Firebase signInWithPhoneNumber error:", error);
         toast({ variant: "destructive", title: "Firebase Error", description: "Could not send OTP. Please ensure this app's domain is authorized in the Firebase console for phone authentication." });
         if(window.recaptchaVerifier) {
-            window.recaptchaVerifier.clear();
+            try {
+                window.recaptchaVerifier.clear();
+            } catch (e) {
+                console.error("Error clearing reCAPTCHA on failure:", e);
+            }
             initializeRecaptcha();
         }
       }

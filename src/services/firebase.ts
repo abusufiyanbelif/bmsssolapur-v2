@@ -33,7 +33,11 @@ const storage = getStorage(clientApp);
 if (typeof window !== 'undefined' && window.location.hostname === 'localhost') {
     // This property does not exist on the Auth type definition by default.
     // We cast to any to set it. It's a valid Firebase JS SDK property.
-    (auth.settings as any).appVerificationDisabledForTesting = true;
+    try {
+      (auth.settings as any).appVerificationDisabledForTesting = true;
+    } catch(e) {
+      console.error("Could not disable app verification for testing. This may happen in some environments.", e);
+    }
 }
 
 

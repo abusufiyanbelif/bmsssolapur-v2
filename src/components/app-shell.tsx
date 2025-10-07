@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { LogIn, LogOut, Menu, Users as UsersIcon, User, Home, Loader2, Bell, AlertTriangle, FileCheck, HandHeart, Megaphone, ArrowRightLeft, Shield, FileUp, HandCoins } from "lucide-react";
 import { RoleSwitcherDialog } from "./role-switcher-dialog";
-import { useState, useEffect, Children, cloneElement, isValidElement, useCallback } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Footer } from "./footer";
 import { logActivity } from "@/services/activity-log-service";
 import Link from "next/link";
@@ -137,8 +137,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
         if (!storedUserId) {
             setUser(guestUser);
-            // If user is not logged in and not on a guest path, redirect to home.
-            if (!isGuestPath) {
+             if (!isGuestPath && pathname !== '/login' && pathname !== '/register') {
                 router.push('/');
             }
         } else {
@@ -162,7 +161,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 setUser(userData);
                 
                 // --- REDIRECTION LOGIC ---
-                // If a logged-in user is on a guest path, redirect them to /home
+                // If a logged-in user is on a public-only path, redirect them to /home
                 if (isGuestPath) {
                     router.push('/home');
                     return; // Stop further execution
@@ -192,7 +191,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         }
         setIsSessionReady(true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [pathname, router]);
+    }, [pathname]);
+
+    useEffect(() => {
+        initializeSession();
+    }, [initializeSession]);
 
     useEffect(() => {
         if (user?.isLoggedIn && user.roles.some(r => ['Admin', 'Super Admin', 'Finance Admin'].includes(r))) {
@@ -209,9 +212,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         }
     }, [user]);
 
-    useEffect(() => {
-        initializeSession();
-    }, [initializeSession]);
 
     const handleRoleChange = (newRole: string) => {
         if (!user || !user.isLoggedIn) return;
@@ -228,7 +228,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 details: { from: previousRole, to: newRole },
             });
         }
-        window.location.href = '/home';
+        window.location.href = redirectUrl || '/home';
     };
     
     const handleLogout = (shouldRedirect = true) => {
