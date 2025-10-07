@@ -21,6 +21,7 @@ import {
   arrayUnion,
   arrayRemove,
   orderBy,
+  FieldValue
 } from 'firebase/firestore';
 import { db } from './firebase';
 import { adminDb } from './firebase-admin';
@@ -94,15 +95,11 @@ const generateNextAnonymousId = async (prefix: string, field: keyof User): Promi
 
 // Function to get a user by their custom userId field
 export const getUserByUserId = async (userId: string): Promise<User | null> => {
-    if (!userId) {
-        return null;
-    }
-     // Hardcoded check for the default admin user by their specific User ID.
-    if (userId === 'admin') {
-        return hardcodedSuperAdmin;
-    }
+    if (!userId) return null;
+    if (userId === 'admin') return hardcodedSuperAdmin;
+
     try {
-        const q = query(collection(db, USERS_COLLECTION), where("userId", "==", userId), limit(1));
+        const q = query(collection(adminDb, USERS_COLLECTION), where("userId", "==", userId), limit(1));
         const querySnapshot = await getDocs(q);
         if (!querySnapshot.empty) {
             const userDoc = querySnapshot.docs[0];
@@ -246,17 +243,14 @@ export const createUser = async (userData: Partial<Omit<User, 'id' | 'createdAt'
 
 // Function to get a user by ID
 export const getUser = async (id?: string): Promise<User | null> => {
-  if (!id) {
-    return null;
-  }
-   // Hardcoded check for the default admin user
-  if (id === hardcodedSuperAdmin.id) {
-        return hardcodedSuperAdmin;
-  }
+  if (!id) return null;
+  if (id === hardcodedSuperAdmin.id) return hardcodedSuperAdmin;
+
   try {
-    const userDoc = await getDoc(doc(db, USERS_COLLECTION, id));
-    if (userDoc.exists()) {
+    const userDoc = await adminDb.collection(USERS_COLLECTION).doc(id).get();
+    if (userDoc.exists) {
       const data = userDoc.data();
+      if (!data) return null;
       return { 
         id: userDoc.id, 
         ...data,
@@ -277,26 +271,23 @@ export const getUser = async (id?: string): Promise<User | null> => {
 
 // Function to get a user by name (for the special 'admin' case)
 export const getUserByName = async (name: string): Promise<User | null> => {
-    if (!name) {
-        return null;
-    }
-     if (name === 'admin') {
-        return hardcodedSuperAdmin;
-    }
+    if (!name) return null;
+    if (name === 'admin') return hardcodedSuperAdmin;
+
     try {
-        const q = query(collection(db, USERS_COLLECTION), where("name", "==", name), limit(1));
+        const q = query(adminDb.collection(USERS_COLLECTION), where("name", "==", name), limit(1));
         const querySnapshot = await getDocs(q);
         if (!querySnapshot.empty) {
-        const userDoc = querySnapshot.docs[0];
-        const data = userDoc.data();
-        return {
-            id: userDoc.id,
-            ...data,
-            roles: getUnique(data.roles),
-            createdAt: (data.createdAt as Timestamp)?.toDate(),
-            updatedAt: data.updatedAt ? (data.updatedAt as Timestamp).toDate() : undefined,
-            dateOfBirth: data.dateOfBirth ? (data.dateOfBirth as Timestamp).toDate() : undefined,
-        } as User;
+            const userDoc = querySnapshot.docs[0];
+            const data = userDoc.data();
+            return {
+                id: userDoc.id,
+                ...data,
+                roles: getUnique(data.roles),
+                createdAt: (data.createdAt as Timestamp)?.toDate(),
+                updatedAt: data.updatedAt ? (data.updatedAt as Timestamp).toDate() : undefined,
+                dateOfBirth: data.dateOfBirth ? (data.dateOfBirth as Timestamp).toDate() : undefined,
+            } as User;
         }
         return null;
     } catch (error) {
@@ -307,14 +298,11 @@ export const getUserByName = async (name: string): Promise<User | null> => {
 
 // Function to get a user by userKey
 export const getUserByUserKey = async (userKey: string): Promise<User | null> => {
-    if (!userKey) {
-        return null;
-    }
-     if (userKey === hardcodedSuperAdmin.userKey) {
-        return hardcodedSuperAdmin;
-    }
+    if (!userKey) return null;
+    if (userKey === hardcodedSuperAdmin.userKey) return hardcodedSuperAdmin;
+
     try {
-        const q = query(collection(db, USERS_COLLECTION), where("userKey", "==", userKey), limit(1));
+        const q = query(adminDb.collection(USERS_COLLECTION), where("userKey", "==", userKey), limit(1));
         const snapshot = await getDocs(q);
         if (!snapshot.empty) {
             const doc = snapshot.docs[0];
@@ -334,18 +322,15 @@ export const getUserByUserKey = async (userKey: string): Promise<User | null> =>
 
 // Function to get a user by full name
 export const getUserByFullName = async (name: string): Promise<User | null> => {
-    if (!name) {
-        return null;
-    }
-     if (name === 'admin') {
-        return hardcodedSuperAdmin;
-    }
+    if (!name) return null;
+    if (name === 'admin') return hardcodedSuperAdmin;
+
     try {
-        const q = query(collection(db, USERS_COLLECTION), where("name", "==", name), limit(1));
+        const q = query(adminDb.collection(USERS_COLLECTION), where("name", "==", name), limit(1));
         const snapshot = await getDocs(q);
         if (!snapshot.empty) {
             const doc = snapshot.docs[0];
-             const data = doc.data();
+            const data = doc.data();
             return {
                 id: doc.id, ...data, roles: getUnique(data.roles), createdAt: (data.createdAt as Timestamp)?.toDate(),
                 updatedAt: data.updatedAt ? (data.updatedAt as Timestamp).toDate() : undefined,
@@ -364,13 +349,10 @@ export const getUserByFullName = async (name: string): Promise<User | null> => {
 export const getUserByPhone = async (phone: string): Promise<User | null> => {
   const standardizedPhone = phone?.replace(/\D/g, '').slice(-10);
   if (!standardizedPhone || standardizedPhone.length !== 10) return null;
-  
-   if (standardizedPhone === hardcodedSuperAdmin.phone) {
-        return hardcodedSuperAdmin;
-    }
+  if (standardizedPhone === hardcodedSuperAdmin.phone) return hardcodedSuperAdmin;
 
   try {
-    const q = query(collection(db, USERS_COLLECTION), where("phone", "==", standardizedPhone), limit(1));
+    const q = query(adminDb.collection(USERS_COLLECTION), where("phone", "==", standardizedPhone), limit(1));
     const querySnapshot = await getDocs(q);
     if (!querySnapshot.empty) {
       const userDoc = querySnapshot.docs[0];
@@ -393,14 +375,11 @@ export const getUserByPhone = async (phone: string): Promise<User | null> => {
 
 // Function to get a user by email
 export const getUserByEmail = async (email: string): Promise<User | null> => {
-  if (!email) {
-    return null;
-  }
-   if (email === hardcodedSuperAdmin.email) {
-        return hardcodedSuperAdmin;
-    }
+  if (!email) return null;
+  if (email === hardcodedSuperAdmin.email) return hardcodedSuperAdmin;
+
   try {
-    const q = query(collection(db, USERS_COLLECTION), where("email", "==", email), limit(1));
+    const q = query(adminDb.collection(USERS_COLLECTION), where("email", "==", email), limit(1));
     const querySnapshot = await getDocs(q);
     if (!querySnapshot.empty) {
       const userDoc = querySnapshot.docs[0];
@@ -425,7 +404,7 @@ export const getUserByEmail = async (email: string): Promise<User | null> => {
 export const getUserByUpiId = async (upiId: string): Promise<User | null> => {
   if (!upiId) return null;
   try {
-    const q = query(collection(db, USERS_COLLECTION), where("upiIds", "array-contains", upiId), limit(1));
+    const q = query(adminDb.collection(USERS_COLLECTION), where("upiIds", "array-contains", upiId), limit(1));
     const querySnapshot = await getDocs(q);
     if (!querySnapshot.empty) {
       const userDoc = querySnapshot.docs[0];
@@ -452,7 +431,7 @@ export const getUserByBankAccountNumber = async (accountNumber: string): Promise
     return null;
   }
   try {
-    const q = query(collection(db, USERS_COLLECTION), where("bankAccountNumber", "==", accountNumber), limit(1));
+    const q = query(adminDb.collection(USERS_COLLECTION), where("bankAccountNumber", "==", accountNumber), limit(1));
     const querySnapshot = await getDocs(q);
     if (!querySnapshot.empty) {
       const userDoc = querySnapshot.docs[0];
@@ -477,7 +456,7 @@ export const getUserByBankAccountNumber = async (accountNumber: string): Promise
 export const getUserByPan = async (pan: string): Promise<User | null> => {
   if (!pan) return null;
   try {
-    const q = query(collection(db, USERS_COLLECTION), where("panNumber", "==", pan.toUpperCase()), limit(1));
+    const q = query(adminDb.collection(USERS_COLLECTION), where("panNumber", "==", pan.toUpperCase()), limit(1));
     const snapshot = await getDocs(q);
     if (!snapshot.empty) {
       const doc = snapshot.docs[0];
@@ -502,7 +481,7 @@ export const getUserByPan = async (pan: string): Promise<User | null> => {
 export const getUserByAadhaar = async (aadhaar: string): Promise<User | null> => {
   if (!aadhaar) return null;
   try {
-    const q = query(collection(db, USERS_COLLECTION), where("aadhaarNumber", "==", aadhaar), limit(1));
+    const q = query(adminDb.collection(USERS_COLLECTION), where("aadhaarNumber", "==", aadhaar), limit(1));
     const snapshot = await getDocs(q);
     if (!snapshot.empty) {
       const doc = snapshot.docs[0];
@@ -663,7 +642,7 @@ export const deleteUser = async (id: string, adminUser: User, isBulkOperation: b
 // Function to get all users
 export const getAllUsers = async (): Promise<User[]> => {
     try {
-        const usersQuery = query(collection(db, USERS_COLLECTION), orderBy("createdAt", "desc"));
+        const usersQuery = query(adminDb.collection(USERS_COLLECTION), orderBy("createdAt", "desc"));
         const querySnapshot = await getDocs(usersQuery);
         const users: User[] = [];
         querySnapshot.forEach((doc) => {

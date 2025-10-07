@@ -39,17 +39,10 @@ export async function handleLogin(formData: FormData): Promise<LoginState> {
             return { success: false, error: "User not found. Please check your credentials." };
         }
         
-        // Special case for the 'admin' user with a hardcoded password check
-        if (user.userId === 'admin' && user.id === 'ADMIN_USER_ID') {
-            if (password !== user.password) {
-                 return { success: false, error: "Incorrect password. Please try again." };
-            }
-        } else {
-             if (password !== user.password) {
-                return { success: false, error: "Incorrect password. Please try again." };
-            }
+        // Correctly handle password check for all users.
+        if (user.password !== password) {
+             return { success: false, error: "Incorrect password. Please try again." };
         }
-
 
         if (!user.isActive && !user.roles.includes('Super Admin')) {
             return { success: false, error: "This user account is inactive. Please contact an administrator." };
