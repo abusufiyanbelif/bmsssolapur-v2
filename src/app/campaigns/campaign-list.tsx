@@ -103,7 +103,7 @@ export function CampaignList({ campaigns }: CampaignListProps) {
                     <Card key={campaign.id} className="flex flex-col">
                         <CardHeader>
                             <div className="flex justify-between items-start gap-4">
-                                <CardTitle className="line-clamp-2">{campaign.name}</CardTitle>
+                                <CardTitle className="line-clamp-2 text-primary">{campaign.name}</CardTitle>
                                  <Badge variant="outline" className={cn("capitalize flex-shrink-0", statusColors[campaign.status])}>
                                     {campaign.status}
                                 </Badge>
