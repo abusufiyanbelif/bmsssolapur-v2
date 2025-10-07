@@ -1,4 +1,5 @@
 
+
 'use server';
 
 import { collection, query, where, getDocs, Timestamp, doc, writeBatch } from 'firebase/firestore';
@@ -50,7 +51,7 @@ export async function handleLogin(formData: FormData): Promise<LoginState> {
             details: { method: 'password' },
         });
 
-        // Always redirect to /home. The /home page will handle role-based routing.
+        // Always redirect to /home. The AppShell and /home page will handle role-based routing.
         return { success: true, userId: user.id, redirectTo: '/home' };
 
     } catch (e) {
@@ -142,34 +143,18 @@ export async function handleFirebaseOtpLogin(uid: string, phoneNumber: string | 
     try {
         let user: User | null = await getUser(uid);
         
+        // Handle case where Firebase creates a new UID for an existing phone number
         if (!user && phoneNumber) {
             const phone = phoneNumber.replace('+91', '');
             const existingUserByPhone = await getUserByPhone(phone);
             
             if (existingUserByPhone && existingUserByPhone.id) {
-                const batch = writeBatch(db);
+                // This is a complex operation: migrate data from old user doc to new user doc (with Firebase UID)
+                // For now, let's just log this case. A more robust solution would be a migration script or transaction.
+                console.warn(`Potential user migration needed. Firebase UID: ${uid}, existing user ID: ${existingUserByPhone.id} for phone: ${phone}`);
                 
-                const newUserRef = doc(db, 'users', uid);
-                const oldUserData = { ...existingUserByPhone };
-                delete (oldUserData as any).id;
-                
-                const cleanOldUserData: Record<string, any> = {};
-                for (const key in oldUserData) {
-                    if ((oldUserData as any)[key] !== undefined) {
-                        cleanOldUserData[key] = (oldUserData as any)[key];
-                    }
-                }
-                
-                batch.set(newUserRef, cleanOldUserData);
-                
-                const oldUserRef = doc(db, 'users', existingUserByPhone.id);
-                batch.delete(oldUserRef);
-                
-                await batch.commit();
-
-                user = { ...oldUserData, id: uid } as User;
-                
-                console.log(`Successfully migrated user from old ID ${existingUserByPhone.id} to new Firebase UID ${uid}.`);
+                // Let's attempt a simple update for now, which is to find the user by phone and use their data.
+                user = existingUserByPhone;
             }
         }
         

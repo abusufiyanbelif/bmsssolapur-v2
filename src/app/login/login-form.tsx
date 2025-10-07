@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
@@ -40,21 +41,16 @@ export function LoginForm() {
       icon: <CheckCircle />,
     });
     
+    // This is the key part: save the user ID and set a flag to show the role switcher.
     localStorage.setItem('userId', userId);
     localStorage.setItem('showRoleSwitcher', 'true');
     
-    // Dispatch a custom event to notify the AppShell
-    window.dispatchEvent(new CustomEvent('loginSuccess'));
-
-    const redirectPath = sessionStorage.getItem('redirectAfterLogin') || redirectTo;
-    sessionStorage.removeItem('redirectAfterLogin');
-
-    // Use a full page reload for robustness
-    window.location.href = redirectPath;
+    // Redirect to the central /home page, which will now handle routing.
+    window.location.href = redirectTo;
   };
   
   const initializeRecaptcha = useCallback(() => {
-    if (typeof window !== 'undefined' && auth && !window.recaptchaVerifier) {
+    if (typeof window !== 'undefined' && auth && !window.recaptchaVerifier?.['id']) {
       const recaptchaContainer = document.getElementById('recaptcha-container');
       if (recaptchaContainer) {
         try {
@@ -108,8 +104,11 @@ export function LoginForm() {
     const result = await handleSendOtp(phoneNumber);
     setOtpProvider(result.provider || null);
     
-    if (result.success && result.provider === 'firebase' && window.recaptchaVerifier) {
+    if (result.success && result.provider === 'firebase') {
       try {
+        if (!window.recaptchaVerifier) {
+          initializeRecaptcha();
+        }
         const fullPhoneNumber = `+91${phoneNumber}`;
         const confirmation = await signInWithPhoneNumber(auth, fullPhoneNumber, window.recaptchaVerifier);
         window.confirmationResult = confirmation;
@@ -118,9 +117,10 @@ export function LoginForm() {
       } catch (error) {
         console.error("Firebase signInWithPhoneNumber error:", error);
         toast({ variant: "destructive", title: "Firebase Error", description: "Could not send OTP. Please ensure this app's domain is authorized in the Firebase console for phone authentication." });
-        // Reset verifier on error
-        if(window.recaptchaVerifier) window.recaptchaVerifier.clear();
-        initializeRecaptcha();
+        if(window.recaptchaVerifier) {
+            window.recaptchaVerifier.clear();
+            initializeRecaptcha();
+        }
       }
     } else if (!result.success) {
       toast({ variant: "destructive", title: "Failed to Send OTP", description: result.error });
@@ -158,6 +158,7 @@ export function LoginForm() {
   
   return (
     <div className="flex items-center justify-center min-h-[calc(100vh-200px)]">
+      <div id="recaptcha-container"></div>
       <Card className="w-full max-w-sm">
         <CardHeader className="text-center">
           <CardTitle className="text-primary">Account Login</CardTitle>
@@ -173,7 +174,6 @@ export function LoginForm() {
             </TabsList>
             <TabsContent value="otp">
               <form className="space-y-6 pt-4" onSubmit={onVerifyOtpSubmit}>
-                <div id="recaptcha-container"></div>
                 <div className="space-y-2">
                   <Label htmlFor="phone">Phone Number</Label>
                   <div className="flex items-center">
