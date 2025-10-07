@@ -1,4 +1,4 @@
-
+// src/app/profile/settings/page.tsx
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -263,6 +263,8 @@ export default function ProfileSettingsPage() {
                                         <FormField control={form.control} name="panNumber" render={({ field }) => (<FormItem><FormLabel>PAN Number</FormLabel><FormControl><Input {...field} disabled={!isEditing} /></FormControl><FormMessage /></FormItem>)}/>
                                         <FormField control={form.control} name="aadhaarNumber" render={({ field }) => (<FormItem><FormLabel>Aadhaar Number</FormLabel><FormControl><Input {...field} disabled={!isEditing} /></FormControl><FormMessage /></FormItem>)}/>
                                     </div>
+                                    <Separator/>
+                                    <h3 className="text-lg font-semibold text-primary">Bank Details</h3>
                                     <FormField control={form.control} name="bankAccountName" render={({ field }) => (<FormItem><FormLabel>Full Name as per Bank Account</FormLabel><FormControl><Input {...field} disabled={!isEditing} /></FormControl><FormMessage /></FormItem>)}/>
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <FormField control={form.control} name="bankAccountNumber" render={({ field }) => (<FormItem><FormLabel>Bank Account Number</FormLabel><FormControl><Input {...field} disabled={!isEditing} /></FormControl><FormMessage /></FormItem>)}/>
@@ -289,5 +291,3 @@ export default function ProfileSettingsPage() {
         </Form>
     );
 }
-
-    

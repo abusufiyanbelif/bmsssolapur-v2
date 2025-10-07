@@ -44,16 +44,18 @@ export async function handleAddLead(
       beneficiaryId: formData.get("beneficiaryId") as string | undefined,
       linkBeneficiaryLater: formData.get("linkBeneficiaryLater") === 'on',
       manualBeneficiaryName: formData.get("manualBeneficiaryName") as string | undefined,
-      // New user fields are now prefixed
-      newBeneficiaryUserId: formData.get("newBeneficiary_userId") as string | undefined,
-      newBeneficiaryFirstName: formData.get("newBeneficiary_firstName") as string | undefined,
-      newBeneficiaryMiddleName: formData.get("newBeneficiary_middleName") as string | undefined,
-      newBeneficiaryLastName: formData.get("newBeneficiary_lastName") as string | undefined,
-      newBeneficiaryFatherName: formData.get("newBeneficiary_fatherName") as string | undefined,
-      newBeneficiaryPhone: formData.get("newBeneficiary_phone") as string | undefined,
-      newBeneficiaryEmail: formData.get("newBeneficiary_email") as string | undefined,
-      newBeneficiaryAadhaar: formData.get("newBeneficiary_aadhaarNumber") as string | undefined,
-      newBeneficiaryGender: formData.get("newBeneficiary_gender") as 'Male' | 'Female' | 'Other' | undefined,
+      // New user fields from AddUserForm are now prefixed with 'newBeneficiary_' in the form
+      newBeneficiary: {
+          userId: formData.get("newBeneficiary_userId") as string | undefined,
+          firstName: formData.get("newBeneficiary_firstName") as string | undefined,
+          middleName: formData.get("newBeneficiary_middleName") as string | undefined,
+          lastName: formData.get("newBeneficiary_lastName") as string | undefined,
+          fatherName: formData.get("newBeneficiary_fatherName") as string | undefined,
+          phone: formData.get("newBeneficiary_phone") as string | undefined,
+          email: formData.get("newBeneficiary_email") as string | undefined,
+          aadhaarNumber: formData.get("newBeneficiary_aadhaarNumber") as string | undefined,
+          gender: formData.get("newBeneficiary_gender") as 'Male' | 'Female' | 'Other' | undefined,
+      },
       campaignId: formData.get("campaignId") as string | undefined,
       campaignName: formData.get("campaignName") as string | undefined,
       referredByUserId: formData.get("referredByUserId") as string | undefined,
@@ -120,32 +122,32 @@ export async function handleAddLead(
         leadName = rawFormData.manualBeneficiaryName;
     } else {
         if (rawFormData.beneficiaryType === 'new') {
-            const { newBeneficiaryUserId, newBeneficiaryFirstName, newBeneficiaryMiddleName, newBeneficiaryLastName, newBeneficiaryPhone, newBeneficiaryEmail, newBeneficiaryAadhaar, newBeneficiaryFatherName, newBeneficiaryGender, addressLine1, city, state, pincode, country } = rawFormData;
+            const { newBeneficiary } = rawFormData;
             
-            if (!newBeneficiaryFirstName || !newBeneficiaryLastName || !newBeneficiaryPhone || !newBeneficiaryGender) {
+            if (!newBeneficiary.firstName || !newBeneficiary.lastName || !newBeneficiary.phone || !newBeneficiary.gender) {
                 return { success: false, error: "New beneficiary requires First Name, Last Name, Phone, and Gender." };
             }
             
             const newUserPayload: Partial<User> = {
-                userId: newBeneficiaryUserId,
-                name: `${newBeneficiaryFirstName} ${newBeneficiaryMiddleName || ''} ${newBeneficiaryLastName}`.replace(/\s+/g, ' ').trim(),
-                firstName: newBeneficiaryFirstName,
-                middleName: newBeneficiaryMiddleName || '',
-                lastName: newBeneficiaryLastName,
-                fatherName: newBeneficiaryFatherName || undefined,
-                phone: newBeneficiaryPhone,
-                email: newBeneficiaryEmail || undefined,
-                aadhaarNumber: newBeneficiaryAadhaar || undefined,
-                gender: newBeneficiaryGender,
+                userId: newBeneficiary.userId,
+                name: `${newBeneficiary.firstName} ${newBeneficiary.middleName || ''} ${newBeneficiary.lastName}`.replace(/\s+/g, ' ').trim(),
+                firstName: newBeneficiary.firstName,
+                middleName: newBeneficiary.middleName || '',
+                lastName: newBeneficiary.lastName,
+                fatherName: newBeneficiary.fatherName || undefined,
+                phone: newBeneficiary.phone,
+                email: newBeneficiary.email || undefined,
+                aadhaarNumber: newBeneficiary.aadhaarNumber || undefined,
+                gender: newBeneficiary.gender,
                 roles: ['Beneficiary'],
                 isActive: true,
                 source: 'Manual Entry',
                 address: {
-                    addressLine1: addressLine1,
-                    city: city,
-                    state: state,
-                    pincode: pincode,
-                    country: country
+                    addressLine1: rawFormData.addressLine1,
+                    city: rawFormData.city,
+                    state: rawFormData.state,
+                    pincode: rawFormData.pincode,
+                    country: rawFormData.country
                 }
             };
 

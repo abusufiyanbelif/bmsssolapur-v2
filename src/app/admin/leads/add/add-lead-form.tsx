@@ -175,10 +175,8 @@ function AddLeadFormContent({ users, campaigns, settings, prefilledRawText }: Ad
   const leadConfiguration = settings.leadConfiguration || {};
   const approvalProcessDisabled = leadConfiguration.approvalProcessDisabled || false;
   
-  const leadPurposes = useMemo(() => 
-    (leadConfiguration.purposes || []).filter(p => p.enabled)
-  , [leadConfiguration.purposes]);
-
+  const form = useFormContext<AddLeadFormValues>();
+  
   useEffect(() => {
     const storedUserId = localStorage.getItem('userId');
     if (storedUserId) {
@@ -189,52 +187,13 @@ function AddLeadFormContent({ users, campaigns, settings, prefilledRawText }: Ad
   
   const userHasOverridePermission = adminUser?.roles.includes('Super Admin');
   const isFormDisabled = approvalProcessDisabled && !userHasOverridePermission;
-
-  const beneficiaryUserConfig = settings.userConfiguration?.Beneficiary || {};
-  const isAadhaarMandatory = beneficiaryUserConfig.isAadhaarMandatory || false;
-  const formSchema = createFormSchema(isAadhaarMandatory);
-
-  const form = useForm<AddLeadFormValues>({
-    resolver: zodResolver(formSchema),
-    mode: 'onBlur',
-    defaultValues: {
-      beneficiaryType: 'existing',
-      beneficiaryId: '',
-      hasReferral: false,
-      referredByUserId: '',
-      referredByUserName: '',
-      campaignId: 'none',
-      campaignName: '',
-      headline: '',
-      story: '',
-      diseaseIdentified: '',
-      diseaseStage: '',
-      diseaseSeriousness: undefined,
-      purpose: '',
-      otherPurposeDetail: '',
-      category: '',
-      otherCategoryDetail: '',
-      degree: '',
-      year: '',
-      semester: '',
-      priority: 'Medium',
-      acceptableDonationTypes: [],
-      isHistoricalRecord: false,
-      helpRequested: 0,
-      fundingGoal: 0,
-      collectedAmount: 0,
-      caseReportedDate: undefined,
-      dueDate: undefined,
-      isLoan: false,
-      caseDetails: '',
-      otherDocuments: [],
-      linkBeneficiaryLater: false,
-      manualBeneficiaryName: '',
-    },
-  });
   
-  const { formState, setValue, watch, getValues, control, trigger, reset, handleSubmit: originalHandleSubmit } = form;
+  const { formState, setValue, watch, getValues, control, trigger, reset, handleSubmit } = form;
 
+  const leadPurposes = useMemo(() => 
+    (leadConfiguration.purposes || []).filter(p => p.enabled)
+  , [leadConfiguration.purposes]);
+  
   const clearFile = () => {
     setOtherDocs([]);
     setCaseRawText('');
@@ -246,7 +205,7 @@ function AddLeadFormContent({ users, campaigns, settings, prefilledRawText }: Ad
   };
 
   const handleCancel = () => {
-    form.reset();
+    reset();
     clearFile();
     setSelectedReferralDetails(null);
   };
@@ -303,11 +262,11 @@ function AddLeadFormContent({ users, campaigns, settings, prefilledRawText }: Ad
 
   useEffect(() => {
     if (selectedPurposeName === 'Loan') {
-        form.setValue('isLoan', true, { shouldDirty: true });
+        setValue('isLoan', true, { shouldDirty: true });
     } else {
-        form.setValue('isLoan', false, { shouldDirty: true });
+        setValue('isLoan', false, { shouldDirty: true });
     }
-  }, [selectedPurposeName, form]);
+  }, [selectedPurposeName, setValue]);
 
   const handleFullAutoFill = async () => {
     if (!caseRawText) {
@@ -581,12 +540,12 @@ function AddLeadFormContent({ users, campaigns, settings, prefilledRawText }: Ad
             </Alert>
         )}
 
-        <FormProvider {...form}>
+        <Form {...form}>
         <form onSubmit={handleSubmit((values) => onSubmit(values, false))} className="space-y-6 max-w-2xl">
             <fieldset disabled={isFormDisabled} className="space-y-6">
                  <h3 className="text-lg font-semibold border-b pb-2 text-primary">Beneficiary Details</h3>
                 <FormField
-                    control={form.control}
+                    control={control}
                     name="linkBeneficiaryLater"
                     render={({ field }) => (
                     <FormItem className="flex flex-row items-center space-x-3 space-y-0 rounded-md border p-4 bg-amber-500/10">
@@ -607,11 +566,11 @@ function AddLeadFormContent({ users, campaigns, settings, prefilledRawText }: Ad
                 />
                  
                 {linkBeneficiaryLater ? (
-                    <FormField control={form.control} name="manualBeneficiaryName" render={({ field }) => (<FormItem><FormLabel>Beneficiary Name</FormLabel><FormControl><Input placeholder="Enter the beneficiary's full name" {...field} /></FormControl><FormMessage /></FormItem>)}/>
+                    <FormField control={control} name="manualBeneficiaryName" render={({ field }) => (<FormItem><FormLabel>Beneficiary Name</FormLabel><FormControl><Input placeholder="Enter the beneficiary's full name" {...field} /></FormControl><FormMessage /></FormItem>)}/>
                 ) : (
                 <>
                 <FormField
-                    control={form.control}
+                    control={control}
                     name="beneficiaryType"
                     render={({ field }) => (
                     <FormItem className="space-y-3">
@@ -634,7 +593,7 @@ function AddLeadFormContent({ users, campaigns, settings, prefilledRawText }: Ad
                 
                 {beneficiaryType === 'existing' ? (
                      <FormField
-                        control={form.control}
+                        control={control}
                         name="beneficiaryId"
                         render={({ field }) => (
                         <FormItem className="flex flex-col">
@@ -667,7 +626,7 @@ function AddLeadFormContent({ users, campaigns, settings, prefilledRawText }: Ad
                                         value={`${user.name} ${user.phone} ${user.aadhaarNumber}`}
                                         key={user.id}
                                         onSelect={() => {
-                                            form.setValue("beneficiaryId", user.id!);
+                                            setValue("beneficiaryId", user.id!);
                                             setPopoverOpen(false);
                                         }}
                                         >
@@ -702,16 +661,16 @@ function AddLeadFormContent({ users, campaigns, settings, prefilledRawText }: Ad
                  <h3 className="text-lg font-semibold border-b pb-2 text-primary">Case Details</h3>
                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                      <FormField
-                        control={form.control}
+                        control={control}
                         name="purpose"
                         render={({ field }) => (
                             <FormItem>
                             <FormLabel>Lead Purpose</FormLabel>
                             <Select onValueChange={(value) => {
                                 field.onChange(value);
-                                form.setValue('category', '');
-                                form.setValue('otherCategoryDetail', '');
-                                form.setValue('otherPurposeDetail', '');
+                                setValue('category', '');
+                                setValue('otherCategoryDetail', '');
+                                setValue('otherPurposeDetail', '');
                             }} value={field.value}>
                                 <FormControl>
                                 <SelectTrigger>
@@ -731,7 +690,7 @@ function AddLeadFormContent({ users, campaigns, settings, prefilledRawText }: Ad
                     />
                     {selectedPurposeName && selectedPurposeName !== 'Other' && (
                         <FormField
-                            control={form.control}
+                            control={control}
                             name="category"
                             render={({ field }) => (
                                 <FormItem>
@@ -758,7 +717,7 @@ function AddLeadFormContent({ users, campaigns, settings, prefilledRawText }: Ad
                 {showEducationFields && (
                      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                         <FormField
-                            control={form.control}
+                            control={control}
                             name="degree"
                             render={({ field }) => (
                                 <FormItem>
@@ -777,7 +736,7 @@ function AddLeadFormContent({ users, campaigns, settings, prefilledRawText }: Ad
                         />
                         {showYearField && (
                              <FormField
-                                control={form.control}
+                                control={control}
                                 name="year"
                                 render={({ field }) => (
                                     <FormItem>
@@ -797,7 +756,7 @@ function AddLeadFormContent({ users, campaigns, settings, prefilledRawText }: Ad
                         )}
                          {showSemesterField && (
                              <FormField
-                                control={form.control}
+                                control={control}
                                 name="semester"
                                 render={({ field }) => (
                                     <FormItem>
@@ -830,7 +789,7 @@ function AddLeadFormContent({ users, campaigns, settings, prefilledRawText }: Ad
                              <div className="space-y-4 p-4 border rounded-lg bg-muted/50">
                                 <p className="text-sm text-muted-foreground">Upload case-specific documents like medical reports or fee receipts. The AI will scan them to help you fill out the case details, headline, and story.</p>
                                  <FormField
-                                    control={form.control}
+                                    control={control}
                                     name="otherDocuments"
                                     render={({ field }) => (
                                         <FormItem>
@@ -926,27 +885,27 @@ function AddLeadFormContent({ users, campaigns, settings, prefilledRawText }: Ad
                     </AccordionItem>
                 </Accordion>
 
-                <FormField control={form.control} name="headline" render={({ field }) => (<FormItem><FormLabel>Case Summary</FormLabel><div className="flex items-center gap-2"><FormControl><Input placeholder={dynamicText.caseSummaryPlaceholder} {...field} /></FormControl><Button type="button" variant="outline" size="icon" onClick={handleRefreshSummary} disabled={!caseRawText || isRefreshingSummary}>{isRefreshingSummary ? <Loader2 className="h-4 w-4 animate-spin"/> : <RefreshIcon className="h-4 w-4"/>}</Button></div><FormMessage /></FormItem>)} />
-                <FormField control={form.control} name="story" render={({ field }) => (<FormItem><FormLabel>Story</FormLabel><div className="flex items-center gap-2"><FormControl><Textarea placeholder="Detailed narrative for public display" {...field} rows={5} /></FormControl><Button type="button" variant="outline" size="icon" onClick={handleRefreshStory} disabled={!caseRawText || isRefreshingStory}>{isRefreshingStory ? <Loader2 className="h-4 w-4 animate-spin"/> : <RefreshIcon className="h-4 w-4"/>}</Button></div><FormMessage /></FormItem>)} />
+                <FormField control={control} name="headline" render={({ field }) => (<FormItem><FormLabel>Case Summary</FormLabel><div className="flex items-center gap-2"><FormControl><Input placeholder={dynamicText.caseSummaryPlaceholder} {...field} /></FormControl><Button type="button" variant="outline" size="icon" onClick={handleRefreshSummary} disabled={!caseRawText || isRefreshingSummary}>{isRefreshingSummary ? <Loader2 className="h-4 w-4 animate-spin"/> : <RefreshIcon className="h-4 w-4"/>}</Button></div><FormMessage /></FormItem>)} />
+                <FormField control={control} name="story" render={({ field }) => (<FormItem><FormLabel>Story</FormLabel><div className="flex items-center gap-2"><FormControl><Textarea placeholder="Detailed narrative for public display" {...field} rows={5} /></FormControl><Button type="button" variant="outline" size="icon" onClick={handleRefreshStory} disabled={!caseRawText || isRefreshingStory}>{isRefreshingStory ? <Loader2 className="h-4 w-4 animate-spin"/> : <RefreshIcon className="h-4 w-4"/>}</Button></div><FormMessage /></FormItem>)} />
                 
                 {selectedPurposeName === 'Medical' && (
                      <div className="p-4 border rounded-lg space-y-4">
                         <h4 className="font-semibold text-md text-primary">Medical Details</h4>
-                        <FormField control={form.control} name="diseaseIdentified" render={({field}) => (<FormItem><FormLabel>Disease Identified</FormLabel><FormControl><Input placeholder="e.g., Typhoid, Cataract" {...field} /></FormControl></FormItem>)} />
+                        <FormField control={control} name="diseaseIdentified" render={({field}) => (<FormItem><FormLabel>Disease Identified</FormLabel><FormControl><Input placeholder="e.g., Typhoid, Cataract" {...field} /></FormControl></FormItem>)} />
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <FormField control={form.control} name="diseaseStage" render={({field}) => (<FormItem><FormLabel>Disease Stage</FormLabel><FormControl><Input placeholder="e.g., Stage II, Chronic" {...field} /></FormControl></FormItem>)} />
-                            <FormField control={form.control} name="diseaseSeriousness" render={({field}) => (<FormItem><FormLabel>Seriousness</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Select seriousness" /></SelectTrigger></FormControl><SelectContent><SelectItem value="High">High</SelectItem><SelectItem value="Moderate">Moderate</SelectItem><SelectItem value="Low">Low</SelectItem></SelectContent></Select></FormItem>)} />
+                            <FormField control={control} name="diseaseStage" render={({field}) => (<FormItem><FormLabel>Disease Stage</FormLabel><FormControl><Input placeholder="e.g., Stage II, Chronic" {...field} /></FormControl></FormItem>)} />
+                            <FormField control={control} name="diseaseSeriousness" render={({field}) => (<FormItem><FormLabel>Seriousness</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Select seriousness" /></SelectTrigger></FormControl><SelectContent><SelectItem value="High">High</SelectItem><SelectItem value="Moderate">Moderate</SelectItem><SelectItem value="Low">Low</SelectItem></SelectContent></Select></FormItem>)} />
                         </div>
                     </div>
                 )}
                 
-                <FormField control={form.control} name="caseDetails" render={({ field }) => (<FormItem><FormLabel>Internal Case Notes</FormLabel><FormControl><Textarea placeholder="Admin-only notes and summary" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                <FormField control={control} name="caseDetails" render={({ field }) => (<FormItem><FormLabel>Internal Case Notes</FormLabel><FormControl><Textarea placeholder="Admin-only notes and summary" {...field} /></FormControl><FormMessage /></FormItem>)} />
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <FormField control={form.control} name="isHistoricalRecord" render={({ field }) => (<FormItem className="flex flex-row items-center justify-between rounded-lg border p-4 bg-amber-500/10"><div className="space-y-0.5"><FormLabel className="text-base">Create record for a past/closed lead</FormLabel><FormDescription>This will allow you to select past dates.</FormDescription></div><FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>)} />
-                    <FormField control={form.control} name="caseReportedDate" render={({ field }) => (<FormItem><FormLabel>Case Reported Date</FormLabel><Popover><PopoverTrigger asChild><FormControl><Button variant="outline" className={cn("w-full text-left font-normal",!field.value&&"text-muted-foreground")}><CalendarIcon className="mr-2 h-4 w-4"/>{field.value?format(field.value,"PPP"):"Pick a date"}</Button></FormControl></PopoverTrigger><PopoverContent className="w-auto p-0"><Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus disabled={(d) => d > new Date() && !isHistoricalRecord} /></PopoverContent></Popover><FormMessage /></FormItem>)} />
+                    <FormField control={control} name="isHistoricalRecord" render={({ field }) => (<FormItem className="flex flex-row items-center justify-between rounded-lg border p-4 bg-amber-500/10"><div className="space-y-0.5"><FormLabel className="text-base">Create record for a past/closed lead</FormLabel><FormDescription>This will allow you to select past dates.</FormDescription></div><FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>)} />
+                    <FormField control={control} name="caseReportedDate" render={({ field }) => (<FormItem><FormLabel>Case Reported Date</FormLabel><Popover><PopoverTrigger asChild><FormControl><Button variant="outline" className={cn("w-full text-left font-normal",!field.value&&"text-muted-foreground")}><CalendarIcon className="mr-2 h-4 w-4"/>{field.value?format(field.value,"PPP"):"Pick a date"}</Button></FormControl></PopoverTrigger><PopoverContent className="w-auto p-0"><Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus disabled={(d) => d > new Date() && !isHistoricalRecord} /></PopoverContent></Popover><FormMessage /></FormItem>)} />
                 </div>
-                 <FormField control={form.control} name="dueDate" render={({ field }) => (<FormItem><FormLabel>Due Date (Optional)</FormLabel><Popover><PopoverTrigger asChild><FormControl><Button variant="outline" className={cn("w-full text-left font-normal",!field.value&&"text-muted-foreground")}><CalendarIcon className="mr-2 h-4 w-4"/>{field.value?format(field.value,"PPP"):"Pick a date"}</Button></FormControl></PopoverTrigger><PopoverContent className="w-auto p-0"><Calendar mode="single" selected={field.value} onSelect={field.onChange} disabled={(d) => d < new Date() && !isHistoricalRecord} initialFocus /></PopoverContent></Popover><FormMessage /></FormItem>)} />
+                 <FormField control={control} name="dueDate" render={({ field }) => (<FormItem><FormLabel>Due Date (Optional)</FormLabel><Popover><PopoverTrigger asChild><FormControl><Button variant="outline" className={cn("w-full text-left font-normal",!field.value&&"text-muted-foreground")}><CalendarIcon className="mr-2 h-4 w-4"/>{field.value?format(field.value,"PPP"):"Pick a date"}</Button></FormControl></PopoverTrigger><PopoverContent className="w-auto p-0"><Calendar mode="single" selected={field.value} onSelect={field.onChange} disabled={(d) => d < new Date() && !isHistoricalRecord} initialFocus /></PopoverContent></Popover><FormMessage /></FormItem>)} />
                 
                 <h3 className="text-lg font-semibold border-b pb-2 text-primary">Financials</h3>
                  <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -958,7 +917,7 @@ function AddLeadFormContent({ users, campaigns, settings, prefilledRawText }: Ad
                 </div>
                  
                  <FormField
-                    control={form.control}
+                    control={control}
                     name="isLoan"
                     render={({ field }) => (
                         <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
@@ -977,7 +936,7 @@ function AddLeadFormContent({ users, campaigns, settings, prefilledRawText }: Ad
                     )}
                 />
                  <FormField
-                    control={form.control}
+                    control={control}
                     name="acceptableDonationTypes"
                     render={() => (
                         <FormItem className="space-y-3">
@@ -993,7 +952,7 @@ function AddLeadFormContent({ users, campaigns, settings, prefilledRawText }: Ad
                             {donationTypes.map((type) => (
                             <FormField
                                 key={type}
-                                control={form.control}
+                                control={control}
                                 name="acceptableDonationTypes"
                                 render={({ field }) => {
                                 return (
@@ -1041,7 +1000,7 @@ function AddLeadFormContent({ users, campaigns, settings, prefilledRawText }: Ad
                 </div>
             </fieldset>
         </form>
-        </FormProvider>
+        </Form>
         <AlertDialog open={!!duplicateWarning} onOpenChange={() => setDuplicateWarning(null)}>
             <AlertDialogContent>
                 <AlertDialogHeader>
@@ -1116,12 +1075,24 @@ function AddLeadFormContent({ users, campaigns, settings, prefilledRawText }: Ad
 }
 
 export function AddLeadForm(props: AddLeadFormProps) {
-    const { settings, prefilledData } = props;
+    const { settings } = props;
     const formSchema = useMemo(() => createFormSchema(settings), [settings]);
     const form = useForm<AddLeadFormValues>({
         resolver: zodResolver(formSchema),
         reValidateMode: "onBlur",
         mode: "onBlur",
+        defaultValues: {
+            // Set initial defaults here
+            beneficiaryType: 'existing',
+            hasReferral: false,
+            campaignId: 'none',
+            priority: 'Medium',
+            acceptableDonationTypes: [],
+            isHistoricalRecord: false,
+            isLoan: false,
+            upiPhoneNumbers: [{value: ''}],
+            upiIds: [{value: ''}],
+        }
     });
 
     return (

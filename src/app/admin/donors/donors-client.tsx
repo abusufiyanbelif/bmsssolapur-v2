@@ -559,3 +559,11 @@ function DonorsPageContent({ initialDonors, error: initialError }: { initialDono
     </div>
   )
 }
+
+export function DonorsPageClient({ initialDonors, error }: { initialDonors: User[], error?: string }) {
+    return (
+        <Suspense fallback={<div className="flex items-center justify-center p-8"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>}>
+            <DonorsPageContent initialDonors={initialDonors} error={error} />
+        </Suspense>
+    )
+}

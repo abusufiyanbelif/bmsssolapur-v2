@@ -1,4 +1,4 @@
-
+// src/app/admin/organization/letterhead/letterhead-document.tsx
 
 "use client";
 
@@ -256,7 +256,7 @@ Thank you for your time and consideration. We look forward to establishing a ban
             <Card className="lg:col-span-1">
                  <CardHeader>
                     <CardTitle className="text-primary flex items-center gap-2">
-                        <Settings />
+                        <Settings className="h-5 w-5" />
                         Customize Letter
                     </CardTitle>
                     <CardDescription className="text-muted-foreground">

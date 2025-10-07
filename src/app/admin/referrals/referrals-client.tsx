@@ -1,4 +1,4 @@
-
+// src/app/admin/referrals/referrals-client.tsx
 "use client";
 
 import { useState, useEffect, useMemo, Suspense } from "react";

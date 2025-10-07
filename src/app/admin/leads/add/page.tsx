@@ -1,5 +1,4 @@
-
-
+// src/app/admin/leads/add/page.tsx
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { AddLeadForm } from "./add-lead-form";
