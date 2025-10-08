@@ -3,13 +3,13 @@
  */
 
 import { createUser, User, UserRole, getUserByEmail, getUserByPhone, getAllUsers, updateUser, getUser, getUserByUserId, generateNextUserKey } from './user-service';
-import { createOrganization, Organization, getCurrentOrganization, OrganizationFooter } from './organization-service';
-import { seedInitialQuotes as seedQuotesService } from './quotes-service';
+import { createOrganization, Organization, getCurrentOrganization, OrganizationFooter, updateOrganizationFooter } from './organization-service';
+import { seedInitialQuotes as seedQuotesService, eraseAllQuotes } from './quotes-service';
 import { db } from './firebase';
 import { collection, getDocs, query, where, Timestamp, setDoc, doc, writeBatch, orderBy, getCountFromServer, limit, updateDoc, serverTimestamp, getDoc, deleteDoc, arrayUnion } from 'firebase/firestore';
 import * as admin from 'firebase-admin';
 import type { Lead, Verifier, LeadDonationAllocation, Donation, Campaign, FundTransfer, LeadAction, AppSettings } from './types';
-import { createLead, getLead } from './lead-service';
+import { createLead, getLead, updateLead } from './lead-service';
 import { createCampaign, getCampaign } from './campaign-service';
 import { createDonation } from './donation-service';
 import { updateAppSettings, getAppSettings, defaultSettings } from './app-settings-service';
@@ -287,7 +287,9 @@ const seedUsers = async (users: Omit<User, 'id' | 'createdAt' | 'userKey'>[]): P
 const seedOrganization = async (): Promise<string> => {
     const existingOrg = await getCurrentOrganization();
     if (existingOrg) {
-        await updateDoc(doc(db, 'organizations', existingOrg.id), { ...organizationToSeed, updatedAt: serverTimestamp() });
+        // Use the server-side `updateDoc` which requires a plain object
+        const adminDb = getAdminDb();
+        await adminDb.collection('organizations').doc(existingOrg.id).update({ ...organizationToSeed, updatedAt: Timestamp.now() });
         return "Organization profile updated with seed data.";
     }
     await createOrganization(organizationToSeed);
@@ -358,9 +360,11 @@ const seedGeneralLeads = async (adminUser: User): Promise<string[]> => {
                 transactionId: `SEED_TXN_${createdLead.id}`
             };
             
-            await updateDoc(doc(db, 'leads', createdLead.id!), {
-                donations: arrayUnion({ donationId: newDonation.id!, amount: leadInfo.amount, allocatedAt: new Date(), allocatedByUserId: adminUser.id!, allocatedByUserName: adminUser.name }),
-                fundTransfers: arrayUnion(newTransfer)
+            // Use server-side updateDoc for arrayUnion
+            const adminDb = getAdminDb();
+            await adminDb.collection('leads').doc(createdLead.id!).update({
+                donations: FieldValue.arrayUnion({ donationId: newDonation.id!, amount: leadInfo.amount, allocatedAt: Timestamp.now(), allocatedByUserId: adminUser.id!, allocatedByUserName: adminUser.name }),
+                fundTransfers: FieldValue.arrayUnion(newTransfer)
             });
         }
         
@@ -373,6 +377,7 @@ const seedCampaignAndData = async (campaignData: Omit<Campaign, 'id' | 'createdA
     let results: string[] = [];
     const adminUser = await getUserByUserId("abusufiyan.belif");
     if (!adminUser) throw new Error("Required admin user 'abusufiyan.belif' for seeding not found.");
+    const adminDb = getAdminDb();
 
     await seedUsers(userData);
 
@@ -386,7 +391,7 @@ const seedCampaignAndData = async (campaignData: Omit<Campaign, 'id' | 'createdA
     };
     
     if (campaign) {
-        await updateDoc(doc(db, 'campaigns', campaignId), { ...dataToWrite, updatedAt: serverTimestamp() });
+        await adminDb.collection('campaigns').doc(campaignId).update({ ...dataToWrite, updatedAt: Timestamp.now() });
         results.push(`Campaign "${campaignData.name}" updated.`);
     } else {
         campaign = await createCampaign(dataToWrite);
@@ -443,9 +448,9 @@ const seedCampaignAndData = async (campaignData: Omit<Campaign, 'id' | 'createdA
                 notes: 'Dummy transfer for seeded closed lead.', transactionId: `SEED_TXN_${createdLead.id}`
             };
             
-            await updateDoc(doc(db, 'leads', createdLead.id!), {
-                donations: arrayUnion({ donationId: newDonation.id!, amount: leadInfo.amount, allocatedAt: new Date(), allocatedByUserId: adminUser.id!, allocatedByUserName: adminUser.name }),
-                fundTransfers: arrayUnion(newTransfer)
+            await adminDb.collection('leads').doc(createdLead.id!).update({
+                donations: FieldValue.arrayUnion({ donationId: newDonation.id!, amount: leadInfo.amount, allocatedAt: Timestamp.now(), allocatedByUserId: adminUser.id!, allocatedByUserName: adminUser.name }),
+                fundTransfers: FieldValue.arrayUnion(newTransfer)
             });
         }
         
@@ -458,6 +463,7 @@ const seedCampaignAndData = async (campaignData: Omit<Campaign, 'id' | 'createdA
 const seedRamadan2025ReliefData = async (adminUser: User): Promise<string[]> => {
     let results: string[] = [];
     await seedUsers(reliefBeneficiaries);
+    const adminDb = getAdminDb();
     
     const donorsToCreate: Omit<User, 'id'|'createdAt'|'userKey'>[] = Array.from({length: 20}, (_, i) => ({
         name: `Zakat Donor ${i+1}`, userId: `zakat.donor.${i+1}`, firstName: 'Zakat', lastName: `Donor ${i+1}`,
@@ -516,9 +522,9 @@ const seedRamadan2025ReliefData = async (adminUser: User): Promise<string[]> => 
                     notes: 'Dummy transfer for seeded relief lead.', transactionId: `SEED_TXN_${createdLead.id}_${donor.id}`
                 };
             
-                await updateDoc(doc(db, 'leads', createdLead.id!), {
-                    donations: arrayUnion({ donationId: newDonation.id!, amount: amountToAllocate, allocatedAt: new Date(), allocatedByUserId: adminUser.id!, allocatedByUserName: adminUser.name }),
-                    fundTransfers: arrayUnion(newTransfer)
+                await adminDb.collection('leads').doc(createdLead.id!).update({
+                    donations: FieldValue.arrayUnion({ donationId: newDonation.id!, amount: amountToAllocate, allocatedAt: Timestamp.now(), allocatedByUserId: adminUser.id!, allocatedByUserName: adminUser.name }),
+                    fundTransfers: FieldValue.arrayUnion(newTransfer)
                 });
                 allocated += amountToAllocate;
             }
@@ -535,20 +541,21 @@ function getRandomDate(start: Date, end: Date): Date {
 
 // Helper to delete all documents in a collection
 async function deleteCollection(collectionPath: string): Promise<number> {
-    const collectionRef = collection(db, collectionPath);
-    const q = query(collectionRef, limit(100)); // Limit to avoid memory issues
+    const adminDb = getAdminDb();
+    const collectionRef = adminDb.collection(collectionPath);
+    const q = collectionRef.limit(100);
     
     let deletedCount = 0;
-    let snapshot = await getDocs(q);
+    let snapshot = await q.get();
 
     while (snapshot.size > 0) {
-        const batch = writeBatch(db);
+        const batch = adminDb.batch();
         snapshot.docs.forEach(doc => {
             batch.delete(doc.ref);
         });
         await batch.commit();
         deletedCount += snapshot.size;
-        snapshot = await getDocs(q);
+        snapshot = await q.get();
     }
     return deletedCount;
 }
@@ -583,7 +590,7 @@ export const seedOrganizationProfile = async (): Promise<SeedResult> => {
 
 export const seedAppSettings = async (): Promise<SeedResult> => {
     // This will create or overwrite the settings with the default structure.
-    await updateAppSettings(defaultSettings);
+    await updateAppSettings(defaultSettings as any);
     return {
         message: "Application Settings Seeded",
         details: ["Default settings for login, features, lead configuration, and dashboards have been applied."]
@@ -676,19 +683,20 @@ export const seedSampleData = async (): Promise<SeedResult> => {
 
 export const eraseInitialUsersAndQuotes = async (): Promise<SeedResult> => {
     const details: string[] = [];
-    const batch = writeBatch(db);
+    const adminDb = getAdminDb();
+    const batch = adminDb.batch();
 
     // Delete users with specific userKeys from the initial seed
     const initialUserIds = initialUsersToSeed.map(u => u.userId);
-    const usersToDeleteQuery = query(collection(db, USERS_COLLECTION), where("userId", "in", initialUserIds));
-    const userSnapshot = await getDocs(usersToDeleteQuery);
+    const usersToDeleteQuery = adminDb.collection(USERS_COLLECTION).where("userId", "in", initialUserIds);
+    const userSnapshot = await usersToDeleteQuery.get();
     userSnapshot.forEach(doc => batch.delete(doc.ref));
     if (userSnapshot.size > 0) {
         details.push(`Scheduled deletion for ${userSnapshot.size} initial user(s).`);
     }
 
     // Delete quotes
-    const quotesDeleted = await deleteCollection('inspirationalQuotes');
+    const quotesDeleted = await eraseAllQuotes();
     details.push(`Deleted ${quotesDeleted} quotes.`);
 
     await batch.commit();
@@ -700,15 +708,16 @@ export const eraseInitialUsersAndQuotes = async (): Promise<SeedResult> => {
 };
 
 export const eraseCoreTeam = async (): Promise<SeedResult> => {
+    const adminDb = getAdminDb();
     const phonesToDelete = coreTeamUsersToSeed.map(u => u.phone);
-    const usersToDeleteQuery = query(collection(db, USERS_COLLECTION), where("phone", "in", phonesToDelete));
-    const snapshot = await getDocs(usersToDeleteQuery);
+    const usersToDeleteQuery = adminDb.collection(USERS_COLLECTION).where("phone", "in", phonesToDelete);
+    const snapshot = await usersToDeleteQuery.get();
 
     if(snapshot.empty) {
         return { message: "No core team members found to erase.", details: [] };
     }
 
-    const batch = writeBatch(db);
+    const batch = adminDb.batch();
     snapshot.docs.forEach(doc => batch.delete(doc.ref));
     await batch.commit();
 
@@ -719,13 +728,14 @@ export const eraseCoreTeam = async (): Promise<SeedResult> => {
 };
 
 export const eraseOrganizationProfile = async (): Promise<SeedResult> => {
+    const adminDb = getAdminDb();
     const org = await getCurrentOrganization();
     if (!org) {
         return { message: "No organization profile found to erase.", details: [] };
     }
-    await deleteDoc(doc(db, 'organizations', org.id));
+    await adminDb.collection('organizations').doc(org.id).delete();
     // Also delete public record
-    await deleteDoc(doc(db, 'publicData', 'organization'));
+    await adminDb.collection('publicData').doc('organization').delete();
     return {
         message: 'Organization Profile Erased',
         details: [`Deleted profile for "${org.name}".`]
@@ -758,6 +768,7 @@ export const erasePaymentGateways = async (): Promise<SeedResult> => {
 
 export const eraseSampleData = async (): Promise<SeedResult> => {
     const details: string[] = [];
+    const adminDb = getAdminDb();
 
     // This function will delete ALL documents from these collections,
     // which is the desired behavior to clear out duplicates.
@@ -771,10 +782,10 @@ export const eraseSampleData = async (): Promise<SeedResult> => {
     details.push(`Deleted ${deletedCampaigns} campaigns.`);
     
     // Find and delete all users with source: 'Seeded', except for the main admin accounts
-    const seededUsersQuery = query(collection(db, USERS_COLLECTION), where("source", "==", "Seeded"));
-    const usersSnapshot = await getDocs(seededUsersQuery);
+    const seededUsersQuery = adminDb.collection(USERS_COLLECTION).where("source", "==", "Seeded");
+    const usersSnapshot = await seededUsersQuery.get();
     
-    const batch = writeBatch(db);
+    const batch = adminDb.batch();
     let deletedUserCount = 0;
     usersSnapshot.docs.forEach(doc => {
         const userData = doc.data();
@@ -796,6 +807,48 @@ export const eraseSampleData = async (): Promise<SeedResult> => {
     };
 };
 
+export const eraseAppSettings = async (): Promise<SeedResult> => {
+    const adminDb = getAdminDb();
+    const settingsDocRef = adminDb.collection('settings').doc('main');
+    await settingsDocRef.delete();
+    return {
+        message: "Application Settings Erased",
+        details: ["The main settings document has been deleted. Default settings will be applied on next load."]
+    };
+};
+
+export const eraseFirebaseAuthUsers = async (): Promise<SeedResult> => {
+    const allUsers = await getAllUsers();
+    let deletedCount = 0;
+    let errorCount = 0;
+    const details: string[] = [];
+
+    const authPromises = allUsers.map(async (user) => {
+        if (user.id) {
+            try {
+                await admin.auth().deleteUser(user.id);
+                deletedCount++;
+            } catch (error: any) {
+                if (error.code !== 'auth/user-not-found') {
+                    errorCount++;
+                    details.push(`Failed to delete ${user.name} (Auth UID: ${user.id}): ${error.code}`);
+                }
+            }
+        }
+    });
+
+    await Promise.all(authPromises);
+    
+    return {
+        message: "Firebase Auth Users Erased",
+        details: [
+            `Successfully deleted ${deletedCount} users from Firebase Authentication.`,
+            `Encountered ${errorCount} errors.`,
+            ...details.slice(0, 10)
+        ]
+    };
+};
+
 export const syncUsersToFirebaseAuth = async (): Promise<SeedResult> => {
     const allUsers = await getAllUsers();
     let createdCount = 0;
@@ -809,7 +862,6 @@ export const syncUsersToFirebaseAuth = async (): Promise<SeedResult> => {
                 // Check if user already exists in Auth by phone number
                 await admin.auth().getUserByPhoneNumber(`+91${user.phone}`);
                 skippedCount++;
-                details.push(`User ${user.name} (${user.phone}): Skipped (already exists in Auth)`);
             } catch (error: any) {
                 if (error.code === 'auth/user-not-found') {
                     // User does not exist, so we can create them

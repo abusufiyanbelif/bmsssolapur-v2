@@ -33,7 +33,7 @@ export default function SeedPage() {
         initial: 'idle',
         coreTeam: 'idle',
         organization: 'idle',
-        appSettings: 'idle', // No erase for app settings
+        appSettings: 'idle',
         paymentGateways: 'idle',
         sampleData: 'idle',
         syncFirebaseAuth: 'idle',
@@ -80,7 +80,7 @@ export default function SeedPage() {
             if (result.success && result.data) {
                 setResults(prev => ({ ...prev, [task]: result.data }));
                 setEraseStatuses(prev => ({ ...prev, [task]: 'success' }));
-                if (task === 'organization') router.refresh(); // Refresh on org change
+                if (task === 'organization' || task === 'appSettings') router.refresh();
             } else {
                 setResults(prev => ({ ...prev, [task]: { message: 'Erase Failed', details: [result.error || 'An unknown error occurred.'] } }));
                 setEraseStatuses(prev => ({ ...prev, [task]: 'error' }));
@@ -174,6 +174,10 @@ export default function SeedPage() {
                                 <p className="text-sm text-muted-foreground mt-1">Seeds default configurations for lead purposes, user fields, and dashboard visibility. **Run this before creating leads.**</p>
                              </div>
                              <div className="flex items-center gap-2">
+                                <Button variant="destructive" onClick={() => handleErase('appSettings')} disabled={eraseStatuses.appSettings === 'loading'}>
+                                    {eraseStatuses.appSettings === 'loading' ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Trash2 className="mr-2 h-4 w-4"/>}
+                                    Erase & Reset
+                                </Button>
                                 <Button onClick={() => handleSeed('appSettings')} disabled={statuses.appSettings === 'loading'}>
                                     {statuses.appSettings === 'loading' && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}
                                     Seed App Settings
@@ -233,6 +237,10 @@ export default function SeedPage() {
                                 <p className="text-sm text-muted-foreground mt-1">Creates records in Firebase Authentication for users in your database, enabling them for OTP login. This can be run at any time.</p>
                              </div>
                              <div className="flex items-center gap-2">
+                                 <Button variant="destructive" onClick={() => handleErase('syncFirebaseAuth')} disabled={eraseStatuses.syncFirebaseAuth === 'loading'}>
+                                    {eraseStatuses.syncFirebaseAuth === 'loading' ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Trash2 className="mr-2 h-4 w-4"/>}
+                                    Erase All Auth Users
+                                </Button>
                                 <Button onClick={() => handleSeed('syncFirebaseAuth')} disabled={statuses.syncFirebaseAuth === 'loading'}>
                                     {statuses.syncFirebaseAuth === 'loading' && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}
                                     Sync Users

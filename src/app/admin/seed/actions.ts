@@ -13,7 +13,9 @@ import {
     erasePaymentGateways,
     eraseSampleData,
     seedAppSettings,
+    eraseAppSettings,
     syncUsersToFirebaseAuth,
+    eraseFirebaseAuthUsers,
     type SeedResult
 } from "@/services/seed-service";
 
@@ -75,7 +77,12 @@ export async function handleEraseAction(task: SeedTask): Promise<{success: boole
             case 'sampleData':
                 result = await eraseSampleData();
                 break;
-            // No erase action for app settings or sync
+            case 'appSettings':
+                result = await eraseAppSettings();
+                break;
+            case 'syncFirebaseAuth':
+                result = await eraseFirebaseAuthUsers();
+                break;
             default:
                 throw new Error("Invalid erase task provided.");
         }
