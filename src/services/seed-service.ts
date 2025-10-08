@@ -1,10 +1,8 @@
-
-
 /**
  * @fileOverview A service to seed the database with initial data.
  */
 
-import { createUser, User, UserRole, getUserByEmail, getUserByPhone, getAllUsers, updateUser, getUser, getUserByUserId } from './user-service';
+import { createUser, User, UserRole, getUserByEmail, getUserByPhone, getAllUsers, updateUser, getUser, getUserByUserId, generateNextUserKey } from './user-service';
 import { createOrganization, Organization, getCurrentOrganization, OrganizationFooter } from './organization-service';
 import { seedInitialQuotes as seedQuotesService } from './quotes-service';
 import { db } from './firebase';
@@ -17,16 +15,15 @@ import { updateAppSettings } from './app-settings-service';
 
 const USERS_COLLECTION = 'users';
 
-const initialUsersToSeed: Omit<User, 'id' | 'createdAt'>[] = [
+const initialUsersToSeed: Omit<User, 'id' | 'createdAt' | 'userKey'>[] = [
     // Super Admin
-    { userKey: "USR01", name: "admin", userId: "admin", firstName: "Admin", lastName: "User", fatherName: "System", email: "admin@example.com", phone: "9999999999", password: "admin", roles: ["Super Admin"], privileges: ["all"], isActive: true, gender: 'Male', source: 'Seeded' },
+    { name: "admin", userId: "admin", firstName: "Admin", lastName: "User", fatherName: "System", email: "admin@example.com", phone: "9999999999", password: "admin", roles: ["Super Admin"], privileges: ["all"], isActive: true, gender: 'Male', source: 'Seeded' },
     // Anonymous Donor for reassignment
-    { userKey: "SYSTEM01", name: "Anonymous Donor", userId: "anonymous_donor", firstName: "Anonymous", lastName: "Donor", email: "anonymous@system.local", phone: "0000000000", password: "N/A", roles: [], isActive: false, gender: 'Other', source: 'Seeded' },
+    { name: "Anonymous Donor", userId: "anonymous_donor", firstName: "Anonymous", lastName: "Donor", email: "anonymous@system.local", phone: "0000000000", password: "N/A", roles: [], isActive: false, gender: 'Other', source: 'Seeded' },
 ];
 
-const coreTeamUsersToSeed: Omit<User, 'id' | 'createdAt'>[] = [
+const coreTeamUsersToSeed: Omit<User, 'id' | 'createdAt' | 'userKey'>[] = [
      { 
-        userKey: "USR02", 
         name: "Abusufiyan Belif", 
         userId: "abusufiyan.belif", 
         firstName: "Abusufiyan", 
@@ -52,14 +49,14 @@ const coreTeamUsersToSeed: Omit<User, 'id' | 'createdAt'>[] = [
     },
     
     // Admins (Founders and Members)
-    { userKey: "USR03", name: "Moosa Shaikh", userId: "moosa.shaikh", firstName: "Moosa", middleName: "", lastName: "Shaikh", fatherName: "", email: "moosa.shaikh@example.com", phone: "8421708907", password: "admin", roles: ["Admin", "Donor"], privileges: ["canManageLeads"], groups: ["Lead Approver"], isActive: true, gender: 'Male', address: { city: 'Solapur', state: 'Maharashtra', country: 'India' }, upiIds: ['8421708907@ybl'], source: 'Seeded' },
-    { userKey: "USR04", name: "Maaz Shaikh", userId: "maaz.shaikh", firstName: "Maaz", middleName: "", lastName: "Shaikh", fatherName: "", email: "maaz.shaikh@example.com", phone: "9372145889", password: "admin", roles: ["Admin", "Finance Admin", "Donor"], privileges: ["canManageDonations", "canViewFinancials"], groups: ["Finance", "Lead Approver"], isActive: true, gender: 'Male', address: { city: 'Solapur', state: 'Maharashtra', country: 'India' }, source: 'Seeded' },
-    { userKey: "USR05", name: "AbuRehan Bedrekar", userId: "aburehan.bedrekar", firstName: "AbuRehan", middleName: "", lastName: "Bedrekar", fatherName: "", email: "aburehan.bedrekar@example.com", phone: "7276224160", password: "admin", roles: ["Admin", "Donor"], privileges: ["canManageLeads"], groups: ["Co-Founder", "Lead Approver"], isActive: true, gender: 'Male', address: { city: 'Solapur', state: 'Maharashtra', country: 'India' }, source: 'Seeded' },
-    { userKey: "USR06", name: "NayyarAhmed Karajgi", userId: "nayyarahmed.karajgi", firstName: "NayyarAhmed", middleName: "", lastName: "Karajgi", fatherName: "", email: "nayyar.karajgi@example.com", phone: "9028976036", password: "admin", roles: ["Admin"], privileges: ["canManageLeads"], groups: ["Member of Organization"], isActive: true, gender: 'Male', address: { city: 'Solapur', state: 'Maharashtra', country: 'India' }, source: 'Seeded' },
-    { userKey: "USR07", name: "Arif Baig", userId: "arif.baig", firstName: "Arif", middleName: "", lastName: "Baig", fatherName: "", email: "arif.baig@example.com", phone: "9225747045", password: "admin", roles: ["Admin"], privileges: ["canManageLeads"], groups: ["Member of Organization"], isActive: true, gender: 'Male', address: { city: 'Solapur', state: 'Maharashtra', country: 'India' }, source: 'Seeded' },
-    { userKey: "USR08", name: "Mazhar Shaikh", userId: "mazhar.shaikh", firstName: "Mazhar", middleName: "", lastName: "Shaikh", fatherName: "", email: "mazhar.shaikh@example.com", phone: "8087669914", password: "admin", roles: ["Admin"], privileges: ["canManageLeads"], groups: ["Member of Organization"], isActive: true, gender: 'Male', address: { city: 'Solapur', state: 'Maharashtra', country: 'India' }, source: 'Seeded' },
-    { userKey: "USR09", name: "Mujahid Chabukswar", userId: "mujahid.chabukswar", firstName: "Mujahid", middleName: "", lastName: "Chabukswar", fatherName: "", email: "mujahid.chabukswar@example.com", phone: "8087420544", password: "admin", roles: ["Admin"], privileges: ["canManageLeads"], groups: ["Member of Organization"], isActive: true, gender: 'Male', address: { city: 'Solapur', state: 'Maharashtra', country: 'India' }, source: 'Seeded' },
-    { userKey: "USR10", name: "Muddasir Shaikh", userId: "muddasir.shaikh", firstName: "Muddasir", middleName: "", lastName: "Shaikh", fatherName: "", email: "muddasir@example.com", phone: "7385557820", password: "admin", roles: ["Admin"], privileges: ["canManageLeads"], groups: ["Member of Organization"], isActive: true, gender: 'Male', address: { city: 'Solapur', state: 'Maharashtra', country: 'India' }, source: 'Seeded' },
+    { name: "Moosa Shaikh", userId: "moosa.shaikh", firstName: "Moosa", middleName: "", lastName: "Shaikh", fatherName: "", email: "moosa.shaikh@example.com", phone: "8421708907", password: "admin", roles: ["Admin", "Donor"], privileges: ["canManageLeads"], groups: ["Lead Approver"], isActive: true, gender: 'Male', address: { city: 'Solapur', state: 'Maharashtra', country: 'India' }, upiIds: ['8421708907@ybl'], source: 'Seeded' },
+    { name: "Maaz Shaikh", userId: "maaz.shaikh", firstName: "Maaz", middleName: "", lastName: "Shaikh", fatherName: "", email: "maaz.shaikh@example.com", phone: "9372145889", password: "admin", roles: ["Admin", "Finance Admin", "Donor"], privileges: ["canManageDonations", "canViewFinancials"], groups: ["Finance", "Lead Approver"], isActive: true, gender: 'Male', address: { city: 'Solapur', state: 'Maharashtra', country: 'India' }, source: 'Seeded' },
+    { name: "AbuRehan Bedrekar", userId: "aburehan.bedrekar", firstName: "AbuRehan", middleName: "", lastName: "Bedrekar", fatherName: "", email: "aburehan.bedrekar@example.com", phone: "7276224160", password: "admin", roles: ["Admin", "Donor"], privileges: ["canManageLeads"], groups: ["Co-Founder", "Lead Approver"], isActive: true, gender: 'Male', address: { city: 'Solapur', state: 'Maharashtra', country: 'India' }, source: 'Seeded' },
+    { name: "NayyarAhmed Karajgi", userId: "nayyarahmed.karajgi", firstName: "NayyarAhmed", middleName: "", lastName: "Karajgi", fatherName: "", email: "nayyar.karajgi@example.com", phone: "9028976036", password: "admin", roles: ["Admin"], privileges: ["canManageLeads"], groups: ["Member of Organization"], isActive: true, gender: 'Male', address: { city: 'Solapur', state: 'Maharashtra', country: 'India' }, source: 'Seeded' },
+    { name: "Arif Baig", userId: "arif.baig", firstName: "Arif", middleName: "", lastName: "Baig", fatherName: "", email: "arif.baig@example.com", phone: "9225747045", password: "admin", roles: ["Admin"], privileges: ["canManageLeads"], groups: ["Member of Organization"], isActive: true, gender: 'Male', address: { city: 'Solapur', state: 'Maharashtra', country: 'India' }, source: 'Seeded' },
+    { name: "Mazhar Shaikh", userId: "mazhar.shaikh", firstName: "Mazhar", middleName: "", lastName: "Shaikh", fatherName: "", email: "mazhar.shaikh@example.com", phone: "8087669914", password: "admin", roles: ["Admin"], privileges: ["canManageLeads"], groups: ["Member of Organization"], isActive: true, gender: 'Male', address: { city: 'Solapur', state: 'Maharashtra', country: 'India' }, source: 'Seeded' },
+    { name: "Mujahid Chabukswar", userId: "mujahid.chabukswar", firstName: "Mujahid", middleName: "", lastName: "Chabukswar", fatherName: "", email: "mujahid.chabukswar@example.com", phone: "8087420544", password: "admin", roles: ["Admin"], privileges: ["canManageLeads"], groups: ["Member of Organization"], isActive: true, gender: 'Male', address: { city: 'Solapur', state: 'Maharashtra', country: 'India' }, source: 'Seeded' },
+    { name: "Muddasir Shaikh", userId: "muddasir.shaikh", firstName: "Muddasir", middleName: "", lastName: "Shaikh", fatherName: "", email: "muddasir@example.com", phone: "7385557820", password: "admin", roles: ["Admin"], privileges: ["canManageLeads"], groups: ["Member of Organization"], isActive: true, gender: 'Male', address: { city: 'Solapur', state: 'Maharashtra', country: 'India' }, source: 'Seeded' },
 ];
 
 const defaultFooterContent: OrganizationFooter = {
@@ -124,12 +121,12 @@ const organizationToSeed: Omit<Organization, 'id' | 'createdAt' | 'updatedAt'> =
 
 
 // --- HISTORICAL/GENERAL LEADS ---
-const generalBeneficiaryUsers: Omit<User, 'id' | 'createdAt'>[] = [
-    { userKey: "USR101", name: "Aisha Begum", userId: "aisha.begum", firstName: "Aisha", lastName: "Begum", fatherName: "Mohammed Ali", email: "aisha.b@example.com", phone: "9876543211", password: "admin", roles: ["Beneficiary"], isActive: true, gender: 'Female', beneficiaryType: 'Widow', isWidow: true, source: 'Seeded' },
-    { userKey: "USR102", name: "Ibrahim Khan", userId: "ibrahim.khan", firstName: "Ibrahim", lastName: "Khan", fatherName: "Yusuf Khan", email: "ibrahim.k@example.com", phone: "9876543212", password: "admin", roles: ["Beneficiary"], isActive: true, gender: 'Male', beneficiaryType: 'Adult', source: 'Seeded' },
-    { userKey: "USR103", name: "Fatima Syed", userId: "fatima.syed", firstName: "Fatima", lastName: "Syed", fatherName: "Ali Syed", email: "fatima.s@example.com", phone: "9876543213", password: "admin", roles: ["Beneficiary"], isActive: true, gender: 'Female', beneficiaryType: 'Kid', source: 'Seeded' },
-    { userKey: "USR104", name: "Yusuf Ahmed", userId: "yusuf.ahmed", firstName: "Yusuf", lastName: "Ahmed", fatherName: "Ahmed Sr.", email: "yusuf.a@example.com", phone: "9876543214", password: "admin", roles: ["Beneficiary"], isActive: true, gender: 'Male', beneficiaryType: 'Old Age', source: 'Seeded' },
-    { userKey: "USR105", name: "Zainab Family", userId: "zainab.family", firstName: "Zainab", lastName: "Family", fatherName: "Anwar Shaikh", email: "zainab.f@example.com", phone: "9876543215", password: "admin", roles: ["Beneficiary"], isActive: true, gender: 'Female', beneficiaryType: 'Family', source: 'Seeded' },
+const generalBeneficiaryUsers: Omit<User, 'id' | 'createdAt' | 'userKey'>[] = [
+    { name: "Aisha Begum", userId: "aisha.begum", firstName: "Aisha", lastName: "Begum", fatherName: "Mohammed Ali", email: "aisha.b@example.com", phone: "9876543211", password: "admin", roles: ["Beneficiary"], isActive: true, gender: 'Female', beneficiaryType: 'Widow', isWidow: true, source: 'Seeded' },
+    { name: "Ibrahim Khan", userId: "ibrahim.khan", firstName: "Ibrahim", lastName: "Khan", fatherName: "Yusuf Khan", email: "ibrahim.k@example.com", phone: "9876543212", password: "admin", roles: ["Beneficiary"], isActive: true, gender: 'Male', beneficiaryType: 'Adult', source: 'Seeded' },
+    { name: "Fatima Syed", userId: "fatima.syed", firstName: "Fatima", lastName: "Syed", fatherName: "Ali Syed", email: "fatima.s@example.com", phone: "9876543213", password: "admin", roles: ["Beneficiary"], isActive: true, gender: 'Female', beneficiaryType: 'Kid', source: 'Seeded' },
+    { name: "Yusuf Ahmed", userId: "yusuf.ahmed", firstName: "Yusuf", lastName: "Ahmed", fatherName: "Ahmed Sr.", email: "yusuf.a@example.com", phone: "9876543214", password: "admin", roles: ["Beneficiary"], isActive: true, gender: 'Male', beneficiaryType: 'Old Age', source: 'Seeded' },
+    { name: "Zainab Family", userId: "zainab.family", firstName: "Zainab", lastName: "Family", fatherName: "Anwar Shaikh", email: "zainab.f@example.com", phone: "9876543215", password: "admin", roles: ["Beneficiary"], isActive: true, gender: 'Female', beneficiaryType: 'Family', source: 'Seeded' },
 ];
 
 const generalLeadsData = [
@@ -142,8 +139,7 @@ const generalLeadsData = [
 
 
 // RAMADAN 2025 CAMPAIGN DATA
-const reliefBeneficiaries: Omit<User, 'id' | 'createdAt'>[] = Array.from({ length: 7 }, (_, i) => ({
-    userKey: `USR${106 + i}`,
+const reliefBeneficiaries: Omit<User, 'id' | 'createdAt' | 'userKey'>[] = Array.from({ length: 7 }, (_, i) => ({
     name: `Relief Beneficiary ${i + 1}`,
     userId: `relief.beneficiary.${i + 1}`,
     firstName: `Relief${i+1}`,
@@ -159,12 +155,11 @@ const reliefBeneficiaries: Omit<User, 'id' | 'createdAt'>[] = Array.from({ lengt
     source: 'Seeded'
 }));
 
-const ramadanCampaignUsers: Omit<User, 'id' | 'createdAt'>[] = [
-    { userKey: "USR17", name: "Salim Operation", userId: "salim.operation", firstName: "Salim", lastName: "Operation", fatherName: "Anwar Operation", email: "salim.op@example.com", phone: "4444444401", password: "admin", roles: ["Beneficiary"], isActive: true, gender: 'Male', beneficiaryType: 'Adult', source: 'Seeded' },
-    { userKey: "USR18", name: "Salim Baig", userId: "salim.baig", firstName: "Salim", lastName: "Baig", fatherName: "Anwar Baig", email: "salim.baig@example.com", phone: "4444444402", password: "admin", roles: ["Beneficiary"], isActive: true, gender: 'Male', beneficiaryType: 'Adult', source: 'Seeded' },
+const ramadanCampaignUsers: Omit<User, 'id' | 'createdAt' | 'userKey'>[] = [
+    { name: "Salim Operation", userId: "salim.operation", firstName: "Salim", lastName: "Operation", fatherName: "Anwar Operation", email: "salim.op@example.com", phone: "4444444401", password: "admin", roles: ["Beneficiary"], isActive: true, gender: 'Male', beneficiaryType: 'Adult', source: 'Seeded' },
+    { name: "Salim Baig", userId: "salim.baig", firstName: "Salim", lastName: "Baig", fatherName: "Anwar Baig", email: "salim.baig@example.com", phone: "4444444402", password: "admin", roles: ["Beneficiary"], isActive: true, gender: 'Male', beneficiaryType: 'Adult', source: 'Seeded' },
     ...reliefBeneficiaries,
     ...Array.from({ length: 10 }, (_, i) => ({
-        userKey: `USR${113 + i}`, // Adjusted start index
         name: `Ration Family ${i + 1}`,
         userId: `ration.family.${i + 1}`,
         firstName: `RationFamily${i+1}`,
@@ -223,9 +218,9 @@ Donate Generously for the Flood affected people.
 
 
 // WINTER CAMPAIGN DATA
-const winterCampaignUsers: Omit<User, 'id' | 'createdAt'>[] = [
-    { userKey: "USR123", name: "Winter Beneficiary A", userId: "winter.beneficiary.a", firstName: "Winter", lastName: "Beneficiary A", fatherName: "Father A", email: "winter.a@example.com", phone: "8888888801", password: "admin", roles: ["Beneficiary"], isActive: true, gender: 'Other', beneficiaryType: 'Family', source: 'Seeded' },
-    { userKey: "USR124", name: "Winter Beneficiary B", userId: "winter.beneficiary.b", firstName: "Winter", lastName: "Beneficiary B", fatherName: "Father B", email: "winter.b@example.com", phone: "8888888802", password: "admin", roles: ["Beneficiary"], isActive: true, gender: 'Other', beneficiaryType: 'Family', source: 'Seeded' },
+const winterCampaignUsers: Omit<User, 'id' | 'createdAt' | 'userKey'>[] = [
+    { name: "Winter Beneficiary A", userId: "winter.beneficiary.a", firstName: "Winter", lastName: "Beneficiary A", fatherName: "Father A", email: "winter.a@example.com", phone: "8888888801", password: "admin", roles: ["Beneficiary"], isActive: true, gender: 'Other', beneficiaryType: 'Family', source: 'Seeded' },
+    { name: "Winter Beneficiary B", userId: "winter.beneficiary.b", firstName: "Winter", lastName: "Beneficiary B", fatherName: "Father B", email: "winter.b@example.com", phone: "8888888802", password: "admin", roles: ["Beneficiary"], isActive: true, gender: 'Other', beneficiaryType: 'Family', source: 'Seeded' },
 ];
 
 const winterCampaign: Omit<Campaign, 'id' | 'createdAt' | 'updatedAt'> = {
@@ -239,9 +234,9 @@ const winterCampaign: Omit<Campaign, 'id' | 'createdAt' | 'updatedAt'> = {
 };
 
 // RAMADAN 2026 CAMPAIGN DATA
-const ramadan2026CampaignUsers: Omit<User, 'id' | 'createdAt'>[] = [
-    { userKey: "USR125", name: "Future Ration Family 1", userId: "future.ration.1", firstName: "Future", lastName: "Family 1", fatherName: "Future Father 1", email: "future1@example.com", phone: "6666666601", password: "admin", roles: ["Beneficiary"], isActive: true, gender: 'Other', beneficiaryType: 'Family', source: 'Seeded' },
-    { userKey: "USR126", name: "Future Ration Family 2", userId: "future.ration.2", firstName: "Future", lastName: "Family 2", fatherName: "Future Father 2", email: "future2@example.com", phone: "6666666602", password: "admin", roles: ["Beneficiary"], isActive: true, gender: 'Other', beneficiaryType: 'Family', source: 'Seeded' },
+const ramadan2026CampaignUsers: Omit<User, 'id' | 'createdAt' | 'userKey'>[] = [
+    { name: "Future Ration Family 1", userId: "future.ration.1", firstName: "Future", lastName: "Family 1", fatherName: "Future Father 1", email: "future1@example.com", phone: "6666666601", password: "admin", roles: ["Beneficiary"], isActive: true, gender: 'Other', beneficiaryType: 'Family', source: 'Seeded' },
+    { name: "Future Ration Family 2", userId: "future.ration.2", firstName: "Future", lastName: "Family 2", fatherName: "Future Father 2", email: "future2@example.com", phone: "6666666602", password: "admin", roles: ["Beneficiary"], isActive: true, gender: 'Other', beneficiaryType: 'Family', source: 'Seeded' },
 ];
 
 const ramadan2026Campaign: Omit<Campaign, 'id' | 'createdAt' | 'updatedAt'> = {
@@ -261,7 +256,7 @@ export type SeedResult = {
     details?: string[];
 };
 
-const seedUsers = async (users: Omit<User, 'id' | 'createdAt'>[]): Promise<string[]> => {
+const seedUsers = async (users: Omit<User, 'id' | 'createdAt' | 'userKey'>[]): Promise<string[]> => {
     const results: string[] = [];
 
     for (const userData of users) {
@@ -373,7 +368,7 @@ const seedGeneralLeads = async (adminUser: User): Promise<string[]> => {
     return leadResults;
 };
 
-const seedCampaignAndData = async (campaignData: Omit<Campaign, 'id' | 'createdAt' | 'updatedAt'>, userData: Omit<User, 'id' | 'createdAt'>[], leadsData: any[]): Promise<string[]> => {
+const seedCampaignAndData = async (campaignData: Omit<Campaign, 'id' | 'createdAt' | 'updatedAt'>, userData: Omit<User, 'id' | 'createdAt' | 'userKey'>[], leadsData: any[]): Promise<string[]> => {
     let results: string[] = [];
     const adminUser = await getUserByUserId("abusufiyan.belif");
     if (!adminUser) throw new Error("Required admin user 'abusufiyan.belif' for seeding not found.");
@@ -463,8 +458,8 @@ const seedRamadan2025ReliefData = async (adminUser: User): Promise<string[]> => 
     let results: string[] = [];
     await seedUsers(reliefBeneficiaries);
     
-    const donorsToCreate: Omit<User, 'id'|'createdAt'>[] = Array.from({length: 20}, (_, i) => ({
-        userKey: `DNR${130+i}`, name: `Zakat Donor ${i+1}`, userId: `zakat.donor.${i+1}`, firstName: 'Zakat', lastName: `Donor ${i+1}`,
+    const donorsToCreate: Omit<User, 'id'|'createdAt'|'userKey'>[] = Array.from({length: 20}, (_, i) => ({
+        name: `Zakat Donor ${i+1}`, userId: `zakat.donor.${i+1}`, firstName: 'Zakat', lastName: `Donor ${i+1}`,
         email: `donor${i+1}@example.com`, phone: `77777777${i.toString().padStart(2, '0')}`, password: 'password',
         roles: ['Donor'], isActive: true, gender: 'Other', source: 'Seeded'
     }));
@@ -674,8 +669,8 @@ export const eraseInitialUsersAndQuotes = async (): Promise<SeedResult> => {
     const batch = writeBatch(db);
 
     // Delete users with specific userKeys from the initial seed
-    const initialUserKeys = initialUsersToSeed.map(u => u.userKey);
-    const usersToDeleteQuery = query(collection(db, USERS_COLLECTION), where("userKey", "in", initialUserKeys));
+    const initialUserIds = initialUsersToSeed.map(u => u.userId);
+    const usersToDeleteQuery = query(collection(db, USERS_COLLECTION), where("userId", "in", initialUserIds));
     const userSnapshot = await getDocs(usersToDeleteQuery);
     userSnapshot.forEach(doc => batch.delete(doc.ref));
     if (userSnapshot.size > 0) {

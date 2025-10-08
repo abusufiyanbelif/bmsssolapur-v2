@@ -1,4 +1,3 @@
-
 /**
  * @fileOverview Lead service for interacting with Firestore.
  */
@@ -56,7 +55,8 @@ export const createLead = async (leadData: Partial<Omit<Lead, 'id' | 'createdAt'
         throw new Error(`The selected beneficiary ("${leadData.name}") does not have a valid UserKey. Please ensure the user profile is complete.`);
     } else {
         // Case where we are linking the beneficiary later
-        const countSnapshot = await getCountFromServer(leadsCollection);
+        const q = query(leadsCollection); // Query without filter to get total count
+        const countSnapshot = await getCountFromServer(q);
         const leadNumber = countSnapshot.data().count + 1;
         customLeadId = `LEAD${leadNumber}_${dateString}`;
     }
@@ -242,6 +242,7 @@ export const deleteLead = async (id: string, adminUser: Pick<User, 'id' | 'name'
         throw new Error('Failed to delete lead.');
     }
 }
+
 
 // Quick status update functions
 export const updateLeadStatus = async (id: string, newStatus: LeadStatus, adminUser: Pick<User, 'id' | 'name' | 'email'>) => {
