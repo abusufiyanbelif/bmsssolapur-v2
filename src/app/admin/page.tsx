@@ -1,4 +1,4 @@
-
+// src/app/admin/page.tsx
 import { Suspense } from "react";
 import { DashboardClient } from "./dashboard-client";
 import { Loader2 } from "lucide-react";

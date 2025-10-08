@@ -1,4 +1,3 @@
-
 # Build Fix Log
 
 This document tracks errors found during the build process and the steps taken to resolve them.
