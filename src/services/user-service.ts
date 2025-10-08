@@ -1,4 +1,3 @@
-
 /**
  * @fileOverview User service for interacting with Firestore.
  * This service should only be called from server-side components or server actions.
@@ -438,7 +437,7 @@ export const updateUser = async (id: string, updates: Partial<User>) => {
         Object.keys(finalUpdates).forEach(key => {
             const typedKey = key as keyof User;
             if (finalUpdates[typedKey] === undefined) {
-                delete (finalUpdates as any)[typedKey];
+                delete (finalUpdates as any)[key];
             }
         });
 
@@ -452,37 +451,49 @@ export const updateUser = async (id: string, updates: Partial<User>) => {
     }
 };
 
-// Function to delete a user and handle related data
+/**
+ * Deletes a user from both Firestore and Firebase Authentication.
+ * Also handles reassigning associated data like donations.
+ * @param id The Firestore document ID of the user to delete.
+ * @param adminUser The user performing the delete action.
+ * @param isBulkOperation A flag to suppress individual logging during bulk deletes.
+ */
 export const deleteUser = async (id: string, adminUser: User, isBulkOperation: boolean = false) => {
     try {
         const adminDb = getAdminDb();
         const batch = adminDb.batch();
-        const userRef = adminDb.collection(USERS_COLLECTION).doc(id);
+        
         const userToDelete = await getUser(id);
         if (!userToDelete) throw new Error("User to delete not found.");
 
+        // Safety checks
         if (userToDelete.userKey === 'SYSTEM01' || userToDelete.userId === 'anonymous_donor') {
             throw new Error("The 'Anonymous Donor' system user cannot be deleted.");
         }
-        
-        const leadsQuery = adminDb.collection('leads').where("beneficiaryId", "==", id);
+        const leadsQuery = adminDb.collection('leads').where("beneficiaryId", "==", id).limit(1);
         const leadsSnapshot = await leadsQuery.get();
-        if (!leadsSnapshot.empty) {
-            const hasFundedLeads = leadsSnapshot.docs.some(doc => doc.data().helpGiven > 0);
-            if (hasFundedLeads) {
-                throw new Error(`User ${userToDelete.name} cannot be deleted because they are a beneficiary on at least one lead that has received funds. Please resolve the fund transfers first.`);
-            }
+        if (!leadsSnapshot.empty && leadsSnapshot.docs.some(d => d.data().helpGiven > 0)) {
+            throw new Error(`User ${userToDelete.name} cannot be deleted because they are a beneficiary on at least one lead that has received funds.`);
         }
-        
-        // 1. Reassign donations from this user to "Anonymous Donor"
+
+        // 1. Delete from Firebase Authentication
+        // The UID in Firebase Auth is the same as the document ID in Firestore
+        await admin.auth().deleteUser(id).catch(error => {
+            // It's okay if the user doesn't exist in Auth (e.g., never logged in via OTP)
+            if (error.code !== 'auth/user-not-found') {
+                throw error; // Re-throw other auth errors
+            }
+            console.log(`User ${id} not found in Firebase Auth, proceeding with Firestore deletion.`);
+        });
+
+        // 2. Reassign donations to "Anonymous Donor"
         const donationsQuery = adminDb.collection('donations').where("donorId", "==", id);
         const donationsSnapshot = await donationsQuery.get();
-        
         let anonymousDonor: User | null = null;
         if (!donationsSnapshot.empty) {
             anonymousDonor = await getUserByUserId('anonymous_donor');
             if (!anonymousDonor || !anonymousDonor.id) {
-                throw new Error("Could not find the 'anonymous_donor' system user to re-assign donations to. Please run the initial seeder.");
+                throw new Error("Could not find the 'anonymous_donor' system user to re-assign donations to.");
             }
             donationsSnapshot.forEach(donationDoc => {
                 batch.update(donationDoc.ref, { 
@@ -493,8 +504,11 @@ export const deleteUser = async (id: string, adminUser: User, isBulkOperation: b
             });
         }
         
-        // Delete the user document
+        // 3. Delete the user document from Firestore
+        const userRef = adminDb.collection(USERS_COLLECTION).doc(id);
         batch.delete(userRef);
+        
+        // Commit all batched writes
         await batch.commit();
         
         if (!isBulkOperation) {
@@ -514,9 +528,10 @@ export const deleteUser = async (id: string, adminUser: User, isBulkOperation: b
         
     } catch (error) {
         console.error(`Error during cascading delete for user ${id}:`, error);
-        throw new Error(`Failed to delete user and clean up related data: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        throw new Error(`Failed to delete user and associated data: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
 }
+
 
 // Function to get all users
 export const getAllUsers = async (): Promise<User[]> => {
