@@ -300,6 +300,7 @@ const seedOrganization = async (): Promise<string> => {
 
 const seedGeneralLeads = async (adminUser: User): Promise<string[]> => {
     const leadResults: string[] = [];
+    const adminDb = getAdminDb();
     
     await seedUsers(generalBeneficiaryUsers);
 
@@ -319,6 +320,18 @@ const seedGeneralLeads = async (adminUser: User): Promise<string[]> => {
     for (const leadInfo of generalLeadsData) {
         const beneficiary = await getUserByPhone(leadInfo.phone);
         if (!beneficiary) continue;
+
+        // Check if a similar lead already exists to prevent duplicates
+        const existingLeadQuery = adminDb.collection('leads')
+            .where('beneficiaryId', '==', beneficiary.id!)
+            .where('purpose', '==', leadInfo.purpose)
+            .where('category', '==', leadInfo.category)
+            .limit(1);
+        const existingLeadSnapshot = await existingLeadQuery.get();
+        if (!existingLeadSnapshot.empty) {
+            leadResults.push(`General Lead for ${beneficiary.name} (${leadInfo.purpose}): Skipped (already exists)`);
+            continue;
+        }
 
         const caseAction: LeadAction = leadInfo.isFunded ? 'Closed' : 'Publish';
 
@@ -361,8 +374,6 @@ const seedGeneralLeads = async (adminUser: User): Promise<string[]> => {
                 transactionId: `SEED_TXN_${createdLead.id}`
             };
             
-            // Use server-side updateDoc for arrayUnion
-            const adminDb = getAdminDb();
             await adminDb.collection('leads').doc(createdLead.id!).update({
                 donations: FieldValue.arrayUnion({ donationId: newDonation.id!, amount: leadInfo.amount, allocatedAt: Timestamp.now(), allocatedByUserId: adminUser.id!, allocatedByUserName: adminUser.name }),
                 fundTransfers: FieldValue.arrayUnion(newTransfer)
@@ -385,19 +396,19 @@ const seedCampaignAndData = async (campaignData: Omit<Campaign, 'id' | 'createdA
     const campaignId = campaignData.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
     let campaign: Campaign | null = await getCampaign(campaignId);
 
+    if (campaign) {
+        results.push(`Campaign "${campaignData.name}": Skipped (already exists)`);
+        return results;
+    }
+
     const dataToWrite: Partial<Campaign> = {
         ...campaignData,
         id: campaignId,
         source: 'Seeded'
     };
     
-    if (campaign) {
-        await adminDb.collection('campaigns').doc(campaignId).update({ ...dataToWrite, updatedAt: Timestamp.now() });
-        results.push(`Campaign "${campaignData.name}" updated.`);
-    } else {
-        campaign = await createCampaign(dataToWrite);
-        results.push(`Campaign "${campaignData.name}" created.`);
-    }
+    campaign = await createCampaign(dataToWrite);
+    results.push(`Campaign "${campaignData.name}" created.`);
 
     const verifierToUse: Verifier = {
         verifierId: adminUser.id,
@@ -412,6 +423,17 @@ const seedCampaignAndData = async (campaignData: Omit<Campaign, 'id' | 'createdA
     for (const leadInfo of leadsData) {
         const beneficiary = await getUserByPhone(leadInfo.phone);
         if (!beneficiary) continue;
+
+        // Check for duplicate lead within the campaign
+        const existingLeadQuery = adminDb.collection('leads')
+            .where('beneficiaryId', '==', beneficiary.id!)
+            .where('campaignId', '==', campaign.id!)
+            .where('purpose', '==', leadInfo.purpose)
+            .limit(1);
+        if (!(await existingLeadQuery.get()).empty) {
+            results.push(`Lead for ${beneficiary.name} in ${campaignData.name}: Skipped (already exists)`);
+            continue;
+        }
 
         const caseAction: LeadAction = campaignData.status === 'Completed' ? 'Closed'
                                       : campaignData.status === 'Active' ? 'Publish'
@@ -455,7 +477,7 @@ const seedCampaignAndData = async (campaignData: Omit<Campaign, 'id' | 'createdA
             });
         }
         
-        results.push(`Lead for ${beneficiary.name} in ${campaignData.name} created/updated.`);
+        results.push(`Lead for ${beneficiary.name} in ${campaignData.name} created.`);
     }
 
     return results;
@@ -491,6 +513,13 @@ const seedRamadan2025ReliefData = async (adminUser: User): Promise<string[]> => 
     for (const data of leadData) {
         const beneficiary = await getUserByPhone(data.phone);
         if (!beneficiary) continue;
+
+        // Check for duplicate lead
+        const existingLeadQuery = adminDb.collection('leads').where('beneficiaryId', '==', beneficiary.id!).where('campaignId', '==', campaign.id).limit(1);
+        if (!(await existingLeadQuery.get()).empty) {
+            results.push(`Seeded Relief Lead for ${beneficiary.name}: Skipped (already exists)`);
+            continue;
+        }
 
         const newLeadData: Partial<Lead> = {
             name: beneficiary.name, beneficiaryId: beneficiary.id,
