@@ -43,21 +43,18 @@ export function LoginForm() {
   // This useEffect hook ensures that reCAPTCHA is initialized only once
   // and properly cleaned up to prevent the "already rendered" error.
   useEffect(() => {
-    if (typeof window === 'undefined' || !auth || !recaptchaContainerRef.current) return;
+    if (typeof window === 'undefined' || !auth) return;
     
-    // Ensure the container is clean before rendering
     if (recaptchaContainerRef.current) {
-        recaptchaContainerRef.current.innerHTML = '';
-    }
-
-    if (!window.recaptchaVerifier) {
-      // Create the verifier instance only if it doesn't exist
-      const verifier = new RecaptchaVerifier(auth, recaptchaContainerRef.current, {
-        'size': 'invisible',
-        'callback': () => {},
-      });
-      verifier.render();
-      window.recaptchaVerifier = verifier;
+        if (!window.recaptchaVerifier) {
+            // Create the verifier instance only if it doesn't exist
+            const verifier = new RecaptchaVerifier(auth, recaptchaContainerRef.current, {
+                'size': 'invisible',
+                'callback': () => {},
+            });
+            verifier.render();
+            window.recaptchaVerifier = verifier;
+        }
     }
 
     // Cleanup function: This is crucial for single-page apps.
@@ -65,7 +62,12 @@ export function LoginForm() {
     return () => {
       if (window.recaptchaVerifier) {
         try {
+            // This is the most robust way to clean up to avoid "already rendered" errors
             window.recaptchaVerifier.clear();
+            const recaptchaContainer = document.getElementById("recaptcha-container");
+            if (recaptchaContainer) {
+              recaptchaContainer.innerHTML = '';
+            }
         } catch (e) {
             console.error("Error clearing reCAPTCHA verifier on unmount:", e);
         }
