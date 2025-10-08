@@ -191,7 +191,7 @@ const generateNextAnonymousId = async (prefix: string, field: keyof User): Promi
 // Function to create or update a user
 export const createUser = async (userData: Partial<Omit<User, 'id' | 'createdAt' | 'updatedAt'>>): Promise<User> => {
   const adminDb = getAdminDb();
-  const userRef = doc(collection(adminDb, USERS_COLLECTION)); // Generate ID upfront
+  const userRef = adminDb.collection(USERS_COLLECTION).doc(); // Generate ID upfront
   
   try {
     const standardizedPhone = userData.phone?.replace(/\D/g, '').slice(-10) || '';

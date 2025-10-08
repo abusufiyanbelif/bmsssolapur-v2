@@ -81,9 +81,30 @@ export async function getAdminNotificationData(): Promise<{ pendingLeads: Lead[]
     }
 }
 
-// Placeholder for a function that doesn't exist yet, to fix build error
 export const getRawTextFromImage = async (formData: FormData): Promise<{ success: boolean; rawText?: string; error?: string }> => {
-  return { success: false, error: 'Not implemented' };
-};
+    try {
+        const { extractRawTextFlow } = await import('@/ai/flows/extract-raw-text-flow');
 
-    
+        const files = Array.from(formData.values()) as File[];
+        if (files.length === 0) {
+            return { success: false, error: 'No files were uploaded.' };
+        }
+
+        const dataUris = await Promise.all(files.map(file => {
+            return new Promise<string>((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => resolve(reader.result as string);
+                reader.onerror = (error) => reject(error);
+                reader.readAsDataURL(file);
+            });
+        }));
+
+        const result = await extractRawTextFlow({ photoDataUris: dataUris });
+        return { success: true, rawText: result.rawText };
+
+    } catch (e) {
+        const error = e instanceof Error ? e.message : "An unknown error occurred during text extraction.";
+        console.error("Error in getRawTextFromImage server action:", error);
+        return { success: false, error };
+    }
+};

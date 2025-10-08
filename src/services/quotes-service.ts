@@ -1,12 +1,11 @@
 
-
 /**
  * @fileOverview Service for managing inspirational quotes in Firestore.
  */
 
 import { getAdminDb } from './firebase-admin';
 import type { Quote } from './types';
-import { WriteBatch } from 'firebase-admin/firestore';
+import { WriteBatch, Timestamp } from 'firebase-admin/firestore';
 import { quranQuotes } from './quotes/quran';
 import { hadithQuotes } from './quotes/hadith';
 import { scholarQuotes } from './quotes/scholars';

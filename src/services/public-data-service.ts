@@ -1,5 +1,4 @@
 
-
 /**
  * @fileOverview Service for managing public-facing, sanitized data in Firestore.
  */

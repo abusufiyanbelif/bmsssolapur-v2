@@ -1,5 +1,4 @@
 
-
 /**
  * @fileOverview Service for managing organization data in Firestore.
  */
