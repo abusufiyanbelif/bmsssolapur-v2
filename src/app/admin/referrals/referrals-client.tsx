@@ -44,6 +44,7 @@ function ReferralsPageContent({ initialReferrals, error: initialError }: { initi
     const [error, setError] = useState<string | null>(initialError || null);
     const { toast } = useToast();
     const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+    const [adminUserId, setAdminUserId] = useState<string | null>(null);
     const [popoverOpen, setPopoverOpen] = useState(false);
     const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
 
@@ -82,14 +83,15 @@ function ReferralsPageContent({ initialReferrals, error: initialError }: { initi
     useEffect(() => {
         const storedUserId = localStorage.getItem('userId');
         setCurrentUserId(storedUserId);
+        setAdminUserId(storedUserId);
     }, []);
     
-    const onUserDeleted = () => {
+    const onUserDeleted = (userId: string) => {
         toast({
             title: "User Deleted",
             description: "The user has been successfully removed.",
         });
-        fetchUsers();
+        setReferrals(prev => prev.filter(u => u.id !== userId));
     }
     
     const onBulkUsersDeleted = () => {
@@ -97,17 +99,17 @@ function ReferralsPageContent({ initialReferrals, error: initialError }: { initi
             title: "Users Deleted",
             description: `${selectedUsers.length} user(s) have been successfully removed.`,
         });
+        setReferrals(prev => prev.filter(u => !selectedUsers.includes(u.id!)));
         setSelectedUsers([]);
-        fetchUsers();
     }
     
-    const onStatusToggled = (newStatus: boolean) => {
+    const onStatusToggled = (userId: string, newStatus: boolean) => {
         toast({
             variant: "success",
             title: "Status Updated",
             description: `User has been successfully ${newStatus ? 'activated' : 'deactivated'}.`,
         });
-        fetchUsers();
+        setReferrals(prev => prev.map(u => u.id === userId ? {...u, isActive: newStatus} : u));
     };
     
     const handleSort = (column: SortableColumn) => {
@@ -124,10 +126,7 @@ function ReferralsPageContent({ initialReferrals, error: initialError }: { initi
             const searchTerm = appliedFilters.name.toLowerCase();
             const nameMatch = appliedFilters.name === '' ||
                 user.name.toLowerCase().includes(searchTerm) ||
-                (user.phone && user.phone.includes(searchTerm)) ||
-                (user.aadhaarNumber && user.aadhaarNumber.includes(searchTerm)) ||
-                (user.panNumber && user.panNumber.toLowerCase().includes(searchTerm)) ||
-                (user.upiIds && user.upiIds.some(id => id.toLowerCase().includes(searchTerm)));
+                (user.phone && user.phone.includes(searchTerm));
 
             const statusMatch = appliedFilters.status === 'all' || (appliedFilters.status === 'active' && user.isActive) || (appliedFilters.status === 'inactive' && !user.isActive);
             return nameMatch && statusMatch;
@@ -140,10 +139,8 @@ function ReferralsPageContent({ initialReferrals, error: initialError }: { initi
             let comparison = 0;
             if (aValue instanceof Date && bValue instanceof Date) {
                 comparison = aValue.getTime() - bValue.getTime();
-            } else if (String(aValue) > String(bValue)) {
-                comparison = 1;
-            } else if (String(aValue) < String(bValue)) {
-                comparison = -1;
+            } else if (typeof aValue === 'string' && typeof bValue === 'string') {
+                comparison = aValue.localeCompare(bValue);
             }
 
             return sortDirection === 'asc' ? comparison : -comparison;
@@ -190,14 +187,14 @@ function ReferralsPageContent({ initialReferrals, error: initialError }: { initi
                     {user.isActive ? (
                         <DropdownMenuItem disabled={isProtectedUser} onSelect={async () => {
                             const result = await handleToggleUserStatus(user.id!, false);
-                            if (result.success) onStatusToggled(false);
+                            if (result.success) onStatusToggled(user.id!, false);
                         }}>
                             <UserX className="mr-2 h-4 w-4" /> Deactivate
                         </DropdownMenuItem>
                     ) : (
                         <DropdownMenuItem disabled={isProtectedUser} onSelect={async () => {
                             const result = await handleToggleUserStatus(user.id!, true);
-                            if (result.success) onStatusToggled(true);
+                            if (result.success) onStatusToggled(user.id!, true);
                         }}>
                             <UserCheck className="mr-2 h-4 w-4" /> Activate
                         </DropdownMenuItem>
@@ -208,8 +205,11 @@ function ReferralsPageContent({ initialReferrals, error: initialError }: { initi
                     <DeleteConfirmationDialog
                         itemType="user"
                         itemName={user.name}
-                        onDelete={() => handleDeleteUser(user.id!)}
-                        onSuccess={onUserDeleted}
+                        onDelete={async () => {
+                            if (!adminUserId) return { success: false, error: 'Admin user ID not found.' };
+                            return await handleDeleteUser(user.id!, adminUserId);
+                        }}
+                        onSuccess={() => onUserDeleted(user.id!)}
                     >
                          <DropdownMenuItem disabled={isProtectedUser} onSelect={(e) => e.preventDefault()} className="text-destructive focus:text-destructive">
                             <Trash2 className="mr-2 h-4 w-4" /> Delete
@@ -422,7 +422,7 @@ function ReferralsPageContent({ initialReferrals, error: initialError }: { initi
 
         return (
             <>
-                 {selectedUsers.length > 0 && currentUserId && (
+                 {selectedUsers.length > 0 && adminUserId && (
                     <div className="flex items-center gap-4 mb-4 p-4 border rounded-lg bg-muted/50">
                         <p className="text-sm font-medium">
                             {selectedUsers.length} item(s) selected.
@@ -430,7 +430,7 @@ function ReferralsPageContent({ initialReferrals, error: initialError }: { initi
                          <DeleteConfirmationDialog
                             itemType={`${selectedUsers.length} user(s)`}
                             itemName="the selected items"
-                            onDelete={() => handleBulkDeleteUsers(selectedUsers, currentUserId)}
+                            onDelete={() => handleBulkDeleteUsers(selectedUsers, adminUserId)}
                             onSuccess={onBulkUsersDeleted}
                         >
                             <Button variant="destructive">
@@ -466,9 +466,9 @@ function ReferralsPageContent({ initialReferrals, error: initialError }: { initi
                 </CardDescription>
             </CardHeader>
             <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6 p-4 border rounded-lg bg-muted/50">
-                    <div className="space-y-2 lg:col-span-2">
-                        <Label htmlFor="nameFilter">Search by Name, Phone, Aadhaar, etc.</Label>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6 p-4 border rounded-lg bg-muted/50">
+                    <div className="space-y-2">
+                        <Label htmlFor="nameFilter">Search by Name or Phone</Label>
                         <Input 
                             id="nameFilter" 
                             placeholder="Enter search term..." 
@@ -487,7 +487,7 @@ function ReferralsPageContent({ initialReferrals, error: initialError }: { initi
                             </SelectContent>
                         </Select>
                     </div>
-                    <div className="flex items-end gap-4 lg:col-span-full">
+                    <div className="flex items-end gap-4 md:col-span-2">
                         <Button onClick={handleSearch} className="w-full">
                             <Search className="mr-2 h-4 w-4" />
                             Apply Filters
