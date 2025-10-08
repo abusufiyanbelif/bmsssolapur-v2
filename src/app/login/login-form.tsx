@@ -40,34 +40,29 @@ export function LoginForm() {
     window.location.href = '/home';
   };
   
-  // This useEffect hook ensures that reCAPTCHA is initialized only once
-  // and properly cleaned up to prevent the "already rendered" error.
   useEffect(() => {
-    if (typeof window === 'undefined' || !auth) return;
-    
-    if (recaptchaContainerRef.current) {
-        if (!window.recaptchaVerifier) {
-            // Create the verifier instance only if it doesn't exist
-            const verifier = new RecaptchaVerifier(auth, recaptchaContainerRef.current, {
-                'size': 'invisible',
-                'callback': () => {},
-            });
-            verifier.render();
-            window.recaptchaVerifier = verifier;
-        }
+    // This effect handles the setup and teardown of the reCAPTCHA verifier.
+    if (typeof window !== 'undefined' && auth && recaptchaContainerRef.current) {
+      if (!window.recaptchaVerifier) {
+        window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
+          'size': 'invisible',
+          'callback': (response: any) => {
+            // reCAPTCHA solved, allow signInWithPhoneNumber.
+          }
+        });
+        window.recaptchaVerifier.render();
+      }
     }
 
-    // Cleanup function: This is crucial for single-page apps.
-    // It runs when the component unmounts.
+    // Cleanup function to prevent "already rendered" errors on Fast Refresh
     return () => {
       if (window.recaptchaVerifier) {
         try {
-            // This is the most robust way to clean up to avoid "already rendered" errors
-            window.recaptchaVerifier.clear();
-            const recaptchaContainer = document.getElementById("recaptcha-container");
-            if (recaptchaContainer) {
-              recaptchaContainer.innerHTML = '';
-            }
+          window.recaptchaVerifier.clear();
+          const recaptchaContainer = document.getElementById("recaptcha-container");
+          if (recaptchaContainer) {
+            recaptchaContainer.innerHTML = '';
+          }
         } catch (e) {
             console.error("Error clearing reCAPTCHA verifier on unmount:", e);
         }
