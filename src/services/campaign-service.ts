@@ -28,22 +28,24 @@ export type { Campaign, CampaignStatus };
 const CAMPAIGNS_COLLECTION = 'campaigns';
 
 /**
- * Creates a new campaign.
+ * Creates a new campaign. If an ID is provided, it will use it.
+ * Otherwise, it will generate one from the name.
  * @param campaignData - The data for the new campaign.
  * @returns The newly created campaign object.
  */
-export const createCampaign = async (campaignData: Partial<Omit<Campaign, 'id' | 'createdAt' | 'updatedAt'>>): Promise<Campaign> => {
+export const createCampaign = async (campaignData: Partial<Omit<Campaign, 'createdAt' | 'updatedAt'>>): Promise<Campaign> => {
   try {
     const campaignId = campaignData.id || campaignData.name!.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
     
-    // Check for duplicates before writing
-    const q = query(collection(db, CAMPAIGNS_COLLECTION), where("name", "==", campaignData.name), limit(1));
-    const querySnapshot = await getDocs(q);
-    if (!querySnapshot.empty) {
-      throw new Error(`A campaign with the name "${campaignData.name}" already exists.`);
-    }
-
     const campaignRef = doc(db, CAMPAIGNS_COLLECTION, campaignId);
+    
+    // Check for duplicates only if we're not intending to overwrite via a seed script
+    if (!campaignData.source) { // Assume if source is not 'Seeded', it's a regular creation
+        const existingDoc = await getDoc(campaignRef);
+        if(existingDoc.exists()) {
+            throw new Error(`A campaign with the ID "${campaignId}" already exists.`);
+        }
+    }
     
     const newCampaignData: Partial<Campaign> = {
       ...campaignData,
@@ -64,7 +66,7 @@ export const createCampaign = async (campaignData: Partial<Omit<Campaign, 'id' |
         }
     });
     
-    await setDoc(campaignRef, dataToWrite);
+    await setDoc(campaignRef, dataToWrite, { merge: true }); // Use merge to be safe with seeding
     
     // We fetch the document again to get the server-generated timestamps as Date objects
     const newDoc = await getDoc(campaignRef);
@@ -213,3 +215,4 @@ export const deleteCampaign = async (id: string): Promise<void> => {
 };
 
   
+
