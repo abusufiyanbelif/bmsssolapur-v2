@@ -1,5 +1,4 @@
 
-
 "use server";
 
 import { updateUser, User } from "@/services/user-service";
@@ -10,7 +9,12 @@ interface FormState {
     error?: string;
 }
 
-type UpdateProfilePayload = Pick<User, 'firstName' | 'middleName' | 'lastName' | 'phone' | 'gender' | 'occupation' | 'panNumber' | 'aadhaarNumber' | 'beneficiaryType' | 'enableMonthlyDonationReminder' | 'upiIds' | 'upiPhoneNumbers' | 'bankAccountName' | 'bankAccountNumber' | 'bankIfscCode' | 'bankName'> & {
+// Update this payload to reflect the fields available on the profile form
+type UpdateProfilePayload = Pick<User, 
+    'firstName' | 'middleName' | 'lastName' | 'phone' | 
+    'gender' | 'occupation' | 'panNumber' | 'aadhaarNumber' | 'beneficiaryType' | 'isWidow' | 
+    'upiIds' | 'bankAccountName' | 'bankAccountNumber' | 'bankIfscCode' | 'bankName'
+> & {
     address: {
         addressLine1: string;
         city: string;
@@ -18,14 +22,12 @@ type UpdateProfilePayload = Pick<User, 'firstName' | 'middleName' | 'lastName' |
         country: string;
         pincode: string;
     };
-    familyMembers: number;
-    isWidow: boolean;
 };
 
 
 export async function handleUpdateProfile(
   userId: string,
-  data: Partial<Omit<UpdateProfilePayload, 'createdAt' | 'updatedAt'>>
+  data: Partial<UpdateProfilePayload>
 ): Promise<FormState> {
   try {
     if (!userId) {
@@ -41,15 +43,12 @@ export async function handleUpdateProfile(
     
     // Ensure arrays are handled correctly
     if (data.upiIds) {
-      updates.upiIds = Array.isArray(data.upiIds) ? data.upiIds : [];
-    }
-    if (data.upiPhoneNumbers) {
-      updates.upiPhoneNumbers = Array.isArray(data.upiPhoneNumbers) ? data.upiPhoneNumbers : [];
+      updates.upiIds = Array.isArray(data.upiIds) ? data.upiIds.filter(Boolean) : [];
     }
     
     await updateUser(userId, updates);
     
-    revalidatePath("/profile");
+    revalidatePath("/profile/settings");
 
     return { success: true };
 
@@ -62,4 +61,3 @@ export async function handleUpdateProfile(
     };
   }
 }
-

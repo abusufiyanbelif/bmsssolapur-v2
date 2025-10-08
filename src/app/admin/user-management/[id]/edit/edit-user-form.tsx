@@ -229,7 +229,6 @@ const createFormSchema = (settings?: AppSettings) => z.object({
   bankName: z.string().optional(),
   bankAccountNumber: z.string().optional(),
   bankIfscCode: z.string().optional(),
-  upiPhoneNumbers: z.array(z.object({ value: z.string() })).optional(),
   upiIds: z.array(z.object({ value: z.string() })).optional(),
   aadhaarCard: z.any().optional(),
   addressProof: z.any().optional(),
@@ -318,7 +317,6 @@ export function EditUserForm({ user }: EditUserFormProps) {
       bankName: user.bankName || '',
       bankAccountNumber: user.bankAccountNumber || '',
       bankIfscCode: user.bankIfscCode || '',
-      upiPhoneNumbers: user.upiPhoneNumbers?.map(id => ({ value: id })) || [{ value: "" }],
       upiIds: user.upiIds?.map(id => ({ value: id })) || [{ value: "" }],
     },
   });
@@ -357,7 +355,6 @@ export function EditUserForm({ user }: EditUserFormProps) {
 
 
   const { fields: upiIdFields, append: appendUpiId, remove: removeUpiId } = useFieldArray({ control, name: "upiIds" });
-  const { fields: upiPhoneFields, append: appendUpiPhone, remove: removeUpiPhone } = useFieldArray({ control, name: "upiPhoneNumbers" });
   const selectedRoles = form.watch("roles");
   
   const handleCancel = () => {
@@ -491,7 +488,7 @@ export function EditUserForm({ user }: EditUserFormProps) {
                             <AccordionItem value="account" className="border rounded-lg">
                                 <AccordionTrigger className="p-4 font-semibold text-primary"><h4 className="flex items-center gap-2">Account Settings & Roles</h4></AccordionTrigger>
                                 <AccordionContent className="p-6 pt-2 space-y-6">
-                                     <FormField control={form.control} name="roles" render={() => ( <FormItem><div className="mb-4"><FormLabel className="text-base">User Roles</FormLabel><FormDescription>Select all roles that apply to this user.</FormDescription></div><div className="grid grid-cols-2 md:grid-cols-3 gap-4">{availableRoles.map((role) => (<FormField key={role} control={form.control} name="roles" render={({ field }) => { return (<FormItem key={role} className="flex flex-row items-start space-x-3 space-y-0"><FormControl><Checkbox checked={field.value?.includes(role)} onCheckedChange={(checked) => { return checked ? field.onChange([...field.value || [], role]) : field.onChange( field.value?.filter( (value) => value !== role))}} disabled={!isEditing}/></FormControl><FormLabel className="font-normal">{role}</FormLabel></FormItem> )}}/>))}</div><FormMessage /></FormItem>)}/>
+                                     <FormField control={form.control} name="roles" render={() => ( <FormItem><div className="mb-4"><FormLabel className="text-base">User Roles</FormLabel><FormDescription>Select all roles that apply to this user.</FormDescription></div><div className="grid grid-cols-2 md:grid-cols-3 gap-4">{availableRoles.map((role) => (<FormField key={role} control={form.control} name="roles" render={({ field }) => { return (<FormItem key={role} className="flex flex-row items-start space-x-3 space-y-0"><FormControl><Checkbox checked={field.value?.includes(role)} onCheckedChange={(checked) => { trigger('roles'); return checked ? field.onChange([...field.value || [], role]) : field.onChange( field.value?.filter( (value) => value !== role))}} disabled={!isEditing}/></FormControl><FormLabel className="font-normal">{role}</FormLabel></FormItem> )}}/>))}</div><FormMessage /></FormItem>)}/>
                                      {selectedRoles.includes("Beneficiary") && <FormField control={form.control} name="isAnonymousAsBeneficiary" render={({ field }) => ( <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4"><FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} disabled={!isEditing}/></FormControl><div className="space-y-1 leading-none"><FormLabel>Mark as Anonymous Beneficiary</FormLabel><FormDescription>If checked, their name will be hidden from public view and their Anonymous ID will be used instead.</FormDescription></div></FormItem>)} />}
                                      {selectedRoles.includes("Donor") && <FormField control={form.control} name="isAnonymousAsDonor" render={({ field }) => ( <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4"><FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} disabled={!isEditing}/></FormControl><div className="space-y-1 leading-none"><FormLabel>Mark as Anonymous Donor</FormLabel><FormDescription>If checked, their name will be hidden from public view for all their donations.</FormDescription></div></FormItem>)} />}
                                      <FormField control={form.control} name="isActive" render={({ field }) => ( <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4"><div className="space-y-0.5"><FormLabel className="text-base">User Status</FormLabel><FormDescription>Set the user account to active or inactive. Inactive users cannot log in.</FormDescription></div><FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} disabled={!isEditing}/></FormControl></FormItem>)}/>
@@ -514,7 +511,7 @@ export function EditUserForm({ user }: EditUserFormProps) {
                                              <FormItem>
                                                  <FormLabel>Beneficiary Type</FormLabel>
                                                  <FormControl>
-                                                     <RadioGroup onValueChange={field.onChange} value={field.value} className="flex flex-row space-x-4 pt-2" disabled={!isEditing}>
+                                                     <RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="flex flex-row space-x-4 pt-2" disabled={!isEditing}>
                                                         <FormItem className="flex items-center space-x-3 space-y-0"><RadioGroupItem value="Adult" id="type-adult"/><FormLabel className="font-normal" htmlFor="type-adult">Adult</FormLabel></FormItem>
                                                         <FormItem className="flex items-center space-x-3 space-y-0"><RadioGroupItem value="Old Age" id="type-old"/><FormLabel className="font-normal" htmlFor="type-old">Old Age</FormLabel></FormItem>
                                                         <FormItem className="flex items-center space-x-3 space-y-0"><RadioGroupItem value="Kid" id="type-kid"/><FormLabel className="font-normal" htmlFor="type-kid">Kid</FormLabel></FormItem>
@@ -565,12 +562,7 @@ export function EditUserForm({ user }: EditUserFormProps) {
                                     </div>
                                     <FormField control={form.control} name="bankName" render={({ field }) => (<FormItem><FormLabel>Bank Name</FormLabel><FormControl><Input {...field} disabled={!isEditing} /></FormControl><FormMessage /></FormItem>)}/>
                                     <Separator />
-                                    <div className="space-y-4">
-                                        <FormLabel>UPI Phone Numbers</FormLabel>
-                                        {upiPhoneFields.map((field, index) => (<FormField control={form.control} key={field.id} name={`upiPhoneNumbers.${index}.value`} render={({ field }) => (<FormItem><div className="flex items-center gap-2"><FormControl><Input {...field} disabled={!isEditing} type="tel" maxLength={10} /></FormControl>{isEditing && (<Button type="button" variant="ghost" size="icon" onClick={() => removeUpiPhone(index)}><Trash2 className="h-4 w-4 text-destructive" /></Button>)}</div><FormMessage /></FormItem>)}/>))}
-                                        {isEditing && (<Button type="button" variant="outline" size="sm" onClick={() => appendUpiPhone({ value: "" })}><PlusCircle className="mr-2" />Add Phone</Button>)}
-                                    </div>
-                                    <div className="space-y-4">
+                                     <div className="space-y-4">
                                         <FormLabel>UPI IDs</FormLabel>
                                         {upiIdFields.map((field, index) => (<FormField control={form.control} key={field.id} name={`upiIds.${index}.value`} render={({ field }) => (<FormItem><div className="flex items-center gap-2"><FormControl><Input {...field} disabled={!isEditing} /></FormControl>{isEditing && (<Button type="button" variant="ghost" size="icon" onClick={() => removeUpiId(index)}><Trash2 className="h-4 w-4 text-destructive" /></Button>)}</div><FormMessage /></FormItem>)}/>))}
                                         {isEditing && (<Button type="button" variant="outline" size="sm" onClick={() => appendUpiId({ value: "" })}><PlusCircle className="mr-2" />Add UPI ID</Button>)}
@@ -592,5 +584,3 @@ export function EditUserForm({ user }: EditUserFormProps) {
     </>
   );
 }
-
-    

@@ -73,7 +73,7 @@ export interface User {
   bankName?: string;
   bankAccountNumber?: string;
   bankIfscCode?: string;
-  upiPhoneNumbers?: string[];
+  upiPhoneNumbers?: string[]; // Kept for schema compatibility, but UI will favor single 'phone'
   upiIds?: string[];
   roles: UserRole[]; 
   privileges?: Privilege[]; 

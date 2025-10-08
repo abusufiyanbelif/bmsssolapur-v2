@@ -43,7 +43,6 @@ const profileFormSchema = z.object({
   bankName: z.string().optional(),
   bankAccountNumber: z.string().optional(),
   bankIfscCode: z.string().optional(),
-  upiPhoneNumbers: z.array(z.object({ value: z.string() })).optional(),
   upiIds: z.array(z.object({ value: z.string() })).optional(),
 });
 
@@ -64,7 +63,6 @@ export default function ProfileSettingsPage() {
 
     const { formState: { isDirty }, control, reset, handleSubmit } = form;
     const { fields: upiIdFields, append: appendUpiId, remove: removeUpiId } = useFieldArray({ control, name: "upiIds" });
-    const { fields: upiPhoneFields, append: appendUpiPhone, remove: removeUpiPhone } = useFieldArray({ control, name: "upiPhoneNumbers" });
 
     useEffect(() => {
         const storedUserId = localStorage.getItem('userId');
@@ -104,7 +102,6 @@ export default function ProfileSettingsPage() {
                     bankName: fetchedUser.bankName || '',
                     bankAccountNumber: fetchedUser.bankAccountNumber || '',
                     bankIfscCode: fetchedUser.bankIfscCode || '',
-                    upiPhoneNumbers: fetchedUser.upiPhoneNumbers?.map(id => ({ value: id })) || [{ value: "" }],
                     upiIds: fetchedUser.upiIds?.map(id => ({ value: id })) || [{ value: "" }],
                 });
             } else {
@@ -131,7 +128,6 @@ export default function ProfileSettingsPage() {
         const updatePayload = {
             ...values,
             upiIds: values.upiIds?.map(item => item.value).filter(Boolean),
-            upiPhoneNumbers: values.upiPhoneNumbers?.map(item => item.value).filter(Boolean),
         };
         const result = await handleUpdateProfile(user.id, updatePayload as any);
         
@@ -219,7 +215,7 @@ export default function ProfileSettingsPage() {
                                     </div>
                                 </AccordionContent>
                             </AccordionItem>
-
+                            
                             <AccordionItem value="address" className="border rounded-lg">
                                 <AccordionTrigger className="p-4 font-semibold text-primary"><h4 className="flex items-center gap-2"><MapPin className="h-5 w-5"/>Address Details</h4></AccordionTrigger>
                                 <AccordionContent className="p-6 pt-2 space-y-6">
@@ -229,8 +225,8 @@ export default function ProfileSettingsPage() {
                                     </div>
                                 </AccordionContent>
                             </AccordionItem>
-                            
-                             {isBeneficiary && (
+
+                            {isBeneficiary && (
                                  <AccordionItem value="beneficiary" className="border rounded-lg">
                                      <AccordionTrigger className="p-4 font-semibold text-primary"><h4 className="flex items-center gap-2"><UserIcon className="h-5 w-5"/>Beneficiary Details</h4></AccordionTrigger>
                                      <AccordionContent className="p-6 pt-2 space-y-6">
@@ -272,12 +268,7 @@ export default function ProfileSettingsPage() {
                                     </div>
                                     <FormField control={form.control} name="bankName" render={({ field }) => (<FormItem><FormLabel>Bank Name</FormLabel><FormControl><Input {...field} disabled={!isEditing} /></FormControl><FormMessage /></FormItem>)}/>
                                     <Separator />
-                                    <div className="space-y-4">
-                                        <FormLabel>UPI Phone Numbers</FormLabel>
-                                        {upiPhoneFields.map((field, index) => (<FormField control={form.control} key={field.id} name={`upiPhoneNumbers.${index}.value`} render={({ field }) => (<FormItem><div className="flex items-center gap-2"><FormControl><Input {...field} disabled={!isEditing} type="tel" maxLength={10} /></FormControl>{isEditing && (<Button type="button" variant="ghost" size="icon" onClick={() => removeUpiPhone(index)}><Trash2 className="h-4 w-4 text-destructive" /></Button>)}</div><FormMessage /></FormItem>)}/>))}
-                                        {isEditing && (<Button type="button" variant="outline" size="sm" onClick={() => appendUpiPhone({ value: "" })}><PlusCircle className="mr-2" />Add Phone</Button>)}
-                                    </div>
-                                    <div className="space-y-4">
+                                     <div className="space-y-4">
                                         <FormLabel>UPI IDs</FormLabel>
                                         {upiIdFields.map((field, index) => (<FormField control={form.control} key={field.id} name={`upiIds.${index}.value`} render={({ field }) => (<FormItem><div className="flex items-center gap-2"><FormControl><Input {...field} disabled={!isEditing} /></FormControl>{isEditing && (<Button type="button" variant="ghost" size="icon" onClick={() => removeUpiId(index)}><Trash2 className="h-4 w-4 text-destructive" /></Button>)}</div><FormMessage /></FormItem>)}/>))}
                                         {isEditing && (<Button type="button" variant="outline" size="sm" onClick={() => appendUpiId({ value: "" })}><PlusCircle className="mr-2" />Add UPI ID</Button>)}
@@ -291,4 +282,3 @@ export default function ProfileSettingsPage() {
         </Form>
     );
 }
-
