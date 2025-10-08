@@ -3,7 +3,7 @@
 
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
-import { LogIn, LogOut, Menu, Users as UsersIcon, User, Home, Loader2, Bell, AlertTriangle, FileCheck, HandHeart, Megaphone, ArrowRightLeft, Shield, FileUp, HandCoins } from "lucide-react";
+import { LogIn, LogOut, Menu, Users as UsersIcon, User, Home, Loader2, Bell, AlertTriangle, FileCheck, HandHeart, Megaphone, ArrowRightLeft, Shield } from "lucide-react";
 import { RoleSwitcherDialog } from "./role-switcher-dialog";
 import { useState, useEffect, useCallback } from "react";
 import { Footer } from "./footer";
@@ -98,7 +98,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     const router = useRouter();
     const { toast } = useToast();
 
-    // New state management for the session
     const [sessionState, setSessionState] = useState<'loading' | 'ready' | 'error'>('loading');
     const [sessionUser, setSessionUser] = useState<UserType & { isLoggedIn: boolean; activeRole: string; initials: string; avatar: string; } | null>(null);
 
@@ -119,6 +118,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     // This is the core session initialization and redirection logic.
     useEffect(() => {
         const initializeSession = async () => {
+            setSessionState('loading');
             const [permissionResult, orgData] = await Promise.all([
                 performPermissionCheck(),
                 getCurrentOrganization()
@@ -137,56 +137,61 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
             if (!storedUserId) {
                 setSessionUser(guestUser);
-                 if (!isGuestPath && pathname !== '/login' && pathname !== '/register') {
+                setSessionState('ready');
+                 if (!isGuestPath) {
                     router.push('/');
-                    return; // Return after redirecting
                 }
-            } else {
-                let fetchedUser = await getCurrentUser(storedUserId);
+                return;
+            } 
+            
+            let fetchedUser = await getCurrentUser(storedUserId);
 
-                if (fetchedUser) {
-                    const savedRole = localStorage.getItem('activeRole');
-                    const activeRole = (savedRole && fetchedUser.roles.includes(savedRole as any)) ? savedRole : fetchedUser.roles[0];
-                    
-                    if (localStorage.getItem('activeRole') !== activeRole) {
-                        localStorage.setItem('activeRole', activeRole);
-                    }
-                    
-                    const userData = {
-                        ...fetchedUser,
-                        isLoggedIn: true,
-                        activeRole: activeRole,
-                        initials: fetchedUser.name.split(' ').map(n => n[0]).join('').substring(0,2).toUpperCase(),
-                        avatar: `https://placehold.co/100x100.png?text=${fetchedUser.name.split(' ').map(n => n[0]).join('').substring(0,2).toUpperCase()}`
-                    };
-                    setSessionUser(userData);
-                    
-                    // --- REDIRECTION LOGIC ---
-                    if (isGuestPath) {
-                        router.push('/home');
-                        return; // Stop further execution
-                    }
-                    
-                    if (pathname === '/home') {
-                        const shouldShowRoleSwitcher = localStorage.getItem('showRoleSwitcher') === 'true';
-                        if (shouldShowRoleSwitcher && fetchedUser.roles.length > 1) {
-                            setIsRoleSwitcherOpen(true);
-                            localStorage.removeItem('showRoleSwitcher'); 
-                        } else {
-                            switch (activeRole) {
-                                case 'Donor': router.push('/donor'); break;
-                                case 'Beneficiary': router.push('/beneficiary'); break;
-                                case 'Referral': router.push('/referral'); break;
-                                case 'Admin': case 'Super Admin': case 'Finance Admin':
-                                    router.push('/admin'); break;
-                                default: router.push('/'); break;
-                            }
-                        }
-                    }
+            if (!fetchedUser) {
+                // If user ID is in storage but user not found in DB, it's a stale session.
+                console.log("Stale session found. Logging out.");
+                handleLogout(true); // This will reload the page as a guest.
+                return;
+            }
+
+            const savedRole = localStorage.getItem('activeRole');
+            const activeRole = (savedRole && fetchedUser.roles.includes(savedRole as any)) ? savedRole : fetchedUser.roles[0];
+            
+            if (localStorage.getItem('activeRole') !== activeRole) {
+                localStorage.setItem('activeRole', activeRole);
+            }
+            
+            const userData = {
+                ...fetchedUser,
+                isLoggedIn: true,
+                activeRole: activeRole,
+                initials: fetchedUser.name.split(' ').map(n => n[0]).join('').substring(0,2).toUpperCase(),
+                avatar: `https://placehold.co/100x100.png?text=${fetchedUser.name.split(' ').map(n => n[0]).join('').substring(0,2).toUpperCase()}`
+            };
+            setSessionUser(userData);
+            
+            // --- REDIRECTION LOGIC ---
+            if (isGuestPath) {
+                router.push('/home');
+                return;
+            }
+            
+            if (pathname === '/home') {
+                const shouldShowRoleSwitcher = localStorage.getItem('showRoleSwitcher') === 'true';
+                if (shouldShowRoleSwitcher && fetchedUser.roles.length > 1) {
+                    setIsRoleSwitcherOpen(true);
+                    localStorage.removeItem('showRoleSwitcher'); 
                 } else {
-                    handleLogout(false);
+                    switch (activeRole) {
+                        case 'Donor': router.push('/donor'); break;
+                        case 'Beneficiary': router.push('/beneficiary'); break;
+                        case 'Referral': router.push('/referral'); break;
+                        case 'Admin': case 'Super Admin': case 'Finance Admin':
+                            router.push('/admin'); break;
+                        default: router.push('/'); break;
+                    }
                 }
             }
+            
             setSessionState('ready');
         };
 
@@ -197,7 +202,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     useEffect(() => {
         if (sessionUser?.isLoggedIn && sessionUser.roles.some(r => ['Admin', 'Super Admin', 'Finance Admin'].includes(r))) {
             const fetchNotifications = async () => {
-                // Call server action instead of directly importing server-only functions
                 const { pendingLeads, readyToPublishLeads, pendingDonations } = await getAdminNotificationData();
                 setPendingLeads(pendingLeads);
                 setReadyToPublishLeads(readyToPublishLeads);
@@ -341,7 +345,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                                 <DropdownMenu>
                                     <DropdownMenuTrigger asChild>
                                         <Button variant="ghost" size="icon" className="relative">
-                                            <HandCoins className="h-5 w-5 text-green-600" />
+                                            <HandHeart className="h-5 w-5 text-green-600" />
                                             {donationsNotificationCount > 0 && (
                                                 <span className="absolute top-0 right-0 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-red-100 transform translate-x-1/2 -translate-y-1/2 bg-red-600 rounded-full">
                                                     {donationsNotificationCount}
@@ -372,7 +376,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                                 <DropdownMenu>
                                     <DropdownMenuTrigger asChild>
                                         <Button variant="ghost" size="icon" className="relative">
-                                            <FileUp className="h-5 w-5 text-blue-600" />
+                                            <FileText className="h-5 w-5 text-blue-600" />
                                             {leadsNotificationCount > 0 && (
                                                 <span className="absolute top-0 right-0 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-red-100 transform translate-x-1/2 -translate-y-1/2 bg-red-600 rounded-full">
                                                     {leadsNotificationCount}

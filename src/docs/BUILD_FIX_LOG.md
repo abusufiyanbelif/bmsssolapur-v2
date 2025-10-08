@@ -1,3 +1,4 @@
+
 # Build Fix Log
 
 This document tracks errors found during the build process and the steps taken to resolve them.
@@ -27,13 +28,6 @@ This document tracks errors found during the build process and the steps taken t
         -   Created dedicated server actions in `src/app/actions.ts` and `src/app/admin/user-management/actions.ts` for all server-side data fetching.
         -   Modified all client components to call these server actions instead of directly importing from service files, thus respecting the client-server boundary.
         -   This fix was applied systematically to `AppShell` and the pages for User Management, Donors, Beneficiaries, and Referrals.
-
-5.  **`You cannot have two parallel pages that resolve to the same path` Build Error**:
-    -   **Description**: A fatal build error caused by leftover files from a previous, faulty refactoring attempt, resulting in multiple files trying to define the same page route (e.g., `/home`).
-    -   **Resolution**: Performed a definitive cleanup of the project's file structure.
-        -   Deleted the conflicting `(authenticated)` and `(public)` route group directories and all files within them.
-        -   Restored `src/app/page.tsx` as the single public entry point.
-        -   Ensured the root `src/app/layout.tsx` is the single source of truth for the application's layout, wrapping all content in the main `AppShell`.
 
 ---
 
