@@ -403,7 +403,7 @@ export const TopDonorsCard = ({ allDonations = [] }: { allDonations: Donation[] 
 };
 
 
-export const RecentCampaignsCard = ({ allCampaigns = [], allLeads = [] }: { allCampaigns: Campaign[], allLeads: Lead[] }) => {
+export const RecentCampaignsCard = ({ allCampaigns = [], allLeads = [] }: { allCampaigns: (Campaign & { raisedAmount?: number, fundingProgress?: number })[], allLeads: Lead[] }) => {
     
      const campaignStatusColors: Record<string, string> = {
         "Active": "bg-blue-500/20 text-blue-700 border-blue-500/30",
@@ -428,8 +428,7 @@ export const RecentCampaignsCard = ({ allCampaigns = [], allLeads = [] }: { allC
             {allCampaigns.length > 0 ? (
                 <div className="space-y-4">
                     {allCampaigns.slice(0, 3).map((campaign) => {
-                        const linkedLeads = allLeads.filter(lead => lead.campaignId === campaign.id);
-                        const raisedAmount = linkedLeads.reduce((sum, lead) => sum + lead.helpGiven, 0);
+                        const raisedAmount = campaign.collectedAmount || 0;
                         const progress = campaign.goal > 0 ? (raisedAmount / campaign.goal) * 100 : 0;
                         const isOverfunded = progress > 100;
                         const isUnfunded = raisedAmount === 0 && campaign.status === 'Active';
@@ -829,5 +828,3 @@ export const ReferralSummaryCard = ({ allUsers, allLeads, currentUser }: { allUs
         </Card>
     )
 }
-
-    

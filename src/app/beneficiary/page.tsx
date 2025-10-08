@@ -1,10 +1,11 @@
+
 'use client';
 
 import { Suspense, useEffect, useState } from "react";
+import { BeneficiaryDashboardContent } from './beneficiary-dashboard-content';
 import { Loader2, AlertCircle } from "lucide-react";
 import { getUser, User } from "@/services/user-service";
 import type { Lead, Quote, AppSettings } from "@/services/types";
-import { BeneficiaryDashboardContent } from './beneficiary-dashboard-content';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { getAppSettings } from "@/services/app-settings-service";
 import { getLeadsByBeneficiaryId } from "@/services/lead-service";

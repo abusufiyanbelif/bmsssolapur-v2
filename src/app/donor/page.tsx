@@ -1,3 +1,4 @@
+
 // src/app/donor/page.tsx
 'use client';
 
@@ -8,7 +9,7 @@ import { getUser, User } from "@/services/user-service";
 import { getDonationsByUserId, getAllDonations } from "@/services/donation-service";
 import { getAllLeads } from "@/services/lead-service";
 import { getAppSettings } from "@/app/admin/settings/actions";
-import { getAllCampaigns } from "@/services/campaign-service";
+import { getAllPublicCampaigns } from "@/app/home/actions";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { getQuotes } from "@/app/home/actions";
 import type { AppSettings, Donation, Lead, Campaign, Quote } from "@/services/types";
@@ -46,7 +47,7 @@ function DonorPageLoader({ userId }: { userId: string | null }) {
                     getDonationsByUserId(userId),
                     getAllLeads(),
                     getAllDonations(),
-                    getAllCampaigns(),
+                    getAllPublicCampaigns(), // Use public campaigns
                     getQuotes(3),
                     getAppSettings(),
                 ]);
@@ -58,7 +59,7 @@ function DonorPageLoader({ userId }: { userId: string | null }) {
                     setDonations(userDonations);
                     setAllLeads(fetchedAllLeads);
                     setAllDonations(fetchedAllDonations);
-                    setAllCampaigns(fetchedAllCampaigns);
+                    setAllCampaigns(fetchedAllCampaigns as Campaign[]);
                     setQuotes(fetchedQuotes);
                     setSettings(fetchedSettings);
                 }
