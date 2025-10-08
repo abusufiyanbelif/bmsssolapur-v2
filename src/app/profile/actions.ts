@@ -39,6 +39,14 @@ export async function handleUpdateProfile(
        updates.name = `${data.firstName || ''} ${data.middleName || ''} ${data.lastName || ''}`.replace(/\s+/g, ' ').trim();
     }
     
+    // Ensure arrays are handled correctly
+    if (data.upiIds) {
+      updates.upiIds = Array.isArray(data.upiIds) ? data.upiIds : [];
+    }
+    if (data.upiPhoneNumbers) {
+      updates.upiPhoneNumbers = Array.isArray(data.upiPhoneNumbers) ? data.upiPhoneNumbers : [];
+    }
+    
     await updateUser(userId, updates);
     
     revalidatePath("/profile");
@@ -54,3 +62,4 @@ export async function handleUpdateProfile(
     };
   }
 }
+

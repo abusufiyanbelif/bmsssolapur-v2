@@ -1,3 +1,4 @@
+
 // src/app/profile/settings/page.tsx
 'use client';
 
@@ -131,7 +132,6 @@ export default function ProfileSettingsPage() {
             ...values,
             upiIds: values.upiIds?.map(item => item.value).filter(Boolean),
             upiPhoneNumbers: values.upiPhoneNumbers?.map(item => item.value).filter(Boolean),
-            enableMonthlyDonationReminder: user.enableMonthlyDonationReminder || false,
         };
         const result = await handleUpdateProfile(user.id, updatePayload as any);
         
@@ -291,3 +291,4 @@ export default function ProfileSettingsPage() {
         </Form>
     );
 }
+
