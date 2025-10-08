@@ -66,27 +66,12 @@ function CampaignsPageContent({ initialCampaigns, initialLeads, error: initialEr
 
 
     const fetchData = async () => {
-        try {
-            setLoading(true);
-            const { getAllCampaigns } = await import('@/services/campaign-service');
-            const { getAllLeads } = await import('@/services/lead-service');
-            const [fetchedCampaigns, fetchedLeads] = await Promise.all([
-                getAllCampaigns(),
-                getAllLeads()
-            ]);
-            setCampaigns(fetchedCampaigns);
-            setLeads(fetchedLeads);
-            setError(null);
-        } catch (e) {
-            setError("Failed to fetch campaign data. Please try again later.");
-            console.error(e);
-        } finally {
-            setLoading(false);
-        }
+        setLoading(true);
+        // This is the simplest and most robust way to ensure we get fresh server-side data
+        window.location.reload();
     };
     
     useEffect(() => {
-        // Data is passed as props, so no initial fetch needed
         setLoading(false);
     }, []);
 

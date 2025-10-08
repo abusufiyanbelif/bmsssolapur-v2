@@ -110,47 +110,14 @@ export function DonationsPageClient({ initialDonations, initialUsers, initialLea
     const router = useRouter();
 
     const fetchData = async () => {
-        try {
-            setLoading(true);
-            setError(null);
-            const { getAllDonations } = await import('@/services/donation-service');
-            const { getAllUsers } = await import('@/services/user-service');
-            const { getAllLeads } = await import('@/services/lead-service');
-            const { getAllCampaigns } = await import('@/services/campaign-service');
-            
-            const [fetchedDonations, fetchedUsers, fetchedLeads, fetchedCampaigns] = await Promise.all([
-                getAllDonations(),
-                getAllUsers(),
-                getAllLeads(),
-                getAllCampaigns(),
-            ]);
-
-            if (fetchedDonations) setDonations(fetchedDonations);
-            else setError("Failed to load donations.");
-            
-            if (fetchedUsers) setAllUsers(fetchedUsers);
-            else setError(prev => prev ? `${prev} Failed to load users.` : "Failed to load users.");
-
-            if (fetchedLeads) setAllLeads(fetchedLeads);
-             else setError(prev => prev ? `${prev} Failed to load leads.` : "Failed to load leads.");
-
-            if (fetchedCampaigns) setAllCampaigns(fetchedCampaigns);
-             else setError(prev => prev ? `${prev} Failed to load campaigns.` : "Failed to load campaigns.");
-
-        } catch (e) {
-            const errorMessage = e instanceof Error ? e.message : "An unknown error occurred.";
-            setError(`Failed to fetch data for Donations page: ${errorMessage}`);
-            console.error(e);
-        } finally {
-            setLoading(false);
-        }
+        // This function will now be used for manual refresh.
+        window.location.reload();
     };
 
 
     useEffect(() => {
         const storedAdminId = localStorage.getItem('userId');
         setAdminUserId(storedAdminId);
-        // Initial data is passed as props, so we don't need an initial fetch unless those are empty
         setLoading(false);
     }, []);
 
@@ -580,7 +547,7 @@ export function DonationsPageClient({ initialDonations, initialUsers, initialLea
                                                     </DropdownMenuItem>
                                                 ))}
                                             </DropdownMenuContent>
-                                        </DropdownMenu>
+                                         </DropdownMenu>
                                     </div>
                                     <CardDescription>
                                         <span className="flex items-center gap-2">

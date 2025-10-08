@@ -108,18 +108,7 @@ function BeneficiariesPageContent({ initialBeneficiaries, error: initialError }:
     };
     
     const fetchUsers = async () => {
-        try {
-            setLoading(true);
-            const allUsers = await getAllUsersAction();
-            const beneficiaryUsers = allUsers.filter(u => u.roles.includes('Beneficiary'));
-            setBeneficiaries(beneficiaryUsers);
-            setError(null);
-        } catch (e) {
-            setError("Failed to fetch beneficiaries. Please try again later.");
-            console.error(e);
-        } finally {
-            setLoading(false);
-        }
+        window.location.reload();
     };
 
 
@@ -621,5 +610,3 @@ function BeneficiariesPageContent({ initialBeneficiaries, error: initialError }:
     </div>
   )
 }
-
-    

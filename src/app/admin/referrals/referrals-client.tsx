@@ -75,18 +75,7 @@ function ReferralsPageContent({ initialReferrals, error: initialError }: { initi
     };
     
     const fetchUsers = async () => {
-        try {
-            setLoading(true);
-            const allUsers = await getAllUsersAction();
-            const referralUsers = allUsers.filter(u => u.roles.includes('Referral'));
-            setReferrals(referralUsers);
-            setError(null);
-        } catch (e) {
-            setError("Failed to fetch referrals. Please try again later.");
-            console.error(e);
-        } finally {
-            setLoading(false);
-        }
+        window.location.reload();
     };
 
 
@@ -433,7 +422,7 @@ function ReferralsPageContent({ initialReferrals, error: initialError }: { initi
 
         return (
             <>
-                 {selectedUsers.length > 0 && (
+                 {selectedUsers.length > 0 && currentUserId && (
                     <div className="flex items-center gap-4 mb-4 p-4 border rounded-lg bg-muted/50">
                         <p className="text-sm font-medium">
                             {selectedUsers.length} item(s) selected.
@@ -441,7 +430,7 @@ function ReferralsPageContent({ initialReferrals, error: initialError }: { initi
                          <DeleteConfirmationDialog
                             itemType={`${selectedUsers.length} user(s)`}
                             itemName="the selected items"
-                            onDelete={() => handleBulkDeleteUsers(selectedUsers)}
+                            onDelete={() => handleBulkDeleteUsers(selectedUsers, currentUserId)}
                             onSuccess={onBulkUsersDeleted}
                         >
                             <Button variant="destructive">
@@ -515,5 +504,3 @@ function ReferralsPageContent({ initialReferrals, error: initialError }: { initi
     </div>
   )
 }
-
-    

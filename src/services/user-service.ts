@@ -159,6 +159,28 @@ export const getUserByUpiId = async (upiId: string): Promise<User | null> => {
 // For completeness, here is the rest of the file with minor consistency adjustments.
 
 /**
+ * Generates the next available sequential user key (e.g., USR01, USR02).
+ * @returns The next user key string.
+ */
+export async function generateNextUserKey(): Promise<string> {
+    const adminDb = getAdminDb();
+    const q = adminDb.collection(USERS_COLLECTION).orderBy("userKey", "desc").limit(1);
+    const snapshot = await q.get();
+    let lastNumber = 0;
+    if (!snapshot.empty) {
+        const lastUser = snapshot.docs[0].data() as User;
+        if (lastUser.userKey && lastUser.userKey.startsWith('USR')) {
+            const numberPart = lastUser.userKey.substring(3);
+            if (!isNaN(parseInt(numberPart))) {
+                lastNumber = parseInt(numberPart, 10);
+            }
+        }
+    }
+    const nextNumber = lastNumber + 1;
+    return `USR${nextNumber.toString().padStart(2, '0')}`;
+}
+
+/**
  * Generates the next available sequential ID for a given anonymous role prefix.
  * e.g., if the highest DONOR ID is DONOR05, it will return DONOR06.
  * @param prefix The prefix for the ID (e.g., "DONOR", "BENFCRY").
@@ -191,7 +213,6 @@ const generateNextAnonymousId = async (prefix: string, field: keyof User): Promi
 // Function to create or update a user
 export const createUser = async (userData: Partial<Omit<User, 'id' | 'createdAt' | 'updatedAt'>>): Promise<User> => {
   const adminDb = getAdminDb();
-  const userRef = adminDb.collection(USERS_COLLECTION).doc(); // Generate ID upfront
   
   try {
     const standardizedPhone = userData.phone?.replace(/\D/g, '').slice(-10) || '';
@@ -211,11 +232,7 @@ export const createUser = async (userData: Partial<Omit<User, 'id' | 'createdAt'
     }
     
     const finalUserId = userData.userId || `${userData.firstName?.toLowerCase() || 'user'}.${userData.lastName?.toLowerCase() || Date.now()}`.replace(/\s+/g, '');
-
-    const usersCollection = adminDb.collection(USERS_COLLECTION);
-    const countSnapshot = await getCountFromServer(usersCollection);
-    const userNumber = countSnapshot.data().count + 1;
-    const userKey = `USR${userNumber.toString().padStart(2, '0')}`;
+    const userKey = await generateNextUserKey();
 
     const assignedRoles = getUnique(userData.roles || ['Donor']);
     let anonymousDonorId: string | undefined;
@@ -228,6 +245,7 @@ export const createUser = async (userData: Partial<Omit<User, 'id' | 'createdAt'
         anonymousBeneficiaryId = await generateNextAnonymousId('BENFCRY', 'anonymousBeneficiaryId');
     }
     
+    const userRef = adminDb.collection(USERS_COLLECTION).doc(); // Generate ID upfront
     const newUser: Omit<User, 'id'> = {
         userKey: userKey,
         name: userData.name || `${userData.firstName || ''} ${userData.middleName || ''} ${userData.lastName || ''}`.replace(/\s+/g, ' ').trim(),
@@ -268,8 +286,8 @@ export const createUser = async (userData: Partial<Omit<User, 'id' | 'createdAt'
         groups: userData.groups || [],
         referredByUserId: userData.referredByUserId,
         referredByUserName: userData.referredByUserName,
-        createdAt: new Date(),
-        updatedAt: new Date(),
+        createdAt: Timestamp.now() as any,
+        updatedAt: Timestamp.now() as any,
         source: userData.source || 'Manual Entry',
     };
     
@@ -470,7 +488,7 @@ export const deleteUser = async (id: string, adminUser: User, isBulkOperation: b
                 batch.update(donationDoc.ref, { 
                     donorId: anonymousDonor!.id,
                     donorName: anonymousDonor!.name,
-                    notes: arrayUnion(`Original donor (${userToDelete.name}, ID: ${id}) deleted by ${adminUser.name}.`)
+                    notes: FieldValue.arrayUnion(`Original donor (${userToDelete.name}, ID: ${id}) deleted by ${adminUser.name}.`)
                 });
             });
         }
@@ -512,9 +530,15 @@ export const getAllUsers = async (): Promise<User[]> => {
         });
         return users;
     } catch (error) {
-        console.error("Error getting all users: ", error);
+        if (error instanceof Error && (error.message.includes('Could not load the default credentials') || error.message.includes('Could not refresh access token'))) {
+            console.error("Critical Firestore permission error in getAllUsers. Check server environment setup.", error);
+            // Re-throwing a more specific error for the server action to catch.
+            throw new Error('permission-denied');
+        }
         if (error instanceof Error && error.message.includes('index')) {
              console.error("Firestore index missing. Please create a descending index on 'createdAt' for the 'users' collection.");
+        } else {
+             console.error("Error getting all users: ", error);
         }
         return [];
     }

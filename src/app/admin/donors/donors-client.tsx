@@ -87,18 +87,7 @@ function DonorsPageContent({ initialDonors, error: initialError }: { initialDono
     };
     
     const fetchUsers = async () => {
-        try {
-            setLoading(true);
-            const allUsers = await getAllUsersAction();
-            const donorUsers = allUsers.filter(u => u.roles.includes('Donor'));
-            setDonors(donorUsers);
-            setError(null);
-        } catch (e) {
-            setError("Failed to fetch donors. Please try again later.");
-            console.error(e);
-        } finally {
-            setLoading(false);
-        }
+        window.location.reload();
     };
 
 
@@ -559,5 +548,3 @@ function DonorsPageContent({ initialDonors, error: initialError }: { initialDono
     </div>
   )
 }
-
-    

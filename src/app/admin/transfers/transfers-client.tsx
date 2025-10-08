@@ -30,7 +30,6 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { DeleteConfirmationDialog } from "@/components/delete-confirmation-dialog";
 import { handleBulkDeleteTransfers } from "./actions";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { getAllLeads, Lead } from "@/services/lead-service";
 
 
 export interface EnrichedTransfer extends FundTransfer {
@@ -69,41 +68,11 @@ export function AllTransfersPageClient({ initialTransfers, error: initialError }
     const [itemsPerPage, setItemsPerPage] = useState(10);
 
     const fetchData = async () => {
-        try {
-            setLoading(true);
-            const fetchedLeads = await getAllLeads();
-            const transfers: EnrichedTransfer[] = [];
-            
-            fetchedLeads.forEach(lead => {
-                if (lead.fundTransfers && lead.fundTransfers.length > 0) {
-                    lead.fundTransfers.forEach((transfer, index) => {
-                        transfers.push({
-                            ...transfer,
-                            leadId: lead.id!,
-                            leadName: lead.name,
-                            beneficiaryId: lead.beneficiaryId,
-                            uniqueId: `${lead.id!}_${index}` // Create a unique key for selection
-                        });
-                    });
-                }
-            });
-            
-            setAllTransfers(transfers);
-            setError(null);
-        } catch (e) {
-            setError("Failed to fetch transfer data. Please try again later.");
-            console.error(e);
-        } finally {
-            setLoading(false);
-        }
+       window.location.reload();
     };
 
     useEffect(() => {
-        if(initialTransfers.length === 0 && !initialError) {
-            fetchData();
-        } else {
-            setLoading(false);
-        }
+        setLoading(false);
     }, [initialTransfers, initialError]);
 
     const onBulkDeleteSuccess = () => {
@@ -414,7 +383,7 @@ export function AllTransfersPageClient({ initialTransfers, error: initialError }
         return (
             <>
                 {selectedTransfers.length > 0 && (
-                    <div className="flex items-center gap-4 mb-4 p-4 border rounded-lg bg-muted/50">
+                     <div className="flex items-center gap-4 mb-4 p-4 border rounded-lg bg-muted/50">
                          <p className="text-sm font-medium">
                             {selectedTransfers.length} item(s) selected.
                         </p>
