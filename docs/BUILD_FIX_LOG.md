@@ -4,6 +4,39 @@ This document tracks errors found during the build process and the steps taken t
 
 ---
 
+## Build Pass 3 (Latest)
+
+### Errors Found:
+
+1.  **`auth/network-request-failed` on `localhost`**:
+    -   **Description**: A runtime Firebase authentication error occurred because Firebase's security features could not verify the `localhost` domain during development.
+    -   **Resolution**: Added `(auth.settings as any).appVerificationDisabledForTesting = true;` to `src/services/firebase.ts`. This is a standard Firebase SDK feature for local development that disables domain verification, resolving the network failure.
+
+2.  **Incorrect Login Redirection (`/` instead of `/home` -> `/admin`)**:
+    -   **Description**: After a successful login, users were being incorrectly redirected to the public homepage (`/`) instead of their role-specific dashboard. This was caused by a race condition in the `AppShell` where redirection logic was firing before the user's session was fully resolved.
+    -   **Resolution**: Re-architected the `AppShell` to use a robust state management system (`'loading' | 'ready' | 'error'`). The shell now *always* waits for the session to be fully resolved before rendering any page content or performing any redirects, which completely eliminates the race condition.
+
+3.  **Critical Login Failure for Non-Admin Users**:
+    -   **Description**: Only the hardcoded `admin` user could log in successfully. Any other valid user (e.g., `abusufiyan.belif`) would be redirected to the homepage as if they were a guest.
+    -   **Root Cause**: The data-fetching functions in `user-service.ts` (like `getUserByUserId`) were critically flawed and could not find any user in the database except for the hardcoded `admin` case.
+    -   **Resolution**: Rewrote `getUserByUserId`, `getUserByEmail`, and `getUserByPhone` to use the correct server-side Firebase Admin SDK queries, ensuring any valid user can be found in the database. Also corrected the password check logic in `login/actions.ts` to work for all users.
+
+4.  **`Module not found: Can't resolve 'net'` Build Error**:
+    -   **Description**: A persistent build error caused by client components (`AppShell`, `user-management-client.tsx`, etc.) illegally importing server-only modules like `firebase-admin`.
+    -   **Resolution**: Performed a full-system audit and refactor.
+        -   Created dedicated server actions in `src/app/actions.ts` and `src/app/admin/user-management/actions.ts` for all server-side data fetching.
+        -   Modified all client components to call these server actions instead of directly importing from service files, thus respecting the client-server boundary.
+        -   This fix was applied systematically to `AppShell` and the pages for User Management, Donors, Beneficiaries, and Referrals.
+
+5.  **`You cannot have two parallel pages that resolve to the same path` Build Error**:
+    -   **Description**: A fatal build error caused by leftover files from a previous, faulty refactoring attempt, resulting in multiple files trying to define the same page route (e.g., `/home`).
+    -   **Resolution**: Performed a definitive cleanup of the project's file structure.
+        -   Deleted the conflicting `(authenticated)` and `(public)` route group directories and all files within them.
+        -   Restored `src/app/page.tsx` as the single public entry point.
+        -   Ensured the root `src/app/layout.tsx` is the single source of truth for the application's layout, wrapping all content in the main `AppShell`.
+
+---
+
 ## Build Pass 2 (2025-10-01)
 
 ### Errors Found:
