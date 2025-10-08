@@ -23,7 +23,7 @@ import { Nav } from "../app/nav";
 import type { User as UserType, Lead as LeadType, Donation as DonationType, Organization } from "@/services/types";
 import { formatDistanceToNow } from "date-fns";
 import { Logo } from "./logo";
-import { AppSettings, getCurrentOrganization } from "@/app/admin/settings/actions";
+import { getAppSettings, getCurrentOrganization } from "@/app/admin/settings/actions";
 import { Alert, AlertDescription, AlertTitle } from "./ui/alert";
 import { Card, CardHeader, CardContent, CardTitle, CardDescription } from "@/components/ui/card";
 import { performPermissionCheck, getCurrentUser, getAdminNotificationData } from "@/app/actions";

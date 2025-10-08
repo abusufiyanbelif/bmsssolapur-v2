@@ -87,8 +87,8 @@ export const getUserByUserId = async (userId: string): Promise<User | null> => {
     
     try {
         const adminDb = getAdminDb();
-        const q = query(adminDb.collection(USERS_COLLECTION), where("userId", "==", userId), limit(1));
-        const querySnapshot = await getDocs(q);
+        const q = adminDb.collection(USERS_COLLECTION).where("userId", "==", userId).limit(1);
+        const querySnapshot = await q.get();
         if (!querySnapshot.empty) {
             return convertToUser(querySnapshot.docs[0]);
         }
@@ -101,14 +101,14 @@ export const getUserByUserId = async (userId: string): Promise<User | null> => {
 
 // CORRECTED: Function to get a user by phone number
 export const getUserByPhone = async (phone: string): Promise<User | null> => {
-  const standardizedPhone = phone?.replace(/\D/g, '').slice(-10);
+  const standardizedPhone = phone?.replace(/\D/g, '').slice(-10) || '';
   if (!standardizedPhone || standardizedPhone.length !== 10) return null;
   if (standardizedPhone === '9999999999') return getUser('admin');
 
   try {
     const adminDb = getAdminDb();
-    const q = query(adminDb.collection(USERS_COLLECTION), where("phone", "==", standardizedPhone), limit(1));
-    const querySnapshot = await getDocs(q);
+    const q = adminDb.collection(USERS_COLLECTION).where("phone", "==", standardizedPhone).limit(1);
+    const querySnapshot = await q.get();
     if (!querySnapshot.empty) {
       return convertToUser(querySnapshot.docs[0]);
     }
@@ -126,8 +126,8 @@ export const getUserByEmail = async (email: string): Promise<User | null> => {
 
   try {
     const adminDb = getAdminDb();
-    const q = query(adminDb.collection(USERS_COLLECTION), where("email", "==", email), limit(1));
-    const querySnapshot = await getDocs(q);
+    const q = adminDb.collection(USERS_COLLECTION).where("email", "==", email).limit(1);
+    const querySnapshot = await q.get();
     if (!querySnapshot.empty) {
         return convertToUser(querySnapshot.docs[0]);
     }
@@ -143,8 +143,8 @@ export const getUserByUpiId = async (upiId: string): Promise<User | null> => {
   if (!upiId) return null;
   try {
     const adminDb = getAdminDb();
-    const q = query(adminDb.collection(USERS_COLLECTION), where("upiIds", "array-contains", upiId), limit(1));
-    const querySnapshot = await getDocs(q);
+    const q = adminDb.collection(USERS_COLLECTION).where("upiIds", "array-contains", upiId).limit(1);
+    const querySnapshot = await q.get();
     if (!querySnapshot.empty) {
       return convertToUser(querySnapshot.docs[0]);
     }
@@ -167,15 +167,13 @@ export const getUserByUpiId = async (upiId: string): Promise<User | null> => {
  */
 const generateNextAnonymousId = async (prefix: string, field: keyof User): Promise<string> => {
     const adminDb = getAdminDb();
-    const q = query(
-        adminDb.collection(USERS_COLLECTION),
-        where(field, '>=', prefix),
-        where(field, '<', prefix + 'Z'), // A trick to query for strings starting with the prefix
-        orderBy(field, 'desc'),
-        limit(1)
-    );
+    const q = adminDb.collection(USERS_COLLECTION)
+        .where(field, '>=', prefix)
+        .where(field, '<', prefix + 'Z') // A trick to query for strings starting with the prefix
+        .orderBy(field, 'desc')
+        .limit(1);
 
-    const querySnapshot = await getDocs(q);
+    const querySnapshot = await q.get();
     let lastNumber = 0;
     if (!querySnapshot.empty) {
         const lastUser = querySnapshot.docs[0].data() as User;
@@ -300,8 +298,8 @@ export const getUserByFullName = async (name: string): Promise<User | null> => {
 
     try {
         const adminDb = getAdminDb();
-        const q = query(adminDb.collection(USERS_COLLECTION), where("name", "==", name), limit(1));
-        const snapshot = await getDocs(q);
+        const q = adminDb.collection(USERS_COLLECTION).where("name", "==", name).limit(1);
+        const snapshot = await q.get();
         if (!snapshot.empty) {
             return convertToUser(snapshot.docs[0]);
         }
@@ -320,8 +318,8 @@ export const getUserByUserKey = async (userKey: string): Promise<User | null> =>
 
     try {
         const adminDb = getAdminDb();
-        const q = query(adminDb.collection(USERS_COLLECTION), where("userKey", "==", userKey), limit(1));
-        const snapshot = await getDocs(q);
+        const q = adminDb.collection(USERS_COLLECTION).where("userKey", "==", userKey).limit(1);
+        const snapshot = await q.get();
         if (!snapshot.empty) {
             return convertToUser(snapshot.docs[0]);
         }
@@ -339,8 +337,8 @@ export const getUserByBankAccountNumber = async (accountNumber: string): Promise
   }
   try {
     const adminDb = getAdminDb();
-    const q = query(adminDb.collection(USERS_COLLECTION), where("bankAccountNumber", "==", accountNumber), limit(1));
-    const querySnapshot = await getDocs(q);
+    const q = adminDb.collection(USERS_COLLECTION).where("bankAccountNumber", "==", accountNumber).limit(1);
+    const querySnapshot = await q.get();
     if (!querySnapshot.empty) {
       return convertToUser(querySnapshot.docs[0]);
     }
@@ -356,8 +354,8 @@ export const getUserByPan = async (pan: string): Promise<User | null> => {
   if (!pan) return null;
   try {
     const adminDb = getAdminDb();
-    const q = query(adminDb.collection(USERS_COLLECTION), where("panNumber", "==", pan.toUpperCase()), limit(1));
-    const snapshot = await getDocs(q);
+    const q = adminDb.collection(USERS_COLLECTION).where("panNumber", "==", pan.toUpperCase()).limit(1);
+    const snapshot = await q.get();
     if (!snapshot.empty) {
         return convertToUser(snapshot.docs[0]);
     }
@@ -373,8 +371,8 @@ export const getUserByAadhaar = async (aadhaar: string): Promise<User | null> =>
   if (!aadhaar) return null;
   try {
     const adminDb = getAdminDb();
-    const q = query(adminDb.collection(USERS_COLLECTION), where("aadhaarNumber", "==", aadhaar), limit(1));
-    const snapshot = await getDocs(q);
+    const q = adminDb.collection(USERS_COLLECTION).where("aadhaarNumber", "==", aadhaar).limit(1);
+    const snapshot = await q.get();
     if (!snapshot.empty) {
       return convertToUser(snapshot.docs[0]);
     }
@@ -449,7 +447,7 @@ export const deleteUser = async (id: string, adminUser: User, isBulkOperation: b
             throw new Error("The 'Anonymous Donor' system user cannot be deleted.");
         }
         
-        const leadsQuery = query(adminDb.collection('leads'), where("beneficiaryId", "==", id));
+        const leadsQuery = adminDb.collection('leads').where("beneficiaryId", "==", id);
         const leadsSnapshot = await getDocs(leadsQuery);
         if (!leadsSnapshot.empty) {
             const hasFundedLeads = leadsSnapshot.docs.some(doc => doc.data().helpGiven > 0);
@@ -459,7 +457,7 @@ export const deleteUser = async (id: string, adminUser: User, isBulkOperation: b
         }
         
         // 1. Reassign donations from this user to "Anonymous Donor"
-        const donationsQuery = query(adminDb.collection('donations'), where("donorId", "==", id));
+        const donationsQuery = adminDb.collection('donations').where("donorId", "==", id);
         const donationsSnapshot = await getDocs(donationsQuery);
         
         let anonymousDonor: User | null = null;
@@ -526,10 +524,7 @@ export const getAllUsers = async (): Promise<User[]> => {
 export const getReferredBeneficiaries = async (referrerId: string): Promise<User[]> => {
     try {
         const adminDb = getAdminDb();
-        const q = query(
-            adminDb.collection(USERS_COLLECTION), 
-            where("referredByUserId", "==", referrerId)
-        );
+        const q = adminDb.collection(USERS_COLLECTION).where("referredByUserId", "==", referrerId);
         const querySnapshot = await getDocs(q);
         const users: User[] = [];
         querySnapshot.forEach((doc) => {
