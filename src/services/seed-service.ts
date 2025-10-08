@@ -7,6 +7,7 @@ import { createOrganization, Organization, getCurrentOrganization, OrganizationF
 import { seedInitialQuotes as seedQuotesService } from './quotes-service';
 import { db } from './firebase';
 import { collection, getDocs, query, where, Timestamp, setDoc, doc, writeBatch, orderBy, getCountFromServer, limit, updateDoc, serverTimestamp, getDoc, deleteDoc, arrayUnion } from 'firebase/firestore';
+import * as admin from 'firebase-admin';
 import type { Lead, Verifier, LeadDonationAllocation, Donation, Campaign, FundTransfer, LeadAction, AppSettings } from './types';
 import { createLead, getLead } from './lead-service';
 import { createCampaign, getCampaign } from './campaign-service';
@@ -613,7 +614,7 @@ export const seedPaymentGateways = async (): Promise<SeedResult> => {
       },
       features: {
         onlinePaymentsEnabled: true,
-        directPaymentToBeneficiary: { enabled: false }
+        directPaymentToBeneficiary: {enabled: false}
       }
     };
     await updateAppSettings(updates);
@@ -792,5 +793,56 @@ export const eraseSampleData = async (): Promise<SeedResult> => {
     return {
         message: 'Sample Data Erased',
         details: details,
+    };
+};
+
+export const syncUsersToFirebaseAuth = async (): Promise<SeedResult> => {
+    const allUsers = await getAllUsers();
+    let createdCount = 0;
+    let skippedCount = 0;
+    let errorCount = 0;
+    const details: string[] = [];
+
+    for (const user of allUsers) {
+        if (user.phone && user.id) {
+            try {
+                // Check if user already exists in Auth by phone number
+                await admin.auth().getUserByPhoneNumber(`+91${user.phone}`);
+                skippedCount++;
+                details.push(`User ${user.name} (${user.phone}): Skipped (already exists in Auth)`);
+            } catch (error: any) {
+                if (error.code === 'auth/user-not-found') {
+                    // User does not exist, so we can create them
+                    try {
+                        await admin.auth().createUser({
+                            uid: user.id, // Use Firestore doc ID as Auth UID
+                            phoneNumber: `+91${user.phone}`,
+                            displayName: user.name,
+                            password: user.password,
+                        });
+                        createdCount++;
+                    } catch (creationError: any) {
+                        errorCount++;
+                        details.push(`User ${user.name}: Failed to create in Auth (${creationError.code})`);
+                    }
+                } else {
+                    // Some other error occurred while checking
+                    errorCount++;
+                    details.push(`User ${user.name}: Error checking Auth status (${error.code})`);
+                }
+            }
+        } else {
+            details.push(`User ${user.name}: Skipped (no phone number or ID)`);
+        }
+    }
+
+    return {
+        message: `Firebase Auth Sync Complete`,
+        details: [
+            `Created: ${createdCount}`,
+            `Skipped: ${skippedCount}`,
+            `Errors: ${errorCount}`,
+            ...details.slice(0, 10) // Show first 10 detailed results
+        ]
     };
 };
