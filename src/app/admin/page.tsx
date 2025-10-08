@@ -5,15 +5,16 @@ import { Loader2 } from "lucide-react";
 import { getAllDonations } from "@/services/donation-service";
 import { getAllUsers } from "@/services/user-service";
 import { getAllLeads } from "@/services/lead-service";
-import { getQuotes, getPublicCampaigns } from "@/app/home/actions";
+import { getQuotes } from "@/app/home/actions";
+import { getAllCampaigns } from "@/services/campaign-service";
 
 async function DashboardData() {
-    // Fetch public campaigns instead of all campaigns
+    // Fetch all necessary data on the server
     const [donations, users, leads, campaigns, quotes] = await Promise.all([
         getAllDonations(),
         getAllUsers(),
         getAllLeads(),
-        getPublicCampaigns(),
+        getAllCampaigns(),
         getQuotes(3),
     ]);
 

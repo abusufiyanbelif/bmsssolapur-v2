@@ -1,4 +1,5 @@
 
+
 'use server';
 
 import { getAllDonations } from "@/services/donation-service";
@@ -22,10 +23,11 @@ interface PublicDashboardData {
 
 export async function getPublicDashboardData(): Promise<PublicDashboardData> {
     try {
+        // Fetch all data necessary for public cards
         const [donations, users, leads, campaigns] = await Promise.all([
             getAllDonations(),
             getAllUsers(),
-            getPublicLeads(), // Fetch public leads
+            getAllLeads(), // Use all leads for more accurate stats
             getPublicCampaignsService()
         ]);
         return {
