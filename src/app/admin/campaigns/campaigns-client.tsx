@@ -5,9 +5,9 @@ import { useState, useEffect, useMemo, Suspense } from "react";
 import { useSearchParams } from 'next/navigation'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { getAllCampaigns, type Campaign, type CampaignStatus } from "@/services/campaign-service";
+import { Campaign, type CampaignStatus } from "@/services/campaign-service";
 import { handleBulkDeleteCampaigns } from "./actions";
-import { getAllLeads, Lead } from "@/services/lead-service";
+import { Lead } from "@/services/lead-service";
 import { format } from "date-fns";
 import { Loader2, AlertCircle, PlusCircle, MoreHorizontal, Edit, Trash2, Megaphone, Users, ListChecks, CheckCircle, Check, Share2, Info, TrendingUp, Image as ImageIcon } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -21,7 +21,7 @@ import { Badge } from "@/components/ui/badge";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
-import { getInspirationalQuotes as getQuotes } from "@/ai/flows/get-inspirational-quotes-flow";
+import { getInspirationalQuotes } from "@/ai/flows/get-inspirational-quotes-flow";
 import type { Quote } from "@/services/types";
 import Image from "next/image";
 
@@ -68,6 +68,8 @@ function CampaignsPageContent({ initialCampaigns, initialLeads, error: initialEr
     const fetchData = async () => {
         try {
             setLoading(true);
+            const { getAllCampaigns } = await import('@/services/campaign-service');
+            const { getAllLeads } = await import('@/services/lead-service');
             const [fetchedCampaigns, fetchedLeads] = await Promise.all([
                 getAllCampaigns(),
                 getAllLeads()
@@ -84,12 +86,9 @@ function CampaignsPageContent({ initialCampaigns, initialLeads, error: initialEr
     };
     
     useEffect(() => {
-        if(initialCampaigns.length === 0 && !initialError) {
-            fetchData();
-        } else {
-            setLoading(false);
-        }
-    }, [initialCampaigns, initialError]);
+        // Data is passed as props, so no initial fetch needed
+        setLoading(false);
+    }, []);
 
 
     const campaignsWithStats: CampaignWithStats[] = useMemo(() => {
@@ -139,12 +138,12 @@ function CampaignsPageContent({ initialCampaigns, initialLeads, error: initialEr
     
      const handleShare = async (campaign: CampaignWithStats) => {
         const campaignUrl = `${window.location.origin}/campaigns`;
-        let message = `*Support Our Campaign: ${campaign.name}*\\n\\nWe are raising ₹${campaign.goal.toLocaleString()} to ${campaign.description.toLowerCase()}\\n\\n*Progress:*\\n- Raised: ₹${campaign.raisedAmount.toLocaleString()}\\n- Beneficiaries Helped: ${campaign.beneficiaryCount}\\n\\nPlease contribute and share this message. Every bit helps!\\n\\nView details here:\\n${campaignUrl}`;
+        let message = `*Support Our Campaign: ${campaign.name}*\n\nWe are raising ₹${campaign.goal.toLocaleString()} to ${campaign.description.toLowerCase()}\n\n*Progress:*-\nRaised: ₹${campaign.raisedAmount.toLocaleString()}\n- Beneficiaries Helped: ${campaign.beneficiaryCount}\n\nPlease contribute and share this message. Every bit helps!\n\nView details here:\n${campaignUrl}`;
         
         try {
-            const quotes = await getQuotes(1);
+            const quotes = await getInspirationalQuotes(1);
             if (quotes.length > 0) {
-                const quoteText = `_"${quotes[0].text}"_\\n- ${quotes[0].source}\\n\\n`;
+                const quoteText = `_"${quotes[0].text}"_\n- ${quotes[0].source}\n\n`;
                 message = quoteText + message;
             }
         } catch (e) {
@@ -285,7 +284,7 @@ function CampaignsPageContent({ initialCampaigns, initialLeads, error: initialEr
                                 <Link href={`/admin/campaigns/${campaign.id}/edit`} className="block flex-grow">
                                     <CardHeader className="p-0">
                                         <CardTitle className="text-lg text-primary">{campaign.name}</CardTitle>
-                                        <CardDescription>{format(campaign.startDate, "dd MMM yyyy")} - {format(campaign.endDate, "dd MMM yyyy")}</CardDescription>
+                                        <CardDescription>{format(campaign.startDate as Date, "dd MMM yyyy")} - {format(campaign.endDate as Date, "dd MMM yyyy")}</CardDescription>
                                     </CardHeader>
                                     <CardContent className="space-y-4 flex-grow p-0 pt-4">
                                         <div>

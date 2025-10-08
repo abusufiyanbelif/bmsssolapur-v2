@@ -11,7 +11,7 @@ import type { Lead, Verifier, LeadDonationAllocation, Donation, Campaign, FundTr
 import { createLead, getLead } from './lead-service';
 import { createCampaign, getCampaign } from './campaign-service';
 import { createDonation } from './donation-service';
-import { updateAppSettings } from './app-settings-service';
+import { updateAppSettings, getAppSettings, defaultSettings } from './app-settings-service';
 
 const USERS_COLLECTION = 'users';
 
@@ -466,7 +466,8 @@ const seedRamadan2025ReliefData = async (adminUser: User): Promise<string[]> => 
     await seedUsers(donorsToCreate);
     const donors = await Promise.all(donorsToCreate.map(d => getUserByPhone(d.phone!)));
 
-    const campaign = await getCampaign("ramadan-2025-zakat-drive");
+    const campaignId = "ramadan-2025-zakat-drive";
+    const campaign = await getCampaign(campaignId);
     if (!campaign) throw new Error("Ramadan 2025 campaign not found.");
 
     const leadData = [
@@ -579,6 +580,16 @@ export const seedOrganizationProfile = async (): Promise<SeedResult> => {
     };
 };
 
+export const seedAppSettings = async (): Promise<SeedResult> => {
+    // This will create or overwrite the settings with the default structure.
+    await updateAppSettings(defaultSettings);
+    return {
+        message: "Application Settings Seeded",
+        details: ["Default settings for login, features, lead configuration, and dashboards have been applied."]
+    };
+};
+
+
 export const seedPaymentGateways = async (): Promise<SeedResult> => {
     const updates: Partial<AppSettings> = {
       paymentGateway: {
@@ -615,11 +626,9 @@ export const seedPaymentGateways = async (): Promise<SeedResult> => {
 export const seedSampleData = async (): Promise<SeedResult> => {
     let details: string[] = [];
 
-    // Ensure core team members exist before using them as verifiers etc.
-    details.push(...await seedUsers(coreTeamUsersToSeed));
-    
+    // The logic inside now relies on this user existing.
     const superAdmin = await getUserByUserId("abusufiyan.belif");
-    if (!superAdmin) throw new Error("Super admin user 'abusufiyan.belif' not found. Please run initial seed first.");
+    if (!superAdmin) throw new Error("Super admin user 'abusufiyan.belif' not found. Please run core team seed first.");
 
     // Seed General Leads
     details.push(...await seedGeneralLeads(superAdmin));

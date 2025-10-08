@@ -1,10 +1,9 @@
-
 // src/app/admin/seed/page.tsx
 'use client';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { CheckCircle, AlertCircle, Database, UserCheck, Quote, Users, HandCoins, RefreshCcw, Building, FileText, Trash2, CreditCard } from "lucide-react";
+import { CheckCircle, AlertCircle, Database, UserCheck, Quote, Users, HandCoins, RefreshCcw, Building, FileText, Trash2, CreditCard, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { Loader2 } from "lucide-react";
@@ -13,7 +12,7 @@ import { useRouter } from "next/navigation";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 
 type SeedStatus = 'idle' | 'loading' | 'success' | 'error';
-type SeedTask = 'initial' | 'coreTeam' | 'organization' | 'paymentGateways' | 'sampleData';
+type SeedTask = 'initial' | 'coreTeam' | 'organization' | 'paymentGateways' | 'sampleData' | 'appSettings';
 type SeedResult = {
     message: string;
     details?: string[];
@@ -25,6 +24,7 @@ export default function SeedPage() {
         initial: 'idle',
         coreTeam: 'idle',
         organization: 'idle',
+        appSettings: 'idle',
         paymentGateways: 'idle',
         sampleData: 'idle'
     });
@@ -32,6 +32,7 @@ export default function SeedPage() {
         initial: 'idle',
         coreTeam: 'idle',
         organization: 'idle',
+        appSettings: 'idle', // No erase for app settings
         paymentGateways: 'idle',
         sampleData: 'idle'
     });
@@ -39,6 +40,7 @@ export default function SeedPage() {
         initial: null,
         coreTeam: null,
         organization: null,
+        appSettings: null,
         paymentGateways: null,
         sampleData: null,
     });
@@ -115,7 +117,7 @@ export default function SeedPage() {
                 <CardHeader>
                     <CardTitle className="text-primary">Seed Initial Data</CardTitle>
                     <CardDescription className="text-muted-foreground">
-                       Use these actions to populate or clear your Firestore database. Run the &quot;Initial Users &amp; Quotes&quot; seed first.
+                       Use these actions to populate or clear your Firestore database. Run these in order from top to bottom for best results.
                     </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-8">
@@ -161,6 +163,23 @@ export default function SeedPage() {
                         <ResultAlert seedStatus={statuses.organization} eraseStatus={eraseStatuses.organization} result={results.organization} />
                     </div>
                     
+                    {/* App Settings */}
+                    <div className="p-4 border rounded-lg space-y-4">
+                        <div className="flex flex-col md:flex-row justify-between md:items-center gap-4">
+                             <div>
+                                <h3 className="font-semibold flex items-center gap-2"><Settings className="h-5 w-5 text-primary" />Application Settings</h3>
+                                <p className="text-sm text-muted-foreground mt-1">Seeds default configurations for lead purposes, user fields, and dashboard visibility. **Run this before creating leads.**</p>
+                             </div>
+                             <div className="flex items-center gap-2">
+                                <Button onClick={() => handleSeed('appSettings')} disabled={statuses.appSettings === 'loading'}>
+                                    {statuses.appSettings === 'loading' && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}
+                                    Seed App Settings
+                                </Button>
+                            </div>
+                        </div>
+                        <ResultAlert seedStatus={statuses.appSettings} eraseStatus={eraseStatuses.appSettings} result={results.appSettings} />
+                    </div>
+
                      {/* Core Team */}
                      <div className="p-4 border rounded-lg space-y-4">
                         <div className="flex flex-col md:flex-row justify-between md:items-center gap-4">

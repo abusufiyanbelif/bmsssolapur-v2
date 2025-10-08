@@ -14,10 +14,10 @@ import {
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
 import { Button, buttonVariants } from "@/components/ui/button";
-import { getAllDonations, type Donation, type DonationStatus, type DonationType, type DonationPurpose, type PaymentMethod } from "@/services/donation-service";
-import { getAllUsers, type User } from "@/services/user-service";
-import { getAllLeads, type Lead } from "@/services/lead-service";
-import { getAllCampaigns, type Campaign } from "@/services/campaign-service";
+import { type Donation, type DonationStatus, type DonationType, type DonationPurpose, type PaymentMethod } from "@/services/donation-service";
+import type { User } from "@/services/user-service";
+import type { Lead } from "@/services/lead-service";
+import type { Campaign } from "@/services/campaign-service";
 import { format } from "date-fns";
 import { Loader2, AlertCircle, PlusCircle, MoreHorizontal, FilterX, ArrowUpDown, ChevronLeft, ChevronRight, Edit, Trash2, Search, EyeOff, Upload, ScanEye, CheckCircle, Link2, Link2Off, ChevronUp, Download, Check, AlertTriangle } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -113,6 +113,11 @@ export function DonationsPageClient({ initialDonations, initialUsers, initialLea
         try {
             setLoading(true);
             setError(null);
+            const { getAllDonations } = await import('@/services/donation-service');
+            const { getAllUsers } = await import('@/services/user-service');
+            const { getAllLeads } = await import('@/services/lead-service');
+            const { getAllCampaigns } = await import('@/services/campaign-service');
+            
             const [fetchedDonations, fetchedUsers, fetchedLeads, fetchedCampaigns] = await Promise.all([
                 getAllDonations(),
                 getAllUsers(),
@@ -146,12 +151,7 @@ export function DonationsPageClient({ initialDonations, initialUsers, initialLea
         const storedAdminId = localStorage.getItem('userId');
         setAdminUserId(storedAdminId);
         // Initial data is passed as props, so we don't need an initial fetch unless those are empty
-        if (initialDonations.length === 0 && !initialError) {
-             fetchData();
-        } else {
-            setLoading(false);
-        }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+        setLoading(false);
     }, []);
 
     const handleSearch = () => {
@@ -511,7 +511,7 @@ export function DonationsPageClient({ initialDonations, initialUsers, initialLea
                                                         <p>{alloc.allocatedByUserName}</p>
                                                     </TableCell>
                                                     <TableCell>
-                                                        <p className="text-xs">{format(alloc.allocatedAt as Date, "dd MMM, p")}</p>
+                                                        <p className="text-xs">{format(alloc.allocatedAt as Date, "dd MMM yyyy, p")}</p>
                                                     </TableCell>
                                                 </TableRow>
                                                 )
@@ -536,7 +536,7 @@ export function DonationsPageClient({ initialDonations, initialUsers, initialLea
                 const isAmountAnomaly = donation.amount < MIN_DONATION_THRESHOLD || donation.amount > MAX_DONATION_THRESHOLD;
                 return (
                     <Card key={donation.id} className={cn("flex flex-col", selectedDonations.includes(donation.id!) && "ring-2 ring-primary")}>
-                         <div className="p-4 flex gap-4">
+                         <div className="p-4 flex gap-4 items-start">
                             <Checkbox className="mt-1.5 flex-shrink-0" checked={selectedDonations.includes(donation.id!)} onCheckedChange={checked => {
                                     setSelectedDonations(prev => checked ? [...prev, donation.id!] : prev.filter(id => id !== donation.id!))
                             }} aria-label="Select card" />

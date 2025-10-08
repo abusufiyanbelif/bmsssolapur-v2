@@ -12,10 +12,11 @@ import {
     eraseOrganizationProfile,
     erasePaymentGateways,
     eraseSampleData,
+    seedAppSettings,
     type SeedResult
 } from "@/services/seed-service";
 
-type SeedTask = 'initial' | 'coreTeam' | 'organization' | 'paymentGateways' | 'sampleData';
+type SeedTask = 'initial' | 'coreTeam' | 'organization' | 'paymentGateways' | 'sampleData' | 'appSettings';
 
 export async function handleSeedAction(task: SeedTask): Promise<{success: boolean; data?: SeedResult; error?: string}> {
     try {
@@ -35,6 +36,9 @@ export async function handleSeedAction(task: SeedTask): Promise<{success: boolea
                 break;
             case 'sampleData':
                 result = await seedSampleData();
+                break;
+            case 'appSettings':
+                result = await seedAppSettings();
                 break;
             default:
                 throw new Error("Invalid seed task provided.");
@@ -67,6 +71,7 @@ export async function handleEraseAction(task: SeedTask): Promise<{success: boole
             case 'sampleData':
                 result = await eraseSampleData();
                 break;
+            // No erase action for app settings as it's a global config
             default:
                 throw new Error("Invalid erase task provided.");
         }
