@@ -14,7 +14,7 @@ import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
 import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
-import { Loader2, AlertCircle, PlusCircle, Trash2, FilterX, ChevronLeft, ChevronRight, MoreHorizontal, Search, UserCheck, UserX, EyeOff, ArrowUpDown, Check, ChevronsUpDown, Edit } from "lucide-react";
+import { Loader2, AlertCircle, PlusCircle, Trash2, FilterX, ChevronLeft, ChevronRight, MoreHorizontal, Search, UserCheck, UserX, ArrowUpDown, Check, Edit } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -23,12 +23,10 @@ import { cn } from "@/lib/utils";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { DeleteConfirmationDialog } from "@/components/delete-confirmation-dialog";
-import { handleDeleteUser, handleToggleUserStatus, handleBulkDeleteUsers, getAllUsersAction } from "./actions";
+import { handleBulkDeleteUsers, getAllUsersAction, handleToggleUserStatus } from "./actions";
 import type { User, UserRole } from "@/services/types";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
-import { Command, CommandInput, CommandList, CommandEmpty, CommandGroup, CommandItem } from "@/components/ui/command";
 import { Checkbox } from "@/components/ui/checkbox";
 
 
@@ -46,12 +44,11 @@ interface UserManagementPageClientProps {
 
 export function UserManagementPageClient({ initialUsers, error: initialError }: UserManagementPageClientProps) {
     const [users, setUsers] = useState<User[]>(initialUsers);
-    const [loading, setLoading] = useState(false);
+    const [loading, setLoading] = useState(false); // Initially false as we have data
     const [error, setError] = useState<string | null>(initialError || null);
     const { toast } = useToast();
     const isMobile = useIsMobile();
     const [currentUserId, setCurrentUserId] = useState<string | null>(null);
-    const [popoverOpen, setPopoverOpen] = useState(false);
     const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
     const [adminUserId, setAdminUserId] = useState<string | null>(null);
 
@@ -59,14 +56,12 @@ export function UserManagementPageClient({ initialUsers, error: initialError }: 
     const [nameInput, setNameInput] = useState('');
     const [roleInput, setRoleInput] = useState<string>('all');
     const [statusInput, setStatusInput] = useState<string>('all');
-    const [anonymityInput, setAnonymityInput] = useState<string>('all');
     
     // Applied filter states
     const [appliedFilters, setAppliedFilters] = useState({
         name: '',
         role: 'all',
         status: 'all',
-        anonymity: 'all',
     });
     
     // Sorting state
@@ -129,7 +124,6 @@ export function UserManagementPageClient({ initialUsers, error: initialError }: 
             name: nameInput,
             role: roleInput,
             status: statusInput,
-            anonymity: anonymityInput,
         });
     };
     
@@ -152,16 +146,12 @@ export function UserManagementPageClient({ initialUsers, error: initialError }: 
                 (user.userId && user.userId.toLowerCase().includes(searchTerm)) ||
                 (user.phone && user.phone.includes(searchTerm)) ||
                 (user.aadhaarNumber && user.aadhaarNumber.includes(searchTerm)) ||
-                (user.panNumber && user.panNumber.toLowerCase().includes(searchTerm)) ||
-                (user.upiIds && user.upiIds.some(id => id.toLowerCase().includes(searchTerm)));
+                (user.panNumber && user.panNumber.toLowerCase().includes(searchTerm));
 
             const roleMatch = appliedFilters.role === 'all' || user.roles.includes(appliedFilters.role as UserRole);
             const statusMatch = appliedFilters.status === 'all' || (appliedFilters.status === 'active' && user.isActive) || (appliedFilters.status === 'inactive' && !user.isActive);
-            const anonymityMatch = appliedFilters.anonymity === 'all' ||
-                (appliedFilters.anonymity === 'anonymous' && (user.isAnonymousAsBeneficiary || user.isAnonymousAsDonor)) ||
-                (appliedFilters.anonymity === 'not-anonymous' && !user.isAnonymousAsBeneficiary && !user.isAnonymousAsDonor);
             
-            return nameMatch && roleMatch && statusMatch && anonymityMatch;
+            return nameMatch && roleMatch && statusMatch;
         });
         
         return filtered.sort((a, b) => {
@@ -171,13 +161,8 @@ export function UserManagementPageClient({ initialUsers, error: initialError }: 
             let comparison = 0;
             if (aValue instanceof Date && bValue instanceof Date) {
                 comparison = aValue.getTime() - bValue.getTime();
-            } else if (typeof aValue === 'number' && typeof bValue === 'number') {
-                comparison = aValue - bValue;
-            }
-             else if (String(aValue) > String(bValue)) {
-                comparison = 1;
-            } else if (String(aValue) < String(bValue)) {
-                comparison = -1;
+            } else if (typeof aValue === 'string' && typeof bValue === 'string') {
+                comparison = aValue.localeCompare(bValue);
             }
 
             return sortDirection === 'asc' ? comparison : -comparison;
@@ -195,8 +180,7 @@ export function UserManagementPageClient({ initialUsers, error: initialError }: 
         setNameInput('');
         setRoleInput('all');
         setStatusInput('all');
-        setAnonymityInput('all');
-        setAppliedFilters({ name: '', role: 'all', status: 'all', anonymity: 'all' });
+        setAppliedFilters({ name: '', role: 'all', status: 'all' });
         setCurrentPage(1);
     };
     
@@ -327,12 +311,6 @@ export function UserManagementPageClient({ initialUsers, error: initialError }: 
                         </TableCell>
                         <TableCell>
                             <div className="font-mono text-xs">{user.userId}</div>
-                            {user.isAnonymousAsBeneficiary && user.anonymousBeneficiaryId && (
-                                <div className="font-mono text-xs text-muted-foreground" title="Anonymous Beneficiary ID">{user.anonymousBeneficiaryId}</div>
-                            )}
-                            {user.isAnonymousAsDonor && user.anonymousDonorId && (
-                                <div className="font-mono text-xs text-muted-foreground" title="Anonymous Donor ID">{user.anonymousDonorId}</div>
-                            )}
                         </TableCell>
                         <TableCell>
                             <div className="flex flex-col">
@@ -597,17 +575,6 @@ export function UserManagementPageClient({ initialUsers, error: initialError }: 
                             </SelectContent>
                         </Select>
                     </div>
-                    <div className="space-y-2">
-                        <Label htmlFor="anonymityFilter">Anonymity</Label>
-                        <Select value={anonymityInput} onValueChange={setAnonymityInput}>
-                            <SelectTrigger id="anonymityFilter">
-                                <SelectValue placeholder="Filter by anonymity" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                {anonymityOptions.map(s => <SelectItem key={s} value={s} className="capitalize">{s.replace('-', ' ')}</SelectItem>)}
-                            </SelectContent>
-                        </Select>
-                    </div>
                     <div className="flex items-end gap-4 lg:col-span-full">
                         <Button onClick={handleSearch} className="w-full">
                            <Search className="mr-2 h-4 w-4" />
@@ -626,5 +593,3 @@ export function UserManagementPageClient({ initialUsers, error: initialError }: 
     </div>
   )
 }
-
-    

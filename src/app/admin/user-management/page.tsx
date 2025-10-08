@@ -2,22 +2,25 @@
 import { Suspense } from "react";
 import { Loader2 } from "lucide-react";
 import { UserManagementPageClient } from "./user-management-client";
-import { getAllUsers } from "@/services/user-service";
-import type { User } from "@/services/types";
+import { getAllUsersAction } from "./actions";
 
+// This is now a Server Component that fetches data
 async function UsersPageDataLoader() {
   try {
-    const allUsers = await getAllUsers();
-    // The getAllUsers function now correctly converts timestamps.
-    return <UserManagementPageClient initialUsers={JSON.parse(JSON.stringify(allUsers))} />;
+    // Fetch data on the server using a server action
+    const allUsers = await getAllUsersAction();
+    // Pass serializable data as props to the Client Component
+    return <UserManagementPageClient initialUsers={allUsers} />;
   } catch (e) {
     const error = e instanceof Error ? e.message : "An unknown error occurred.";
+    // Pass error to the client component to display it
     return <UserManagementPageClient initialUsers={[]} error={error} />;
   }
 }
 
 export default function UserManagementPage() {
     return (
+        // Use a Suspense boundary to show a loading state while the server fetches data
         <Suspense fallback={<div className="flex items-center justify-center p-8"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>}>
             <UsersPageDataLoader />
         </Suspense>

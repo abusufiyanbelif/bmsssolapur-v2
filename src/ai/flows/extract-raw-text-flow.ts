@@ -28,7 +28,7 @@ export const extractRawTextFlow = ai.defineFlow(
     // Use gemini-1.5-pro for PDFs as it's better for complex documents, and flash for images for speed.
     const isPdf = input.photoDataUris.some(uri => uri.startsWith('data:application/pdf'));
     const modelName = await getSafeGeminiModel(
-      isPdf ? 'models/gemini-1.5-pro-latest' : 'models/gemini-1.5-flash-latest'
+      isPdf ? 'gemini-1.5-pro-latest' : 'gemini-1.5-flash-latest'
     );
     
     try {

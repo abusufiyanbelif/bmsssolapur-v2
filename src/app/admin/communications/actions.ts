@@ -82,7 +82,7 @@ export async function generateAppealMessage(
         const ctaLink = `${appBaseUrl}/public-leads`;
 
         const modelName = await getSafeGeminiModel();
-        const llmResponse = await ai.generate({
+        const { text: llmResponseText } = await ai.generate({
             model: googleAI.model(modelName),
             prompt: `
                 You are a helpful assistant for a charity organization. Your task is to craft a complete and compelling WhatsApp appeal message.
@@ -116,7 +116,7 @@ export async function generateAppealMessage(
             `,
         });
         
-        return { success: true, message: llmResponse.text };
+        return { success: true, message: llmResponseText };
 
     } catch (e) {
         const error = e instanceof Error ? e.message : "An unknown error occurred.";

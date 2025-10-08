@@ -1,7 +1,19 @@
-
 # Build Fix Log
 
 This document tracks errors found during the build process and the steps taken to resolve them.
+
+---
+
+## Build Pass 4 (Latest)
+
+### Errors Found:
+
+1.  **`Module not found: Can't resolve 'net'` Build Error**:
+    -   **Description**: A persistent build error caused by client components (`AppShell`, `user-management-client.tsx`, etc.) illegally importing server-only modules like `firebase-admin`. This is a fundamental violation of Next.js architecture.
+    -   **Resolution**: Performed a full-system audit and refactor to correctly separate client and server code.
+        -   Created dedicated server actions in `src/app/actions.ts` and `src/app/admin/user-management/actions.ts` for all server-side data fetching.
+        -   Modified all client components to call these new server actions instead of directly importing from service files, thus respecting the client-server boundary.
+        -   This fix was applied systematically to `AppShell` and the pages for User Management, Donors, Beneficiaries, and Referrals, resolving the build error at its root cause.
 
 ---
 
@@ -22,14 +34,7 @@ This document tracks errors found during the build process and the steps taken t
     -   **Root Cause**: The data-fetching functions in `user-service.ts` (like `getUserByUserId`) were critically flawed and could not find any user in the database except for the hardcoded `admin` case.
     -   **Resolution**: Rewrote `getUserByUserId`, `getUserByEmail`, and `getUserByPhone` to use the correct server-side Firebase Admin SDK queries, ensuring any valid user can be found in the database. Also corrected the password check logic in `login/actions.ts` to work for all users.
 
-4.  **`Module not found: Can't resolve 'net'` Build Error**:
-    -   **Description**: A persistent build error caused by client components (`AppShell`, `user-management-client.tsx`, etc.) illegally importing server-only modules like `firebase-admin`.
-    -   **Resolution**: Performed a full-system audit and refactor.
-        -   Created dedicated server actions in `src/app/actions.ts` and `src/app/admin/user-management/actions.ts` for all server-side data fetching.
-        -   Modified all client components to call these server actions instead of directly importing from service files, thus respecting the client-server boundary.
-        -   This fix was applied systematically to `AppShell` and the pages for User Management, Donors, Beneficiaries, and Referrals.
-
-5.  **`You cannot have two parallel pages that resolve to the same path` Build Error**:
+4.  **`You cannot have two parallel pages that resolve to the same path` Build Error**:
     -   **Description**: A fatal build error caused by leftover files from a previous, faulty refactoring attempt, resulting in multiple files trying to define the same page route (e.g., `/home`).
     -   **Resolution**: Performed a definitive cleanup of the project's file structure.
         -   Deleted the conflicting `(authenticated)` and `(public)` route group directories and all files within them.
