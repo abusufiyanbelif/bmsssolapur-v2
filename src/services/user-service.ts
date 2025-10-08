@@ -4,6 +4,7 @@
  * This service should only be called from server-side components or server actions.
  */
 
+import * as admin from 'firebase-admin';
 import {
   collection,
   doc,
@@ -12,7 +13,6 @@ import {
   updateDoc,
   deleteDoc,
   query,
-  getDocs,
   Timestamp,
   where,
   limit,
@@ -448,7 +448,7 @@ export const deleteUser = async (id: string, adminUser: User, isBulkOperation: b
         }
         
         const leadsQuery = adminDb.collection('leads').where("beneficiaryId", "==", id);
-        const leadsSnapshot = await getDocs(leadsQuery);
+        const leadsSnapshot = await leadsQuery.get();
         if (!leadsSnapshot.empty) {
             const hasFundedLeads = leadsSnapshot.docs.some(doc => doc.data().helpGiven > 0);
             if (hasFundedLeads) {
@@ -458,7 +458,7 @@ export const deleteUser = async (id: string, adminUser: User, isBulkOperation: b
         
         // 1. Reassign donations from this user to "Anonymous Donor"
         const donationsQuery = adminDb.collection('donations').where("donorId", "==", id);
-        const donationsSnapshot = await getDocs(donationsQuery);
+        const donationsSnapshot = await donationsQuery.get();
         
         let anonymousDonor: User | null = null;
         if (!donationsSnapshot.empty) {
@@ -505,7 +505,7 @@ export const getAllUsers = async (): Promise<User[]> => {
     try {
         const adminDb = getAdminDb();
         const usersQuery = adminDb.collection(USERS_COLLECTION).orderBy("createdAt", "desc");
-        const querySnapshot = await getDocs(usersQuery);
+        const querySnapshot = await usersQuery.get();
         const users: User[] = [];
         querySnapshot.forEach((doc) => {
             users.push(convertToUser(doc) as User);
@@ -525,7 +525,7 @@ export const getReferredBeneficiaries = async (referrerId: string): Promise<User
     try {
         const adminDb = getAdminDb();
         const q = adminDb.collection(USERS_COLLECTION).where("referredByUserId", "==", referrerId);
-        const querySnapshot = await getDocs(q);
+        const querySnapshot = await q.get();
         const users: User[] = [];
         querySnapshot.forEach((doc) => {
             users.push(convertToUser(doc) as User);
