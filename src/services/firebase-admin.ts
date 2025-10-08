@@ -32,14 +32,3 @@ export const getAdminDb = (): AdminFirestore => {
     }
     return adminDbInstance;
 };
-
-// Export a direct instance for convenience, which will be lazily initialized
-export const adminDb: AdminFirestore = new Proxy({} as AdminFirestore, {
-    get: (target, prop) => {
-        if (!adminDbInstance) {
-            initializeFirebaseAdmin();
-        }
-        // Forward the property access to the actual db instance
-        return Reflect.get(adminDbInstance, prop);
-    }
-});
