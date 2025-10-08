@@ -50,15 +50,15 @@ export function LoginForm() {
         recaptchaContainerRef.current.innerHTML = '';
     }
 
-    // Create the verifier instance
-    const verifier = new RecaptchaVerifier(auth, recaptchaContainerRef.current, {
-      'size': 'invisible',
-      'callback': () => {},
-    });
-
-    // Render the reCAPTCHA and store the verifier instance on the window object
-    verifier.render();
-    window.recaptchaVerifier = verifier;
+    if (!window.recaptchaVerifier) {
+      // Create the verifier instance only if it doesn't exist
+      const verifier = new RecaptchaVerifier(auth, recaptchaContainerRef.current, {
+        'size': 'invisible',
+        'callback': () => {},
+      });
+      verifier.render();
+      window.recaptchaVerifier = verifier;
+    }
 
     // Cleanup function: This is crucial for single-page apps.
     // It runs when the component unmounts.
@@ -228,7 +228,7 @@ export function LoginForm() {
           </CardFooter>
         </Card>
       </div>
-      <div id="recaptcha-container" ref={recaptchaContainerRef} style={{ position: 'fixed', bottom: 0, right: 0, visibility: 'hidden' }}></div>
+      <div id="recaptcha-container" ref={recaptchaContainerRef}></div>
     </>
   );
 }
