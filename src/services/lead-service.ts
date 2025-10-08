@@ -346,6 +346,7 @@ export const getLeadsByBeneficiaryId = async (beneficiaryId: string): Promise<Le
                 id: doc.id, 
                 ...data,
                 createdAt: data.createdAt ? (data.createdAt as Timestamp).toDate() : new Date(),
+                 dateCreated: data.dateCreated ? (data.dateCreated as Timestamp).toDate() : new Date(),
             } as Lead);
         });
         // Sort in memory instead of in the query
@@ -381,7 +382,7 @@ export const getLeadsByCampaignId = async (campaignId: string): Promise<Lead[]> 
                 createdAt: data.createdAt ? (data.createdAt as Timestamp).toDate() : new Date(),
             } as Lead);
         });
-        // Sort in memory instead of requiring a composite index
+        // Sort in memory to avoid needing a composite index
         leads.sort((a, b) => b.dateCreated.getTime() - a.dateCreated.getTime());
         return leads;
     } catch (error) {
@@ -413,3 +414,5 @@ export const getOpenLeadsByBeneficiaryId = async (beneficiaryId: string): Promis
         return [];
     }
 }
+
+    

@@ -24,7 +24,7 @@ import {
   FieldValue
 } from 'firebase/firestore';
 import { db } from './firebase';
-import { adminDb } from './firebase-admin';
+import { getAdminDb } from './firebase-admin';
 import type { User, UserRole } from './types';
 import { uploadFile } from './storage-service';
 import { logActivity } from './activity-log-service';
@@ -99,7 +99,7 @@ export const getUserByUserId = async (userId: string): Promise<User | null> => {
     if (userId === 'admin') return hardcodedSuperAdmin;
 
     try {
-        const q = query(adminDb.collection(USERS_COLLECTION), where("userId", "==", userId), limit(1));
+        const q = query(collection(db, USERS_COLLECTION), where("userId", "==", userId), limit(1));
         const querySnapshot = await getDocs(q);
         if (!querySnapshot.empty) {
             const userDoc = querySnapshot.docs[0];
@@ -247,8 +247,8 @@ export const getUser = async (id?: string): Promise<User | null> => {
   if (id === hardcodedSuperAdmin.id) return hardcodedSuperAdmin;
 
   try {
-    const userDoc = await adminDb.collection(USERS_COLLECTION).doc(id).get();
-    if (userDoc.exists) {
+    const userDoc = await getDoc(doc(db, USERS_COLLECTION, id));
+    if (userDoc.exists()) {
       const data = userDoc.data();
       if (!data) return null;
       return { 
@@ -275,7 +275,7 @@ export const getUserByName = async (name: string): Promise<User | null> => {
     if (name === 'admin') return hardcodedSuperAdmin;
 
     try {
-        const q = query(adminDb.collection(USERS_COLLECTION), where("name", "==", name), limit(1));
+        const q = query(collection(db, USERS_COLLECTION), where("name", "==", name), limit(1));
         const querySnapshot = await getDocs(q);
         if (!querySnapshot.empty) {
             const userDoc = querySnapshot.docs[0];
@@ -302,7 +302,7 @@ export const getUserByUserKey = async (userKey: string): Promise<User | null> =>
     if (userKey === hardcodedSuperAdmin.userKey) return hardcodedSuperAdmin;
 
     try {
-        const q = query(adminDb.collection(USERS_COLLECTION), where("userKey", "==", userKey), limit(1));
+        const q = query(collection(db, USERS_COLLECTION), where("userKey", "==", userKey), limit(1));
         const snapshot = await getDocs(q);
         if (!snapshot.empty) {
             const doc = snapshot.docs[0];
@@ -326,7 +326,7 @@ export const getUserByFullName = async (name: string): Promise<User | null> => {
     if (name === 'admin') return hardcodedSuperAdmin;
 
     try {
-        const q = query(adminDb.collection(USERS_COLLECTION), where("name", "==", name), limit(1));
+        const q = query(collection(db, USERS_COLLECTION), where("name", "==", name), limit(1));
         const snapshot = await getDocs(q);
         if (!snapshot.empty) {
             const doc = snapshot.docs[0];
@@ -352,7 +352,7 @@ export const getUserByPhone = async (phone: string): Promise<User | null> => {
   if (standardizedPhone === hardcodedSuperAdmin.phone) return hardcodedSuperAdmin;
 
   try {
-    const q = query(adminDb.collection(USERS_COLLECTION), where("phone", "==", standardizedPhone), limit(1));
+    const q = query(collection(db, USERS_COLLECTION), where("phone", "==", standardizedPhone), limit(1));
     const querySnapshot = await getDocs(q);
     if (!querySnapshot.empty) {
       const userDoc = querySnapshot.docs[0];
@@ -379,7 +379,7 @@ export const getUserByEmail = async (email: string): Promise<User | null> => {
   if (email === hardcodedSuperAdmin.email) return hardcodedSuperAdmin;
 
   try {
-    const q = query(adminDb.collection(USERS_COLLECTION), where("email", "==", email), limit(1));
+    const q = query(collection(db, USERS_COLLECTION), where("email", "==", email), limit(1));
     const querySnapshot = await getDocs(q);
     if (!querySnapshot.empty) {
       const userDoc = querySnapshot.docs[0];
@@ -404,7 +404,7 @@ export const getUserByEmail = async (email: string): Promise<User | null> => {
 export const getUserByUpiId = async (upiId: string): Promise<User | null> => {
   if (!upiId) return null;
   try {
-    const q = query(adminDb.collection(USERS_COLLECTION), where("upiIds", "array-contains", upiId), limit(1));
+    const q = query(collection(db, USERS_COLLECTION), where("upiIds", "array-contains", upiId), limit(1));
     const querySnapshot = await getDocs(q);
     if (!querySnapshot.empty) {
       const userDoc = querySnapshot.docs[0];
@@ -431,7 +431,7 @@ export const getUserByBankAccountNumber = async (accountNumber: string): Promise
     return null;
   }
   try {
-    const q = query(adminDb.collection(USERS_COLLECTION), where("bankAccountNumber", "==", accountNumber), limit(1));
+    const q = query(collection(db, USERS_COLLECTION), where("bankAccountNumber", "==", accountNumber), limit(1));
     const querySnapshot = await getDocs(q);
     if (!querySnapshot.empty) {
       const userDoc = querySnapshot.docs[0];
@@ -456,7 +456,7 @@ export const getUserByBankAccountNumber = async (accountNumber: string): Promise
 export const getUserByPan = async (pan: string): Promise<User | null> => {
   if (!pan) return null;
   try {
-    const q = query(adminDb.collection(USERS_COLLECTION), where("panNumber", "==", pan.toUpperCase()), limit(1));
+    const q = query(collection(db, USERS_COLLECTION), where("panNumber", "==", pan.toUpperCase()), limit(1));
     const snapshot = await getDocs(q);
     if (!snapshot.empty) {
       const doc = snapshot.docs[0];
@@ -481,7 +481,7 @@ export const getUserByPan = async (pan: string): Promise<User | null> => {
 export const getUserByAadhaar = async (aadhaar: string): Promise<User | null> => {
   if (!aadhaar) return null;
   try {
-    const q = query(adminDb.collection(USERS_COLLECTION), where("aadhaarNumber", "==", aadhaar), limit(1));
+    const q = query(collection(db, USERS_COLLECTION), where("aadhaarNumber", "==", aadhaar), limit(1));
     const snapshot = await getDocs(q);
     if (!snapshot.empty) {
       const doc = snapshot.docs[0];
@@ -642,7 +642,7 @@ export const deleteUser = async (id: string, adminUser: User, isBulkOperation: b
 // Function to get all users
 export const getAllUsers = async (): Promise<User[]> => {
     try {
-        const usersQuery = query(adminDb.collection(USERS_COLLECTION), orderBy("createdAt", "desc"));
+        const usersQuery = query(collection(db, USERS_COLLECTION), orderBy("createdAt", "desc"));
         const querySnapshot = await getDocs(usersQuery);
         const users: User[] = [];
         querySnapshot.forEach((doc) => {
@@ -749,3 +749,5 @@ export async function checkAvailability(field: string, value: string): Promise<A
         return { isAvailable: false }; // Fail closed to prevent duplicates
     }
 }
+
+    

@@ -44,7 +44,7 @@ export async function getCurrentUser(userId: string | null): Promise<User | null
     if (!userId) return null;
     try {
         const user = await getUserService(userId);
-        // Ensure the returned object is serializable
+        // Ensure the returned object is serializable by converting Timestamps
         return user ? JSON.parse(JSON.stringify(user)) : null;
     } catch (error) {
         console.error("Error in getCurrentUser server action:", error);
@@ -68,6 +68,7 @@ export async function getAdminNotificationData(): Promise<{ pendingLeads: Lead[]
         const readyToPublishLeads = allLeads.filter(l => l.caseAction === 'Ready For Help');
         const pendingDonations = allDonations.filter(d => d.status === 'Pending verification' || d.status === 'Pending');
 
+        // Ensure data is serializable
         return { 
             pendingLeads: JSON.parse(JSON.stringify(pendingLeads)), 
             readyToPublishLeads: JSON.parse(JSON.stringify(readyToPublishLeads)),
@@ -79,3 +80,10 @@ export async function getAdminNotificationData(): Promise<{ pendingLeads: Lead[]
         return { pendingLeads: [], readyToPublishLeads: [], pendingDonations: [] };
     }
 }
+
+// Placeholder for a function that doesn't exist yet, to fix build error
+export const getRawTextFromImage = async (formData: FormData): Promise<{ success: boolean; rawText?: string; error?: string }> => {
+  return { success: false, error: 'Not implemented' };
+};
+
+    

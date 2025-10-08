@@ -11,6 +11,7 @@ import { logActivity } from "@/services/activity-log-service";
 export async function getAllUsersAction() {
     // This server action wraps the server-only service function.
     const users = await getAllUsersService();
+    // This is the critical fix: ensure all data is serializable before returning.
     return JSON.parse(JSON.stringify(users));
 }
 
