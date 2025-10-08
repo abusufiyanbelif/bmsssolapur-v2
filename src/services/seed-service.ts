@@ -13,7 +13,7 @@ import type { Lead, Verifier, LeadDonationAllocation, Donation, Campaign, FundTr
 import { createLead, getLead, updateLead } from './lead-service';
 import { createCampaign, getCampaign } from './campaign-service';
 import { createDonation } from './donation-service';
-import { updateAppSettings, getAppSettings, defaultSettings } from './app-settings-service';
+import { updateAppSettings, getAppSettings } from './app-settings-service';
 
 const USERS_COLLECTION = 'users';
 
@@ -376,8 +376,8 @@ const seedGeneralLeads = async (adminUser: User): Promise<string[]> => {
 
 const seedCampaignAndData = async (campaignData: Omit<Campaign, 'id' | 'createdAt' | 'updatedAt'>, userData: Omit<User, 'id' | 'createdAt' | 'userKey'>[], leadsData: any[]): Promise<string[]> => {
     let results: string[] = [];
-    const adminUser = await getUserByUserId("abusufiyan.belif");
-    if (!adminUser) throw new Error("Required admin user 'abusufiyan.belif' for seeding not found.");
+    const adminUser = await getUserByUserId("admin");
+    if (!adminUser) throw new Error("Required admin user for seeding not found.");
     const adminDb = getAdminDb();
 
     await seedUsers(userData);
@@ -600,8 +600,10 @@ export const seedAppSettings = async (): Promise<SeedResult> => {
 
 
 export const seedPaymentGateways = async (): Promise<SeedResult> => {
+    const settings = await getAppSettings();
     const updates: Partial<AppSettings> = {
       paymentGateway: {
+        ...settings.paymentGateway,
         razorpay: {
           enabled: true,
           mode: 'test',
@@ -614,15 +616,10 @@ export const seedPaymentGateways = async (): Promise<SeedResult> => {
             keySecret: '',
           },
         },
-        phonepe: { enabled: false, mode: 'test', test: {}, live: {} },
-        paytm: { enabled: false, mode: 'test', test: {}, live: {} },
-        cashfree: { enabled: false, mode: 'test', test: {}, live: {} },
-        instamojo: { enabled: false, mode: 'test', test: {}, live: {} },
-        stripe: { enabled: false, mode: 'test', test: {}, live: {} },
       },
       features: {
+        ...settings.features,
         onlinePaymentsEnabled: true,
-        directPaymentToBeneficiary: {enabled: false}
       }
     };
     await updateAppSettings(updates);
@@ -636,11 +633,11 @@ export const seedSampleData = async (): Promise<SeedResult> => {
     let details: string[] = [];
 
     // The logic inside now relies on this user existing.
-    const superAdmin = await getUserByUserId("abusufiyan.belif");
-    if (!superAdmin) throw new Error("Super admin user 'abusufiyan.belif' not found. Please run core team seed first.");
+    const adminUser = await getUserByUserId("admin");
+    if (!adminUser) throw new Error("Required 'admin' user for seeding not found. Please run initial seed first.");
 
     // Seed General Leads
-    details.push(...await seedGeneralLeads(superAdmin));
+    details.push(...await seedGeneralLeads(adminUser));
 
     // Seed Flood Relief Campaign
     details.push(...await seedCampaignAndData(floodReliefCampaign, [], []));
@@ -657,7 +654,7 @@ export const seedSampleData = async (): Promise<SeedResult> => {
     details.push(...await seedCampaignAndData(ramadan2025Campaign, ramadanCampaignUsers, ramadanLeads));
     
     // Seed the 50k relief data (7 beneficiaries, 20 donors)
-    details.push(...await seedRamadan2025ReliefData(superAdmin));
+    details.push(...await seedRamadan2025ReliefData(adminUser));
 
     // Seed Winter Campaign
     const winterLeads = [
@@ -744,21 +741,21 @@ export const eraseOrganizationProfile = async (): Promise<SeedResult> => {
 };
 
 export const erasePaymentGateways = async (): Promise<SeedResult> => {
+    const settings = await getAppSettings();
     const updates: Partial<AppSettings> = {
       paymentGateway: {
+        ...settings.paymentGateway,
         razorpay: {
           enabled: false,
           mode: 'test',
           test: { keyId: '', keySecret: '' },
           live: { keyId: '', keySecret: '' }
         },
-        phonepe: { enabled: false, mode: 'test', test: {}, live: {} },
-        paytm: { enabled: false, mode: 'test', test: {}, live: {} },
-        cashfree: { enabled: false, mode: 'test', test: {}, live: {} },
-        instamojo: { enabled: false, mode: 'test', test: {}, live: {} },
-        stripe: { enabled: false, mode: 'test', test: {}, live: {} },
       },
-      features: { onlinePaymentsEnabled: false, directPaymentToBeneficiary: {enabled: false} }
+      features: { 
+        ...settings.features,
+        onlinePaymentsEnabled: false, 
+      }
     };
     await updateAppSettings(updates);
     return {
