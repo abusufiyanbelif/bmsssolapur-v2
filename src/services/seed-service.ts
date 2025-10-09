@@ -16,10 +16,8 @@ import { updateAppSettings, getAppSettings } from './app-settings-service';
 
 const USERS_COLLECTION = 'users';
 
-const initialUsersToSeed: Omit<User, 'id' | 'createdAt' | 'userKey'>[] = [
-    // Super Admin
-    { name: "admin", userId: "admin", firstName: "Admin", lastName: "User", fatherName: "System", email: "admin@example.com", phone: "9999999999", password: "password", roles: ["Super Admin"], privileges: ["all"], isActive: true, gender: 'Male', source: 'Seeded' },
-];
+// The admin user is now hardcoded in the user-service, so it's removed from this initial seed.
+const initialUsersToSeed: Omit<User, 'id' | 'createdAt' | 'userKey'>[] = [];
 
 const anonymousSystemUsersToSeed: Omit<User, 'id' | 'createdAt' | 'userKey'>[] = [
     { name: "Anonymous Donor", userId: "anonymous_donor", firstName: "Anonymous", lastName: "Donor", email: "anonymous@system.local", phone: "0000000000", password: "N/A", roles: [], isActive: false, gender: 'Other', source: 'Seeded' },
@@ -609,11 +607,10 @@ async function deleteCollection(collectionPath: string): Promise<number> {
 // --- EXPORTED SEEDING FUNCTIONS ---
 
 export const seedInitialUsersAndQuotes = async (): Promise<SeedResult> => {
-    const userResults = await seedUsers(initialUsersToSeed);
     const quotesStatus = await seedQuotesService();
     return {
         message: 'Initial Seeding Complete',
-        details: [...userResults, quotesStatus]
+        details: [quotesStatus]
     };
 };
 
@@ -732,29 +729,11 @@ export const seedSampleData = async (): Promise<SeedResult> => {
 // --- ERASE FUNCTIONS ---
 
 export const eraseInitialUsersAndQuotes = async (): Promise<SeedResult> => {
-    const adminDb = getAdminDb();
-    const batch = adminDb.batch();
-
-    // Query for just the main admin user to delete
-    const usersToDeleteQuery = adminDb.collection(USERS_COLLECTION).where("userId", "in", ["admin"]);
-    const userSnapshot = await usersToDeleteQuery.get();
-    
-    let deletedUserCount = 0;
-    userSnapshot.forEach(doc => {
-        // Double-check to never delete the main admin
-        if (doc.data().userId !== 'admin') {
-            batch.delete(doc.ref);
-            deletedUserCount++;
-        }
-    });
-
     const quotesDeleted = await eraseAllQuotes();
     
-    await batch.commit();
-
     return {
         message: 'Initial Data Erased',
-        details: [`Deleted ${quotesDeleted} quotes. The main 'admin' user was preserved.`]
+        details: [`Deleted ${quotesDeleted} quotes. The main 'admin' user is hardcoded and was not affected.`]
     };
 };
 
@@ -873,8 +852,8 @@ export const eraseSampleData = async (): Promise<SeedResult> => {
     let deletedUserCount = 0;
     usersSnapshot.docs.forEach(doc => {
         const userData = doc.data();
-        // Safeguard: Do not delete the main admin users
-        if (userData.userId !== 'admin' && userData.userId !== 'abusufiyan.belif') {
+        // Safeguard: Do not delete the main admin users or system users
+        if (userData.userId !== 'admin' && userData.userId !== 'abusufiyan.belif' && userData.userId !== 'anonymous_donor') {
            batch.delete(doc.ref);
            deletedUserCount++;
         }

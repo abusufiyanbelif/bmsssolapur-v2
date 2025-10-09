@@ -131,17 +131,17 @@ export default function SeedPage() {
                     <div className="p-4 border rounded-lg space-y-4">
                         <div className="flex flex-col md:flex-row justify-between md:items-center gap-4">
                              <div>
-                                <h3 className="font-semibold flex items-center gap-2"><Database className="h-5 w-5 text-primary" />Initial Users &amp; Quotes</h3>
-                                <p className="text-sm text-muted-foreground mt-1">Creates the Super Admin user (`admin`/`password`) and populates the database with inspirational quotes. **Run this first.**</p>
+                                <h3 className="font-semibold flex items-center gap-2"><Quote className="h-5 w-5 text-primary" />Inspirational Quotes</h3>
+                                <p className="text-sm text-muted-foreground mt-1">Populates the database with inspirational quotes for the dashboard. The main 'admin' user is now hardcoded and does not need seeding.</p>
                              </div>
                              <div className="flex items-center gap-2">
                                 <Button variant="destructive" onClick={() => handleErase('initial')} disabled={eraseStatuses.initial === 'loading'}>
                                     {eraseStatuses.initial === 'loading' ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Trash2 className="mr-2 h-4 w-4"/>}
-                                    Erase
+                                    Erase Quotes
                                 </Button>
                                 <Button onClick={() => handleSeed('initial')} disabled={statuses.initial === 'loading'}>
                                     {statuses.initial === 'loading' && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}
-                                    Seed Initial Data
+                                    Seed Quotes
                                 </Button>
                              </div>
                         </div>

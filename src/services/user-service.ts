@@ -60,7 +60,7 @@ export const getUser = async (id?: string): Promise<User | null> => {
       return {
           id: 'ADMIN_USER_ID',
           userKey: "USR01", name: "admin", userId: "admin", firstName: "Admin", lastName: "User", fatherName: "System",
-          email: "admin@example.com", phone: "9999999999", password: "admin",
+          email: "admin@example.com", phone: "9999999999", password: "password",
           roles: ["Super Admin"], privileges: ["all"], isActive: true, gender: 'Male', source: 'Seeded',
           createdAt: new Date('2024-01-01'),
       };
@@ -220,7 +220,7 @@ export const createUser = async (userData: Partial<Omit<User, 'id' | 'createdAt'
         throw new Error("User must have at least one role assigned.");
     }
     
-    if (!userData.firstName || !userData.lastName || !standardizedPhone) {
+    if (!isAnonymousSystemUser && (!userData.firstName || !userData.lastName || !standardizedPhone)) {
         throw new Error("Critical fields are missing: First Name, Last Name, and Phone are required.");
     }
 
@@ -232,7 +232,7 @@ export const createUser = async (userData: Partial<Omit<User, 'id' | 'createdAt'
     if (userData.email && (await getUserByEmail(userData.email))) {
       throw new Error(`A user with the email ${userData.email} already exists.`);
     }
-    if (await getUserByPhone(standardizedPhone)) {
+    if (standardizedPhone && (await getUserByPhone(standardizedPhone))) {
       throw new Error(`A user with the phone number ${standardizedPhone} already exists.`);
     }
     
@@ -264,7 +264,7 @@ export const createUser = async (userData: Partial<Omit<User, 'id' | 'createdAt'
         password: userData.password,
         isActive: userData.isActive !== undefined ? userData.isActive : true,
         address: userData.address || {},
-        gender: userData.gender!,
+        gender: userData.gender || 'Other',
         dateOfBirth: userData.dateOfBirth,
         beneficiaryType: userData.beneficiaryType,
         isAnonymousAsBeneficiary: userData.isAnonymousAsBeneficiary || false,
@@ -474,6 +474,9 @@ export const deleteUser = async (id: string, adminUser: User, isBulkOperation: b
         if (!userToDelete) throw new Error("User to delete not found.");
 
         // Safety checks
+        if (userToDelete.userId === 'admin') {
+            throw new Error("The default 'admin' user cannot be deleted.");
+        }
         if (userToDelete.userKey === 'SYSTEM01' || userToDelete.userId === 'anonymous_donor') {
             throw new Error("The 'Anonymous Donor' system user cannot be deleted.");
         }
