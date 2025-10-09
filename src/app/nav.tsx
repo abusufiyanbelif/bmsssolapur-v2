@@ -43,7 +43,7 @@ const allNavItems: NavItem[] = [
     { href: "/home", label: "Dashboard", icon: Home, allowedRoles: ["Donor", "Beneficiary", "Admin", "Super Admin", "Finance Admin", "Referral"] },
     
     // Common authenticated user pages
-    { href: "/campaigns", label: "Campaigns", icon: Megaphone, allowedRoles: ["Donor", "Beneficiary", "Referral"] },
+    { href: "/campaigns", label: "Campaigns", icon: Megaphone, allowedRoles: ["Donor", "Beneficiary", "Referral", "Admin", "Super Admin", "Finance Admin"] },
 
     // Donor
     { href: "/donate", label: "Donate Now", icon: HandHeart, allowedRoles: ["Donor"] },
