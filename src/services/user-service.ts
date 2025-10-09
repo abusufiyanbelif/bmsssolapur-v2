@@ -55,17 +55,6 @@ const convertToUser = (doc: admin.firestore.DocumentSnapshot): User | null => {
 // Function to get a user by their document ID
 export const getUser = async (id?: string): Promise<User | null> => {
   if (!id) return null;
-  // This is a special hardcoded user for development and initial setup.
-  if (id === 'admin' || id === 'ADMIN_USER_ID') {
-      return {
-          id: 'ADMIN_USER_ID',
-          userKey: "USR01", name: "admin", userId: "admin", firstName: "Admin", lastName: "User", fatherName: "System",
-          email: "admin@example.com", phone: "9999999999", password: "password",
-          roles: ["Super Admin"], privileges: ["all"], isActive: true, gender: 'Male', source: 'Seeded',
-          createdAt: new Date('2024-01-01'),
-      };
-  }
-
   try {
     const adminDb = getAdminDb();
     const userDoc = await adminDb.collection(USERS_COLLECTION).doc(id).get();
@@ -80,7 +69,6 @@ export const getUser = async (id?: string): Promise<User | null> => {
 // CORRECTED: Function to get a user by their custom userId field
 export const getUserByUserId = async (userId: string): Promise<User | null> => {
     if (!userId) return null;
-    if (userId === 'admin') return getUser('admin');
     
     try {
         const adminDb = getAdminDb();
@@ -100,7 +88,6 @@ export const getUserByUserId = async (userId: string): Promise<User | null> => {
 export const getUserByPhone = async (phone: string): Promise<User | null> => {
   const standardizedPhone = phone?.replace(/\D/g, '').slice(-10) || '';
   if (!standardizedPhone || standardizedPhone.length !== 10) return null;
-  if (standardizedPhone === '9999999999') return getUser('admin');
 
   try {
     const adminDb = getAdminDb();
@@ -119,7 +106,6 @@ export const getUserByPhone = async (phone: string): Promise<User | null> => {
 // CORRECTED: Function to get a user by email
 export const getUserByEmail = async (email: string): Promise<User | null> => {
   if (!email) return null;
-  if (email === 'admin@example.com') return getUser('admin');
 
   try {
     const adminDb = getAdminDb();

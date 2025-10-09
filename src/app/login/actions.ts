@@ -26,7 +26,7 @@ export async function handleLogin(formData: FormData): Promise<LoginState> {
     try {
         let user: User | null = null;
         
-        // Robust user lookup: Check by email, then phone, then custom userId.
+        // This is the fix: Always fetch the user record from the database directly.
         if (identifier.includes('@')) {
              user = await getUserByEmail(identifier);
         } else if (/^[0-9]{10}$/.test(identifier)) {
@@ -39,7 +39,7 @@ export async function handleLogin(formData: FormData): Promise<LoginState> {
             return { success: false, error: "User not found. Please check your credentials." };
         }
         
-        // Correctly handle password check for all users.
+        // Check password against the record fetched from Firestore.
         if (user.password !== password) {
              return { success: false, error: "Incorrect password. Please try again." };
         }
