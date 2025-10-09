@@ -1,4 +1,5 @@
 
+
 /**
  * @fileOverview A service to seed the database with initial data.
  */
@@ -51,7 +52,25 @@ const coreTeamUsersToSeed: Omit<User, 'id' | 'createdAt' | 'userKey'>[] = [
     },
     
     // Admins (Founders and Members)
-    { name: "Moosa Shaikh", userId: "moosa.shaikh", firstName: "Moosa", middleName: "", lastName: "Shaikh", fatherName: "", email: "moosa.shaikh@example.com", phone: "8421708907", password: "8421708907", roles: ["Admin", "Donor"], privileges: ["canManageLeads"], groups: ["Lead Approver"], isActive: true, gender: 'Male', address: { city: 'Solapur', state: 'Maharashtra', country: 'India' }, upiIds: ['8421708907@ybl'], source: 'Seeded' },
+    { 
+        name: "Moosa Shaikh", 
+        userId: "moosa.shaikh", 
+        firstName: "Moosa", 
+        middleName: "", 
+        lastName: "Shaikh", 
+        fatherName: "", 
+        email: "moosa.shaikh@example.com", 
+        phone: "8421708907", 
+        password: "8421708907", 
+        roles: ["Super Admin", "Admin", "Donor"], 
+        privileges: ["all"], 
+        groups: ["Founder", "Lead Approver"], 
+        isActive: true, 
+        gender: 'Male', 
+        address: { city: 'Solapur', state: 'Maharashtra', country: 'India' }, 
+        upiIds: ['8421708907@ybl'], 
+        source: 'Seeded' 
+    },
     { name: "Maaz Shaikh", userId: "maaz.shaikh", firstName: "Maaz", middleName: "", lastName: "Shaikh", fatherName: "", email: "maaz.shaikh@example.com", phone: "9372145889", password: "9372145889", roles: ["Admin", "Finance Admin", "Donor"], privileges: ["canManageDonations", "canViewFinancials"], groups: ["Finance", "Lead Approver"], isActive: true, gender: 'Male', address: { city: 'Solapur', state: 'Maharashtra', country: 'India' }, source: 'Seeded' },
     { name: "AbuRehan Bedrekar", userId: "aburehan.bedrekar", firstName: "AbuRehan", middleName: "", lastName: "Bedrekar", fatherName: "", email: "aburehan.bedrekar@example.com", phone: "7276224160", password: "7276224160", roles: ["Admin", "Donor"], privileges: ["canManageLeads"], groups: ["Co-Founder", "Lead Approver"], isActive: true, gender: 'Male', address: { city: 'Solapur', state: 'Maharashtra', country: 'India' }, source: 'Seeded' },
     { name: "NayyarAhmed Karajgi", userId: "nayyarahmed.karajgi", firstName: "NayyarAhmed", middleName: "", lastName: "Karajgi", fatherName: "", email: "nayyar.karajgi@example.com", phone: "9028976036", password: "9028976036", roles: ["Admin"], privileges: ["canManageLeads"], groups: ["Member of Organization"], isActive: true, gender: 'Male', address: { city: 'Solapur', state: 'Maharashtra', country: 'India' }, source: 'Seeded' },
@@ -399,17 +418,13 @@ const seedCampaignAndData = async (campaignData: Omit<Campaign, 'createdAt' | 'u
 
     const campaignId = campaignData.id!;
     const campaignRef = adminDb.collection('campaigns').doc(campaignId);
-    const campaignDoc = await campaignRef.get();
-
-    if (campaignDoc.exists()) {
-        results.push(`Campaign "${campaignData.name}": Skipped (already exists)`);
-        return results;
-    }
     
-    // Create the campaign using the predefined ID
-    const campaign = await createCampaign(campaignData);
-    results.push(`Campaign "${campaignData.name}" created.`);
-
+    // Create the campaign using the predefined ID with set and merge
+    await setDoc(campaignRef, { ...campaignData }, { merge: true });
+    results.push(`Campaign "${campaignData.name}" created or updated.`);
+    const campaign = await getCampaign(campaignId);
+    if(!campaign) throw new Error(`Failed to retrieve campaign ${campaignId} after seeding.`);
+    
     const verifierToUse: Verifier = {
         verifierId: adminUser.id,
         verifierName: adminUser.name,
