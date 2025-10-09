@@ -213,9 +213,17 @@ export const createUser = async (userData: Partial<Omit<User, 'id' | 'createdAt'
   
   try {
     const standardizedPhone = userData.phone?.replace(/\D/g, '').slice(-10) || '';
-    if (!userData.firstName || !userData.lastName || !standardizedPhone || !userData.roles || userData.roles.length === 0) {
-        throw new Error("Critical fields are missing: First Name, Last Name, Phone, and Roles are required.");
+    const isAnonymousSystemUser = userData.userId === 'anonymous_donor';
+
+    // Role validation, with an exception for our special system user
+    if (!isAnonymousSystemUser && (!userData.roles || userData.roles.length === 0)) {
+        throw new Error("User must have at least one role assigned.");
     }
+    
+    if (!userData.firstName || !userData.lastName || !standardizedPhone) {
+        throw new Error("Critical fields are missing: First Name, Last Name, and Phone are required.");
+    }
+
 
     // Check for duplicates using the corrected functions
     if (userData.userId && (await getUserByUserId(userData.userId))) {
@@ -231,7 +239,7 @@ export const createUser = async (userData: Partial<Omit<User, 'id' | 'createdAt'
     const finalUserId = userData.userId || `${userData.firstName?.toLowerCase() || 'user'}.${userData.lastName?.toLowerCase() || Date.now()}`.replace(/\s+/g, '');
     const userKey = await generateNextUserKey();
 
-    const assignedRoles = getUnique(userData.roles || ['Donor']);
+    const assignedRoles = getUnique(userData.roles || []);
     let anonymousDonorId: string | undefined;
     let anonymousBeneficiaryId: string | undefined;
 
