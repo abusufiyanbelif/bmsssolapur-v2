@@ -4,7 +4,36 @@ This document tracks errors found during the build process and the steps taken t
 
 ---
 
-## Build Pass 3 (Latest)
+## Build Pass 4 (Latest)
+
+### Errors Found:
+1.  **Orphaned Firebase Auth Records on User Deletion**:
+    -   **Description**: Deleting a user from the application only removed their Firestore document, leaving behind their authentication record in Firebase Auth. This could lead to login errors if the user tried to re-register or log in with the same credentials.
+    -   **Resolution**: Modified `user-service.ts` to ensure that when a user is deleted, the function first deletes them from Firebase Authentication and *then* deletes their Firestore document, ensuring a complete and clean removal.
+
+2.  **Inconsistent Dashboard Data**:
+    -   **Description**: Different dashboards (e.g., Public vs. Admin) were fetching campaign data from different Firestore collections (`publicCampaigns` vs. `campaigns`), leading to discrepancies in what was displayed.
+    -   **Resolution**: Standardized data fetching across all dashboard components (`admin/dashboard-cards.tsx`, `home/public-dashboard-cards.tsx`, `donor/donor-dashboard-content.tsx`, `beneficiary/beneficiary-dashboard-content.tsx`) to pull from the same, reliable server actions, ensuring data consistency for all user roles.
+
+3.  **Idempotency Bug in Seeding**:
+    -   **Description**: The "Seed Sample Data" function would create duplicate campaigns and leads every time it was run, as it did not check for pre-existing data.
+    -   **Resolution**: Refactored the `seed-service.ts` to be fully idempotent. It now assigns static, predictable IDs to all seeded campaigns and uses `setDoc` with `{ merge: true }`. This ensures that running the script multiple times will only create or overwrite the same records, preventing any duplication.
+
+4.  **Missing "Erase" Functionality on Seed Page**:
+    -   **Description**: The `/admin/seed` page was missing buttons and logic to erase "Application Settings" and "Firebase Auth Users".
+    -   **Resolution**: Implemented the `eraseAppSettings` and `eraseFirebaseAuthUsers` functions in `seed-service.ts` and added corresponding "Erase" buttons to the UI, providing full control over the seeding process.
+
+5.  **Build Failure due to Unterminated Template**:
+    -   **Description**: A stray `` ``` `` character at the end of `seed-service.ts` was causing the Next.js build to fail with a syntax error.
+    -   **Resolution**: Removed the invalid character from the file.
+
+6.  **Build Failure: `LeadsPageClient` Not Found**:
+    -   **Description**: A build error "Element type is invalid" occurred because `src/app/admin/leads/leads-client.tsx` was an empty file, causing the import in `page.tsx` to resolve to `undefined`.
+    -   **Resolution**: Restored the correct and complete content for the `LeadsPageClient` component.
+
+---
+
+## Build Pass 3
 
 ### Errors Found:
 
