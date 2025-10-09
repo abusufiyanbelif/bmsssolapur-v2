@@ -22,7 +22,13 @@ const getInspirationalQuotesFlow = ai.defineFlow(
         let allQuotes: Quote[] = [];
         try {
             allQuotes = await getAllQuotes();
+            // If the database is empty, return an empty array.
+            // This is the correct behavior after an "erase" operation.
+            if (allQuotes.length === 0) {
+                return [];
+            }
         } catch (error) {
+            // Only fall back to a hardcoded list on a true database error.
             console.error("Error getting quotes from database, falling back to hardcoded list: ", error);
             allQuotes = [
                 { id: '1', number: 1, text: "The believer's shade on the Day of Resurrection will be their charity.", source: "Tirmidhi", category: "Hadith", categoryTypeNumber: 2 },
