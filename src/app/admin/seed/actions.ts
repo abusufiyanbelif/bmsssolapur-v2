@@ -16,10 +16,12 @@ import {
     eraseAppSettings,
     syncUsersToFirebaseAuth,
     eraseFirebaseAuthUsers,
+    seedAnonymousSystemUsers,
+    eraseAnonymousSystemUsers,
     type SeedResult
 } from "@/services/seed-service";
 
-type SeedTask = 'initial' | 'coreTeam' | 'organization' | 'paymentGateways' | 'sampleData' | 'appSettings' | 'syncFirebaseAuth';
+type SeedTask = 'initial' | 'anonymous' | 'coreTeam' | 'organization' | 'paymentGateways' | 'sampleData' | 'appSettings' | 'syncFirebaseAuth';
 
 export async function handleSeedAction(task: SeedTask): Promise<{success: boolean; data?: SeedResult; error?: string}> {
     try {
@@ -27,6 +29,9 @@ export async function handleSeedAction(task: SeedTask): Promise<{success: boolea
         switch(task) {
             case 'initial':
                 result = await seedInitialUsersAndQuotes();
+                break;
+            case 'anonymous':
+                result = await seedAnonymousSystemUsers();
                 break;
             case 'coreTeam':
                 result = await seedCoreTeam();
@@ -64,6 +69,9 @@ export async function handleEraseAction(task: SeedTask): Promise<{success: boole
         switch(task) {
             case 'initial':
                 result = await eraseInitialUsersAndQuotes();
+                break;
+            case 'anonymous':
+                result = await eraseAnonymousSystemUsers();
                 break;
             case 'coreTeam':
                 result = await eraseCoreTeam();

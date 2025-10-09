@@ -1,4 +1,3 @@
-
 /**
  * @fileOverview A service to seed the database with initial data.
  */
@@ -20,7 +19,9 @@ const USERS_COLLECTION = 'users';
 const initialUsersToSeed: Omit<User, 'id' | 'createdAt' | 'userKey'>[] = [
     // Super Admin
     { name: "admin", userId: "admin", firstName: "Admin", lastName: "User", fatherName: "System", email: "admin@example.com", phone: "9999999999", password: "password", roles: ["Super Admin"], privileges: ["all"], isActive: true, gender: 'Male', source: 'Seeded' },
-    // Anonymous Donor for reassignment
+];
+
+const anonymousSystemUsersToSeed: Omit<User, 'id' | 'createdAt' | 'userKey'>[] = [
     { name: "Anonymous Donor", userId: "anonymous_donor", firstName: "Anonymous", lastName: "Donor", email: "anonymous@system.local", phone: "0000000000", password: "N/A", roles: [], isActive: false, gender: 'Other', source: 'Seeded' },
 ];
 
@@ -616,6 +617,14 @@ export const seedInitialUsersAndQuotes = async (): Promise<SeedResult> => {
     };
 };
 
+export const seedAnonymousSystemUsers = async (): Promise<SeedResult> => {
+    const userResults = await seedUsers(anonymousSystemUsersToSeed);
+    return {
+        message: 'Anonymous System Users Seeded',
+        details: userResults
+    };
+};
+
 export const seedCoreTeam = async (): Promise<SeedResult> => {
     const userResults = await seedUsers(coreTeamUsersToSeed);
     return {
@@ -723,34 +732,48 @@ export const seedSampleData = async (): Promise<SeedResult> => {
 // --- ERASE FUNCTIONS ---
 
 export const eraseInitialUsersAndQuotes = async (): Promise<SeedResult> => {
-    const details: string[] = [];
     const adminDb = getAdminDb();
     const batch = adminDb.batch();
 
-    const initialUserIds = initialUsersToSeed.map(u => u.userId);
-    const usersToDeleteQuery = adminDb.collection(USERS_COLLECTION).where("userId", "in", initialUserIds);
+    // Query for just the main admin user to delete
+    const usersToDeleteQuery = adminDb.collection(USERS_COLLECTION).where("userId", "in", ["admin"]);
     const userSnapshot = await usersToDeleteQuery.get();
     
     let deletedUserCount = 0;
     userSnapshot.forEach(doc => {
-        // Critical safeguard for the admin user
+        // Double-check to never delete the main admin
         if (doc.data().userId !== 'admin') {
             batch.delete(doc.ref);
             deletedUserCount++;
         }
     });
-    if (deletedUserCount > 0) {
-        details.push(`Scheduled deletion for ${deletedUserCount} initial user(s).`);
-    }
 
     const quotesDeleted = await eraseAllQuotes();
-    details.push(`Deleted ${quotesDeleted} quotes.`);
-
+    
     await batch.commit();
 
     return {
         message: 'Initial Data Erased',
-        details: details
+        details: [`Deleted ${quotesDeleted} quotes. The main 'admin' user was preserved.`]
+    };
+};
+
+export const eraseAnonymousSystemUsers = async (): Promise<SeedResult> => {
+    const adminDb = getAdminDb();
+    const batch = adminDb.batch();
+    const q = adminDb.collection(USERS_COLLECTION).where("userId", "in", ["anonymous_donor"]);
+    const snapshot = await q.get();
+    
+    if (snapshot.empty) {
+        return { message: "No anonymous system users found to erase.", details: [] };
+    }
+    
+    snapshot.docs.forEach(doc => batch.delete(doc.ref));
+    await batch.commit();
+
+    return {
+        message: `Erased ${snapshot.size} anonymous system user(s).`,
+        details: [`Removed user 'anonymous_donor'.`]
     };
 };
 
