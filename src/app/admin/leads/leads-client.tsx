@@ -264,7 +264,7 @@ export function LeadsPageClient({ initialLeads, initialUsers, initialSettings, e
                 </Button>
                 <Button asChild>
                     <Link href="/admin/leads/add">
-                        <PlusCircle className="mr-2 h-4 w-4" />
+                        <PlusCircle className="mr-2" />
                         Add Lead
                     </Link>
                 </Button>

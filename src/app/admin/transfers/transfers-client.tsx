@@ -166,7 +166,7 @@ export function AllTransfersPageClient({ initialTransfers, error: initialError }
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
                 <DropdownMenuItem asChild>
-                    <Link href={`/admin/leads/${transfer.leadId}`}>
+                    <Link href={`/admin/leads/${encodeURIComponent(transfer.leadId)}`}>
                         <Eye className="mr-2 h-4 w-4" /> View Lead
                     </Link>
                 </DropdownMenuItem>
@@ -240,7 +240,7 @@ export function AllTransfersPageClient({ initialTransfers, error: initialError }
                             <TableCell>{(currentPage - 1) * itemsPerPage + index + 1}</TableCell>
                             <TableCell>{format(new Date(transfer.transferredAt), "dd MMM yyyy, p")}</TableCell>
                             <TableCell>
-                                <Link href={`/admin/leads/${transfer.leadId}`} className="hover:underline text-primary font-medium">
+                                <Link href={`/admin/leads/${encodeURIComponent(transfer.leadId)}`} className="hover:underline text-primary font-medium">
                                     {transfer.leadName}
                                 </Link>
                                 <div className="text-xs text-muted-foreground">{transfer.leadId}</div>
@@ -284,7 +284,7 @@ export function AllTransfersPageClient({ initialTransfers, error: initialError }
                                     </div>
                                 </div>
                                 <CardDescription>
-                                    To: <Link href={`/admin/leads/${transfer.leadId}`} className="hover:underline text-primary font-medium">{transfer.leadName}</Link>
+                                    To: <Link href={`/admin/leads/${encodeURIComponent(transfer.leadId)}`} className="hover:underline text-primary font-medium">{transfer.leadName}</Link>
                                 </CardDescription>
                             </CardHeader>
                             <CardContent className="p-0 space-y-2 text-sm">

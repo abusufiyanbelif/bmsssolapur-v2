@@ -556,7 +556,7 @@ export function DonationsPageClient({ initialDonations, initialUsers, initialLea
                                         </span>
                                     </CardDescription>
                                 </CardHeader>
-                                <CardContent className="p-0 space-y-3 text-sm">
+                                <CardContent className="p-0 space-y-2 text-sm">
                                      <div className="flex justify-between"><span className="text-muted-foreground">ID</span><span className="font-mono text-xs">{donation.id}</span></div>
                                      <div className="flex justify-between"><span className="text-muted-foreground">Date</span><span>{format(new Date(donation.donationDate), "dd MMM yyyy")}</span></div>
                                      <div className="flex justify-between"><span className="text-muted-foreground">Category</span><span>{donation.type}</span></div>

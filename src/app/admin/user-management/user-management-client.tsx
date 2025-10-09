@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
@@ -201,7 +202,7 @@ export function UserManagementPageClient({ initialUsers, error: initialError }: 
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
                      <DropdownMenuItem asChild>
-                        <Link href={`/admin/user-management/${user.id}/edit`}>
+                        <Link href={`/admin/user-management/${encodeURIComponent(user.id!)}/edit`}>
                             <Edit className="mr-2 h-4 w-4" /> Edit User
                         </Link>
                     </DropdownMenuItem>
@@ -305,7 +306,7 @@ export function UserManagementPageClient({ initialUsers, error: initialError }: 
                         </TableCell>
                         <TableCell><Badge variant="outline">{user.userKey || 'N/A'}</Badge></TableCell>
                         <TableCell className="font-medium">
-                            <Link href={`/admin/user-management/${user.id}/edit`} className="hover:underline hover:text-primary">
+                            <Link href={`/admin/user-management/${encodeURIComponent(user.id!)}/edit`} className="hover:underline hover:text-primary">
                                 {user.name}
                             </Link>
                         </TableCell>
@@ -357,7 +358,7 @@ export function UserManagementPageClient({ initialUsers, error: initialError }: 
                                 aria-label="Select card"
                                 disabled={isProtectedUser}
                             />
-                        <Link href={`/admin/user-management/${user.id}/edit`} className="flex-grow space-y-3">
+                        <Link href={`/admin/user-management/${encodeURIComponent(user.id!)}/edit`} className="flex-grow space-y-3">
                             <CardHeader className="p-0">
                                 <div className="flex justify-between items-start">
                                     <CardTitle className="text-lg flex items-center gap-2">
@@ -504,6 +505,24 @@ export function UserManagementPageClient({ initialUsers, error: initialError }: 
                         <p className="text-sm font-medium">
                             {selectedUsers.length} item(s) selected.
                         </p>
+                         {isMobile && (
+                            <Button
+                                variant="outline"
+                                onClick={() => {
+                                    const pageIds = paginatedUsers.map(d => d.id!);
+                                    const allSelectedOnPage = pageIds.every(id => selectedUsers.includes(id));
+
+                                    if (allSelectedOnPage) {
+                                        setSelectedUsers(prev => prev.filter(id => !pageIds.includes(id)));
+                                    } else {
+                                        setSelectedUsers(prev => [...new Set([...prev, ...pageIds])]);
+                                    }
+                                }}
+                            >
+                                <Check className="mr-2 h-4 w-4"/>
+                                { paginatedUsers.every(d => selectedUsers.includes(d.id!)) ? 'Deselect All' : 'Select All on Page'}
+                            </Button>
+                        )}
                          <DeleteConfirmationDialog
                             itemType={`${selectedUsers.length} user(s)`}
                             itemName="the selected items"
