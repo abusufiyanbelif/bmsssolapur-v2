@@ -97,3 +97,30 @@ export const getAllQuotes = async (): Promise<Quote[]> => {
         ];
     }
 }
+
+/**
+ * Deletes all quotes from the database.
+ * @returns The number of quotes deleted.
+ */
+export const eraseAllQuotes = async (): Promise<number> => {
+    const adminDb = getAdminDb();
+    const quotesCollection = adminDb.collection(QUOTES_COLLECTION);
+    const snapshot = await quotesCollection.limit(500).get(); // Process in batches of 500
+
+    if (snapshot.empty) {
+        return 0;
+    }
+
+    const batch = adminDb.batch();
+    snapshot.docs.forEach(doc => {
+        batch.delete(doc.ref);
+    });
+    await batch.commit();
+
+    // If there might be more than 500, recurse
+    if (snapshot.size === 500) {
+        return snapshot.size + await eraseAllQuotes();
+    }
+
+    return snapshot.size;
+}

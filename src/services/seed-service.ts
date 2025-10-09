@@ -1,3 +1,4 @@
+
 /**
  * @fileOverview A service to seed the database with initial data.
  */
@@ -726,16 +727,22 @@ export const eraseInitialUsersAndQuotes = async (): Promise<SeedResult> => {
     const adminDb = getAdminDb();
     const batch = adminDb.batch();
 
-    // Delete users with specific userKeys from the initial seed
     const initialUserIds = initialUsersToSeed.map(u => u.userId);
     const usersToDeleteQuery = adminDb.collection(USERS_COLLECTION).where("userId", "in", initialUserIds);
     const userSnapshot = await usersToDeleteQuery.get();
-    userSnapshot.forEach(doc => batch.delete(doc.ref));
-    if (userSnapshot.size > 0) {
-        details.push(`Scheduled deletion for ${userSnapshot.size} initial user(s).`);
+    
+    let deletedUserCount = 0;
+    userSnapshot.forEach(doc => {
+        // Critical safeguard for the admin user
+        if (doc.data().userId !== 'admin') {
+            batch.delete(doc.ref);
+            deletedUserCount++;
+        }
+    });
+    if (deletedUserCount > 0) {
+        details.push(`Scheduled deletion for ${deletedUserCount} initial user(s).`);
     }
 
-    // Delete quotes
     const quotesDeleted = await eraseAllQuotes();
     details.push(`Deleted ${quotesDeleted} quotes.`);
 
@@ -758,12 +765,23 @@ export const eraseCoreTeam = async (): Promise<SeedResult> => {
     }
 
     const batch = adminDb.batch();
-    snapshot.docs.forEach(doc => batch.delete(doc.ref));
+    let deletedCount = 0;
+    const deletedNames: string[] = [];
+
+    snapshot.docs.forEach(doc => {
+        // Critical safeguard for core admins
+        if (doc.data().userId !== 'abusufiyan.belif' && doc.data().userId !== 'moosa.shaikh') {
+            batch.delete(doc.ref);
+            deletedCount++;
+            deletedNames.push(`${doc.data().name} (${doc.data().phone}) deleted.`);
+        }
+    });
+
     await batch.commit();
 
     return {
-        message: `Erased ${snapshot.size} core team members.`,
-        details: snapshot.docs.map(d => `${d.data().name} (${d.data().phone}) deleted.`)
+        message: `Erased ${deletedCount} core team members.`,
+        details: deletedNames
     };
 };
 
@@ -814,12 +832,15 @@ export const eraseSampleData = async (): Promise<SeedResult> => {
     // which is the desired behavior to clear out duplicates.
     const deletedLeads = await deleteCollection('leads');
     details.push(`Deleted ${deletedLeads} leads.`);
+    await deleteCollection('publicLeads');
+
 
     const deletedDonations = await deleteCollection('donations');
     details.push(`Deleted ${deletedDonations} donations.`);
 
     const deletedCampaigns = await deleteCollection('campaigns');
     details.push(`Deleted ${deletedCampaigns} campaigns.`);
+    await deleteCollection('publicCampaigns');
     
     // Find and delete all users with source: 'Seeded', except for the main admin accounts
     const seededUsersQuery = adminDb.collection(USERS_COLLECTION).where("source", "==", "Seeded");
