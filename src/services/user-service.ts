@@ -303,7 +303,6 @@ export const createUser = async (userData: Partial<Omit<User, 'id' | 'createdAt'
 // Function to get a user by full name
 export const getUserByFullName = async (name: string): Promise<User | null> => {
     if (!name) return null;
-    if (name === 'admin') return getUser('admin');
 
     try {
         const adminDb = getAdminDb();
@@ -323,7 +322,6 @@ export const getUserByFullName = async (name: string): Promise<User | null> => {
 // Function to get a user by userKey
 export const getUserByUserKey = async (userKey: string): Promise<User | null> => {
     if (!userKey) return null;
-    if (userKey === 'USR01') return getUser('admin');
 
     try {
         const adminDb = getAdminDb();

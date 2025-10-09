@@ -27,6 +27,7 @@ declare global {
 
 export function LoginForm() {
   const { toast } = useToast();
+  const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isOtpSending, setIsOtpSending] = useState(false);
   const [isOtpSent, setIsOtpSent] = useState(false);
@@ -35,7 +36,6 @@ export function LoginForm() {
   const [settings, setSettings] = useState<AppSettings | null>(null);
   const [loadingSettings, setLoadingSettings] = useState(true);
   const recaptchaContainerRef = useRef<HTMLDivElement>(null);
-
 
   const handleLoginSuccess = (userId: string) => {
     localStorage.setItem('userId', userId);

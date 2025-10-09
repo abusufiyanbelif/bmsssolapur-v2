@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import { useState, useEffect } from "react";
@@ -59,7 +58,7 @@ function InspirationalQuotes({ quotes, loading }: { quotes: Quote[], loading: bo
     );
 }
 
-export default function ReferralDashboardPage() {
+export function ReferralDashboardPage() {
     const [user, setUser] = useState<User | null>(null);
     const [referredBeneficiaries, setReferredBeneficiaries] = useState<User[]>([]);
     const [referredLeads, setReferredLeads] = useState<Lead[]>([]);
@@ -201,5 +200,3 @@ export default function ReferralDashboardPage() {
         </div>
     );
 }
-
-    
