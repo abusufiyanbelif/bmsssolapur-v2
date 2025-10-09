@@ -7,13 +7,10 @@ import { getAllUsersAction } from "./actions";
 // This is now a Server Component that fetches data
 async function UsersPageDataLoader() {
   try {
-    // Fetch data on the server using a server action
     const allUsers = await getAllUsersAction();
-    // Pass serializable data as props to the Client Component
     return <UserManagementPageClient initialUsers={allUsers} />;
   } catch (e) {
     const error = e instanceof Error ? e.message : "An unknown error occurred.";
-    // Pass error to the client component to display it
     return <UserManagementPageClient initialUsers={[]} error={error} />;
   }
 }

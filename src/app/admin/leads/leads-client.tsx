@@ -39,9 +39,10 @@ type SortableColumn = 'name' | 'helpRequested' | 'createdAt' | 'status' | 'verif
 type SortDirection = 'asc' | 'desc';
 
 
-const statusColors: Record<LeadStatus, string> = {
-    "Open": "bg-blue-500/20 text-blue-700 border-blue-500/30",
+const statusColors: Record<LeadAction, string> = {
     "Pending": "bg-yellow-500/20 text-yellow-700 border-yellow-500/30",
+    "Ready For Help": "bg-cyan-500/20 text-cyan-700 border-cyan-500/30",
+    "Publish": "bg-blue-500/20 text-blue-700 border-blue-500/30",
     "Partial": "bg-blue-500/20 text-blue-700 border-blue-500/30",
     "Complete": "bg-indigo-500/20 text-indigo-700 border-indigo-500/30",
     "Closed": "bg-green-500/20 text-green-700 border-green-500/30",
@@ -50,14 +51,15 @@ const statusColors: Record<LeadStatus, string> = {
 };
 
 interface LeadsPageClientProps {
-    initialLeads: Lead[];
-    initialUsers: User[];
-    initialSettings: AppSettings | null;
-    error?: string;
+  initialLeads: Lead[];
+  initialUsers: User[];
+  initialSettings: AppSettings | null;
+  error?: string;
 }
 
 export function LeadsPageClient({ initialLeads, initialUsers, initialSettings, error: initialError }: LeadsPageClientProps) {
     const searchParams = useSearchParams();
+    const router = useRouter();
     const statusFromUrl = searchParams.get('status');
     const verificationFromUrl = searchParams.get('verification');
     const purposeFromUrl = searchParams.get('purpose');
@@ -69,6 +71,7 @@ export function LeadsPageClient({ initialLeads, initialUsers, initialSettings, e
     const isMobile = useIsMobile();
     const [adminUserId, setAdminUserId] = useState<string | null>(null);
     const [selectedLeads, setSelectedLeads] = useState<string[]>([]);
+    const [expandedRows, setExpandedRows] = useState<string[]>([]);
 
     // Input states
     const [nameInput, setNameInput] = useState('');
@@ -93,7 +96,7 @@ export function LeadsPageClient({ initialLeads, initialUsers, initialSettings, e
     const [itemsPerPage, setItemsPerPage] = useState(10);
     
      const fetchData = async () => {
-        window.location.reload();
+        router.refresh();
     };
 
     useEffect(() => {
@@ -149,21 +152,22 @@ export function LeadsPageClient({ initialLeads, initialUsers, initialSettings, e
             setSortDirection('asc');
         }
     }
-
+    
     const filteredLeads = useMemo(() => {
         let filtered = leads.filter(lead => {
-            const nameMatch = appliedFilters.name === '' || lead.name.toLowerCase().includes(appliedFilters.name.toLowerCase());
+            // Ensure lead has a name property before calling toLowerCase
+            const nameMatch = appliedFilters.name === '' || (lead.name && lead.name.toLowerCase().includes(appliedFilters.name.toLowerCase()));
             const purposeMatch = appliedFilters.purpose === 'all' || lead.purpose === appliedFilters.purpose;
             const statusMatch = appliedFilters.status === 'all' || lead.caseStatus === appliedFilters.status;
             const verificationMatch = appliedFilters.verification === 'all' || lead.caseVerification === appliedFilters.verification;
             
             return nameMatch && purposeMatch && statusMatch && verificationMatch;
         });
-
+    
         return filtered.sort((a, b) => {
             const aValue = a[sortColumn];
             const bValue = b[sortColumn];
-
+    
             let comparison = 0;
             if (aValue instanceof Date && bValue instanceof Date) {
                 comparison = aValue.getTime() - bValue.getTime();
@@ -174,11 +178,12 @@ export function LeadsPageClient({ initialLeads, initialUsers, initialSettings, e
             } else if (String(aValue) < String(bValue)) {
                 comparison = -1;
             }
-
+    
             return sortDirection === 'asc' ? comparison : -comparison;
         });
     }, [leads, appliedFilters, sortColumn, sortDirection]);
-
+    
+    
     const paginatedLeads = useMemo(() => {
         const startIndex = (currentPage - 1) * itemsPerPage;
         return filteredLeads.slice(startIndex, startIndex + itemsPerPage);
@@ -213,7 +218,7 @@ export function LeadsPageClient({ initialLeads, initialUsers, initialSettings, e
                 </div>
             );
         }
-
+    
         if (error) {
             return (
                 <Alert variant="destructive" className="my-4">
@@ -223,7 +228,7 @@ export function LeadsPageClient({ initialLeads, initialUsers, initialSettings, e
                 </Alert>
             );
         }
-        
+    
         if (leads.length === 0) {
             return (
                 <div className="text-center py-10">
@@ -238,6 +243,18 @@ export function LeadsPageClient({ initialLeads, initialUsers, initialSettings, e
             )
         }
         
+        if (paginatedLeads.length === 0) {
+             return (
+                <div className="text-center py-10">
+                    <p className="text-muted-foreground">No leads match your current filters.</p>
+                     <Button variant="outline" onClick={resetFilters} className="mt-4">
+                        <FilterX className="mr-2 h-4 w-4" />
+                        Clear Filters
+                    </Button>
+                </div>
+            )
+        }
+    
         return <div>Table of leads...</div>
     }
     
@@ -249,6 +266,8 @@ export function LeadsPageClient({ initialLeads, initialUsers, initialSettings, e
              </div>
         )
     }
+
+  const purposeOptions = initialSettings.leadConfiguration?.purposes.map(p => p.name) || [];
 
   return (
     <div className="flex-1 space-y-4">
@@ -277,7 +296,44 @@ export function LeadsPageClient({ initialLeads, initialUsers, initialSettings, e
                 </CardDescription>
             </CardHeader>
             <CardContent>
-                {/* Filters */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6 p-4 border rounded-lg bg-muted/50">
+                    <div className="space-y-2 lg:col-span-2">
+                        <Label htmlFor="nameFilter">Search by Beneficiary Name</Label>
+                        <Input id="nameFilter" placeholder="Filter by name..." value={nameInput} onChange={e => setNameInput(e.target.value)} />
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="purposeFilter">Purpose</Label>
+                        <Select value={purposeInput} onValueChange={setPurposeInput}>
+                            <SelectTrigger id="purposeFilter"><SelectValue /></SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">All Purposes</SelectItem>
+                                {purposeOptions.map(p => <SelectItem key={p} value={p}>{p}</SelectItem>)}
+                            </SelectContent>
+                        </Select>
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="statusFilter">Status</Label>
+                        <Select value={statusInput} onValueChange={setStatusInput}>
+                            <SelectTrigger id="statusFilter"><SelectValue /></SelectTrigger>
+                            <SelectContent>
+                                {actionOptions.map(s => <SelectItem key={s} value={s} className="capitalize">{s}</SelectItem>)}
+                            </SelectContent>
+                        </Select>
+                    </div>
+                     <div className="space-y-2">
+                        <Label htmlFor="verificationFilter">Verification</Label>
+                        <Select value={verificationInput} onValueChange={setVerificationInput}>
+                            <SelectTrigger id="verificationFilter"><SelectValue /></SelectTrigger>
+                            <SelectContent>
+                                {verificationOptions.map(s => <SelectItem key={s} value={s} className="capitalize">{s}</SelectItem>)}
+                            </SelectContent>
+                        </Select>
+                    </div>
+                     <div className="flex items-end gap-4 lg:col-span-full">
+                        <Button onClick={handleSearch} className="w-full"><Search className="mr-2 h-4 w-4" />Apply Filters</Button>
+                        <Button variant="outline" onClick={resetFilters} className="w-full"><FilterX className="mr-2 h-4 w-4" />Clear Filters</Button>
+                    </div>
+                </div>
                 {renderContent()}
             </CardContent>
         </Card>

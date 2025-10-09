@@ -2,8 +2,8 @@
 import { Suspense } from "react";
 import { Loader2 } from "lucide-react";
 import { LeadsPageClient } from "./leads-client";
-import { getAllLeads, Lead } from "@/services/lead-service";
-import { getAllUsers, User } from "@/services/user-service";
+import { getAllLeads } from "@/services/lead-service";
+import { getAllUsers } from "@/services/user-service";
 import { getAppSettings } from "@/services/app-settings-service";
 
 async function LeadsPageData() {
@@ -15,9 +15,9 @@ async function LeadsPageData() {
         ]);
         
         return <LeadsPageClient 
-            initialLeads={leads} 
-            initialUsers={users}
-            initialSettings={settings}
+            initialLeads={JSON.parse(JSON.stringify(leads))}
+            initialUsers={JSON.parse(JSON.stringify(users))}
+            initialSettings={JSON.parse(JSON.stringify(settings))}
         />
 
     } catch (e) {

@@ -1,4 +1,3 @@
-
 // src/app/admin/beneficiaries/beneficiaries-client.tsx
 "use client";
 
@@ -32,6 +31,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { useRouter } from 'next/navigation';
 
 
 type StatusFilter = 'all' | 'active' | 'inactive';
@@ -55,6 +55,7 @@ type SortDirection = 'asc' | 'desc';
 
 function BeneficiariesPageContent({ initialBeneficiaries, error: initialError }: { initialBeneficiaries: User[], error?: string }) {
     const searchParams = useSearchParams();
+    const router = useRouter();
     const typeFromUrl = searchParams.get('type');
     const widowFromUrl = searchParams.get('isWidow');
     
@@ -108,7 +109,7 @@ function BeneficiariesPageContent({ initialBeneficiaries, error: initialError }:
     };
     
     const fetchUsers = async () => {
-        window.location.reload();
+        router.refresh();
     };
 
 
@@ -609,4 +610,12 @@ function BeneficiariesPageContent({ initialBeneficiaries, error: initialError }:
         </Card>
     </div>
   )
+}
+
+export function BeneficiariesPageClient(props: { initialBeneficiaries: User[], error?: string }) {
+    return (
+        <Suspense fallback={<div className="flex items-center justify-center p-8"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>}>
+            <BeneficiariesPageContent {...props} />
+        </Suspense>
+    )
 }

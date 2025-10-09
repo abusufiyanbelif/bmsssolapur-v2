@@ -1,4 +1,3 @@
-
 // src/app/admin/donors/donors-client.tsx
 "use client";
 
@@ -32,6 +31,7 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { useSearchParams } from "next/navigation";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { useRouter } from 'next/navigation';
 
 
 type StatusFilter = 'all' | 'active' | 'inactive';
@@ -45,6 +45,7 @@ type SortDirection = 'asc' | 'desc';
 
 function DonorsPageContent({ initialDonors, error: initialError }: { initialDonors: User[], error?: string }) {
     const searchParams = useSearchParams();
+    const router = useRouter();
     const nameFromUrl = searchParams.get('name');
 
     const [donors, setDonors] = useState<User[]>(initialDonors);
@@ -87,7 +88,7 @@ function DonorsPageContent({ initialDonors, error: initialError }: { initialDono
     };
     
     const fetchUsers = async () => {
-        window.location.reload();
+        router.refresh();
     };
 
 
@@ -547,4 +548,12 @@ function DonorsPageContent({ initialDonors, error: initialError }: { initialDono
         </Card>
     </div>
   )
+}
+
+export function DonorsPageClient(props: { initialDonors: User[], error?: string }) {
+    return (
+        <Suspense fallback={<div className="flex items-center justify-center p-8"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>}>
+            <DonorsPageContent {...props} />
+        </Suspense>
+    )
 }

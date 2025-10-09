@@ -3,7 +3,6 @@ import { Suspense } from "react";
 import { Loader2 } from "lucide-react";
 import { ReferralsPageClient } from "./referrals-client";
 import { getAllUsersAction } from "@/app/admin/user-management/actions";
-import type { User } from "@/services/types";
 
 async function ReferralsPageDataLoader() {
   try {
