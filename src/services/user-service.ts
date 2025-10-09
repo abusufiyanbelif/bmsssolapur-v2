@@ -1,10 +1,8 @@
-
 /**
  * @fileOverview User service for interacting with Firestore.
  * This service should only be called from server-side components or server actions.
  */
 
-import * as admin from 'firebase-admin';
 import {
   collection,
   doc,
@@ -24,9 +22,8 @@ import {
   orderBy,
   FieldValue
 } from 'firebase-admin/firestore';
-import { getAdminDb } from './firebase-admin';
+import { getAdminDb, getAdminAuth } from './firebase-admin';
 import type { User, UserRole } from './types';
-import { uploadFile } from './storage-service';
 import { logActivity } from './activity-log-service';
 
 // Re-export types for backward compatibility
@@ -462,6 +459,7 @@ export const updateUser = async (id: string, updates: Partial<User>) => {
 export const deleteUser = async (id: string, adminUser: User, isBulkOperation: boolean = false) => {
     try {
         const adminDb = getAdminDb();
+        const adminAuth = getAdminAuth();
         const batch = adminDb.batch();
         
         const userToDelete = await getUser(id);
@@ -479,7 +477,7 @@ export const deleteUser = async (id: string, adminUser: User, isBulkOperation: b
 
         // 1. Delete from Firebase Authentication
         // The UID in Firebase Auth is the same as the document ID in Firestore
-        await admin.auth().deleteUser(id).catch(error => {
+        await adminAuth.deleteUser(id).catch(error => {
             // It's okay if the user doesn't exist in Auth (e.g., never logged in via OTP)
             if (error.code !== 'auth/user-not-found') {
                 throw error; // Re-throw other auth errors
@@ -633,4 +631,3 @@ export async function checkAvailability(field: string, value: string): Promise<A
         return { isAvailable: false }; // Fail closed to prevent duplicates
     }
 }
-

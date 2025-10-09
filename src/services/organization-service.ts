@@ -1,10 +1,9 @@
-
 /**
  * @fileOverview Service for managing organization data in Firestore.
  */
 
 import { doc, getDoc, setDoc, updateDoc, collection, limit, query, getDocs, where, Timestamp } from 'firebase/firestore';
-import { db } from './firebase'; // Use client-side SDK
+import { db } from './firebase'; // Use client-side SDK for updates from client components/actions
 import type { Organization, OrganizationFooter } from './types';
 import { getAdminDb } from './firebase-admin';
 
@@ -18,8 +17,9 @@ const PUBLIC_DATA_COLLECTION = 'publicData';
 
 // Function to check for duplicate organizations
 const checkDuplicates = async (name: string, registrationNumber: string): Promise<boolean> => {
-    const nameQuery = query(collection(db, ORGANIZATIONS_COLLECTION), where("name", "==", name), limit(1));
-    const regQuery = query(collection(db, ORGANIZATIONS_COLLECTION), where("registrationNumber", "==", registrationNumber), limit(1));
+    const adminDb = getAdminDb();
+    const nameQuery = query(collection(adminDb, ORGANIZATIONS_COLLECTION), where("name", "==", name), limit(1));
+    const regQuery = query(collection(adminDb, ORGANIZATIONS_COLLECTION), where("registrationNumber", "==", registrationNumber), limit(1));
 
     const [nameSnapshot, regSnapshot] = await Promise.all([
         getDocs(nameQuery),
@@ -32,13 +32,14 @@ const checkDuplicates = async (name: string, registrationNumber: string): Promis
 
 // Function to create an organization
 export const createOrganization = async (orgData: Omit<Organization, 'id' | 'createdAt' | 'updatedAt'>) => {
+  const adminDb = getAdminDb();
   try {
     const isDuplicate = await checkDuplicates(orgData.name, orgData.registrationNumber);
     if (isDuplicate) {
         throw new Error("An organization with the same name or registration number already exists.");
     }
 
-    const orgRef = doc(collection(db, ORGANIZATIONS_COLLECTION));
+    const orgRef = doc(collection(adminDb, ORGANIZATIONS_COLLECTION));
     const newOrganization: Organization = {
       ...orgData,
       id: orgRef.id,
@@ -59,8 +60,9 @@ export const createOrganization = async (orgData: Omit<Organization, 'id' | 'cre
 
 // Function to get an organization by ID
 export const getOrganization = async (id: string): Promise<Organization | null> => {
+  const adminDb = getAdminDb();
   try {
-    const orgDoc = await getDoc(doc(db, ORGANIZATIONS_COLLECTION, id));
+    const orgDoc = await getDoc(doc(adminDb, ORGANIZATIONS_COLLECTION, id));
     if (orgDoc.exists()) {
       const data = orgDoc.data();
       return { 
@@ -79,8 +81,9 @@ export const getOrganization = async (id: string): Promise<Organization | null> 
 
 // Function to update an organization
 export const updateOrganization = async (id: string, updates: Partial<Omit<Organization, 'id' | 'createdAt'>>) => {
+  const adminDb = getAdminDb();
   try {
-    const orgRef = doc(db, ORGANIZATIONS_COLLECTION, id);
+    const orgRef = doc(adminDb, ORGANIZATIONS_COLLECTION, id);
     await updateDoc(orgRef, {
         ...updates,
         updatedAt: new Date(),
@@ -99,8 +102,9 @@ export const updateOrganization = async (id: string, updates: Partial<Omit<Organ
 };
 
 export const updateOrganizationFooter = async (id: string, footerData: OrganizationFooter) => {
+    const adminDb = getAdminDb();
     try {
-        const orgRef = doc(db, ORGANIZATIONS_COLLECTION, id);
+        const orgRef = doc(adminDb, ORGANIZATIONS_COLLECTION, id);
         await updateDoc(orgRef, {
             footer: footerData,
             updatedAt: new Date(),

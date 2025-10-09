@@ -1,5 +1,3 @@
-
-
 /**
  * @fileOverview A service to seed the database with initial data.
  */
@@ -9,7 +7,7 @@ import { createOrganization, Organization, getCurrentOrganization, OrganizationF
 import { seedInitialQuotes as seedQuotesService, eraseAllQuotes } from './quotes-service';
 import { db } from './firebase';
 import { collection, getDocs, query, where, Timestamp, setDoc, doc, writeBatch, orderBy, getCountFromServer, limit, updateDoc, serverTimestamp, getDoc, deleteDoc, arrayUnion, FieldValue } from 'firebase-admin/firestore';
-import * as admin from 'firebase-admin';
+import { getAdminDb, getAdminAuth } from './firebase-admin';
 import type { Lead, Verifier, LeadDonationAllocation, Donation, Campaign, FundTransfer, LeadAction, AppSettings } from './types';
 import { createLead, getLead, updateLead } from './lead-service';
 import { createCampaign, getCampaign } from './campaign-service';
@@ -864,11 +862,12 @@ export const eraseFirebaseAuthUsers = async (): Promise<SeedResult> => {
     let deletedCount = 0;
     let errorCount = 0;
     const details: string[] = [];
+    const adminAuth = getAdminAuth();
 
     const authPromises = allUsers.map(async (user) => {
         if (user.id) {
             try {
-                await admin.auth().deleteUser(user.id);
+                await adminAuth.deleteUser(user.id);
                 deletedCount++;
             } catch (error: any) {
                 if (error.code !== 'auth/user-not-found') {
@@ -897,18 +896,19 @@ export const syncUsersToFirebaseAuth = async (): Promise<SeedResult> => {
     let skippedCount = 0;
     let errorCount = 0;
     const details: string[] = [];
+    const adminAuth = getAdminAuth();
 
     for (const user of allUsers) {
         if (user.phone && user.id) {
             try {
                 // Check if user already exists in Auth by phone number
-                await admin.auth().getUserByPhoneNumber(`+91${user.phone}`);
+                await adminAuth.getUserByPhoneNumber(`+91${user.phone}`);
                 skippedCount++;
             } catch (error: any) {
                 if (error.code === 'auth/user-not-found') {
                     // User does not exist, so we can create them
                     try {
-                        await admin.auth().createUser({
+                        await adminAuth.createUser({
                             uid: user.id, // Use Firestore doc ID as Auth UID
                             phoneNumber: `+91${user.phone}`,
                             displayName: user.name,
