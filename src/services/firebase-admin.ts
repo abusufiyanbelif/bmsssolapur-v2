@@ -15,51 +15,38 @@ let adminAuthInstance: admin.auth.Auth | null = null;
 let isFirstInit = true;
 
 /**
- * Ensures the default 'admin' user exists in the database.
+ * Ensures a system user exists in the database.
  * This is a critical function for production readiness, ensuring the app
- * always has a super admin without relying on manual seeding.
+ * always has critical system accounts without relying on manual seeding.
  * @param db The Firestore admin instance.
+ * @param userData The user data to check for and create if absent.
  */
-const ensureAdminUserExists = async (db: AdminFirestore) => {
+const ensureSystemUserExists = async (db: AdminFirestore, userData: Partial<User>) => {
     try {
         const usersRef = db.collection('users');
-        const q = usersRef.where('userId', '==', 'admin').limit(1);
+        const q = usersRef.where('userId', '==', userData.userId).limit(1);
         const snapshot = await q.get();
 
         if (snapshot.empty) {
-            console.log("Default 'admin' user not found. Creating it now...");
+            console.log(`Default system user "${userData.userId}" not found. Creating it now...`);
             
-            // Generate the user key. In a real scenario, this might need a more robust transaction.
+            // Generate the user key.
             const userCountSnapshot = await usersRef.count().get();
-            const userKey = `USR${(userCountSnapshot.data().count + 1).toString().padStart(2, '0')}`;
-
-            const adminUser: Omit<User, 'id'> = {
+            const userKey = `SYSTEM${(userCountSnapshot.data().count + 1).toString().padStart(2, '0')}`;
+            
+            const userToCreate: Omit<User, 'id'> = {
+                ...userData,
                 userKey: userKey,
-                name: "admin",
-                userId: "admin",
-                firstName: "Admin",
-                lastName: "User",
-                fatherName: "System",
-                email: "admin@example.com",
-                phone: "9999999999",
-                password: "password", // Default password, should be changed immediately in production
-                roles: ["Super Admin"],
-                privileges: ["all"],
-                isActive: true,
-                gender: 'Male',
-                source: 'Seeded',
                 createdAt: Timestamp.now() as any,
                 updatedAt: Timestamp.now() as any,
-            };
+            } as Omit<User, 'id'>;
 
-            // Use the hardcoded, predictable ID for the admin user document
-            await usersRef.doc('ADMIN_USER_ID').set(adminUser);
-            console.log("Default 'admin' user created successfully with ID 'ADMIN_USER_ID'.");
+            // Use the userId as the document ID for predictability
+            await usersRef.doc(userData.userId!).set(userToCreate);
+            console.log(`Default system user "${userData.userId}" created successfully.`);
         }
     } catch (e) {
-        console.error("CRITICAL ERROR: Failed to ensure admin user exists.", e);
-        // We don't re-throw here to allow the app to attempt to continue running,
-        // but this error should be treated as a major issue.
+        console.error(`CRITICAL ERROR: Failed to ensure system user "${userData.userId}" exists.`, e);
     }
 };
 
@@ -84,10 +71,41 @@ const initializeFirebaseAdmin = async () => {
     adminAuthInstance = admin.auth();
   }
 
-  // On the very first initialization of the server, check for the admin user.
+  // On the very first initialization of the server, check for critical system users.
   if (isFirstInit && adminDbInstance) {
     isFirstInit = false; // Ensure this only runs once per server start
-    await ensureAdminUserExists(adminDbInstance);
+    
+    // Auto-create the main 'admin' user
+    await ensureSystemUserExists(adminDbInstance, {
+        name: "admin",
+        userId: "admin",
+        firstName: "Admin",
+        lastName: "User",
+        fatherName: "System",
+        email: "admin@example.com",
+        phone: "9999999999",
+        password: "password",
+        roles: ["Super Admin"],
+        privileges: ["all"],
+        isActive: true,
+        gender: 'Male',
+        source: 'Seeded',
+    });
+
+    // Auto-create the 'anonymous_donor' user
+    await ensureSystemUserExists(adminDbInstance, {
+        name: "Anonymous Donor",
+        userId: "anonymous_donor",
+        firstName: "Anonymous",
+        lastName: "Donor",
+        email: "anonymous@system.local",
+        phone: "0000000000",
+        password: "N/A",
+        roles: [],
+        isActive: false,
+        gender: 'Other',
+        source: 'Seeded',
+    });
   }
 };
 
@@ -95,7 +113,7 @@ const initializeFirebaseAdmin = async () => {
 export const getAdminDb = (): AdminFirestore => {
   if (!adminDbInstance) {
     // Note: We can't await here, but initializeApp is synchronous if not awaited.
-    // The async check for the admin user will run in the background on first call.
+    // The async check for system users will run in the background on first call.
     initializeFirebaseAdmin();
   }
   return adminDbInstance!;

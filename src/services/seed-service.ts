@@ -16,12 +16,9 @@ import { updateAppSettings, getAppSettings } from './app-settings-service';
 
 const USERS_COLLECTION = 'users';
 
-// The admin user is now hardcoded in the user-service, so it's removed from this initial seed.
+// The admin and anonymous users are now hardcoded/auto-created, so they are removed from this initial seed.
 const initialUsersToSeed: Omit<User, 'id' | 'createdAt' | 'userKey'>[] = [];
 
-const anonymousSystemUsersToSeed: Omit<User, 'id' | 'createdAt' | 'userKey'>[] = [
-    { name: "Anonymous Donor", userId: "anonymous_donor", firstName: "Anonymous", lastName: "Donor", email: "anonymous@system.local", phone: "0000000000", password: "N/A", roles: [], isActive: false, gender: 'Other', source: 'Seeded' },
-];
 
 const coreTeamUsersToSeed: Omit<User, 'id' | 'createdAt' | 'userKey'>[] = [
      { 
@@ -610,15 +607,7 @@ export const seedInitialUsersAndQuotes = async (): Promise<SeedResult> => {
     const quotesStatus = await seedQuotesService();
     return {
         message: 'Initial Seeding Complete',
-        details: [quotesStatus]
-    };
-};
-
-export const seedAnonymousSystemUsers = async (): Promise<SeedResult> => {
-    const userResults = await seedUsers(anonymousSystemUsersToSeed);
-    return {
-        message: 'Anonymous System Users Seeded',
-        details: userResults
+        details: [quotesStatus, "The 'admin' user is automatically created on startup and does not need to be seeded."]
     };
 };
 
@@ -734,25 +723,6 @@ export const eraseInitialUsersAndQuotes = async (): Promise<SeedResult> => {
     return {
         message: 'Initial Data Erased',
         details: [`Deleted ${quotesDeleted} quotes. The main 'admin' user is hardcoded and was not affected.`]
-    };
-};
-
-export const eraseAnonymousSystemUsers = async (): Promise<SeedResult> => {
-    const adminDb = getAdminDb();
-    const batch = adminDb.batch();
-    const q = adminDb.collection(USERS_COLLECTION).where("userId", "in", ["anonymous_donor"]);
-    const snapshot = await q.get();
-    
-    if (snapshot.empty) {
-        return { message: "No anonymous system users found to erase.", details: [] };
-    }
-    
-    snapshot.docs.forEach(doc => batch.delete(doc.ref));
-    await batch.commit();
-
-    return {
-        message: `Erased ${snapshot.size} anonymous system user(s).`,
-        details: [`Removed user 'anonymous_donor'.`]
     };
 };
 

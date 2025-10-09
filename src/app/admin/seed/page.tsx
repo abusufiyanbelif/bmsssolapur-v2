@@ -12,7 +12,7 @@ import { useRouter } from "next/navigation";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 
 type SeedStatus = 'idle' | 'loading' | 'success' | 'error';
-type SeedTask = 'initial' | 'anonymous' | 'coreTeam' | 'organization' | 'paymentGateways' | 'sampleData' | 'appSettings' | 'syncFirebaseAuth';
+type SeedTask = 'initial' | 'coreTeam' | 'organization' | 'paymentGateways' | 'sampleData' | 'appSettings' | 'syncFirebaseAuth';
 type SeedResult = {
     message: string;
     details?: string[];
@@ -22,7 +22,6 @@ export default function SeedPage() {
     const router = useRouter();
     const [statuses, setStatuses] = useState<Record<SeedTask, SeedStatus>>({
         initial: 'idle',
-        anonymous: 'idle',
         coreTeam: 'idle',
         organization: 'idle',
         appSettings: 'idle',
@@ -32,7 +31,6 @@ export default function SeedPage() {
     });
     const [eraseStatuses, setEraseStatuses] = useState<Record<SeedTask, SeedStatus>>({
         initial: 'idle',
-        anonymous: 'idle',
         coreTeam: 'idle',
         organization: 'idle',
         appSettings: 'idle',
@@ -42,7 +40,6 @@ export default function SeedPage() {
     });
     const [results, setResults] = useState<Record<SeedTask, SeedResult | null>>({
         initial: null,
-        anonymous: null,
         coreTeam: null,
         organization: null,
         appSettings: null,
@@ -146,27 +143,6 @@ export default function SeedPage() {
                              </div>
                         </div>
                         <ResultAlert seedStatus={statuses.initial} eraseStatus={eraseStatuses.initial} result={results.initial} />
-                    </div>
-
-                    {/* Anonymous System User */}
-                     <div className="p-4 border rounded-lg space-y-4">
-                        <div className="flex flex-col md:flex-row justify-between md:items-center gap-4">
-                             <div>
-                                <h3 className="font-semibold flex items-center gap-2"><AnonymousUserIcon className="h-5 w-5 text-primary" />Anonymous System Users</h3>
-                                <p className="text-sm text-muted-foreground mt-1">Creates the 'Anonymous Donor' placeholder user. This is critical for reassigning donations if a user is deleted.</p>
-                             </div>
-                             <div className="flex items-center gap-2">
-                                <Button variant="destructive" onClick={() => handleErase('anonymous')} disabled={eraseStatuses.anonymous === 'loading'}>
-                                    {eraseStatuses.anonymous === 'loading' ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Trash2 className="mr-2 h-4 w-4"/>}
-                                    Erase
-                                </Button>
-                                <Button onClick={() => handleSeed('anonymous')} disabled={statuses.anonymous === 'loading'}>
-                                    {statuses.anonymous === 'loading' && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}
-                                    Seed Anonymous User
-                                </Button>
-                             </div>
-                        </div>
-                        <ResultAlert seedStatus={statuses.anonymous} eraseStatus={eraseStatuses.anonymous} result={results.anonymous} />
                     </div>
 
                     {/* Organization Profile */}
