@@ -5,6 +5,7 @@ import React, { forwardRef } from 'react';
 import { format } from 'date-fns';
 import type { Organization, LetterheadInclusionOptions, LetterContentOptions } from '@/services/types';
 import { ScrollArea } from './ui/scroll-area';
+import Image from 'next/image';
 
 
 interface LetterheadProps {
@@ -75,10 +76,12 @@ export const Letterhead = forwardRef<HTMLDivElement, LetterheadProps>(
                 {/* Watermark */}
                 {logoDataUri && (
                     <div className="absolute inset-0 flex items-center justify-center z-0">
-                        <img
+                        <Image
                             src={logoDataUri}
                             alt="Watermark"
-                            className="w-2/3 h-2/3 object-contain opacity-5"
+                            fill
+                            sizes="100vw"
+                            className="object-contain opacity-5"
                         />
                     </div>
                 )}
@@ -90,10 +93,12 @@ export const Letterhead = forwardRef<HTMLDivElement, LetterheadProps>(
                                     <td style={{ width: '150px', verticalAlign: 'top' }}>
                                          {logoDataUri && (
                                             <div className="relative w-36 h-36">
-                                                <img
+                                                <Image
                                                     src={logoDataUri}
                                                     alt="Organization Logo"
-                                                    className="w-full h-full object-contain"
+                                                    fill
+                                                    sizes="144px"
+                                                    className="object-contain"
                                                 />
                                             </div>
                                          )}

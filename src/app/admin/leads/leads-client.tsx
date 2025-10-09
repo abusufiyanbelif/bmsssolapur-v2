@@ -1,4 +1,3 @@
-
 // src/app/admin/leads/leads-client.tsx
 "use client";
 
@@ -27,7 +26,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { DeleteConfirmationDialog } from "@/components/delete-confirmation-dialog";
-import { handleBulkDeleteLeads, handleDeleteLead, handleBulkUpdateLeadStatus } from "./actions";
+import { handleBulkDeleteLeads, handleDeleteLead, handleBulkUpdateLeadStatus } from "./[id]/actions";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 
