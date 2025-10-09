@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import Link from "next/link"
@@ -18,6 +19,7 @@ type NavSubItem = {
     icon?: React.ElementType;
     subItems?: NavSubItem[]; // For nested collapsibles
     allowedRoles?: string[];
+    privilege?: string;
 };
 
 type NavItem = {
@@ -25,6 +27,7 @@ type NavItem = {
   label: string;
   icon: React.ElementType;
   allowedRoles: string[]; 
+  privilege?: string;
   subItems?: NavSubItem[];
 };
 
@@ -39,6 +42,9 @@ const allNavItems: NavItem[] = [
     // Authenticated User Home (common entry point)
     { href: "/home", label: "Dashboard", icon: Home, allowedRoles: ["Donor", "Beneficiary", "Admin", "Super Admin", "Finance Admin", "Referral"] },
     
+    // Common authenticated user pages
+    { href: "/campaigns", label: "Campaigns", icon: Megaphone, allowedRoles: ["Donor", "Beneficiary", "Referral"] },
+
     // Donor
     { href: "/donate", label: "Donate Now", icon: HandHeart, allowedRoles: ["Donor"] },
     { href: "/my-donations", label: "My Donations", icon: HandHeart, allowedRoles: ["Donor"] },
@@ -116,6 +122,7 @@ const allNavItems: NavItem[] = [
         label: "Transfers Management",
         icon: ArrowRightLeft,
         allowedRoles: ["Admin", "Super Admin", "Finance Admin"],
+        privilege: "canViewTransferAudit",
         subItems: [
             { href: "/admin/transfers", label: "All Transfers", icon: ArrowRightLeft, allowedRoles: ["Admin", "Super Admin", "Finance Admin"] },
             { href: "/admin/transfers/configuration", label: "Configuration", icon: Settings, allowedRoles: ["Super Admin"] },
@@ -154,7 +161,7 @@ const allNavItems: NavItem[] = [
         icon: BrainCircuit, 
         allowedRoles: ["Super Admin", "Finance Admin"],
         subItems: [
-            { href: "/admin/data-analytics", label: "Analytics Dashboard", icon: LayoutDashboard, allowedRoles: ["Super Admin", "Finance Admin"] },
+            { href: "/admin/data-analytics", label: "Analytics Dashboard", icon: LayoutDashboard },
             { href: "/admin/data-analytics/configuration", label: "Configuration", icon: Settings, allowedRoles: ["Super Admin"] },
         ]
     },
@@ -170,7 +177,7 @@ const allNavItems: NavItem[] = [
             { href: "/admin/dashboard-settings", label: "Dashboard Settings", icon: LayoutDashboard, allowedRoles: ["Super Admin"] },
             { href: "/admin/payment-gateways", label: "Payment Gateways", icon: CreditCard, allowedRoles: ["Super Admin"] },
             { href: "/admin/settings/notifications", label: "Notification Settings", icon: BellRing, allowedRoles: ["Super Admin"] },
-            { href: "/admin/audit-trail", label: "Audit Trail", icon: History, allowedRoles: ["Super Admin"] },
+            { href: "/admin/audit-trail", label: "Audit Trail", icon: History, allowedRoles: ["Super Admin"], privilege: 'canViewAllAudit' },
             { href: "/admin/seed", label: "Seed Database", icon: Database, allowedRoles: ["Super Admin"] },
             { 
                 label: "Diagnostics", 
@@ -193,6 +200,7 @@ const allNavItems: NavItem[] = [
 
 interface NavProps {
     userRoles: string[];
+    userPrivileges: string[];
     activeRole: string;
     onRoleSwitchRequired: (requiredRole: string) => void;
 }
@@ -215,7 +223,7 @@ const NavLink = ({ item, isActive, onClick, paddingLeft }: { item: NavItem | Nav
     );
 };
 
-const NavCollapsible = ({ item, pathname, level = 0, userRoles, activeRole, onRoleSwitchRequired }: { item: NavItem | NavSubItem, pathname: string, level?: number, userRoles: string[], activeRole: string, onRoleSwitchRequired: (requiredRole: string) => void }) => {
+const NavCollapsible = ({ item, pathname, level = 0, userRoles, activeRole, userPrivileges, onRoleSwitchRequired }: { item: NavItem | NavSubItem, pathname: string, level?: number, userRoles: string[], activeRole: string, userPrivileges: string[], onRoleSwitchRequired: (requiredRole: string) => void }) => {
     const Icon = item.icon;
     const isAnySubItemActive = item.subItems?.some(sub => sub.href && pathname.startsWith(sub.href)) || 
                                item.subItems?.some(sub => sub.subItems?.some(s => s.href && pathname.startsWith(s.href))) ||
@@ -223,10 +231,11 @@ const NavCollapsible = ({ item, pathname, level = 0, userRoles, activeRole, onRo
 
     const paddingLeft = level > 0 ? `pl-${level * 4}` : '';
     
-    // Filter sub-items based on the active role
+    // Filter sub-items based on the active role and privileges
     const visibleSubItems = item.subItems?.filter(subItem => {
-        if (!subItem.allowedRoles) return true; // if no roles specified, it's visible to all parent roles
-        return subItem.allowedRoles.includes(activeRole);
+        const hasRole = subItem.allowedRoles ? subItem.allowedRoles.includes(activeRole) : true;
+        const hasPrivilege = subItem.privilege ? userPrivileges.includes(subItem.privilege) : true;
+        return hasRole && hasPrivilege;
     }) || [];
 
     if(visibleSubItems.length === 0) return null;
@@ -254,7 +263,7 @@ const NavCollapsible = ({ item, pathname, level = 0, userRoles, activeRole, onRo
             <CollapsibleContent className={cn("pt-1 space-y-1", `pl-${(level + 1) * 4}`)}>
                 {visibleSubItems.map(subItem => {
                     if (subItem.subItems) {
-                        return <NavCollapsible key={subItem.label} item={subItem} pathname={pathname} level={level + 1} userRoles={userRoles} activeRole={activeRole} onRoleSwitchRequired={onRoleSwitchRequired} />
+                        return <NavCollapsible key={subItem.label} item={subItem} pathname={pathname} level={level + 1} userRoles={userRoles} activeRole={activeRole} userPrivileges={userPrivileges} onRoleSwitchRequired={onRoleSwitchRequired} />
                     }
                     const isSubActive = subItem.href ? pathname.startsWith(subItem.href) : false;
                     return <NavLink key={subItem.href} item={subItem} isActive={isSubActive} />
@@ -265,19 +274,20 @@ const NavCollapsible = ({ item, pathname, level = 0, userRoles, activeRole, onRo
 }
 
 
-export function Nav({ userRoles, activeRole, onRoleSwitchRequired }: NavProps) {
+export function Nav({ userRoles, userPrivileges, activeRole, onRoleSwitchRequired }: NavProps) {
     const pathname = usePathname();
     
     const visibleNavItems = allNavItems.filter(item => {
-        if ('allowedRoles' in item) {
-            return item.allowedRoles.includes(activeRole);
-        }
-        return true;
+        const hasRole = item.allowedRoles.includes(activeRole);
+        const hasPrivilege = item.privilege ? userPrivileges.includes(item.privilege) : true;
+        return hasRole && hasPrivilege;
     });
 
     const handleNavClick = (e: React.MouseEvent<HTMLAnchorElement>, item: NavItem) => {
         // If the active role can see the link, just navigate.
-        if (item.allowedRoles.includes(activeRole)) {
+        const hasRole = item.allowedRoles.includes(activeRole);
+        const hasPrivilege = item.privilege ? userPrivileges.includes(item.privilege) : true;
+        if (hasRole && hasPrivilege) {
             return;
         }
 
@@ -294,7 +304,7 @@ export function Nav({ userRoles, activeRole, onRoleSwitchRequired }: NavProps) {
             {visibleNavItems.map((item) => {
                 const key = item.label + activeRole;
                  if (item.subItems) {
-                    return <NavCollapsible key={key} item={item} pathname={pathname} userRoles={userRoles} activeRole={activeRole} onRoleSwitchRequired={onRoleSwitchRequired} />;
+                    return <NavCollapsible key={key} item={item} pathname={pathname} userRoles={userRoles} activeRole={activeRole} userPrivileges={userPrivileges} onRoleSwitchRequired={onRoleSwitchRequired} />;
                 }
                 const isActive = (item.href === '/' && pathname === '/') || 
                                  (item.href && item.href !== '/' && pathname.startsWith(item.href));
