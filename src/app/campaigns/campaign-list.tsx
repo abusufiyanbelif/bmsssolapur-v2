@@ -6,11 +6,12 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
-import { HandHeart, Target, CheckCircle, XCircle, Share2 } from 'lucide-react';
+import { HandHeart, Target, CheckCircle, XCircle, Share2, ImageIcon } from 'lucide-react';
 import { format, formatDistanceToNowStrict } from 'date-fns';
 import type { Campaign } from '@/services/types';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
+import Image from 'next/image';
 
 interface CampaignWithStats extends Campaign {
     raisedAmount: number;
@@ -22,9 +23,9 @@ interface CampaignListProps {
 }
 
 const statusColors: Record<string, string> = {
-    "Active": "bg-blue-500/20 text-blue-700 border-blue-500/30",
+    "Active": "bg-green-500/20 text-green-700 border-green-500/30",
     "Upcoming": "bg-yellow-500/20 text-yellow-700 border-yellow-500/30",
-    "Completed": "bg-green-500/20 text-green-700 border-green-500/30",
+    "Completed": "bg-blue-500/20 text-blue-700 border-blue-500/30",
     "Cancelled": "bg-red-500/20 text-red-700 border-red-500/30",
 };
 
@@ -85,7 +86,7 @@ export function CampaignList({ campaigns }: CampaignListProps) {
             {campaigns.map((campaign) => {
                 const isUpcoming = campaign.status === 'Upcoming';
                 const isEnded = campaign.status === 'Completed' || campaign.status === 'Cancelled';
-                const daysRemaining = !isEnded && !isUpcoming ? formatDistanceToNowStrict(campaign.endDate as Date, { unit: 'day' }) : null;
+                const daysRemaining = !isEnded && !isUpcoming ? formatDistanceToNowStrict(new Date(campaign.endDate), { unit: 'day' }) : null;
                 
                 let buttonText = 'Donate to Campaign';
                 let buttonIcon = <HandHeart className="mr-2 h-4 w-4" />;
@@ -100,36 +101,43 @@ export function CampaignList({ campaigns }: CampaignListProps) {
                 }
                 
                 return (
-                    <Card key={campaign.id} className="flex flex-col">
-                        <CardHeader>
-                            <div className="flex justify-between items-start gap-4">
-                                <CardTitle className="line-clamp-2 text-primary">{campaign.name}</CardTitle>
-                                 <Badge variant="outline" className={cn("capitalize flex-shrink-0", statusColors[campaign.status])}>
-                                    {campaign.status}
-                                </Badge>
-                            </div>
-                            <CardDescription>
-                                {format(campaign.startDate as Date, 'dd MMM')} - {format(campaign.endDate as Date, 'dd MMM, yyyy')}
-                            </CardDescription>
-                        </CardHeader>
-                        <CardContent className="flex-grow space-y-4">
-                            <p className="text-sm text-muted-foreground line-clamp-3 h-[60px]">{campaign.description || "No details provided."}</p>
-                            <div>
-                                <div className="text-xs text-muted-foreground flex justify-between mb-1">
-                                    <span>
-                                        Raised: <span className="font-semibold text-foreground">₹{campaign.raisedAmount.toLocaleString()}</span>
-                                    </span>
-                                    <span>
-                                        Goal: ₹{campaign.goal.toLocaleString()}
-                                    </span>
+                     <Card key={campaign.id} className="flex flex-col h-full overflow-hidden transition-shadow hover:shadow-lg">
+                        <div className="relative h-40 w-full bg-muted/50">
+                            {campaign.imageUrl ? (
+                                <Image src={campaign.imageUrl} alt={campaign.name} fill className="object-cover" />
+                            ) : (
+                                <div className="flex items-center justify-center h-full">
+                                    <ImageIcon className="h-12 w-12 text-muted-foreground" />
                                 </div>
-                                <Progress value={campaign.fundingProgress} />
-                            </div>
-                        </CardContent>
+                            )}
+                             <Badge variant="outline" className={cn("absolute top-2 right-2 capitalize backdrop-blur-sm", statusColors[campaign.status])}>
+                                {campaign.status}
+                            </Badge>
+                        </div>
+                        <div className="p-4 flex flex-col flex-grow">
+                            <CardHeader className="p-0">
+                                <CardTitle className="text-lg line-clamp-2 text-primary">{campaign.name}</CardTitle>
+                                <CardDescription>{format(new Date(campaign.startDate), 'dd MMM')} - {format(new Date(campaign.endDate), 'dd MMM, yyyy')}</CardDescription>
+                            </CardHeader>
+                            <CardContent className="flex-grow p-0 pt-4 space-y-4">
+                                <p className="text-sm text-muted-foreground line-clamp-3 h-[60px]">{campaign.description || "No details provided."}</p>
+                                <div>
+                                    <div className="text-xs text-muted-foreground flex justify-between mb-1">
+                                        <span>
+                                            Raised: <span className="font-semibold text-foreground">₹{campaign.raisedAmount.toLocaleString()}</span>
+                                        </span>
+                                        <span>
+                                            Goal: ₹{campaign.goal.toLocaleString()}
+                                        </span>
+                                    </div>
+                                    <Progress value={campaign.fundingProgress} />
+                                </div>
+                            </CardContent>
+                        </div>
                         <CardFooter className='flex-col items-start gap-4'>
                              {!isEnded && (
                                 <p className="text-primary font-bold text-center w-full">
-                                    {isUpcoming ? `Starts in ${formatDistanceToNowStrict(campaign.startDate as Date)}` : `${daysRemaining} remaining`}
+                                    {isUpcoming ? `Starts in ${formatDistanceToNowStrict(new Date(campaign.startDate))}` : `${daysRemaining} remaining`}
                                 </p>
                              )}
                             <div className="w-full flex gap-2">
@@ -139,6 +147,7 @@ export function CampaignList({ campaigns }: CampaignListProps) {
                                 </Button>
                                 <Button variant="outline" size="icon" onClick={() => handleShare(campaign)}>
                                     <Share2 className="h-4 w-4" />
+                                    <span className="sr-only">Share campaign</span>
                                 </Button>
                             </div>
                         </CardFooter>

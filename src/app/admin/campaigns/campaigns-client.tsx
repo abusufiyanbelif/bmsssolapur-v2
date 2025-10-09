@@ -87,7 +87,7 @@ function CampaignsPageContent({ initialCampaigns, initialLeads, error: initialEr
                 return acc;
             }, { Pending: 0, Partial: 0, Closed: 0 });
 
-            const raisedAmount = linkedLeads.reduce((sum, lead) => sum + lead.helpGiven, 0);
+            const raisedAmount = campaign.collectedAmount || 0;
             const fundingProgress = campaign.goal > 0 ? (raisedAmount / campaign.goal) * 100 : 0;
             const beneficiaryCount = new Set(linkedLeads.map(l => l.beneficiaryId)).size;
 
@@ -269,7 +269,7 @@ function CampaignsPageContent({ initialCampaigns, initialLeads, error: initialEr
                                 <Link href={`/admin/campaigns/${campaign.id}/edit`} className="block flex-grow">
                                     <CardHeader className="p-0">
                                         <CardTitle className="text-lg text-primary">{campaign.name}</CardTitle>
-                                        <CardDescription>{format(campaign.startDate as Date, "dd MMM yyyy")} - {format(campaign.endDate as Date, "dd MMM yyyy")}</CardDescription>
+                                        <CardDescription>{format(new Date(campaign.startDate), "dd MMM yyyy")} - {format(new Date(campaign.endDate), "dd MMM yyyy")}</CardDescription>
                                     </CardHeader>
                                     <CardContent className="space-y-4 flex-grow p-0 pt-4">
                                         <div>

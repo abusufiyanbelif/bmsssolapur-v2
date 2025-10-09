@@ -406,8 +406,8 @@ export const TopDonorsCard = ({ allDonations = [] }: { allDonations: Donation[] 
 export const RecentCampaignsCard = ({ allCampaigns = [], allLeads = [] }: { allCampaigns: (Campaign & { raisedAmount?: number, fundingProgress?: number })[], allLeads: Lead[] }) => {
     
      const campaignStatusColors: Record<string, string> = {
-        "Active": "bg-blue-500/20 text-blue-700 border-blue-500/30",
-        "Completed": "bg-green-500/20 text-green-700 border-green-500/30",
+        "Active": "bg-green-500/20 text-green-700 border-green-500/30",
+        "Completed": "bg-blue-500/20 text-blue-700 border-blue-500/30",
         "Upcoming": "bg-yellow-500/20 text-yellow-700 border-yellow-500/30",
         "Cancelled": "bg-red-500/20 text-red-700 border-red-500/30",
     };
@@ -435,13 +435,11 @@ export const RecentCampaignsCard = ({ allCampaigns = [], allLeads = [] }: { allC
                         return (
                              <Link key={campaign.id} href={`/admin/campaigns/${campaign.id}/edit`}>
                                 <div className="flex items-start gap-4 p-4 border rounded-lg hover:bg-muted/50 transition-colors">
-                                    <div className="relative h-24 w-24 rounded-md overflow-hidden flex-shrink-0">
+                                    <div className="relative h-24 w-24 rounded-md overflow-hidden flex-shrink-0 bg-muted/50 flex items-center justify-center">
                                         {campaign.imageUrl ? (
                                             <Image src={campaign.imageUrl} alt={campaign.name} fill className="object-cover" />
                                         ) : (
-                                            <div className="bg-secondary h-full w-full flex items-center justify-center">
-                                                <ImageIcon className="h-8 w-8 text-muted-foreground" />
-                                            </div>
+                                            <ImageIcon className="h-8 w-8 text-muted-foreground" />
                                         )}
                                     </div>
                                     <div className="flex-grow">
