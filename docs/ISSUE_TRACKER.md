@@ -45,4 +45,7 @@ This document tracks bugs, issues, and their resolution status for the project.
 | 27 | 2025-10-01    | User          | Build error during compilation of `/admin/leads/add`. | Fixed an incorrect import path for the `User` type in `src/app/admin/leads/add/actions.ts`. | AI Assistant | 2025-10-01    |
 | 28 | 2025-10-01    | User          | Inconsistent theme colors on page headings and UI elements. | Performed a full-system audit and applied `text-primary` and `text-muted-foreground` classes consistently across all pages and components to enforce the theme. Added new status colors to `globals.css`. | AI Assistant | 2025-10-01    |
 | 29 | 2025-10-01    | User          | Repository link in `README.md` was broken. | Corrected the `href` for the GitHub repository link in `README.md`. | AI Assistant | 2025-10-01    |
+| 30 | 2025-10-02    | User          | Build error: `Element type is invalid` because `LeadsPageClient` was not correctly imported. | Corrected the file structure and import paths for all admin list pages (`donors`, `leads`, `campaigns`, etc.) to use a proper Server Component (`page.tsx`) for data fetching and a Client Component (`*-client.tsx`) for UI, resolving the build error and a data integrity issue where tables appeared empty. | AI Assistant | 2025-10-02    |
 
+
+```

@@ -91,4 +91,3 @@
 - Donation target tracker (e.g., Zakat obligation calculator)
 - Anonymous donation toggle
 - Multilingual UI (Arabic, Urdu, English, Hindi, Marathi)
-
