@@ -1,4 +1,3 @@
-
 // src/app/admin/donations/add/add-donation-form.tsx
 "use client";
 
@@ -27,7 +26,7 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect, Suspense, useRef, useCallback } from "react";
-import { Loader2, Info, CalendarIcon, ChevronsUpDown, Check, X, ScanEye, TextSelect, XCircle, AlertTriangle, Bot, Text, ZoomIn, ZoomOut, FileIcon, UserPlus, UserSearch, ScanSearch, UserRoundPlus, Trash2, RotateCw, RefreshCw as RefreshIcon, BookOpen, Sparkles, CreditCard, Fingerprint, MapPin } from "lucide-react";
+import { Loader2, Info, CalendarIcon, ChevronsUpDown, Check, X, ScanEye, TextSelect, XCircle, AlertTriangle, Bot, Text, ZoomIn, ZoomOut, FileIcon, UserPlus, UserSearch, ScanSearch, UserRoundPlus, Trash2, RotateCw, RefreshCw as RefreshIcon, BookOpen, Sparkles, CreditCard, Fingerprint, MapPin, UserX as AnonymousUserIcon } from "lucide-react";
 import type { User, Donation, DonationType, DonationPurpose, PaymentMethod, Lead, Campaign, ExtractDonationDetailsOutput, ExtractBeneficiaryDetailsOutput, AppSettings } from "@/services/types";
 import { getUser, checkAvailability } from "@/services/user-service";
 import { useSearchParams, useRouter } from "next/navigation";
@@ -535,6 +534,25 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation, set
     setIsExtracting(false);
   };
   
+  const handleAnonymousDonation = () => {
+    const anonymousUser = users.find(u => u.userId === 'anonymous_donor');
+    if (anonymousUser) {
+        setValue('donorId', anonymousUser.id!, { shouldValidate: true });
+        setSelectedDonor(anonymousUser);
+        setValue('isAnonymous', true);
+        toast({
+            title: "Anonymous Donor Selected",
+            description: "You can now enter the donation details for an unknown donor.",
+        });
+    } else {
+        toast({
+            variant: "destructive",
+            title: "System User Not Found",
+            description: "The 'Anonymous Donor' system user has not been seeded. Please seed it from the settings page.",
+        });
+    }
+  }
+  
   const isFormInvalid = transactionIdState.isAvailable === false;
   
    const handleWheel = (e: React.WheelEvent<HTMLDivElement>) => {
@@ -630,28 +648,25 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation, set
       <Form {...form}>
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
                {!isEditing && (
-                 <FormField
-                    control={control}
-                    name="donorType"
-                    render={({ field }) => (
-                    <FormItem className="space-y-3">
-                        <h3 className="text-lg font-semibold border-b pb-2 text-primary">Donor Details</h3>
-                        <FormControl>
-                        <RadioGroup onValueChange={(value) => { field.onChange(value as 'existing' | 'new'); setValue('donorId', undefined); }} value={field.value} className="grid grid-cols-2 gap-4">
-                            <FormItem className="flex items-center space-x-3 space-y-0">
-                                <Button type="button" variant={field.value === 'existing' ? 'default' : 'outline'} className="w-full h-20 flex-col gap-2" onClick={() => field.onChange('existing')}><UserSearch className="h-6 w-6"/><span>Search Existing</span></Button>
+                 <div className="space-y-4">
+                    <h3 className="text-lg font-semibold border-b pb-2 text-primary">Donor Details</h3>
+                    <div className="flex items-center gap-4">
+                        <RadioGroup onValueChange={(value) => { setValue('donorType', value as any); setValue('donorId', undefined); }} value={donorType} className="grid grid-cols-2 gap-4 flex-grow">
+                            <FormItem>
+                                <Button type="button" variant={donorType === 'existing' ? 'default' : 'outline'} className="w-full h-20 flex-col gap-2" onClick={() => setValue('donorType', 'existing')}><UserSearch className="h-6 w-6"/><span>Search Existing</span></Button>
                             </FormItem>
-                             <FormItem className="flex items-center space-x-3 space-y-0">
-                                     <Button type="button" variant={field.value === 'new' ? 'default' : 'outline'} className="w-full h-20 flex-col gap-2" onClick={() => field.onChange('new')}>
+                             <FormItem>
+                                     <Button type="button" variant={donorType === 'new' ? 'default' : 'outline'} className="w-full h-20 flex-col gap-2" onClick={() => setValue('donorType', 'new')}>
                                         <UserRoundPlus className="h-6 w-6"/><span>Create New</span>
                                     </Button>
                             </FormItem>
                         </RadioGroup>
-                        </FormControl>
-                        <FormMessage />
-                    </FormItem>
-                    )}
-                />
+                        <Button type="button" variant="secondary" className="h-20 flex-col gap-2" onClick={handleAnonymousDonation}>
+                            <AnonymousUserIcon className="h-6 w-6"/>
+                            <span>Anonymous</span>
+                        </Button>
+                    </div>
+                </div>
                )}
               
               {donorType === 'existing' ? (
@@ -952,3 +967,4 @@ export function AddDonationForm(props: AddDonationFormProps) {
         </Suspense>
     )
 }
+```
