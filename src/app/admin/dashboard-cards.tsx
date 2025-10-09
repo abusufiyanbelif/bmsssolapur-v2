@@ -412,82 +412,86 @@ export const RecentCampaignsCard = ({ allCampaigns = [], allLeads = [] }: { allC
         "Cancelled": "bg-red-500/20 text-red-700 border-red-500/30",
     };
 
-
     return (
         <Card>
-        <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-primary">
-                <Megaphone/>
-                Active &amp; Recent Campaigns
-            </CardTitle>
-            <CardDescription>
-                An overview of our fundraising campaigns.
-            </CardDescription>
-        </CardHeader>
-        <CardContent>
-            {allCampaigns.length > 0 ? (
-                <div className="space-y-4">
-                    {allCampaigns.slice(0, 3).map((campaign) => {
-                        const raisedAmount = campaign.collectedAmount || 0;
-                        const progress = campaign.goal > 0 ? (raisedAmount / campaign.goal) * 100 : 0;
-                        const isOverfunded = progress > 100;
-                        const isUnfunded = raisedAmount === 0 && campaign.status === 'Active';
-                        return (
-                             <Link key={campaign.id} href={`/admin/campaigns/${campaign.id}/edit`}>
-                                <div className="flex items-start gap-4 p-4 border rounded-lg hover:bg-muted/50 transition-colors">
-                                    <div className="relative h-24 w-24 rounded-md overflow-hidden flex-shrink-0 bg-muted/50 flex items-center justify-center">
-                                        {campaign.imageUrl ? (
-                                            <Image src={campaign.imageUrl} alt={campaign.name} fill className="object-cover" />
-                                        ) : (
-                                            <ImageIcon className="h-8 w-8 text-muted-foreground" />
-                                        )}
-                                    </div>
-                                    <div className="flex-grow">
-                                        <div className="flex justify-between items-start">
-                                            <p className="font-semibold text-primary">{campaign.name}</p>
-                                            <Badge variant="outline" className={cn("capitalize text-xs", campaignStatusColors[campaign.status])}>{campaign.status}</Badge>
+            <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-primary">
+                    <Megaphone/>
+                    Active &amp; Recent Campaigns
+                </CardTitle>
+                <CardDescription>
+                    An overview of our fundraising campaigns.
+                </CardDescription>
+            </CardHeader>
+            <CardContent>
+                {allCampaigns.length > 0 ? (
+                    <div className="space-y-4">
+                        {allCampaigns.slice(0, 3).map((campaign) => {
+                            const raisedAmount = campaign.collectedAmount || 0;
+                            const progress = campaign.goal > 0 ? (raisedAmount / campaign.goal) * 100 : 0;
+                            const isOverfunded = progress > 100;
+                            const isUnfunded = raisedAmount === 0 && campaign.status === 'Active';
+                            
+                            return (
+                                <Link key={campaign.id} href={`/admin/campaigns/${campaign.id}/edit`}>
+                                    <div className="flex items-start gap-4 p-4 border rounded-lg hover:bg-muted/50 transition-colors">
+                                        <div className="relative h-24 w-24 rounded-md overflow-hidden flex-shrink-0 bg-muted/50 flex items-center justify-center">
+                                            {campaign.imageUrl ? (
+                                                <Image src={campaign.imageUrl} alt={campaign.name} fill className="object-cover" />
+                                            ) : (
+                                                <ImageIcon className="h-8 w-8 text-muted-foreground" />
+                                            )}
                                         </div>
-                                        <p className="text-xs text-muted-foreground">{format(new Date(campaign.startDate), "dd MMM")} - {format(new Date(campaign.endDate), "dd MMM yyyy")}</p>
-                                        <div className="mt-2 space-y-1">
-                                            <Progress value={Math.min(100, progress)} className={cn(isOverfunded && '[&>div]:bg-amber-500')} />
-                                            <div className="flex justify-between items-center text-xs text-muted-foreground">
-                                                <p>
-                                                    <span className="font-semibold text-foreground">₹{raisedAmount.toLocaleString()}</span> raised of ₹{campaign.goal.toLocaleString()}
-                                                </p>
-                                                 {(isOverfunded || isUnfunded) && (
-                                                    <TooltipProvider>
-                                                        <Tooltip>
-                                                            <TooltipTrigger>
-                                                                {isOverfunded && <TrendingUp className="h-4 w-4 text-green-600" />}
-                                                                {isUnfunded && <Info className="h-4 w-4 text-amber-600" />}
-                                                            </TooltipTrigger>
-                                                            <TooltipContent>
-                                                                {isOverfunded && <p>This campaign is overfunded!</p>}
-                                                                {isUnfunded && <p>This active campaign has not received funds yet.</p>}
-                                                            </TooltipContent>
-                                                        </Tooltip>
-                                                    </TooltipProvider>
-                                                )}
+                                        <div className="flex-grow">
+                                            <div className="flex justify-between items-start">
+                                                <p className="font-semibold text-primary">{campaign.name}</p>
+                                                <Badge variant="outline" className={cn("capitalize text-xs", campaignStatusColors[campaign.status])}>
+                                                    {campaign.status}
+                                                </Badge>
+                                            </div>
+                                            <p className="text-xs text-muted-foreground">
+                                                {format(new Date(campaign.startDate), "dd MMM")} - {format(new Date(campaign.endDate), "dd MMM yyyy")}
+                                            </p>
+                                            <div className="mt-2 space-y-1">
+                                                <Progress value={Math.min(100, progress)} className={cn(isOverfunded && '[&>div]:bg-amber-500')} />
+                                                <div className="flex justify-between items-center text-xs text-muted-foreground">
+                                                    <p>
+                                                        <span className="font-semibold text-foreground">₹{raisedAmount.toLocaleString()}</span> raised of ₹{campaign.goal.toLocaleString()}
+                                                    </p>
+                                                    {(isOverfunded || isUnfunded) && (
+                                                        <TooltipProvider>
+                                                            <Tooltip>
+                                                                <TooltipTrigger>
+                                                                    {isOverfunded && <TrendingUp className="h-4 w-4 text-green-600" />}
+                                                                    {isUnfunded && <Info className="h-4 w-4 text-amber-600" />}
+                                                                </TooltipTrigger>
+                                                                <TooltipContent>
+                                                                    {isOverfunded && <p>This campaign is overfunded!</p>}
+                                                                    {isUnfunded && <p>This active campaign has not received funds yet.</p>}
+                                                                </TooltipContent>
+                                                            </Tooltip>
+                                                        </TooltipProvider>
+                                                    )}
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
-                                </div>
-                            </Link>
-                        )
-                    })}
-                </div>
-            ) : (
-                <p className="text-center text-muted-foreground py-6">No campaigns are currently active.</p>
+                                </Link>
+                            )
+                        })}
+                    </div>
+                ) : (
+                    <p className="text-center text-muted-foreground py-6">No campaigns are currently active.</p>
+                )}
+            </CardContent>
+            {allCampaigns.length > 3 && (
+                <CardFooter>
+                     <Button asChild variant="secondary" className="w-full">
+                        <Link href="/admin/campaigns">View All Campaigns</Link>
+                    </Button>
+                </CardFooter>
             )}
-        </CardContent>
-        {allCampaigns.length > 3 && (
-            <CardFooter>
-                 <Button asChild variant="secondary" className="w-full">
-                    <Link href="/admin/campaigns">View All Campaigns</Link>
-                </Button>
-            </CardFooter>
-        )}
-    </Card>
+        </Card>
     )
 }
 
@@ -826,3 +830,5 @@ export const ReferralSummaryCard = ({ allUsers, allLeads, currentUser }: { allUs
         </Card>
     )
 }
+
+    
