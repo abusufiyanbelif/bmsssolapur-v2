@@ -1,3 +1,4 @@
+
 /**
  * @fileOverview A service to seed the database with initial data.
  */
@@ -605,9 +606,10 @@ async function deleteCollection(collectionPath: string): Promise<number> {
 
 export const seedInitialUsersAndQuotes = async (): Promise<SeedResult> => {
     const quotesStatus = await seedQuotesService();
+    const orgStatus = await seedOrganization(); // Organization is critical, seed it here.
     return {
         message: 'Initial Seeding Complete',
-        details: [quotesStatus, "The 'admin' user is automatically created on startup and does not need to be seeded."]
+        details: [quotesStatus, orgStatus, "The 'admin' user is automatically created on startup and does not need to be seeded."]
     };
 };
 
@@ -722,7 +724,7 @@ export const eraseInitialUsersAndQuotes = async (): Promise<SeedResult> => {
     
     return {
         message: 'Initial Data Erased',
-        details: [`Deleted ${quotesDeleted} quotes. The main 'admin' user is hardcoded and was not affected.`]
+        details: [`Deleted ${quotesDeleted} quotes. The 'admin' user is hardcoded and was not affected.`]
     };
 };
 

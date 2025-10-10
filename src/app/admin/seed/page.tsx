@@ -1,3 +1,4 @@
+
 // src/app/admin/seed/page.tsx
 'use client';
 
@@ -128,42 +129,21 @@ export default function SeedPage() {
                     <div className="p-4 border rounded-lg space-y-4">
                         <div className="flex flex-col md:flex-row justify-between md:items-center gap-4">
                              <div>
-                                <h3 className="font-semibold flex items-center gap-2"><Quote className="h-5 w-5 text-primary" />Inspirational Quotes</h3>
-                                <p className="text-sm text-muted-foreground mt-1">Populates the database with inspirational quotes for the dashboard. The main 'admin' user is now hardcoded and does not need seeding.</p>
+                                <h3 className="font-semibold flex items-center gap-2"><Building className="h-5 w-5 text-primary" />Initial Setup</h3>
+                                <p className="text-sm text-muted-foreground mt-1">Seeds the Organization Profile and Inspirational Quotes. This is the first step to make the app usable.</p>
                              </div>
                              <div className="flex items-center gap-2">
                                 <Button variant="destructive" onClick={() => handleErase('initial')} disabled={eraseStatuses.initial === 'loading'}>
                                     {eraseStatuses.initial === 'loading' ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Trash2 className="mr-2 h-4 w-4"/>}
-                                    Erase Quotes
+                                    Erase
                                 </Button>
                                 <Button onClick={() => handleSeed('initial')} disabled={statuses.initial === 'loading'}>
                                     {statuses.initial === 'loading' && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}
-                                    Seed Quotes
+                                    Seed Initial Data
                                 </Button>
                              </div>
                         </div>
                         <ResultAlert seedStatus={statuses.initial} eraseStatus={eraseStatuses.initial} result={results.initial} />
-                    </div>
-
-                    {/* Organization Profile */}
-                     <div className="p-4 border rounded-lg space-y-4">
-                        <div className="flex flex-col md:flex-row justify-between md:items-center gap-4">
-                             <div>
-                                <h3 className="font-semibold flex items-center gap-2"><Building className="h-5 w-5 text-primary" />Organization Profile</h3>
-                                <p className="text-sm text-muted-foreground mt-1">Creates the public-facing profile for your organization, including address, contact info, and bank details.</p>
-                             </div>
-                             <div className="flex items-center gap-2">
-                                <Button variant="destructive" onClick={() => handleErase('organization')} disabled={eraseStatuses.organization === 'loading'}>
-                                    {eraseStatuses.organization === 'loading' ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Trash2 className="mr-2 h-4 w-4"/>}
-                                    Erase
-                                </Button>
-                                <Button onClick={() => handleSeed('organization')} disabled={statuses.organization === 'loading'}>
-                                    {statuses.organization === 'loading' && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}
-                                    Seed Organization
-                                </Button>
-                            </div>
-                        </div>
-                        <ResultAlert seedStatus={statuses.organization} eraseStatus={eraseStatuses.organization} result={results.organization} />
                     </div>
                     
                     {/* App Settings */}
@@ -294,7 +274,7 @@ export default function SeedPage() {
                                             </li>
                                              <li>
                                                 <strong>Ramadan 2026 Campaign (Upcoming):</strong> 2 leads for future ration kits.
-                                            </li>
+                                             </li>
                                         </ul>
                                     </div>
                                 </AccordionContent>
