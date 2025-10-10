@@ -1,8 +1,9 @@
 
+// src/app/admin/organization/letterhead/letterhead-document.tsx
 
 "use client";
 
-import { useRef, useState, useEffect } from "react";
+import { useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Download, Loader2, FileText, Settings, Type, Milestone, CalendarIcon, Users } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
@@ -105,25 +106,29 @@ Thank you for your time and consideration. We look forward to establishing a ban
       pdf.addImage(logoDataUri, 'PNG', margin, 40, logoWidth, logoHeight);
 
       const textX = margin + logoWidth + 20;
-      const orgInfo = organization.footer!.organizationInfo;
+      const orgInfo = organization.footer?.organizationInfo;
       
       pdf.setFont('Helvetica', 'bold');
       pdf.setTextColor('#16a34a'); // Primary Green
       pdf.setFontSize(28);
-      pdf.text(orgInfo.titleLine1.toUpperCase(), textX, 70);
+      pdf.text(orgInfo?.titleLine1.toUpperCase() || organization.name.toUpperCase(), textX, 70);
       
-      pdf.setTextColor('#FFC107'); // Accent Gold
-      pdf.text(orgInfo.titleLine2.toUpperCase(), textX, 100);
+      if(orgInfo?.titleLine2) {
+        pdf.setTextColor('#FFC107'); // Accent Gold
+        pdf.text(orgInfo.titleLine2.toUpperCase(), textX, 100);
+      }
 
-      pdf.setTextColor('#16a34a');
-      pdf.setFontSize(22);
-      pdf.text(orgInfo.titleLine3.toUpperCase(), textX, 125);
+      if(orgInfo?.titleLine3){
+        pdf.setTextColor('#16a34a');
+        pdf.setFontSize(22);
+        pdf.text(orgInfo.titleLine3.toUpperCase(), textX, 125);
+      }
       
       pdf.setFont('Helvetica', 'normal');
       pdf.setTextColor(100, 100, 100);
       pdf.setFontSize(9);
       
-      let headerTextY = 145;
+      let headerTextY = orgInfo?.titleLine3 ? 145 : 125;
       if (inclusions.includeAddress) {
         pdf.text(`Address: ${isTemplate ? '' : `${organization.address}, ${organization.city}`}`, textX, headerTextY);
         headerTextY += 15;
@@ -372,5 +377,3 @@ Thank you for your time and consideration. We look forward to establishing a ban
     </div>
   );
 }
-
-    

@@ -122,6 +122,22 @@ export function BoardManagementClient({ initialUsers, error: initialError }: Boa
         // Refresh the page data from the server to ensure consistency
         router.refresh();
     };
+    
+    const MemberSection = ({ title, members, icon: Icon }: { title: string, members: User[], icon: React.ElementType }) => (
+        <div>
+            <h3 className="text-lg font-semibold mb-4 flex items-center gap-2 text-primary">
+                {Icon && <Icon className="h-5 w-5" />}
+                {title}
+            </h3>
+            {members.length > 0 ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {members.map(member => <MemberCard key={member.id} member={member} onRemove={handleRemoveMember} />)}
+                </div>
+            ) : (
+                <p className="text-sm text-muted-foreground italic">No members assigned to this group yet.</p>
+            )}
+        </div>
+    );
 
     const renderContent = () => {
         if (loading) {
@@ -145,38 +161,10 @@ export function BoardManagementClient({ initialUsers, error: initialError }: Boa
 
         return (
             <div className="space-y-6">
-                 {boardMembers.founder.length > 0 && (
-                    <div>
-                        <h3 className="text-lg font-semibold mb-4 text-primary">Founder</h3>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                            {boardMembers.founder.map(member => <MemberCard key={member.id} member={member} onRemove={handleRemoveMember} />)}
-                        </div>
-                    </div>
-                )}
-                {boardMembers.cofounder.length > 0 && (
-                    <div>
-                        <h3 className="text-lg font-semibold mb-4 text-primary">Co-Founder</h3>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                            {boardMembers.cofounder.map(member => <MemberCard key={member.id} member={member} onRemove={handleRemoveMember} />)}
-                        </div>
-                    </div>
-                )}
-                {boardMembers.finance.length > 0 && (
-                    <div>
-                        <h3 className="text-lg font-semibold mb-4 flex items-center gap-2 text-primary"><Banknote className="h-5 w-5" /> Finance</h3>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                            {boardMembers.finance.map(member => <MemberCard key={member.id} member={member} onRemove={handleRemoveMember} />)}
-                        </div>
-                    </div>
-                )}
-                {boardMembers.members.length > 0 && (
-                    <div>
-                        <h3 className="text-lg font-semibold mb-4 text-primary">Members</h3>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                            {boardMembers.members.map(member => <MemberCard key={member.id} member={member} onRemove={handleRemoveMember} />)}
-                        </div>
-                    </div>
-                )}
+                <MemberSection title="Founder" members={boardMembers.founder} icon={Users} />
+                <MemberSection title="Co-Founder" members={boardMembers.cofounder} icon={Users} />
+                <MemberSection title="Finance" members={boardMembers.finance} icon={Banknote} />
+                <MemberSection title="Members of Organization" members={boardMembers.members} icon={Users} />
             </div>
         )
     };
