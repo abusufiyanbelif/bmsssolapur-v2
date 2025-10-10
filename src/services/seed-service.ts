@@ -243,13 +243,13 @@ const winterCampaignUsers: Omit<User, 'id' | 'createdAt' | 'userKey'>[] = [
 ];
 
 const winterCampaign: Omit<Campaign, 'createdAt' | 'updatedAt'> = {
-    id: "winter-relief-2024",
-    name: "Winter Relief 2024",
+    id: "winter-relief-2025",
+    name: "Winter Relief 2025",
     description: "A campaign to provide blankets and warm clothing to families during the cold winter months.",
     goal: 50000,
     status: 'Active',
-    startDate: Timestamp.fromDate(new Date("2024-11-01")),
-    endDate: Timestamp.fromDate(new Date("2024-12-31")),
+    startDate: Timestamp.fromDate(new Date("2025-11-01")),
+    endDate: Timestamp.fromDate(new Date("2025-12-31")),
     source: 'Seeded',
 };
 
@@ -605,10 +605,11 @@ async function deleteCollection(collectionPath: string): Promise<number> {
 // --- EXPORTED SEEDING FUNCTIONS ---
 
 export const seedInitialUsersAndQuotes = async (): Promise<SeedResult> => {
+    const orgStatus = await seedOrganization();
     const quotesStatus = await seedQuotesService();
     return {
         message: 'Initial Seeding Complete',
-        details: [quotesStatus, "The 'admin' and 'anonymous_donor' users are automatically created on startup."]
+        details: [orgStatus, quotesStatus, "The 'admin' and 'anonymous_donor' users are automatically created on startup."]
     };
 };
 
@@ -720,10 +721,11 @@ export const seedSampleData = async (): Promise<SeedResult> => {
 
 export const eraseInitialUsersAndQuotes = async (): Promise<SeedResult> => {
     const quotesDeleted = await eraseAllQuotes();
+    const orgDeleted = await eraseOrganizationProfile();
     
     return {
         message: 'Initial Data Erased',
-        details: [`Deleted ${quotesDeleted} quotes. The 'admin' user is hardcoded and was not affected.`]
+        details: [`Deleted ${quotesDeleted} quotes.`, ...orgDeleted.details!]
     };
 };
 
