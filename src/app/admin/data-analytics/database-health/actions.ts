@@ -1,3 +1,4 @@
+
 'use server';
 
 import { getAdminDb } from '@/services/firebase-admin';
@@ -22,6 +23,10 @@ const collectionsToAnalyze: { name: string; description: string; orphanField?: s
     { name: 'activityLog', description: 'A log of all significant user and system actions.', orphanField: 'userId', orphanCollection: 'users' },
     { name: 'organizations', description: 'Stores the main organization profile details.' },
     { name: 'settings', description: 'Contains global application configurations.' },
+    { name: 'publicLeads', description: 'Sanitized, public-facing copies of leads marked for publication.' },
+    { name: 'publicCampaigns', description: 'Public-facing copies of active and upcoming campaigns.' },
+    { name: 'publicData', description: 'Stores other public data like the main organization profile.' },
+    { name: 'inspirationalQuotes', description: 'A collection of quotes used throughout the application.' },
 ];
 
 export async function getDatabaseHealthStats(): Promise<CollectionStat[]> {
