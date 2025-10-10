@@ -22,20 +22,17 @@ const getInspirationalQuotesFlow = ai.defineFlow(
         let allQuotes: Quote[] = [];
         try {
             allQuotes = await getAllQuotes();
-            // If the database is empty, return an empty array.
-            // This is the correct behavior after an "erase" operation.
+            // If the database is empty (e.g., after an erase operation), return an empty array.
             if (allQuotes.length === 0) {
                 return [];
             }
         } catch (error) {
-            // Only fall back to a hardcoded list on a true database error.
-            console.error("Error getting quotes from database, falling back to hardcoded list: ", error);
-            allQuotes = [
-                { id: '1', number: 1, text: "The believer's shade on the Day of Resurrection will be their charity.", source: "Tirmidhi", category: "Hadith", categoryTypeNumber: 2 },
-                { id: '2', number: 2, text: "Charity does not decrease wealth.", source: "Sahih Muslim", category: "Hadith", categoryTypeNumber: 2 },
-                { id: '3', number: 3, text: "And be steadfast in prayer and regular in charity: And whatever good ye send forth for your souls before you, ye shall find it with Allah.", source: "Quran 2:110", category: "Quran", categoryTypeNumber: 1 },
-                { id: '4', number: 1, text: "A man's true wealth is the good he does in this world.", source: "Imam Ali (RA)", category: "Scholar", categoryTypeNumber: 3 },
-            ];
+            console.error("Error getting quotes from database in flow, re-throwing a standard error.", error);
+            // Re-throw a standard serializable error object so the server action can log it.
+            if (error instanceof Error) {
+                throw new Error(error.message);
+            }
+            throw new Error("An unknown error occurred while fetching quotes from the database.");
         }
         
         // Shuffle and return the requested number of quotes
