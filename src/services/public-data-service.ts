@@ -7,7 +7,7 @@ import { getAdminDb } from './firebase-admin';
 import type { Lead, Organization, Campaign, PublicStats, User } from './types';
 import { getUser } from './user-service';
 import { getLeadsByCampaignId } from './lead-service';
-import { Timestamp, collection, getDocs, orderBy } from 'firebase-admin/firestore';
+import { Timestamp, collection, getDocs as getAdminDocs, orderBy } from 'firebase-admin/firestore'; // aliasing to avoid confusion
 import { getDonationsByCampaignId } from './donation-service';
 
 
@@ -162,7 +162,7 @@ export const getPublicCampaigns = async (): Promise<(Campaign & { raisedAmount: 
     const adminDb = getAdminDb();
     try {
         const q = adminDb.collection(PUBLIC_CAMPAIGNS_COLLECTION).orderBy("startDate", "desc");
-        const snapshot = await getDocs(q);
+        const snapshot = await q.get();
         const campaigns = snapshot.docs.map(doc => {
             const data = doc.data();
             return {
