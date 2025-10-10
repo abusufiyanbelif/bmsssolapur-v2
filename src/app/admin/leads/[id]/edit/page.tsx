@@ -38,7 +38,7 @@ export default async function EditLeadPage({ params }: { params: { id: string } 
                 </AlertDescription>
             </Alert>
             
-            <EditLeadForm lead={JSON.parse(JSON.stringify(lead))} campaigns={campaigns} users={users} />
+            <EditLeadForm lead={JSON.parse(JSON.stringify(lead))} campaigns={JSON.parse(JSON.stringify(campaigns))} users={JSON.parse(JSON.stringify(users))} />
         </div>
     );
 }
