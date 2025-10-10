@@ -272,12 +272,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     const HeaderTitle = () => {
         const orgInfo = organization?.footer?.organizationInfo;
         return (
-            <Link href="/" className="flex items-center gap-3" title="Baitul Mal Samajik Sanstha (Solapur)">
-                <Logo className="h-14 w-14" logoUrl={organization?.logoUrl} />
-                <div className="flex flex-col leading-tight">
-                    <span className="font-bold font-headline text-primary text-sm">{orgInfo?.titleLine1 || 'Baitul Mal'}</span>
-                    <span className="font-bold font-headline text-accent text-sm">{orgInfo?.titleLine2 || 'Samajik Sanstha'}</span>
-                    <span className="font-bold font-headline text-primary text-xs">{orgInfo?.titleLine3 || '(Solapur)'}</span>
+            <Link href="/" className="flex items-center gap-3" title={organization?.name || 'Baitul Mal'}>
+                <Logo className="h-12 w-12" logoUrl={organization?.logoUrl} />
+                 <div className="flex flex-col leading-tight">
+                    <span className="font-bold font-headline text-primary text-sm">{orgInfo?.titleLine1 || organization?.name || 'Baitul Mal'}</span>
+                    {orgInfo?.titleLine2 && <span className="font-bold font-headline text-accent text-sm">{orgInfo.titleLine2}</span>}
+                    {orgInfo?.titleLine3 && <span className="font-bold font-headline text-primary text-xs">{orgInfo.titleLine3}</span>}
                 </div>
             </Link>
         )
@@ -295,7 +295,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <div className="grid min-h-screen w-full md:grid-cols-[220px_1fr] lg:grid-cols-[280px_1fr]">
             <div className="hidden border-r bg-card md:block">
                 <div className="flex h-full max-h-screen flex-col gap-2">
-                    <div className="flex h-[72px] items-center border-b px-4 lg:px-6">
+                    <div className="flex h-16 items-center border-b px-4 lg:px-6">
                         <HeaderTitle />
                     </div>
                     <div className="flex-1 overflow-y-auto">
@@ -322,7 +322,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                             </Button>
                         </SheetTrigger>
                         <SheetContent side="left" className="flex flex-col p-0">
-                            <SheetHeader className="h-[72px] items-center border-b px-4 lg:px-6">
+                            <SheetHeader className="h-16 items-center border-b px-4 lg:px-6">
                                <HeaderTitle />
                                <SheetTitle className="sr-only">Main Menu</SheetTitle>
                                <SheetDescription className="sr-only">Navigation links for the application.</SheetDescription>

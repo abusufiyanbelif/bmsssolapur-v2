@@ -56,11 +56,11 @@ export function Footer({ organization }: FooterProps) {
             <p className="text-sm text-muted-foreground max-w-lg">
                 {footer.organizationInfo.description}
             </p>
-             <p className="text-xs text-muted-foreground">
-                {footer.organizationInfo.taxInfo}
+             <p className="text-xs text-muted-foreground font-mono">
+                {footer.organizationInfo.registrationInfo}
             </p>
             <p className="text-xs text-muted-foreground font-mono">
-                {footer.organizationInfo.registrationInfo}
+                {footer.organizationInfo.taxInfo}
             </p>
           </div>
 
