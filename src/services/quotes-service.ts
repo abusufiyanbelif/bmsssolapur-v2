@@ -1,4 +1,3 @@
-
 /**
  * @fileOverview Service for managing inspirational quotes in Firestore.
  */
@@ -66,15 +65,7 @@ export const getAllQuotes = async (): Promise<Quote[]> => {
         const quotesQuery = adminDb.collection(QUOTES_COLLECTION);
         const querySnapshot = await quotesQuery.get();
         if (querySnapshot.empty) {
-            console.log("Quotes collection is empty, attempting to seed initial data.");
-            await seedInitialQuotes();
-            // Re-fetch after seeding
-            const newSnapshot = await quotesQuery.get();
-             const quotes: Quote[] = [];
-            newSnapshot.forEach((doc) => {
-                quotes.push({ id: doc.id, ...doc.data() } as Quote);
-            });
-            return quotes;
+            return []; // Return an empty array if the collection is empty.
         }
         const quotes: Quote[] = [];
         querySnapshot.forEach((doc) => {
@@ -82,19 +73,16 @@ export const getAllQuotes = async (): Promise<Quote[]> => {
         });
         return quotes;
     } catch (error) {
-        // Specifically check for the access token error and fall back gracefully.
+        // Specifically check for the access token error and re-throw.
         if (error instanceof Error && (error.message.includes('Could not load the default credentials') || error.message.includes('Could not refresh access token') || error.message.includes('permission-denied'))) {
-            console.warn("Firestore permission error in getAllQuotes. Please check IAM roles. Falling back to hardcoded list.");
-        } else {
-            console.error("Error getting all quotes, falling back to hardcoded list: ", error);
+            console.error("Firestore permission error in getAllQuotes. Please check IAM roles.", error);
+            throw error; // Re-throw permission errors to be handled upstream.
         }
-
-        // Fallback to a simple list if any service fails
-        return [
-            { id: 'fb1', number: 1, text: "The believer's shade on the Day of Resurrection will be their charity.", source: "Tirmidhi", category: "Hadith", categoryTypeNumber: 2 },
-            { id: 'fb2', number: 2, text: "Charity does not decrease wealth.", source: "Sahih Muslim", category: "Hadith", categoryTypeNumber: 2 },
-            { id: 'fb3', number: 3, text: "And be steadfast in prayer and regular in charity: And whatever good ye send forth for your souls before you, ye shall find it with Allah.", source: "Quran 2:110", category: "Quran", categoryTypeNumber: 1 },
-        ];
+        
+        console.error("Error getting all quotes: ", error);
+        // For other types of errors, you might still want to return an empty array or throw.
+        // For now, let's re-throw to make the calling function aware of the issue.
+        throw error;
     }
 }
 
