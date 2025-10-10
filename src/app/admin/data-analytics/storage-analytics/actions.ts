@@ -1,3 +1,4 @@
+
 'use server';
 
 import { getStorage } from 'firebase-admin/storage';
@@ -75,10 +76,10 @@ export async function getStorageAnalytics(): Promise<StorageAnalytics> {
         };
 
     } catch (e) {
-        if (e instanceof Error && e.message.includes('permission-denied')) {
-            throw new Error('Permission Denied: The server environment lacks the "Storage Admin" IAM role needed to list files.');
+        if (e instanceof Error && e.message.toLowerCase().includes('permission-denied')) {
+            throw new Error('Permission Denied: The server environment lacks the "Storage Admin" IAM role needed to list files. Please refer to the TROUBLESHOOTING.md guide for instructions on how to grant it.');
         }
         console.error("Error getting storage analytics:", e);
-        throw new Error("Failed to retrieve storage analytics data.");
+        throw new Error("Failed to retrieve storage analytics data. This may be due to a server configuration issue or missing permissions.");
     }
 }
