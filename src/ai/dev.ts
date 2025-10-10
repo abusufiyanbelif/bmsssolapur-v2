@@ -18,3 +18,4 @@ import '@/ai/flows/send-email-flow';
 import '@/ai/flows/send-otp-flow';
 import '@/ai/flows/send-whatsapp-flow';
 import '@/ai/flows/verify-otp-flow';
+import '@/ai/flows/generate-monthly-update-flow';

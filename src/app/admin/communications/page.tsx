@@ -5,6 +5,7 @@ import { CommunicationsForm } from "./communications-form";
 import { getAllLeads } from "@/services/lead-service";
 import { Megaphone, MessageSquare, ShieldCheck, Activity } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { MonthlyUpdateForm } from "./monthly-update-form";
 
 export default async function CommunicationsPage() {
     const allLeads = await getAllLeads();
@@ -36,7 +37,7 @@ export default async function CommunicationsPage() {
                         <TabsList className="grid w-full grid-cols-3">
                             <TabsTrigger value="public-appeal"><Megaphone className="mr-2 h-4 w-4" />Public Appeal</TabsTrigger>
                             <TabsTrigger value="admin-action"><ShieldCheck className="mr-2 h-4 w-4" />Admin Action</TabsTrigger>
-                            <TabsTrigger value="monthly-update" disabled><Activity className="mr-2 h-4 w-4" />Monthly Update</TabsTrigger>
+                            <TabsTrigger value="monthly-update"><Activity className="mr-2 h-4 w-4" />Monthly Update</TabsTrigger>
                         </TabsList>
                         <TabsContent value="public-appeal" className="pt-6">
                             <CommunicationsForm 
@@ -49,6 +50,9 @@ export default async function CommunicationsPage() {
                                 openLeads={pendingVerificationLeads}
                                 formType="admin-action"
                             />
+                        </TabsContent>
+                        <TabsContent value="monthly-update" className="pt-6">
+                            <MonthlyUpdateForm />
                         </TabsContent>
                     </Tabs>
                 </CardContent>
