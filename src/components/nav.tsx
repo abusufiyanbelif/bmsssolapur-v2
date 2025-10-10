@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import Link from "next/link"
@@ -8,7 +7,7 @@ import {
     Home, Settings, Share2, ShieldCheck, UserCog, HandHeart, Users,
     FileCheck, FileText, Banknote, UserPlus, BookText,
     Wrench, Download, Eye, Megaphone, Info, LogIn, Server, BrainCircuit, FilePlus2,
-    Database, Building, Award, ChevronDown, Shield, KeySquare, Group, BookOpenCheck, ArrowRightLeft, LayoutDashboard, Workflow, UserSearch, CreditCard, BellRing, MessageSquare, Newspaper, ScanSearch, PlusCircle, Binary, Palette, History
+    Database, Building, Award, ChevronDown, Shield, KeySquare, Group, BookOpenCheck, ArrowRightLeft, LayoutDashboard, Workflow, UserSearch, CreditCard, BellRing, MessageSquare, Newspaper, ScanSearch, PlusCircle, Binary, Palette, History, Layout
 } from "lucide-react"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { cn } from "@/lib/utils"
@@ -73,6 +72,7 @@ const allNavItems: NavItem[] = [
             { href: "/admin/organization", label: "Organization Profile", icon: Info, allowedRoles: ["Admin", "Super Admin", "Finance Admin"] },
             { href: "/admin/board-management", label: "Board Members", icon: Users, allowedRoles: ["Admin", "Super Admin", "Finance Admin"] },
             { href: "/admin/organization/letterhead", label: "Letterhead", icon: Newspaper, allowedRoles: ["Admin", "Super Admin", "Finance Admin"] },
+            { href: "/admin/organization/layout", label: "Layout & Footer", icon: Layout, allowedRoles: ["Super Admin"] },
         ]
     },
     

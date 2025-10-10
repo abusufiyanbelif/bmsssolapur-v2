@@ -1,3 +1,4 @@
+
 /**
  * @fileOverview Service for managing organization data in Firestore.
  */
@@ -9,7 +10,7 @@ import { getAdminDb } from './firebase-admin';
 
 
 // Re-export types for backward compatibility
-export type { Organization };
+export type { Organization, OrganizationFooter };
 
 const ORGANIZATIONS_COLLECTION = 'organizations';
 const PUBLIC_DATA_COLLECTION = 'publicData';

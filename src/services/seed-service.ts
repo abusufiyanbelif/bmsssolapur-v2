@@ -606,10 +606,9 @@ async function deleteCollection(collectionPath: string): Promise<number> {
 
 export const seedInitialUsersAndQuotes = async (): Promise<SeedResult> => {
     const quotesStatus = await seedQuotesService();
-    const orgStatus = await seedOrganization(); // Organization is critical, seed it here.
     return {
         message: 'Initial Seeding Complete',
-        details: [quotesStatus, orgStatus, "The 'admin' user is automatically created on startup and does not need to be seeded."]
+        details: [quotesStatus, "The 'admin' and 'anonymous_donor' users are automatically created on startup."]
     };
 };
 
