@@ -284,6 +284,7 @@ export async function handleRemoveApprover(userId: string, group: string): Promi
   try {
     await updateUser(userId, { groups: arrayRemove(group) as any });
     revalidatePath("/admin/leads/configuration");
+    revalidatePath("/admin/board-management");
     return { success: true };
   } catch(e) {
     const error = e instanceof Error ? e.message : "An unknown error occurred.";

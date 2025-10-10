@@ -4,16 +4,17 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Users, Banknote, PlusCircle, Loader2, AlertCircle, Trash2, MoreHorizontal } from "lucide-react";
+import { Users, Banknote, PlusCircle, Loader2, AlertCircle, Trash2, MoreHorizontal, ArrowUpCircle, ArrowDownCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { updateUser } from "@/services/user-service";
 import type { User } from "@/services/types";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
 import { DeleteConfirmationDialog } from "@/components/delete-confirmation-dialog";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { useRouter } from 'next/navigation';
+import { handleRemoveApprover, handleMakeMandatory, handleMakeOptional } from "@/app/admin/leads/configuration/actions";
+
 
 const groupMapping: Record<string, string> = {
     'Founder': 'founder',
@@ -27,20 +28,24 @@ const MemberCard = ({ member, onRemove }: { member: User; onRemove: (user: User)
     const initials = member.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
 
     const handleRemove = async () => {
-        const newGroups = member.groups?.filter(g => !Object.keys(groupMapping).includes(g));
-        try {
-            await updateUser(member.id!, { groups: newGroups });
+        const groupToRemove = member.groups?.find(g => Object.keys(groupMapping).includes(g));
+        if (!groupToRemove) {
+            toast({ variant: 'destructive', title: 'Error', description: 'Could not determine group to remove.' });
+            return;
+        }
+        const result = await handleRemoveApprover(member.id!, groupToRemove);
+        if (result.success) {
             toast({
                 variant: 'success',
                 title: "Member Removed",
-                description: `${member.name} has been removed from the board.`,
+                description: `${member.name} has been removed from the board group.`,
             });
             onRemove(member);
-        } catch (error) {
-            toast({
+        } else {
+             toast({
                 variant: 'destructive',
                 title: 'Error',
-                description: `Failed to remove ${member.name}.`,
+                description: result.error || `Failed to remove ${member.name}.`,
             });
         }
     };
