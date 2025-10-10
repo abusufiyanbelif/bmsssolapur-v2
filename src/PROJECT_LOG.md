@@ -1,4 +1,3 @@
-
 # Project Log - Baitul Mal Samajik Sanstha (Solapur)
 
 ## Guiding Principles
