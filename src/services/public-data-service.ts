@@ -7,7 +7,8 @@ import { getAdminDb } from './firebase-admin';
 import type { Lead, Organization, Campaign, PublicStats, User } from './types';
 import { getUser } from './user-service';
 import { getLeadsByCampaignId } from './lead-service';
-import { Timestamp } from 'firebase-admin/firestore';
+import { Timestamp, collection, getDocs, orderBy } from 'firebase-admin/firestore';
+import { getDonationsByCampaignId } from './donation-service';
 
 
 const PUBLIC_LEADS_COLLECTION = 'publicLeads';
@@ -161,8 +162,8 @@ export const getPublicCampaigns = async (): Promise<(Campaign & { raisedAmount: 
     const adminDb = getAdminDb();
     try {
         const q = adminDb.collection(PUBLIC_CAMPAIGNS_COLLECTION).orderBy("startDate", "desc");
-        const snapshot = await q.get();
-        return snapshot.docs.map(doc => {
+        const snapshot = await getDocs(q);
+        const campaigns = snapshot.docs.map(doc => {
             const data = doc.data();
             return {
                 ...data,
@@ -172,6 +173,7 @@ export const getPublicCampaigns = async (): Promise<(Campaign & { raisedAmount: 
                 updatedAt: data.updatedAt ? (data.updatedAt as Timestamp).toDate() : undefined,
             } as (Campaign & { raisedAmount: number, fundingProgress: number });
         });
+        return campaigns;
     } catch (e) {
         if (e instanceof Error && (e.message.includes('Could not refresh access token') || e.message.includes('permission-denied'))) {
             console.warn("Firestore permission error in getPublicCampaigns. Returning empty array. Please check IAM roles.");
@@ -187,13 +189,17 @@ export const getPublicCampaigns = async (): Promise<(Campaign & { raisedAmount: 
 };
 
 /**
- * Enriches a campaign with its public-facing statistics.
+ * Enriches a campaign with its public-facing statistics by calculating funds raised from linked leads.
  * @param campaign The campaign object to enrich.
  * @returns The enriched campaign object.
  */
 export const enrichCampaignWithPublicStats = async (campaign: Campaign): Promise<Campaign & { raisedAmount: number; fundingProgress: number; }> => {
-    const linkedLeads = await getLeadsByCampaignId(campaign.id!);
-    const raisedAmount = linkedLeads.reduce((sum, lead) => sum + lead.helpGiven, 0);
+    // Fetch all donations linked to this campaign.
+    const linkedDonations = await getDonationsByCampaignId(campaign.id!);
+    const raisedAmount = linkedDonations
+        .filter(d => d.status === 'Verified' || d.status === 'Allocated')
+        .reduce((sum, d) => sum + d.amount, 0);
+
     const fundingProgress = campaign.goal > 0 ? (raisedAmount / campaign.goal) * 100 : 0;
     
     return {

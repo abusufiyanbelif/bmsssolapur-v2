@@ -1,3 +1,4 @@
+// src/app/admin/campaigns/[id]/edit/actions.ts
 
 "use server";
 
@@ -92,6 +93,8 @@ export async function handleUpdateCampaign(campaignId: string, formData: FormDat
                 helpRequested: fixedAmountPerBeneficiary > 0 ? fixedAmountPerBeneficiary : 0,
                 caseDetails: `This case was automatically generated for the "${campaignUpdateData.name}" campaign.`,
             };
+            // The createLeadService now correctly creates a new lead document.
+            // We await it here to ensure it's created before the function finishes, although not strictly necessary if we don't need its ID immediately.
             await createLeadService(newLeadData, adminUser);
         }
 

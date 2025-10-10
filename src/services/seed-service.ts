@@ -1,4 +1,3 @@
-
 /**
  * @fileOverview A service to seed the database with initial data.
  */
@@ -199,14 +198,15 @@ const ramadan2025Campaign: Omit<Campaign, 'createdAt' | 'updatedAt'> = {
     description: "A campaign to collect Zakat during Ramadan 2025 to help with critical operations and provide ration kits to families in need.",
     goal: 200000,
     status: 'Completed',
-    startDate: Timestamp.fromDate(new Date("2025-03-01")),
-    endDate: Timestamp.fromDate(new Date("2025-03-30")),
+    startDate: Timestamp.fromDate(new Date("2024-03-01")),
+    endDate: Timestamp.fromDate(new Date("2024-03-30")),
     source: 'Seeded',
+    isHistoricalRecord: true,
 };
 
 const floodReliefCampaign: Omit<Campaign, 'createdAt' | 'updatedAt'> = {
-    id: "flood-relief-september-2025",
-    name: "Flood Relief September 2025 Solapur by SIO",
+    id: "flood-relief-september-2024",
+    name: "Flood Relief September 2024 Solapur by SIO",
     description: `Solapur Flood Relief Report - Day 3
 
 - Pakani Village :
@@ -229,8 +229,8 @@ Donate Generously for the Flood affected people.
     goal: 75000, // 50 kits * 1500 each
     collectedAmount: 7500,
     status: 'Completed',
-    startDate: Timestamp.fromDate(new Date("2025-09-01")),
-    endDate: Timestamp.fromDate(new Date("2025-09-15")),
+    startDate: Timestamp.fromDate(new Date("2024-09-01")),
+    endDate: Timestamp.fromDate(new Date("2024-09-15")),
     isHistoricalRecord: true,
     source: 'Seeded',
 };

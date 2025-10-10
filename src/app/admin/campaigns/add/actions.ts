@@ -1,4 +1,3 @@
-
 // src/app/admin/campaigns/add/actions.ts
 
 "use server";
@@ -80,6 +79,7 @@ export async function handleCreateCampaign(formData: FormData): Promise<FormStat
     const linkedLeadIds = formData.getAll('linkedLeadIds') as string[];
     const linkedDonationIds = formData.getAll('linkedDonationIds') as string[];
     const linkedBeneficiaryIds = formData.getAll('linkedBeneficiaryIds') as string[];
+    
     const batch = writeBatch(db);
 
     // --- Automatically create leads for linked beneficiaries ---
@@ -99,8 +99,9 @@ export async function handleCreateCampaign(formData: FormData): Promise<FormStat
               helpRequested: fixedAmountPerBeneficiary > 0 ? fixedAmountPerBeneficiary : 0,
               caseDetails: `This case was automatically generated for the "${newCampaign.name}" campaign.`,
           };
+          // Directly create the lead using the service, which handles logging and ID generation
           const createdLead = await createLeadService(leadData, adminUser);
-          linkedLeadIds.push(createdLead.id); // Add the new lead ID to the list
+          linkedLeadIds.push(createdLead.id!); // Add the new lead ID to the list
       }
     }
     // --- End auto lead creation ---
@@ -148,7 +149,7 @@ export async function handleCreateCampaign(formData: FormData): Promise<FormStat
     // Return the clean, specific error message from the service
     return {
       success: false,
-      error: error.message,
+      error: error,
     };
   }
 }
