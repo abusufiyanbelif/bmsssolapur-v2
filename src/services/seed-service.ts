@@ -7,7 +7,7 @@ import { createUser, User, UserRole, getUserByEmail, getUserByPhone, getAllUsers
 import { createOrganization, Organization, getCurrentOrganization, OrganizationFooter, updateOrganizationFooter } from './organization-service';
 import { seedInitialQuotes as seedQuotesService, eraseAllQuotes } from './quotes-service';
 import { db } from './firebase';
-import { collection, getDocs, query, where, Timestamp, setDoc, doc, writeBatch, orderBy, getCountFromServer, limit, updateDoc, serverTimestamp, getDoc, deleteDoc, arrayUnion, FieldValue } from 'firebase-admin/firestore';
+import { collection, getDocs, query, where, Timestamp, setDoc, doc, writeBatch, orderBy, getCountFromServer, limit, updateDoc, serverTimestamp, getDoc, deleteDoc, FieldValue } from 'firebase-admin/firestore';
 import { getAdminDb, getAdminAuth } from './firebase-admin';
 import type { Lead, Verifier, LeadDonationAllocation, Donation, Campaign, FundTransfer, LeadAction, AppSettings } from './types';
 import { createLead, getLead, updateLead } from './lead-service';
@@ -581,23 +581,27 @@ function getRandomDate(start: Date, end: Date): Date {
   return new Date(start.getTime() + Math.random() * (end.getTime() - start.getTime()));
 }
 
-// Helper to delete all documents in a collection
-async function deleteCollection(collectionPath: string): Promise<number> {
+// Helper to clear all documents in a collection without deleting the collection itself.
+async function clearCollection(collectionPath: string): Promise<number> {
     const adminDb = getAdminDb();
     const collectionRef = adminDb.collection(collectionPath);
-    const q = collectionRef.limit(100);
-    
-    let deletedCount = 0;
-    let snapshot = await q.get();
+    // No limit, get all documents
+    const snapshot = await collectionRef.get();
 
-    while (snapshot.size > 0) {
+    if (snapshot.empty) {
+        return 0;
+    }
+
+    let deletedCount = 0;
+    // Process in batches of 500
+    for (let i = 0; i < snapshot.docs.length; i += 500) {
         const batch = adminDb.batch();
-        snapshot.docs.forEach(doc => {
+        const chunk = snapshot.docs.slice(i, i + 500);
+        chunk.forEach(doc => {
             batch.delete(doc.ref);
         });
         await batch.commit();
-        deletedCount += snapshot.size;
-        snapshot = await q.get();
+        deletedCount += chunk.length;
     }
     return deletedCount;
 }
@@ -721,12 +725,12 @@ export const seedSampleData = async (): Promise<SeedResult> => {
 // --- ERASE FUNCTIONS ---
 
 export const eraseInitialUsersAndQuotes = async (): Promise<SeedResult> => {
-    const quotesDeleted = await eraseAllQuotes();
+    const quotesDeleted = await clearCollection('inspirationalQuotes');
     const orgDeleted = await eraseOrganizationProfile();
     
     return {
         message: 'Initial Data Erased',
-        details: [`Deleted ${quotesDeleted} quotes.`, ...orgDeleted.details!]
+        details: [`Cleared ${quotesDeleted} quotes.`, ...orgDeleted.details!]
     };
 };
 
@@ -767,12 +771,16 @@ export const eraseOrganizationProfile = async (): Promise<SeedResult> => {
     if (!org) {
         return { message: "No organization profile found to erase.", details: [] };
     }
-    await adminDb.collection('organizations').doc(org.id).delete();
-    // Also delete public record
-    await adminDb.collection('publicData').doc('organization').delete();
+    // Instead of deleting the doc, clear its fields but keep it.
+    await adminDb.collection('organizations').doc(org.id).set({
+        name: "DELETED - Please Reseed",
+        updatedAt: Timestamp.now()
+    }, { merge: true });
+
+    await adminDb.collection('publicData').doc('organization').delete().catch(() => {});
     return {
-        message: 'Organization Profile Erased',
-        details: [`Deleted profile for "${org.name}".`]
+        message: 'Organization Profile Cleared',
+        details: [`Cleared profile for "${org.name}".`]
     };
 };
 
@@ -804,19 +812,11 @@ export const eraseSampleData = async (): Promise<SeedResult> => {
     const details: string[] = [];
     const adminDb = getAdminDb();
 
-    // This function will delete ALL documents from these collections,
-    // which is the desired behavior to clear out duplicates.
-    const deletedLeads = await deleteCollection('leads');
-    details.push(`Deleted ${deletedLeads} leads.`);
-    await deleteCollection('publicLeads');
-
-
-    const deletedDonations = await deleteCollection('donations');
-    details.push(`Deleted ${deletedDonations} donations.`);
-
-    const deletedCampaigns = await deleteCollection('campaigns');
-    details.push(`Deleted ${deletedCampaigns} campaigns.`);
-    await deleteCollection('publicCampaigns');
+    details.push(`Cleared ${await clearCollection('leads')} leads.`);
+    details.push(`Cleared ${await clearCollection('publicLeads')} public leads.`);
+    details.push(`Cleared ${await clearCollection('donations')} donations.`);
+    details.push(`Cleared ${await clearCollection('campaigns')} campaigns.`);
+    details.push(`Cleared ${await clearCollection('publicCampaigns')} public campaigns.`);
     
     // Find and delete all users with source: 'Seeded', except for the main admin accounts
     const seededUsersQuery = adminDb.collection(USERS_COLLECTION).where("source", "==", "Seeded");
