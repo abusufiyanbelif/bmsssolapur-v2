@@ -46,6 +46,8 @@ This document tracks bugs, issues, and their resolution status for the project.
 | 28 | 2025-10-01    | User          | Inconsistent theme colors on page headings and UI elements. | Performed a full-system audit and applied `text-primary` and `text-muted-foreground` classes consistently across all pages and components to enforce the theme. Added new status colors to `globals.css`. | AI Assistant | 2025-10-01    |
 | 29 | 2025-10-01    | User          | Repository link in `README.md` was broken. | Corrected the `href` for the GitHub repository link in `README.md`. | AI Assistant | 2025-10-01    |
 | 30 | 2025-10-02    | User          | Build error: `Element type is invalid` because `LeadsPageClient` was not correctly imported. | Corrected the file structure and import paths for all admin list pages (`donors`, `leads`, `campaigns`, etc.) to use a proper Server Component (`page.tsx`) for data fetching and a Client Component (`*-client.tsx`) for UI, resolving the build error and a data integrity issue where tables appeared empty. | AI Assistant | 2025-10-02    |
+| 31 | 2025-10-02    | User          | `Server action getQuotes failed: {}` error due to non-existent collection. | Modified the `quotes-service.ts` and Genkit flow to gracefully handle cases where the `inspirationalQuotes` collection doesn't exist, preventing a server crash. | AI Assistant | 2025-10-02    |
+| 32 | 2025-10-02    | User          | Server crashes on startup if Firestore indexes are missing. | Refactored all data fetching services to try queries with indexes first, then fall back to an unsorted query with in-memory sorting if an index-related error is caught. This makes the application resilient to missing indexes. | AI Assistant | 2025-10-02    |
 
 
 ```

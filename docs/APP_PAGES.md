@@ -112,6 +112,8 @@ These roles have access to more sensitive data and settings.
 | Page | Path | Description |
 | :--- | :--- | :--- |
 | **Analytics Dashboard** | `/admin/data-analytics` | A dashboard with in-depth financial and system performance metrics. |
+| **Database Health** | `/admin/data-analytics/database-health` | An overview of Firestore collection sizes and data integrity checks. |
+| **Storage Analytics** | `/admin/data-analytics/storage-analytics` | An overview of Firebase Storage usage, including file counts and total size. |
 | **Analytics Configuration**| `/admin/data-analytics/configuration`| Configure visibility for the analytics dashboard. **(Super Admin only)** |
 
 ---
