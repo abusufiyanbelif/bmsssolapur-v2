@@ -2,12 +2,13 @@
 'use server';
 
 import { getAdminDb } from '@/services/firebase-admin';
-import type { Lead, Donation } from '@/services/types';
+import type { Lead, Donation, User } from '@/services/types';
 
 export interface CollectionStat {
     name: string;
     description: string;
     count: number;
+    lastModified?: Date;
     orphanCheck?: {
         checked: boolean;
         orphanCount: number;
@@ -17,12 +18,12 @@ export interface CollectionStat {
 
 // This map provides metadata for known collections.
 // Any new collections will be discovered automatically and given a default description.
-const collectionsMetadata: Record<string, { description: string; orphanField?: string, orphanCollection?: string }> = {
-    users: { description: 'Stores all user profiles, including donors, beneficiaries, and admins.' },
-    leads: { description: 'Contains all help requests (cases) for beneficiaries.', orphanField: 'beneficiaryId', orphanCollection: 'users' },
-    donations: { description: 'Holds all donation records, both online and manually entered.', orphanField: 'donorId', orphanCollection: 'users' },
-    campaigns: { description: 'Stores fundraising campaign details.' },
-    activityLog: { description: 'A log of all significant user and system actions.', orphanField: 'userId', orphanCollection: 'users' },
+const collectionsMetadata: Record<string, { description: string; timestampField?: string; orphanField?: string, orphanCollection?: string }> = {
+    users: { description: 'Stores all user profiles, including donors, beneficiaries, and admins.', timestampField: 'updatedAt' },
+    leads: { description: 'Contains all help requests (cases) for beneficiaries.', timestampField: 'updatedAt', orphanField: 'beneficiaryId', orphanCollection: 'users' },
+    donations: { description: 'Holds all donation records, both online and manually entered.', timestampField: 'updatedAt', orphanField: 'donorId', orphanCollection: 'users' },
+    campaigns: { description: 'Stores fundraising campaign details.', timestampField: 'updatedAt' },
+    activityLog: { description: 'A log of all significant user and system actions.', timestampField: 'timestamp', orphanField: 'userId', orphanCollection: 'users' },
     organizations: { description: 'Stores the main organization profile details.' },
     settings: { description: 'Contains global application configurations.' },
     publicLeads: { description: 'Sanitized, public-facing copies of leads marked for publication.' },
@@ -43,13 +44,29 @@ export async function getDatabaseHealthStats(): Promise<CollectionStat[]> {
             const metadata = collectionsMetadata[colId] || { description: 'No description available.' };
 
             try {
-                const snapshot = await collectionRef.count().get();
-                const count = snapshot.data().count;
+                // Fetch count and last modified doc in parallel
+                const [countSnapshot, lastModifiedSnapshot] = await Promise.all([
+                    collectionRef.count().get(),
+                    metadata.timestampField 
+                        ? collectionRef.orderBy(metadata.timestampField, 'desc').limit(1).get() 
+                        : Promise.resolve(null)
+                ]);
+                
+                const count = countSnapshot.data().count;
+                let lastModified: Date | undefined;
+                if (lastModifiedSnapshot && !lastModifiedSnapshot.empty) {
+                    const lastDoc = lastModifiedSnapshot.docs[0].data();
+                    const timestamp = lastDoc[metadata.timestampField!];
+                    if (timestamp && typeof timestamp.toDate === 'function') {
+                        lastModified = timestamp.toDate();
+                    }
+                }
 
                 const stat: CollectionStat = {
                     name: colId,
                     description: metadata.description,
                     count,
+                    lastModified,
                 };
                 
                 // Perform orphan check if configured in metadata
@@ -107,4 +124,15 @@ async function checkForOrphans(db: FirebaseFirestore.Firestore, collectionName: 
     });
 
     return { orphanCount };
+}
+
+/**
+ * Gets basic details about the current Firebase project.
+ * @returns An object with the project ID.
+ */
+export async function getDatabaseDetails(): Promise<{ projectId: string }> {
+    const adminDb = getAdminDb();
+    return {
+        projectId: adminDb.project.id,
+    };
 }

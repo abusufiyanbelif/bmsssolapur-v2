@@ -3,13 +3,15 @@
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Loader2, AlertCircle, Database, CheckCircle, AlertTriangle, FileWarning, BarChart2, List } from "lucide-react";
+import { Loader2, AlertCircle, Database, CheckCircle, AlertTriangle, FileWarning, BarChart2, List, Server } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { getDatabaseHealthStats, CollectionStat } from "./actions";
+import { getDatabaseHealthStats, getDatabaseDetails, CollectionStat } from "./actions";
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
+import { format, formatDistanceToNow } from 'date-fns';
+import { Skeleton } from '@/components/ui/skeleton';
 
 
 const chartConfig = {
@@ -19,22 +21,27 @@ const chartConfig = {
 
 export default function DatabaseHealthPage() {
     const [stats, setStats] = useState<CollectionStat[]>([]);
+    const [dbDetails, setDbDetails] = useState<{ projectId: string } | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [viewMode, setViewMode] = useState<'table' | 'chart'>('table');
 
     useEffect(() => {
-        const fetchStats = async () => {
+        const fetchAllData = async () => {
             try {
-                const fetchedStats = await getDatabaseHealthStats();
+                const [fetchedStats, fetchedDetails] = await Promise.all([
+                    getDatabaseHealthStats(),
+                    getDatabaseDetails()
+                ]);
                 setStats(fetchedStats);
+                setDbDetails(fetchedDetails);
             } catch (e) {
                 setError(e instanceof Error ? e.message : "An unknown error occurred.");
             } finally {
                 setLoading(false);
             }
         };
-        fetchStats();
+        fetchAllData();
     }, []);
 
     const chartData = stats.map(s => ({
@@ -83,6 +90,7 @@ export default function DatabaseHealthPage() {
                         <TableHead>Collection</TableHead>
                         <TableHead>Description</TableHead>
                         <TableHead className="text-right">Record Count</TableHead>
+                        <TableHead className="text-center">Last Modified</TableHead>
                         <TableHead className="text-center">Orphan Check</TableHead>
                     </TableRow>
                 </TableHeader>
@@ -92,6 +100,15 @@ export default function DatabaseHealthPage() {
                             <TableCell className="font-semibold">{stat.name}</TableCell>
                             <TableCell className="text-muted-foreground text-sm">{stat.description}</TableCell>
                             <TableCell className="text-right font-mono">{stat.count.toLocaleString()}</TableCell>
+                            <TableCell className="text-center text-xs text-muted-foreground">
+                                {stat.lastModified ? (
+                                    <div title={format(stat.lastModified, 'PPP p')}>
+                                        {formatDistanceToNow(stat.lastModified, { addSuffix: true })}
+                                    </div>
+                                ) : (
+                                    '-'
+                                )}
+                            </TableCell>
                             <TableCell className="text-center">
                                 {!stat.orphanCheck ? (
                                     <span className="text-xs text-muted-foreground">-</span>
@@ -115,6 +132,28 @@ export default function DatabaseHealthPage() {
     return (
         <div className="flex-1 space-y-4">
             <h2 className="text-3xl font-bold tracking-tight font-headline text-primary">Database Health</h2>
+            
+             <Card>
+                <CardHeader>
+                    <CardTitle className="flex items-center gap-2 text-primary">
+                        <Server />
+                        Database Details
+                    </CardTitle>
+                </CardHeader>
+                 <CardContent>
+                    {loading ? (
+                        <Skeleton className="h-8 w-1/2" />
+                    ) : dbDetails ? (
+                         <div className="text-sm">
+                            <span className="text-muted-foreground">Project ID: </span>
+                            <span className="font-mono bg-muted px-2 py-1 rounded-md">{dbDetails.projectId}</span>
+                        </div>
+                    ) : (
+                        <p className="text-sm text-muted-foreground">Could not load database details.</p>
+                    )}
+                 </CardContent>
+            </Card>
+
             <Card>
                 <CardHeader>
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
