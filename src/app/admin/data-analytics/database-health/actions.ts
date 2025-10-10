@@ -21,7 +21,7 @@ export interface CollectionStat {
 // This map provides metadata for known collections.
 // Any new collections will be discovered automatically and given a default description.
 export const collectionsMetadata: Record<string, { description: string; type: CollectionStat['type']; timestampField?: string; orphanField?: string, orphanCollection?: string }> = {
-    users: { description: 'Stores all user profiles, including donors, beneficiaries, and admins.', type: 'Application Data', timestampField: 'updatedAt', orphanField: 'referredByUserId', orphanCollection: 'users' },
+    users: { description: 'Stores all user profiles, including donors, beneficiaries, and admins.', type: 'Application Data', timestampField: 'updatedAt' },
     leads: { description: 'Contains all help requests (cases) for beneficiaries.', type: 'Application Data', timestampField: 'updatedAt', orphanField: 'beneficiaryId', orphanCollection: 'users' },
     donations: { description: 'Holds all donation records, both online and manually entered.', type: 'Application Data', timestampField: 'updatedAt', orphanField: 'donorId', orphanCollection: 'users' },
     campaigns: { description: 'Stores fundraising campaign details.', type: 'Application Data', timestampField: 'updatedAt' },
@@ -143,7 +143,7 @@ export async function getDatabaseDetails(): Promise<{ projectId: string } | null
         // Ensure initialization before getting details
         const adminDb = getAdminDb();
         return {
-            projectId: adminDb.project.id,
+            projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || 'Not Found',
         };
     } catch (error) {
         console.error("Error getting database details:", error);

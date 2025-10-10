@@ -1,11 +1,14 @@
+
 'use server';
 
-import { getLead } from "@/services/lead-service";
+import { getLead, getAllLeads } from "@/services/lead-service";
+import { getAllDonations } from "@/services/donation-service";
 import type { Lead } from "@/services/types";
-import { format } from "date-fns";
+import { format, subDays } from "date-fns";
 import { ai } from "@/ai/genkit";
 import { googleAI } from "@genkit-ai/googleai";
 import { getSafeGeminiModel } from "@/services/gemini-service";
+import { generateMonthlyUpdate as generateMonthlyUpdateFlow } from '@/ai/flows/generate-monthly-update-flow';
 
 interface ActionResult {
     success: boolean;
@@ -26,7 +29,6 @@ async function getLeadsToProcess(appealType: AppealType, data: { leadIds?: strin
         const results = await Promise.all(leadPromises);
         leadsToProcess = results.filter((lead): lead is Lead => lead !== null);
     } else {
-        const { getAllLeads } = await import('@/services/lead-service');
         const allLeads = await getAllLeads();
         const openLeads = allLeads.filter(lead => 
             lead.caseVerification === 'Verified' && 
@@ -82,8 +84,7 @@ export async function generateAppealMessage(
         const ctaLink = `${appBaseUrl}/public-leads`;
 
         const modelName = await getSafeGeminiModel();
-
-        const llmResponse = await ai.generate({
+        const { text: llmResponseText } = await ai.generate({
             model: googleAI.model(modelName),
             prompt: `
                 You are a helpful assistant for a charity organization. Your task is to craft a complete and compelling WhatsApp appeal message.
@@ -117,7 +118,7 @@ export async function generateAppealMessage(
             `,
         });
         
-        return { success: true, message: llmResponse.text };
+        return { success: true, message: llmResponseText };
 
     } catch (e) {
         const error = e instanceof Error ? e.message : "An unknown error occurred.";
@@ -161,6 +162,36 @@ export async function generateAdminActionMessage(leadIds: string[]): Promise<Act
     } catch (e) {
         const error = e instanceof Error ? e.message : "An unknown error occurred.";
         console.error("Error generating admin action message:", error);
+        return { success: false, error: `Failed to generate message: ${error}` };
+    }
+}
+
+export async function generateMonthlyUpdate(): Promise<ActionResult> {
+    try {
+        const thirtyDaysAgo = subDays(new Date(), 30);
+        const allDonations = await getAllDonations();
+        const allLeads = await getAllLeads();
+
+        const recentDonations = allDonations.filter(d => (d.donationDate as Date) > thirtyDaysAgo && (d.status === 'Verified' || d.status === 'Allocated'));
+        const totalDonated = recentDonations.reduce((sum, d) => sum + d.amount, 0);
+
+        const recentClosedLeads = allLeads.filter(l => l.closedAt && (l.closedAt as Date) > thirtyDaysAgo);
+        const totalDistributed = recentClosedLeads.reduce((sum, l) => sum + l.helpGiven, 0);
+        const uniqueBeneficiaries = new Set(recentClosedLeads.map(l => l.beneficiaryId));
+        
+        const message = await generateMonthlyUpdateFlow({
+            month: format(new Date(), 'MMMM yyyy'),
+            totalDonated,
+            casesClosed: recentClosedLeads.length,
+            fundsDistributed: totalDistributed,
+            beneficiariesHelped: uniqueBeneficiaries.size
+        });
+
+        return { success: true, message: message.text };
+
+    } catch(e) {
+         const error = e instanceof Error ? e.message : "An unknown error occurred.";
+        console.error("Error generating monthly update:", error);
         return { success: false, error: `Failed to generate message: ${error}` };
     }
 }
