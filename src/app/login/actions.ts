@@ -147,21 +147,15 @@ export async function handleVerifyOtp(formData: FormData): Promise<LoginState> {
 
 export async function handleFirebaseOtpLogin(uid: string, phoneNumber: string | null): Promise<LoginState> {
     try {
-        let user: User | null = await getUser(uid);
+        const user = await getUser(uid);
         
-        // Handle case where Firebase creates a new UID for an existing phone number
-        if (!user && phoneNumber) {
-            const phone = phoneNumber.replace('+91', '');
-            const existingUserByPhone = await getUserByPhone(phone);
-            
-            if (existingUserByPhone && existingUserByPhone.id) {
-                console.warn(`Potential user migration needed. Firebase UID: ${uid}, existing user ID: ${existingUserByPhone.id} for phone: ${phone}`);
-                user = existingUserByPhone;
-            }
-        }
-        
+        // This is the critical security fix.
+        // We no longer try to find a user by phone number if the UID doesn't match.
+        // If the UID from Firebase Auth doesn't exist in our Firestore database,
+        // it means the user has not been registered in our system, even if their
+        // phone number is valid.
         if (!user) {
-             return { success: false, error: 'Could not retrieve user data after sign-in. Your phone number might not be registered in our system.' };
+             return { success: false, error: 'Your phone number is not registered in our system. Please register an account first.' };
         }
         
         await logActivity({
@@ -182,3 +176,4 @@ export async function handleFirebaseOtpLogin(uid: string, phoneNumber: string | 
         return { success: false, error };
     }
 }
+
