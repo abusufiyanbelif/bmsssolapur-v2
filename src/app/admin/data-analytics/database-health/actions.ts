@@ -3,6 +3,7 @@
 
 import { getAdminDb } from '@/services/firebase-admin';
 import type { Lead, Donation, User } from '@/services/types';
+import { Timestamp } from 'firebase-admin/firestore';
 
 export interface CollectionStat {
     name: string;
@@ -19,8 +20,8 @@ export interface CollectionStat {
 
 // This map provides metadata for known collections.
 // Any new collections will be discovered automatically and given a default description.
-const collectionsMetadata: Record<string, { description: string; type: CollectionStat['type']; timestampField?: string; orphanField?: string, orphanCollection?: string }> = {
-    users: { description: 'Stores all user profiles, including donors, beneficiaries, and admins.', type: 'Application Data', timestampField: 'updatedAt' },
+export const collectionsMetadata: Record<string, { description: string; type: CollectionStat['type']; timestampField?: string; orphanField?: string, orphanCollection?: string }> = {
+    users: { description: 'Stores all user profiles, including donors, beneficiaries, and admins.', type: 'Application Data', timestampField: 'updatedAt', orphanField: 'referredByUserId', orphanCollection: 'users' },
     leads: { description: 'Contains all help requests (cases) for beneficiaries.', type: 'Application Data', timestampField: 'updatedAt', orphanField: 'beneficiaryId', orphanCollection: 'users' },
     donations: { description: 'Holds all donation records, both online and manually entered.', type: 'Application Data', timestampField: 'updatedAt', orphanField: 'donorId', orphanCollection: 'users' },
     campaigns: { description: 'Stores fundraising campaign details.', type: 'Application Data', timestampField: 'updatedAt' },
@@ -148,4 +149,13 @@ export async function getDatabaseDetails(): Promise<{ projectId: string } | null
         console.error("Error getting database details:", error);
         return null;
     }
+}
+
+/**
+ * Manually triggers the function to ensure all core Firestore collections exist.
+ * @returns An object with a list of created collections and any errors.
+ */
+export async function handleEnsureCollectionsExist(): Promise<{ success: boolean; created: string[]; errors: string[] }> {
+    const { ensureCollectionsExist } = await import('@/services/firebase-admin');
+    return ensureCollectionsExist();
 }

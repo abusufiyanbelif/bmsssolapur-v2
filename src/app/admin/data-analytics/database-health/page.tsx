@@ -4,9 +4,9 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Loader2, AlertCircle, Database, CheckCircle, AlertTriangle, FileWarning, BarChart2, List, Server } from "lucide-react";
+import { Loader2, AlertCircle, Database, CheckCircle, AlertTriangle, FileWarning, BarChart2, List, Server, RefreshCw } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { getDatabaseHealthStats, getDatabaseDetails, CollectionStat } from "./actions";
+import { getDatabaseHealthStats, getDatabaseDetails, CollectionStat, handleEnsureCollectionsExist } from "./actions";
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -15,6 +15,8 @@ import { format, formatDistanceToNow } from 'date-fns';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
+import { useToast } from "@/hooks/use-toast";
 
 
 const chartConfig = {
@@ -26,26 +28,52 @@ export default function DatabaseHealthPage() {
     const [stats, setStats] = useState<CollectionStat[]>([]);
     const [dbDetails, setDbDetails] = useState<{ projectId: string } | null>(null);
     const [loading, setLoading] = useState(true);
+    const [isSyncing, setIsSyncing] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [viewMode, setViewMode] = useState<'table' | 'chart'>('table');
+    const { toast } = useToast();
 
+    const fetchAllData = async () => {
+        try {
+            setLoading(true);
+            const [fetchedStats, fetchedDetails] = await Promise.all([
+                getDatabaseHealthStats(),
+                getDatabaseDetails()
+            ]);
+            setStats(fetchedStats);
+            setDbDetails(fetchedDetails);
+        } catch (e) {
+            setError(e instanceof Error ? e.message : "An unknown error occurred.");
+        } finally {
+            setLoading(false);
+        }
+    };
+    
     useEffect(() => {
-        const fetchAllData = async () => {
-            try {
-                const [fetchedStats, fetchedDetails] = await Promise.all([
-                    getDatabaseHealthStats(),
-                    getDatabaseDetails()
-                ]);
-                setStats(fetchedStats);
-                setDbDetails(fetchedDetails);
-            } catch (e) {
-                setError(e instanceof Error ? e.message : "An unknown error occurred.");
-            } finally {
-                setLoading(false);
-            }
-        };
         fetchAllData();
     }, []);
+
+    const handleSync = async () => {
+        setIsSyncing(true);
+        const result = await handleEnsureCollectionsExist();
+        if(result.success) {
+             toast({
+                variant: 'success',
+                title: 'Sync Complete',
+                description: result.created.length > 0
+                    ? `Successfully created ${result.created.length} missing collection(s): ${result.created.join(', ')}.`
+                    : 'All collections were already present.',
+            });
+            await fetchAllData(); // Refresh the data after sync
+        } else {
+             toast({
+                variant: 'destructive',
+                title: 'Sync Failed',
+                description: result.errors.join(' '),
+            });
+        }
+        setIsSyncing(false);
+    }
 
     const chartData = stats.map(s => ({
         name: s.name,
@@ -179,16 +207,22 @@ export default function DatabaseHealthPage() {
                                 An overview of your database collections, record counts, and data integrity checks.
                             </CardDescription>
                         </div>
-                        <RadioGroup defaultValue="table" value={viewMode} onValueChange={(v) => setViewMode(v as 'table' | 'chart')} className="flex items-center gap-1 rounded-lg bg-muted p-1">
-                            <Label htmlFor="table-view" className="flex h-9 items-center justify-center rounded-md border text-xs font-normal cursor-pointer px-3 data-[state=checked]:bg-background data-[state=checked]:text-foreground data-[state=checked]:shadow">
-                                <List className="mr-2 h-4 w-4" />Table
-                                <RadioGroupItem value="table" id="table-view" className="sr-only" />
-                            </Label>
-                             <Label htmlFor="chart-view" className="flex h-9 items-center justify-center rounded-md border text-xs font-normal cursor-pointer px-3 data-[state=checked]:bg-background data-[state=checked]:text-foreground data-[state=checked]:shadow">
-                                <BarChart2 className="mr-2 h-4 w-4" />Chart
-                                <RadioGroupItem value="chart" id="chart-view" className="sr-only" />
-                            </Label>
-                        </RadioGroup>
+                        <div className="flex items-center gap-2">
+                            <Button onClick={handleSync} disabled={isSyncing} variant="secondary">
+                                {isSyncing ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <RefreshCw className="mr-2 h-4 w-4" />}
+                                Sync Collections
+                            </Button>
+                            <RadioGroup defaultValue="table" value={viewMode} onValueChange={(v) => setViewMode(v as 'table' | 'chart')} className="flex items-center gap-1 rounded-lg bg-muted p-1">
+                                <Label htmlFor="table-view" className="flex h-9 items-center justify-center rounded-md border text-xs font-normal cursor-pointer px-3 data-[state=checked]:bg-background data-[state=checked]:text-foreground data-[state=checked]:shadow">
+                                    <List className="mr-2 h-4 w-4" />Table
+                                    <RadioGroupItem value="table" id="table-view" className="sr-only" />
+                                </Label>
+                                <Label htmlFor="chart-view" className="flex h-9 items-center justify-center rounded-md border text-xs font-normal cursor-pointer px-3 data-[state=checked]:bg-background data-[state=checked]:text-foreground data-[state=checked]:shadow">
+                                    <BarChart2 className="mr-2 h-4 w-4" />Chart
+                                    <RadioGroupItem value="chart" id="chart-view" className="sr-only" />
+                                </Label>
+                            </RadioGroup>
+                        </div>
                     </div>
                 </CardHeader>
                 <CardContent>

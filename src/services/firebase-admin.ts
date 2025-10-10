@@ -53,9 +53,10 @@ const ensureSystemUserExists = async (db: AdminFirestore, userData: Partial<User
 /**
  * Checks if essential Firestore collections exist, and creates them with a placeholder
  * document if they don't. This prevents errors on fresh deployments.
- * @param db The Firestore admin instance.
+ * @returns An object with a list of created collections and any errors.
  */
-const ensureCollectionsExist = async (db: AdminFirestore) => {
+export const ensureCollectionsExist = async (): Promise<{ success: boolean; created: string[]; errors: string[] }> => {
+    const db = getAdminDb();
     const coreCollections = [
         'users', 'leads', 'donations', 'campaigns', 'activityLog',
         'settings', 'organizations', 'publicLeads', 'publicCampaigns',
@@ -63,6 +64,9 @@ const ensureCollectionsExist = async (db: AdminFirestore) => {
     ];
 
     console.log("Checking for essential Firestore collections...");
+    
+    const created: string[] = [];
+    const errors: string[] = [];
 
     for (const collectionName of coreCollections) {
         try {
@@ -75,11 +79,16 @@ const ensureCollectionsExist = async (db: AdminFirestore) => {
                     initializedAt: Timestamp.now(),
                     description: `This document was automatically created to initialize the ${collectionName} collection.`
                 });
+                created.push(collectionName);
             }
         } catch (e) {
-            console.error(`CRITICAL ERROR: Failed to ensure collection "${collectionName}" exists.`, e);
+            const errorMsg = `CRITICAL ERROR: Failed to ensure collection "${collectionName}" exists.`;
+            console.error(errorMsg, e);
+            errors.push(errorMsg);
         }
     }
+    
+    return { success: errors.length === 0, created, errors };
 };
 
 
@@ -109,7 +118,7 @@ const initializeFirebaseAdmin = async () => {
     isFirstInit = false; // Ensure this only runs once per server start
     
     // Auto-create essential collections
-    await ensureCollectionsExist(adminDbInstance);
+    await ensureCollectionsExist();
     
     // Auto-create the main 'admin' user
     await ensureSystemUserExists(adminDbInstance, {
