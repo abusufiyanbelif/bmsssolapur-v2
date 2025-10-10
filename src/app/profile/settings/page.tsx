@@ -10,7 +10,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { getUser } from '@/services/user-service';
 import type { User } from '@/services/types';
 import { Loader2, AlertCircle, Edit, X, Save, PlusCircle, Trash2, CreditCard, Fingerprint, MapPin, Banknote, User as UserIcon } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -48,12 +47,12 @@ const profileFormSchema = z.object({
 
 type ProfileFormValues = z.infer<typeof profileFormSchema>;
 
-export default function ProfileSettingsPage() {
+interface ProfileSettingsPageProps {
+    user: User | null; // This will be passed from the server layout
+}
+
+export default function ProfileSettingsPage({ user: initialUser }: ProfileSettingsPageProps) {
     const { toast } = useToast();
-    const [user, setUser] = useState<User | null>(null);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
-    const [userId, setUserId] = useState<string | null>(null);
     const [isEditing, setIsEditing] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -63,77 +62,50 @@ export default function ProfileSettingsPage() {
 
     const { formState: { isDirty }, control, reset, handleSubmit } = form;
     const { fields: upiIdFields, append: appendUpiId, remove: removeUpiId } = useFieldArray({ control, name: "upiIds" });
-
-    useEffect(() => {
-        const storedUserId = localStorage.getItem('userId');
-        if (storedUserId) {
-            setUserId(storedUserId);
-        } else {
-            setError("You must be logged in to view your profile.");
-            setLoading(false);
-        }
-    }, []);
-
-    const fetchUser = async () => {
-        if (!userId) return;
-        try {
-            setLoading(true);
-            const fetchedUser = await getUser(userId);
-            if (fetchedUser) {
-                setUser(fetchedUser);
-                reset({
-                    firstName: fetchedUser.firstName,
-                    middleName: fetchedUser.middleName || '',
-                    lastName: fetchedUser.lastName,
-                    phone: fetchedUser.phone,
-                    addressLine1: fetchedUser.address?.addressLine1 || '',
-                    city: fetchedUser.address?.city || '',
-                    state: fetchedUser.address?.state || '',
-                    country: fetchedUser.address?.country || '',
-                    pincode: fetchedUser.address?.pincode || '',
-                    gender: fetchedUser.gender || 'Other',
-                    beneficiaryType: fetchedUser.beneficiaryType,
-                    occupation: fetchedUser.occupation || '',
-                    familyMembers: fetchedUser.familyMembers || 0,
-                    isWidow: fetchedUser.isWidow || false,
-                    panNumber: fetchedUser.panNumber || '',
-                    aadhaarNumber: fetchedUser.aadhaarNumber || '',
-                    bankAccountName: fetchedUser.bankAccountName || '',
-                    bankName: fetchedUser.bankName || '',
-                    bankAccountNumber: fetchedUser.bankAccountNumber || '',
-                    bankIfscCode: fetchedUser.bankIfscCode || '',
-                    upiIds: fetchedUser.upiIds?.map(id => ({ value: id })) || [{ value: "" }],
-                });
-            } else {
-                setError("User not found.");
-            }
-        } catch (e) {
-            setError("Failed to load user profile.");
-        } finally {
-            setLoading(false);
-        }
-    };
     
+    // Set form defaults once the user prop is available
     useEffect(() => {
-        if (userId) {
-            fetchUser();
+        if (initialUser) {
+            reset({
+                firstName: initialUser.firstName,
+                middleName: initialUser.middleName || '',
+                lastName: initialUser.lastName,
+                phone: initialUser.phone,
+                addressLine1: initialUser.address?.addressLine1 || '',
+                city: initialUser.address?.city || '',
+                state: initialUser.address?.state || '',
+                country: initialUser.address?.country || '',
+                pincode: initialUser.address?.pincode || '',
+                gender: initialUser.gender || 'Other',
+                beneficiaryType: initialUser.beneficiaryType,
+                occupation: initialUser.occupation || '',
+                familyMembers: initialUser.familyMembers || 0,
+                isWidow: initialUser.isWidow || false,
+                panNumber: initialUser.panNumber || '',
+                aadhaarNumber: initialUser.aadhaarNumber || '',
+                bankAccountName: initialUser.bankAccountName || '',
+                bankName: initialUser.bankName || '',
+                bankAccountNumber: initialUser.bankAccountNumber || '',
+                bankIfscCode: initialUser.bankIfscCode || '',
+                upiIds: initialUser.upiIds?.map(id => ({ value: id })) || [{ value: "" }],
+            });
         }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [userId]);
+    }, [initialUser, reset]);
 
 
     async function onSubmit(values: ProfileFormValues) {
-        if (!user?.id) return;
+        if (!initialUser?.id) return;
         setIsSubmitting(true);
         const updatePayload = {
             ...values,
             upiIds: values.upiIds?.map(item => item.value).filter(Boolean),
         };
-        const result = await handleUpdateProfile(user.id, updatePayload as any);
+        const result = await handleUpdateProfile(initialUser.id, updatePayload as any);
         
         if (result.success) {
             toast({ variant: "success", title: "Profile Updated", description: "Your changes have been saved." });
-            await fetchUser();
+            // Re-fetch or simply reset the form to the newly saved state
+            reset(values);
             setIsEditing(false);
         } else {
             toast({ variant: "destructive", title: "Update Failed", description: result.error });
@@ -142,21 +114,15 @@ export default function ProfileSettingsPage() {
         setIsSubmitting(false);
     }
     
-    if (loading) {
-        return <div className="flex items-center justify-center py-10"><Loader2 className="h-8 w-8 animate-spin" /></div>;
-    }
-
-    if (error || !user) {
+    if (!initialUser) {
         return (
-            <Alert variant="destructive">
-                <AlertCircle className="h-4 w-4" />
-                <AlertTitle>Error</AlertTitle>
-                <AlertDescription>{error || "Could not load user profile."}</AlertDescription>
-            </Alert>
+            <div className="flex items-center justify-center py-10">
+                <Loader2 className="h-8 w-8 animate-spin" />
+            </div>
         );
     }
     
-    const isBeneficiary = user.roles.includes('Beneficiary');
+    const isBeneficiary = initialUser.roles.includes('Beneficiary');
 
     return (
         <Form {...form}>
