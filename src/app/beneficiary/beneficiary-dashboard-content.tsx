@@ -1,4 +1,4 @@
-
+// src/app/beneficiary/beneficiary-dashboard-content.tsx
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
@@ -86,8 +86,6 @@ export function BeneficiaryDashboardContent({ cases, quotes, settings }: { cases
             <TableBody>
                 {paginatedCases.map((caseItem) => {
                     const progress = caseItem.helpRequested > 0 ? (caseItem.helpGiven / caseItem.helpRequested) * 100 : 100;
-                    const remainingAmount = caseItem.helpRequested - caseItem.helpGiven;
-                    const donationCount = caseItem.donations?.length || 0;
                     const caseStatus = caseItem.caseStatus || 'Pending';
                     return (
                         <TableRow key={caseItem.id}>
@@ -101,11 +99,9 @@ export function BeneficiaryDashboardContent({ cases, quotes, settings }: { cases
                             <TableCell>
                                 <div className="flex flex-col gap-2">
                                     <Progress value={progress}  />
-                                    <div className="text-xs text-muted-foreground flex justify-between">
-                                        <span>Raised: <span className="font-semibold text-foreground">₹{caseItem.helpGiven.toLocaleString()}</span></span>
-                                        {remainingAmount > 0 && <span className="text-destructive">Pending: ₹{remainingAmount.toLocaleString()}</span>}
-                                    </div>
-                                     <span className="text-xs text-muted-foreground">{donationCount} allocation(s) from organization</span>
+                                    <span className="text-xs text-muted-foreground">
+                                        ₹{caseItem.helpGiven.toLocaleString()} / ₹{caseItem.helpRequested.toLocaleString()}
+                                    </span>
                                 </div>
                             </TableCell>
                             <TableCell className="text-right font-semibold">₹{caseItem.helpRequested.toLocaleString()}</TableCell>
@@ -120,8 +116,6 @@ export function BeneficiaryDashboardContent({ cases, quotes, settings }: { cases
         <div className="space-y-4">
             {paginatedCases.map((caseItem, index) => {
                 const progress = caseItem.helpRequested > 0 ? (caseItem.helpGiven / caseItem.helpRequested) * 100 : 100;
-                const remainingAmount = caseItem.helpRequested - caseItem.helpGiven;
-                const donationCount = caseItem.donations?.length || 0;
                 const caseStatus = caseItem.caseStatus || 'Pending';
                 return (
                     <Card key={caseItem.id}>
@@ -129,7 +123,7 @@ export function BeneficiaryDashboardContent({ cases, quotes, settings }: { cases
                             <div className="flex justify-between items-start">
                                 <div>
                                     <CardTitle className="text-lg text-primary">For: {caseItem.purpose}</CardTitle>
-                                    <CardDescription>Submitted: {format(caseItem.createdAt, "dd MMM yyyy")}</CardDescription>
+                                    <CardDescription>Submitted: {format(caseItem.dateCreated, "dd MMM yyyy")}</CardDescription>
                                 </div>
                                 <Badge variant="outline" className={cn("capitalize", statusColors[caseStatus as LeadStatus])}>
                                     {caseStatus}
@@ -146,10 +140,6 @@ export function BeneficiaryDashboardContent({ cases, quotes, settings }: { cases
                                 <div className="flex justify-between text-xs mt-2 text-muted-foreground">
                                     <span>Raised: ₹{caseItem.helpGiven.toLocaleString()}</span>
                                     <span>{progress.toFixed(0)}%</span>
-                                </div>
-                                 <div className="flex justify-between text-xs mt-1">
-                                    <span className="text-destructive">Pending: ₹{remainingAmount.toLocaleString()}</span>
-                                    <span>{donationCount} allocation(s)</span>
                                 </div>
                             </div>
                         </CardContent>
@@ -190,7 +180,7 @@ export function BeneficiaryDashboardContent({ cases, quotes, settings }: { cases
 
     return (
         <div className="space-y-6">
-            <InspirationalQuotes quotes={quotes} />
+            <InspirationalQuotes quotes={quotes} loading={false} />
             
             {dashboardSettings?.beneficiarySummary?.visibleTo.includes('Beneficiary') && (
                 <Card>
@@ -265,7 +255,23 @@ export function BeneficiaryDashboardContent({ cases, quotes, settings }: { cases
     )
 }
 
-function InspirationalQuotes({ quotes }: { quotes: Quote[] }) {
+function InspirationalQuotes({ quotes, loading }: { quotes: Quote[], loading: boolean }) {
+    if (loading) {
+        return (
+             <Card>
+                <CardHeader>
+                    <CardTitle className="flex items-center gap-2 text-primary">
+                        <QuoteIcon />
+                        Wisdom & Reflection
+                    </CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <div className="flex justify-center items-center p-8"><Loader2 className="animate-spin h-6 w-6 text-primary" /></div>
+                </CardContent>
+            </Card>
+        )
+    }
+
     if (quotes.length === 0) {
         return null;
     }

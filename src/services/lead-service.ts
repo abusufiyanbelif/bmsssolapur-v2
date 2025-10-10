@@ -20,7 +20,7 @@ import {
   arrayUnion,
   limit,
 } from 'firebase/firestore';
-import { db, isConfigValid } from './firebase';
+import { db } from './firebase';
 import type { Lead, LeadStatus, LeadVerificationStatus, LeadPurpose, User, Verifier, LeadDonationAllocation, DonationType, FundTransfer, LeadAction } from './types';
 import { logActivity } from './activity-log-service';
 import { getUser } from './user-service';
@@ -34,7 +34,6 @@ const LEADS_COLLECTION = 'leads';
 
 // Function to create a lead
 export const createLead = async (leadData: Partial<Omit<Lead, 'id' | 'createdAt' | 'updatedAt'>>, adminUser: User) => {
-  if (!isConfigValid) throw new Error('Firebase is not configured.');
   if (!adminUser || !adminUser.id) throw new Error('Admin user details are required to create a lead.');
   
   try {
@@ -158,7 +157,7 @@ export const createLead = async (leadData: Partial<Omit<Lead, 'id' | 'createdAt'
 
 // Function to get a lead by ID
 export const getLead = async (id: string): Promise<Lead | null> => {
-  if (!isConfigValid || !id) return null;
+  if (!id) return null;
   try {
     const leadDoc = await getDoc(doc(db, LEADS_COLLECTION, id));
     if (leadDoc.exists()) {
@@ -190,7 +189,6 @@ export const getLead = async (id: string): Promise<Lead | null> => {
 
 // Function to update a lead
 export const updateLead = async (id: string, updates: Partial<Omit<Lead, 'id' | 'createdAt'>>) => {
-  if (!isConfigValid) throw new Error('Firebase is not configured.');
   try {
     const leadRef = doc(db, LEADS_COLLECTION, id);
     
@@ -217,7 +215,6 @@ export const updateLead = async (id: string, updates: Partial<Omit<Lead, 'id' | 
 
 // Function to delete a lead
 export const deleteLead = async (id: string, adminUser: Pick<User, 'id' | 'name' | 'email'>) => {
-    if (!isConfigValid) throw new Error('Firebase is not configured.');
     try {
         const leadToDelete = await getLead(id);
         if (!leadToDelete) throw new Error("Lead to delete not found.");
@@ -285,10 +282,6 @@ export const updateLeadVerificationStatus = async (id: string, newStatus: LeadVe
 
 // Function to get all leads
 export const getAllLeads = async (): Promise<Lead[]> => {
-    if (!isConfigValid) {
-        console.warn("Firebase not configured. Returning empty array for leads.");
-        return [];
-    }
     try {
         const leadsQuery = query(collection(db, LEADS_COLLECTION), orderBy("dateCreated", "desc"));
         const querySnapshot = await getDocs(leadsQuery);
@@ -333,7 +326,7 @@ export const getAllLeads = async (): Promise<Lead[]> => {
 
 // Function to get all leads for a specific beneficiary
 export const getLeadsByBeneficiaryId = async (beneficiaryId: string): Promise<Lead[]> => {
-    if (!isConfigValid || !beneficiaryId) return [];
+    if (!beneficiaryId) return [];
     try {
         const leadsQuery = query(
             collection(db, LEADS_COLLECTION), 
@@ -366,7 +359,6 @@ export const getLeadsByBeneficiaryId = async (beneficiaryId: string): Promise<Le
 
 // Function to get leads by campaignId
 export const getLeadsByCampaignId = async (campaignId: string): Promise<Lead[]> => {
-    if (!isConfigValid) return [];
     try {
         const leadsQuery = query(
             collection(db, LEADS_COLLECTION), 
@@ -387,14 +379,17 @@ export const getLeadsByCampaignId = async (campaignId: string): Promise<Lead[]> 
         leads.sort((a, b) => b.dateCreated.getTime() - a.dateCreated.getTime());
         return leads;
     } catch (error) {
-        console.error("Error fetching campaign leads:", error);
+        console.error("Error fetching campaign leads: ", error);
+        if (error instanceof Error && error.message.includes('index')) {
+             console.error("Firestore index missing. Please create a composite index in Firestore on the 'leads' collection for 'campaignId' (ascending) and 'dateCreated' (descending).");
+        }
         return [];
     }
 };
 
 // Function to get open leads for a specific beneficiary
 export const getOpenLeadsByBeneficiaryId = async (beneficiaryId: string): Promise<Lead[]> => {
-    if (!isConfigValid || !beneficiaryId) return [];
+    if (!beneficiaryId) return [];
     try {
         const leadsQuery = query(
             collection(db, LEADS_COLLECTION),
@@ -416,4 +411,22 @@ export const getOpenLeadsByBeneficiaryId = async (beneficiaryId: string): Promis
     }
 }
 
-    
+export const getAllCampaigns = async (): Promise<Campaign[]> => {
+    try {
+        const querySnapshot = await getDocs(collection(db, 'campaigns'));
+        const campaigns: Campaign[] = [];
+        querySnapshot.forEach((doc) => {
+            const data = doc.data();
+            campaigns.push({
+                id: doc.id,
+                ...data,
+                startDate: (data.startDate as Timestamp).toDate(),
+                endDate: (data.endDate as Timestamp).toDate(),
+            } as Campaign);
+        });
+        return campaigns;
+    } catch (error) {
+        console.error('Error fetching all campaigns for lead form: ', error);
+        return [];
+    }
+};

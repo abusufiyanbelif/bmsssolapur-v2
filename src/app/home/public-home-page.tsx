@@ -1,4 +1,4 @@
-
+// src/app/home/public-home-page.tsx
 'use client';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
@@ -7,27 +7,12 @@ import Link from "next/link";
 import { ArrowRight, HandHeart, FileText, Loader2, Quote as QuoteIcon } from "lucide-react";
 import type { Quote, Lead, Campaign, Donation, User } from "@/services/types";
 import { Progress } from '@/components/ui/progress';
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, Suspense } from "react";
 import { useRouter } from 'next/navigation';
-import { getQuotes, getOpenGeneralLeads, getPublicDashboardData } from "./actions";
-import { RecentCampaignsCard, TopDonationsCard, BeneficiaryBreakdownCard, CampaignBreakdownCard, DonationTypeCard } from "@/app/admin/dashboard-cards";
+import { RecentCampaignsCard } from "@/app/admin/dashboard-cards";
 import { PublicMainMetricsCard } from "./public-dashboard-cards";
 
-
-function InspirationalQuotes() {
-    const [loading, setLoading] = useState(true);
-    const [quotes, setQuotes] = useState<Quote[]>([]);
-
-    useEffect(() => {
-        const fetchQuotes = async () => {
-             setLoading(true);
-             const fetchedQuotes = await getQuotes(3);
-             setQuotes(fetchedQuotes);
-             setLoading(false);
-        }
-        fetchQuotes();
-    }, []);
-
+function InspirationalQuotes({ quotes, loading }: { quotes: Quote[], loading: boolean }) {
     if (loading) {
         return (
              <Card>
@@ -70,41 +55,18 @@ function InspirationalQuotes() {
     );
 }
 
-export function PublicHomePage() {
-  const router = useRouter();
-  const [initialLeads, setOpenLeads] = useState<Lead[]>([]);
-  const [campaigns, setCampaigns] = useState<Campaign[]>([]);
-  const [allLeads, setAllLeads] = useState<Lead[]>([]);
-  const [allDonations, setAllDonations] = useState<Donation[]>([]);
-  const [allUsers, setAllUsers] = useState<User[]>([]);
-  const [loading, setLoading] = useState(true);
+interface PublicHomePageProps {
+    publicLeads: Lead[];
+    publicCampaigns: Campaign[];
+    allLeads: Lead[];
+    allDonations: Donation[];
+    allUsers: User[];
+    quotes: Quote[];
+    loading: boolean;
+}
 
-  useEffect(() => {
-    const fetchPublicData = async () => {
-        setLoading(true);
-        try {
-            const [leadsData, publicData] = await Promise.all([
-                getOpenGeneralLeads(),
-                getPublicDashboardData(),
-            ]);
-            setOpenLeads(leadsData);
-            if (publicData && !publicData.error) {
-                const activeAndUpcomingCampaigns = (publicData.campaigns || []).filter(
-                    (c: Campaign) => c.status === 'Active' || c.status === 'Upcoming'
-                );
-                setCampaigns(activeAndUpcomingCampaigns);
-                setAllLeads(publicData.leads || []);
-                setAllDonations(publicData.donations || []);
-                setAllUsers(publicData.users || []);
-            }
-        } catch (e) {
-            console.error("Failed to fetch public data", e);
-        } finally {
-            setLoading(false);
-        }
-    };
-    fetchPublicData();
-  }, []);
+export function PublicHomePage({ publicLeads, publicCampaigns, allLeads, allDonations, allUsers, quotes, loading }: PublicHomePageProps) {
+  const router = useRouter();
   
   const handleDonateClick = (leadId?: string) => {
     const userId = localStorage.getItem('userId');
@@ -146,7 +108,7 @@ export function PublicHomePage() {
       
       <PublicMainMetricsCard allDonations={allDonations} allLeads={allLeads} />
 
-      <InspirationalQuotes />
+      <InspirationalQuotes quotes={quotes} loading={loading} />
 
       <Card>
           <CardHeader>
@@ -154,9 +116,9 @@ export function PublicHomePage() {
               <CardDescription className="text-muted-foreground">These are verified, individual cases that need your direct support right now.</CardDescription>
           </CardHeader>
           <CardContent>
-              {initialLeads.length > 0 ? (
+              {publicLeads.length > 0 ? (
                   <div className="space-y-4">
-                      {initialLeads.slice(0, 3).map(lead => {
+                      {publicLeads.slice(0, 3).map(lead => {
                           const progress = lead.helpRequested > 0 ? (lead.helpGiven / lead.helpRequested) * 100 : 100;
                           const remainingAmount = lead.helpRequested - lead.helpGiven;
                           return (
@@ -185,7 +147,7 @@ export function PublicHomePage() {
                   </div>
               )}
           </CardContent>
-          {initialLeads.length > 0 && (
+          {publicLeads.length > 0 && (
               <CardFooter>
                   <Button asChild variant="secondary" className="w-full">
                       <Link href="/public-leads">View All General Cases <ArrowRight className="ml-2" /></Link>
@@ -194,7 +156,7 @@ export function PublicHomePage() {
           )}
       </Card>
       
-      <RecentCampaignsCard allCampaigns={campaigns} allLeads={allLeads} />
+      <RecentCampaignsCard allCampaigns={publicCampaigns} allLeads={allLeads} />
 
     </div>
   );

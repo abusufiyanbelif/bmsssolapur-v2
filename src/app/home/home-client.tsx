@@ -9,7 +9,7 @@ import { BeneficiaryDashboardContent } from "@/app/beneficiary/beneficiary-dashb
 import type { AppSettings, Campaign, Donation, Lead, Quote, User } from "@/services/types";
 import { useRouter } from "next/navigation";
 import { DashboardClient } from "../admin/dashboard-client";
-import { ReferralDashboardPage } from "../referral/page";
+import { ReferralDashboardContent } from "../referral/referral-dashboard-content";
 import { getCurrentUser } from "../actions";
 
 interface HomeClientProps {
@@ -74,24 +74,23 @@ export function HomeClient({ settings, allDonations, allLeads, allUsers, allCamp
         return null; // Or a more specific error/loading state
     }
     
-    let userSpecificData: any = {};
-    if (activeRole === 'Donor') {
-        userSpecificData.donations = allDonations.filter(d => d.donorId === user.id);
-    } else if (activeRole === 'Beneficiary') {
-        userSpecificData.cases = allLeads.filter(l => l.beneficiaryId === user.id);
-    }
-
+    // Pass only the relevant data down to each dashboard component
     switch (activeRole) {
         case 'Donor':
-            return <DonorDashboardContent user={user} donations={userSpecificData.donations || []} allLeads={allLeads} allDonations={allDonations} allCampaigns={allCampaigns} quotes={quotes} settings={settings} />;
+            const userDonations = allDonations.filter(d => d.donorId === user.id);
+            return <DonorDashboardContent user={user} donations={userDonations} allLeads={allLeads} allDonations={allDonations} allCampaigns={allCampaigns} quotes={quotes} settings={settings} />;
         case 'Beneficiary':
-            return <BeneficiaryDashboardContent cases={userSpecificData.cases || []} quotes={quotes} settings={settings} />;
+            const userCases = allLeads.filter(l => l.beneficiaryId === user.id);
+            return <BeneficiaryDashboardContent cases={userCases} quotes={quotes} settings={settings} />;
         case 'Admin':
         case 'Super Admin':
         case 'Finance Admin':
             return <DashboardClient allDonations={allDonations} allLeads={allLeads} allUsers={allUsers} allCampaigns={allCampaigns} quotes={quotes} />;
         case 'Referral':
-            return <ReferralDashboardPage />;
+             const referredBeneficiaries = allUsers.filter(u => u.referredByUserId === user.id);
+             const referredBeneficiaryIds = new Set(referredBeneficiaries.map(u => u.id));
+             const referredLeads = allLeads.filter(l => l.beneficiaryId && referredBeneficiaryIds.has(l.beneficiaryId));
+            return <ReferralDashboardContent user={user} referredBeneficiaries={referredBeneficiaries} referredLeads={referredLeads} quotes={quotes} />;
         default:
             return <p>No dashboard available for role: {activeRole}</p>;
     }

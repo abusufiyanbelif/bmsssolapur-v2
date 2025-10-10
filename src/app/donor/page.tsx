@@ -1,110 +1,74 @@
-
 // src/app/donor/page.tsx
-'use client';
-
-import { Suspense, useEffect, useState } from "react";
+import { Suspense } from "react";
 import { DonorDashboardContent } from './donor-dashboard-content';
 import { Loader2, AlertCircle } from "lucide-react";
 import { getUser, User } from "@/services/user-service";
 import { getDonationsByUserId, getAllDonations } from "@/services/donation-service";
 import { getAllLeads } from "@/services/lead-service";
 import { getAppSettings } from "@/app/admin/settings/actions";
-import { getAllPublicCampaigns } from "@/app/home/actions";
+import { getPublicCampaigns, getQuotes } from "@/app/home/actions";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { getQuotes } from "@/app/home/actions";
-import type { AppSettings, Donation, Lead, Campaign, Quote } from "@/services/types";
+import { cookies } from 'next/headers';
 
-function DonorPageLoader() {
-    const [userId, setUserId] = useState<string | null>(null);
-    const [user, setUser] = useState<User | null>(null);
-    const [donations, setDonations] = useState<Donation[]>([]);
-    const [allLeads, setAllLeads] = useState<Lead[]>([]);
-    const [allDonations, setAllDonations] = useState<Donation[]>([]);
-    const [allCampaigns, setAllCampaigns] = useState<Campaign[]>([]);
-    const [quotes, setQuotes] = useState<Quote[]>([]);
-    const [settings, setSettings] = useState<AppSettings | null>(null);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
+async function DonorPageDataLoader() {
+    const cookieStore = cookies();
+    // This is a placeholder; in a real app, you'd get the user ID securely
+    const userId = cookieStore.get('userId')?.value;
 
-    useEffect(() => {
-        const storedUserId = localStorage.getItem('userId');
-        if (storedUserId) {
-            setUserId(storedUserId);
-        } else {
-            setError("You must be logged in to view the Donor Dashboard.");
-            setLoading(false);
-        }
-    }, []);
-    
-    useEffect(() => {
-        if (!userId) return;
-
-        const fetchData = async () => {
-            try {
-                const [
-                    fetchedUser,
-                    userDonations,
-                    fetchedAllLeads,
-                    fetchedAllDonations,
-                    fetchedAllCampaigns,
-                    fetchedQuotes,
-                    fetchedSettings,
-                ] = await Promise.all([
-                    getUser(userId),
-                    getDonationsByUserId(userId),
-                    getAllLeads(),
-                    getAllDonations(),
-                    getAllPublicCampaigns(), // Use public campaigns
-                    getQuotes(3),
-                    getAppSettings(),
-                ]);
-
-                if (!fetchedUser || !fetchedUser.roles.includes('Donor') || !fetchedSettings) {
-                    setError("You do not have permission to view this page or settings could not be loaded.");
-                } else {
-                    setUser(fetchedUser);
-                    setDonations(userDonations);
-                    setAllLeads(fetchedAllLeads);
-                    setAllDonations(fetchedAllDonations);
-                    setAllCampaigns(fetchedAllCampaigns as Campaign[]);
-                    setQuotes(fetchedQuotes);
-                    setSettings(fetchedSettings);
-                }
-            } catch (e) {
-                setError("An error occurred while fetching dashboard data.");
-                console.error(e);
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        fetchData();
-
-    }, [userId]);
-
-    if (loading) {
-        return <div className="flex justify-center items-center p-8"><Loader2 className="animate-spin h-8 w-8 text-primary" /></div>;
-    }
-    
-    if (error) {
+    if (!userId) {
         return (
-             <Alert variant="destructive">
-                <AlertCircle className="h-4 w-4" />
-                <AlertTitle>Access Denied</AlertTitle>
-                <AlertDescription>{error}</AlertDescription>
+            <Alert variant="destructive">
+              <AlertCircle className="h-4 w-4" />
+              <AlertTitle>Error</AlertTitle>
+              <AlertDescription>You must be logged in to view this page.</AlertDescription>
             </Alert>
         );
     }
-    
-    if (!user || !settings) return null;
 
-    return <DonorDashboardContent user={user} donations={donations} allLeads={allLeads} allDonations={allDonations} allCampaigns={allCampaigns} quotes={quotes} settings={settings} />
+    try {
+        const [
+            user,
+            donations,
+            allLeads,
+            allDonations,
+            allCampaigns,
+            quotes,
+            settings
+        ] = await Promise.all([
+            getUser(userId),
+            getDonationsByUserId(userId),
+            getAllLeads(),
+            getAllDonations(),
+            getPublicCampaigns(),
+            getQuotes(3),
+            getAppSettings(),
+        ]);
+
+        if (!user || !settings) {
+            throw new Error("Could not load user or settings data.");
+        }
+
+        return <DonorDashboardContent 
+            user={JSON.parse(JSON.stringify(user))} 
+            donations={JSON.parse(JSON.stringify(donations))} 
+            allLeads={JSON.parse(JSON.stringify(allLeads))} 
+            allDonations={JSON.parse(JSON.stringify(allDonations))} 
+            allCampaigns={JSON.parse(JSON.stringify(allCampaigns))} 
+            quotes={JSON.parse(JSON.stringify(quotes))} 
+            settings={JSON.parse(JSON.stringify(settings))} 
+        />;
+        
+    } catch(e) {
+        const error = e instanceof Error ? e.message : "An unknown error occurred.";
+        return <Alert variant="destructive"><AlertCircle className="h-4 w-4" /><AlertTitle>Error</AlertTitle><AlertDescription>{error}</AlertDescription></Alert>;
+    }
 }
+
 
 export default function DonorDashboardPage() {
     return (
         <Suspense fallback={<div className="flex justify-center items-center p-8"><Loader2 className="animate-spin h-8 w-8 text-primary" /></div>}>
-            <DonorPageLoader />
+            <DonorPageDataLoader />
         </Suspense>
     );
 }
