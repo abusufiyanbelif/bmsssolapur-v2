@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect, useMemo, Suspense, Fragment } from "react";
@@ -175,9 +174,11 @@ export function DonationsPageClient({ initialDonations, initialUsers, initialLea
             const bValue = b[sortColumn];
 
             let comparison = 0;
-            // Handle date/timestamp objects
+            const aDate = aValue ? new Date(aValue as any) : new Date(0);
+            const bDate = bValue ? new Date(bValue as any) : new Date(0);
+
             if (aValue instanceof Date && bValue instanceof Date) {
-                comparison = aValue.getTime() - bValue.getTime();
+                 comparison = aDate.getTime() - bDate.getTime();
             } else if (typeof aValue === 'number' && typeof bValue === 'number') {
                 comparison = aValue - bValue;
             } else if (String(aValue) > String(bValue)) {
@@ -198,18 +199,18 @@ export function DonationsPageClient({ initialDonations, initialUsers, initialLea
 
     const totalPages = Math.ceil(filteredDonations.length / itemsPerPage);
     
-    useEffect(() => {
-        setCurrentPage(1);
-    }, [itemsPerPage]);
-
     const resetFilters = () => {
+        setNameInput('');
         setStatusInput('all');
         setTypeInput('all');
         setPurposeInput('all');
-        setNameInput('');
         setAppliedFilters({ status: 'all', type: 'all', purpose: 'all', name: '' });
         setCurrentPage(1);
     };
+    
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [itemsPerPage]);
 
     const onDonationDeleted = () => {
         toast({
@@ -478,7 +479,7 @@ export function DonationsPageClient({ initialDonations, initialUsers, initialLea
                                                         <p>{alloc.allocatedByUserName}</p>
                                                     </TableCell>
                                                     <TableCell>
-                                                        <p className="text-xs">{format(alloc.allocatedAt as Date, "dd MMM yyyy, p")}</p>
+                                                        <p className="text-xs">{format(new Date(alloc.allocatedAt), "dd MMM yyyy, p")}</p>
                                                     </TableCell>
                                                 </TableRow>
                                                 )
@@ -856,15 +857,9 @@ export function DonationsPageClient({ initialDonations, initialUsers, initialLea
                             </SelectContent>
                         </Select>
                     </div>
-                    <div className="flex items-end gap-4 lg:col-span-full">
-                        <Button onClick={handleSearch} className="w-full">
-                            <Search className="mr-2 h-4 w-4" />
-                            Apply Filters
-                        </Button>
-                         <Button variant="outline" onClick={resetFilters} className="w-full">
-                            <FilterX className="mr-2 h-4 w-4" />
-                            Clear Filters
-                        </Button>
+                     <div className="flex items-end gap-4 lg:col-span-full">
+                        <Button onClick={handleSearch} className="w-full"><Search className="mr-2 h-4 w-4" />Apply Filters</Button>
+                         <Button variant="outline" onClick={resetFilters} className="w-full"><FilterX className="mr-2 h-4 w-4" />Clear Filters</Button>
                     </div>
                 </div>
                 {renderContent()}

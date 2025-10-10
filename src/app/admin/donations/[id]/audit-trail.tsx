@@ -1,12 +1,9 @@
-
-
 "use client";
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { History, ListChecks, Trash2, Upload } from "lucide-react";
 import { format, formatDistanceToNow } from "date-fns";
 import type { ActivityLog } from "@/services/types";
-import { Timestamp } from "firebase/firestore";
 
 interface ActivityItemProps {
   log: ActivityLog;
@@ -16,9 +13,10 @@ const ActivityItem = ({ log }: ActivityItemProps) => {
   let timeAgo = "Just now";
   let fullDate = "Pending timestamp...";
 
-  if (log.timestamp instanceof Timestamp) {
-    timeAgo = formatDistanceToNow(log.timestamp.toDate(), { addSuffix: true });
-    fullDate = log.timestamp.toDate().toLocaleString();
+  if (log.timestamp) {
+    const date = new Date(log.timestamp);
+    timeAgo = formatDistanceToNow(date, { addSuffix: true });
+    fullDate = format(date, 'PPP p');
   }
 
   const renderDetails = () => {

@@ -1,4 +1,3 @@
-
 // src/app/admin/campaigns/page.tsx
 import { Suspense } from "react";
 import { Loader2 } from "lucide-react";
@@ -15,6 +14,7 @@ async function CampaignsPageData() {
             getAllLeads()
         ]);
         
+        // Serialize data before passing to Client Component
         return <CampaignsClient 
             initialCampaigns={JSON.parse(JSON.stringify(campaigns))} 
             initialLeads={JSON.parse(JSON.stringify(leads))}

@@ -1,5 +1,4 @@
-
-
+// src/app/admin/donations/[id]/edit/page.tsx
 
 import { getDonation } from "@/services/donation-service";
 import { notFound } from "next/navigation";
@@ -55,7 +54,7 @@ export default async function EditDonationPage({ params }: { params: { id: strin
                                 users={allUsers} 
                                 leads={linkableLeads} 
                                 campaigns={linkableCampaigns} 
-                                existingDonation={donation}
+                                existingDonation={JSON.parse(JSON.stringify(donation))}
                                 currentUser={currentUser}
                                 settings={settings}
                             />
@@ -64,7 +63,7 @@ export default async function EditDonationPage({ params }: { params: { id: strin
                     <LinkedLeadsCard donation={donation} leads={allLeads} />
                 </div>
                  <div className="lg:col-span-1">
-                    <AuditTrail activityLogs={activityLogs} />
+                    <AuditTrail activityLogs={JSON.parse(JSON.stringify(activityLogs))} />
                  </div>
             </div>
         </div>

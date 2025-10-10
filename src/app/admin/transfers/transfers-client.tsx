@@ -1,5 +1,3 @@
-
-
 "use client";
 
 import { useState, useEffect, useMemo, Suspense } from "react";
@@ -117,9 +115,12 @@ export function AllTransfersPageClient({ initialTransfers, error: initialError }
             let comparison = 0;
             if (!aValue) return 1;
             if (!bValue) return -1;
+            
+            const aDate = new Date(aValue as any);
+            const bDate = new Date(bValue as any);
 
             if (aValue instanceof Date && bValue instanceof Date) {
-                comparison = aValue.getTime() - bValue.getTime();
+                comparison = aDate.getTime() - bDate.getTime();
             } else if (typeof aValue === 'number' && typeof bValue === 'number') {
                 comparison = aValue - bValue;
             }
@@ -329,12 +330,8 @@ export function AllTransfersPageClient({ initialTransfers, error: initialError }
                     Page {currentPage} of {totalPages}
                 </div>
                 <div className="flex items-center space-x-2">
-                    <Button variant="outline" size="sm" onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))} disabled={currentPage === 1}>
-                        <ChevronLeft className="h-4 w-4" /><span className="sr-only">Previous</span>
-                    </Button>
-                    <Button variant="outline" size="sm" onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))} disabled={currentPage === totalPages}>
-                        <ChevronRight className="h-4 w-4" /><span className="sr-only">Next</span>
-                    </Button>
+                    <Button variant="outline" size="sm" onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))} disabled={currentPage === 1}><ChevronLeft className="h-4 w-4" /><span className="sr-only">Previous</span></Button>
+                    <Button variant="outline" size="sm" onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))} disabled={currentPage === totalPages}><ChevronRight className="h-4 w-4" /><span className="sr-only">Next</span></Button>
                 </div>
             </div>
         </div>

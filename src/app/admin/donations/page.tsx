@@ -1,4 +1,3 @@
-
 // src/app/admin/donations/page.tsx
 import { Suspense } from "react";
 import { Loader2 } from "lucide-react";
@@ -8,6 +7,8 @@ import { getAllUsers } from "@/services/user-service";
 import { getAllLeads } from "@/services/lead-service";
 import { getAllCampaigns } from "@/services/campaign-service";
 import { getCurrentOrganization } from "@/app/admin/settings/actions";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { AlertCircle } from "lucide-react";
 
 async function DonationsPageData() {
     try {
@@ -19,24 +20,24 @@ async function DonationsPageData() {
             getCurrentOrganization(),
         ]);
         
+        // Serialize data before passing to client component
         return <DonationsPageClient 
             initialDonations={JSON.parse(JSON.stringify(donations))}
             initialUsers={JSON.parse(JSON.stringify(users))}
             initialLeads={JSON.parse(JSON.stringify(leads))}
             initialCampaigns={JSON.parse(JSON.stringify(campaigns))}
             organization={JSON.parse(JSON.stringify(organization))}
-        />
+        />;
 
     } catch (e) {
         const error = e instanceof Error ? e.message : "An unknown error occurred.";
-        return <DonationsPageClient 
-            initialDonations={[]}
-            initialUsers={[]}
-            initialLeads={[]}
-            initialCampaigns={[]}
-            organization={null}
-            error={error}
-        />
+        return (
+             <Alert variant="destructive">
+                <AlertCircle className="h-4 w-4" />
+                <AlertTitle>Error Loading Donations Page</AlertTitle>
+                <AlertDescription>{error}</AlertDescription>
+            </Alert>
+        )
     }
 }
 
