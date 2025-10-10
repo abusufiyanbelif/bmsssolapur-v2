@@ -1,10 +1,8 @@
-
-
 // src/app/admin/organization/letterhead/letterhead-document.tsx
 
 "use client";
 
-import { useRef, useState, useEffect } from "react";
+import { useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Download, Loader2, FileText, Settings, Type, Milestone, CalendarIcon, Users } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";

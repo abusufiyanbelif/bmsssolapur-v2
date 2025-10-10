@@ -47,16 +47,17 @@ export const Letterhead = forwardRef<HTMLDivElement, LetterheadProps>(
 
 
         const organizationDetails = {
-            name: organization?.name || "Baitul Mal Samajik Sanstha (Solapur)",
-            address: organization?.address || "123 Muslim Peth, Solapur, Maharashtra 413001",
-            registration: organization?.registrationNumber || "MAHA/123/2024",
-            email: organization?.contactEmail || "contact@baitulmalsolapur.org",
-            phone: organization?.contactPhone || "+91 9372145889",
-            website: organization?.website || 'https://baitulmalsolapur.org',
-            pan: organization?.panNumber || 'AAPAB1213J',
-            titleLine1: organization.footer?.organizationInfo.titleLine1 || 'BAITUL MAL',
-            titleLine2: organization.footer?.organizationInfo.titleLine2 || 'SAMAJIK SANSTHA',
-            titleLine3: organization.footer?.organizationInfo.titleLine3 || '(SOLAPUR)',
+            name: organization?.name || "Your Organization Name",
+            address: organization?.address || "[Your Address]",
+            city: organization?.city || "[Your City]",
+            registration: organization?.registrationNumber || "[Reg No.]",
+            email: organization?.contactEmail || "[your-email@example.com]",
+            phone: organization?.contactPhone || "[Your Phone]",
+            website: organization?.website || '[your-website.com]',
+            pan: organization?.panNumber || '[Your PAN]',
+            titleLine1: organization.footer?.organizationInfo?.titleLine1 || 'Baitul Mal',
+            titleLine2: organization.footer?.organizationInfo?.titleLine2 || 'Samajik Sanstha',
+            titleLine3: organization.footer?.organizationInfo?.titleLine3 || '(Solapur)',
         };
         
         const textStyle = { letterSpacing: '0.5px' };
@@ -115,7 +116,7 @@ export const Letterhead = forwardRef<HTMLDivElement, LetterheadProps>(
                                         </h3>
                                         {(includeAddress || isTemplate) && (
                                             <p className="text-sm text-muted-foreground mt-2" style={textStyle}>
-                                                Address: {isTemplate ? '' : `${organizationDetails.address}`}
+                                                Address: {isTemplate ? '' : `${organizationDetails.address}, ${organizationDetails.city}`}
                                             </p>
                                         )}
                                         {emailPhoneText && (
@@ -164,7 +165,7 @@ export const Letterhead = forwardRef<HTMLDivElement, LetterheadProps>(
                          )}
                          {(includeUrl || isTemplate) && (
                             <p className='mt-2'>
-                                URL: {isTemplate ? '' : organization.website}
+                                URL: {isTemplate ? '' : organizationDetails.website}
                             </p>
                          )}
                     </footer>
