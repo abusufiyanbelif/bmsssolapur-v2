@@ -56,6 +56,9 @@ export function EditOrganizationForm({ organization }: EditOrganizationFormProps
   const [qrCodePreviewUrl, setQrCodePreviewUrl] = useState(organization.qrCodeUrl || '');
   const [logoPreviewUrl, setLogoPreviewUrl] = useState(organization.logoUrl || '');
   const [isEditing, setIsEditing] = useState(false);
+  
+  // If the organization has a real `createdAt` timestamp, it exists. Otherwise, it's a new one.
+  const isCreating = !organization.createdAt || Object.keys(organization.createdAt).length === 0;
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -100,18 +103,18 @@ export function EditOrganizationForm({ organization }: EditOrganizationFormProps
         }
     });
     
-    const result = await handleUpdateOrganization(organization.id!, formData);
+    const result = await handleUpdateOrganization(organization.id!, formData, isCreating);
 
     setIsSubmitting(false);
 
     if (result.success) {
       toast({
-        title: "Organization Details Saved",
+        title: isCreating ? "Organization Created" : "Organization Details Saved",
         description: `The organization profile has been updated successfully.`,
       });
       // Reset the form with the new values, which marks it as "not dirty"
       form.reset(values);
-      setIsEditing(false);
+      setIsEditing(isCreating); // Stay in editing mode if we just created it
     } else {
       toast({
         variant: "destructive",
@@ -131,19 +134,17 @@ export function EditOrganizationForm({ organization }: EditOrganizationFormProps
                         Update your organization's public information, contact details, and payment settings. These details will be visible on the public-facing pages.
                     </CardDescription>
                 </div>
-                 {!isEditing ? (
+                 {!isEditing && !isCreating ? (
                     <Button onClick={() => setIsEditing(true)}>
                         <Edit className="mr-2 h-4 w-4" />
                         Edit
                     </Button>
                 ) : (
                     <div className="flex gap-2">
-                        <Button type="button" variant="outline" onClick={handleCancel}>
-                             <X className="mr-2 h-4 w-4" /> Cancel
-                        </Button>
+                        {!isCreating && <Button type="button" variant="outline" onClick={handleCancel}><X className="mr-2 h-4 w-4" /> Cancel</Button>}
                          <Button onClick={form.handleSubmit(onSubmit)} disabled={isSubmitting || !isDirty}>
                             {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-                            Save Changes
+                            {isCreating ? "Create Profile" : "Save Changes"}
                         </Button>
                     </div>
                 )}
@@ -152,7 +153,7 @@ export function EditOrganizationForm({ organization }: EditOrganizationFormProps
         <CardContent>
             <Form {...form}>
             <form className="space-y-8">
-                <fieldset disabled={!isEditing} className="space-y-8">
+                <fieldset disabled={!isEditing && !isCreating} className="space-y-8">
                     <div className="grid md:grid-cols-3 gap-8">
                         <div className="md:col-span-2 space-y-8">
                             <FormField

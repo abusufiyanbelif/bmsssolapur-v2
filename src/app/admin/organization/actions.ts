@@ -2,7 +2,7 @@
 
 "use server";
 
-import { updateOrganization, Organization } from "@/services/organization-service";
+import { updateOrganization, Organization, createOrganization } from "@/services/organization-service";
 import { revalidatePath } from "next/cache";
 import { uploadFile } from "@/services/storage-service";
 
@@ -15,7 +15,8 @@ interface FormState {
 
 export async function handleUpdateOrganization(
   orgId: string,
-  formData: FormData
+  formData: FormData,
+  isCreating: boolean,
 ): Promise<FormState> {
   
   try {
@@ -35,7 +36,7 @@ export async function handleUpdateOrganization(
         qrCodeUrl = await uploadFile(qrCodeFile, uploadPath);
     }
 
-    const updates: Partial<Organization> = {
+    const orgData: Partial<Organization> = {
         name: formData.get('name') as string,
         logoUrl: logoUrl,
         address: formData.get('address') as string,
@@ -51,8 +52,12 @@ export async function handleUpdateOrganization(
         upiId: formData.get('upiId') as string,
         qrCodeUrl: qrCodeUrl,
     };
-
-    await updateOrganization(orgId, updates);
+    
+    if(isCreating) {
+        await createOrganization(orgData as Omit<Organization, 'id' | 'createdAt' | 'updatedAt'>);
+    } else {
+        await updateOrganization(orgId, orgData);
+    }
     
     revalidatePath("/admin/organization");
     revalidatePath("/organization");
@@ -72,3 +77,4 @@ export async function handleUpdateOrganization(
     };
   }
 }
+

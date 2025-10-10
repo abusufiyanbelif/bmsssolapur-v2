@@ -1,32 +1,69 @@
 
-
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { getCurrentOrganization } from "@/services/organization-service";
 import { EditOrganizationForm } from "./edit-organization-form";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
 
-export default async function OrganizationSettingsPage() {
-    const organization = await getCurrentOrganization();
+const defaultOrganization = {
+    id: "main_org", // A default, predictable ID for creation
+    name: "",
+    logoUrl: "",
+    address: "",
+    city: "Solapur",
+    registrationNumber: "",
+    panNumber: "",
+    contactEmail: "",
+    contactPhone: "",
+    website: "",
+    bankAccountName: "",
+    bankAccountNumber: "",
+    bankIfscCode: "",
+    upiId: "",
+    qrCodeUrl: "",
+    footer: undefined, // Let the form handle default footer
+    createdAt: new Date(),
+    updatedAt: new Date(),
+};
 
-    if (!organization) {
-        return (
-             <div className="flex-1 space-y-4">
+
+export default async function OrganizationSettingsPage() {
+    let organization;
+    let error = null;
+
+    try {
+        organization = await getCurrentOrganization();
+    } catch (e) {
+        error = e instanceof Error ? e.message : "An unknown error occurred.";
+    }
+
+    if (error) {
+         return (
+            <div className="flex-1 space-y-4">
                 <Alert variant="destructive">
                     <AlertCircle className="h-4 w-4" />
-                    <AlertTitle>No Organization Found</AlertTitle>
-                    <AlertDescription>
-                        No organization details have been configured in the database. Please run the seeder or manually add an organization entry.
-                    </AlertDescription>
+                    <AlertTitle>Error Loading Data</AlertTitle>
+                    <AlertDescription>{error}</AlertDescription>
                 </Alert>
             </div>
         )
     }
 
+    // If no organization exists, use the default empty object to render the form for creation
+    const orgData = organization || defaultOrganization;
+
     return (
         <div className="flex-1 space-y-4">
             <h2 className="text-3xl font-bold tracking-tight font-headline text-primary">Organization Profile</h2>
-            <EditOrganizationForm organization={organization} />
+            {!organization && (
+                 <Alert>
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertTitle>No Organization Profile Found</AlertTitle>
+                    <AlertDescription>
+                        Please fill out the form below to create your organization&apos;s public profile.
+                    </AlertDescription>
+                </Alert>
+            )}
+            <EditOrganizationForm organization={orgData} />
         </div>
     );
 }
