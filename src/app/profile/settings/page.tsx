@@ -11,26 +11,27 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import type { User } from '@/services/types';
-import { Loader2, AlertCircle, Edit, X, Save, PlusCircle, Trash2, CreditCard, Fingerprint, MapPin, Banknote, User as UserIcon } from 'lucide-react';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Loader2, Edit, X, Save, PlusCircle, Trash2, CreditCard, Fingerprint, MapPin, Banknote, User as UserIcon } from 'lucide-react';
 import { Textarea } from "@/components/ui/textarea";
 import { handleUpdateProfile } from '../actions';
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Checkbox } from '@/components/ui/checkbox';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Separator } from "@/components/ui/separator";
+import { useProfileUser } from '../layout'; // Import the new hook
 
 const profileFormSchema = z.object({
   firstName: z.string().min(2, "First name must be at least 2 characters."),
   middleName: z.string().optional(),
   lastName: z.string().min(1, "Last name is required."),
   phone: z.string().regex(/^[0-9]{10}$/, "Phone number must be 10 digits."),
-  addressLine1: z.string().optional(),
-  city: z.string().optional(),
-  state: z.string().optional(),
-  country: z.string().optional(),
-  pincode: z.string().optional(),
+  address: z.object({
+    addressLine1: z.string().optional(),
+    city: z.string().optional(),
+    state: z.string().optional(),
+    country: z.string().optional(),
+    pincode: z.string().optional(),
+  }),
   gender: z.enum(['Male', 'Female', 'Other']),
   beneficiaryType: z.enum(["Adult", "Old Age", "Kid", "Family", "Widow"]).optional(),
   occupation: z.string().optional(),
@@ -47,11 +48,8 @@ const profileFormSchema = z.object({
 
 type ProfileFormValues = z.infer<typeof profileFormSchema>;
 
-interface ProfileSettingsPageProps {
-    user: User | null; // This will be passed from the server layout
-}
-
-export default function ProfileSettingsPage({ user: initialUser }: ProfileSettingsPageProps) {
+export default function ProfileSettingsPage() {
+    const user = useProfileUser(); // Get user from context
     const { toast } = useToast();
     const [isEditing, setIsEditing] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -65,46 +63,47 @@ export default function ProfileSettingsPage({ user: initialUser }: ProfileSettin
     
     // Set form defaults once the user prop is available
     useEffect(() => {
-        if (initialUser) {
+        if (user) {
             reset({
-                firstName: initialUser.firstName,
-                middleName: initialUser.middleName || '',
-                lastName: initialUser.lastName,
-                phone: initialUser.phone,
-                addressLine1: initialUser.address?.addressLine1 || '',
-                city: initialUser.address?.city || '',
-                state: initialUser.address?.state || '',
-                country: initialUser.address?.country || '',
-                pincode: initialUser.address?.pincode || '',
-                gender: initialUser.gender || 'Other',
-                beneficiaryType: initialUser.beneficiaryType,
-                occupation: initialUser.occupation || '',
-                familyMembers: initialUser.familyMembers || 0,
-                isWidow: initialUser.isWidow || false,
-                panNumber: initialUser.panNumber || '',
-                aadhaarNumber: initialUser.aadhaarNumber || '',
-                bankAccountName: initialUser.bankAccountName || '',
-                bankName: initialUser.bankName || '',
-                bankAccountNumber: initialUser.bankAccountNumber || '',
-                bankIfscCode: initialUser.bankIfscCode || '',
-                upiIds: initialUser.upiIds?.map(id => ({ value: id })) || [{ value: "" }],
+                firstName: user.firstName,
+                middleName: user.middleName || '',
+                lastName: user.lastName,
+                phone: user.phone,
+                address: {
+                    addressLine1: user.address?.addressLine1 || '',
+                    city: user.address?.city || '',
+                    state: user.address?.state || '',
+                    country: user.address?.country || '',
+                    pincode: user.address?.pincode || '',
+                },
+                gender: user.gender || 'Other',
+                beneficiaryType: user.beneficiaryType,
+                occupation: user.occupation || '',
+                familyMembers: user.familyMembers || 0,
+                isWidow: user.isWidow || false,
+                panNumber: user.panNumber || '',
+                aadhaarNumber: user.aadhaarNumber || '',
+                bankAccountName: user.bankAccountName || '',
+                bankName: user.bankName || '',
+                bankAccountNumber: user.bankAccountNumber || '',
+                bankIfscCode: user.bankIfscCode || '',
+                upiIds: user.upiIds?.map(id => ({ value: id })) || [{ value: "" }],
             });
         }
-    }, [initialUser, reset]);
+    }, [user, reset]);
 
 
     async function onSubmit(values: ProfileFormValues) {
-        if (!initialUser?.id) return;
+        if (!user?.id) return;
         setIsSubmitting(true);
         const updatePayload = {
             ...values,
             upiIds: values.upiIds?.map(item => item.value).filter(Boolean),
         };
-        const result = await handleUpdateProfile(initialUser.id, updatePayload as any);
+        const result = await handleUpdateProfile(user.id, updatePayload as any);
         
         if (result.success) {
             toast({ variant: "success", title: "Profile Updated", description: "Your changes have been saved." });
-            // Re-fetch or simply reset the form to the newly saved state
             reset(values);
             setIsEditing(false);
         } else {
@@ -114,7 +113,7 @@ export default function ProfileSettingsPage({ user: initialUser }: ProfileSettin
         setIsSubmitting(false);
     }
     
-    if (!initialUser) {
+    if (!user) {
         return (
             <div className="flex items-center justify-center py-10">
                 <Loader2 className="h-8 w-8 animate-spin" />
@@ -122,10 +121,10 @@ export default function ProfileSettingsPage({ user: initialUser }: ProfileSettin
         );
     }
     
-    const isBeneficiary = initialUser.roles.includes('Beneficiary');
+    const isBeneficiary = user.roles.includes('Beneficiary');
 
     return (
-        <Form {...form}>
+        <FormProvider {...form}>
             <form onSubmit={handleSubmit(onSubmit)}>
                 <Card>
                     <CardHeader>
@@ -185,9 +184,9 @@ export default function ProfileSettingsPage({ user: initialUser }: ProfileSettin
                             <AccordionItem value="address" className="border rounded-lg">
                                 <AccordionTrigger className="p-4 font-semibold text-primary"><h4 className="flex items-center gap-2"><MapPin className="h-5 w-5"/>Address Details</h4></AccordionTrigger>
                                 <AccordionContent className="p-6 pt-2 space-y-6">
-                                    <FormField control={form.control} name="addressLine1" render={({ field }) => (<FormItem><FormLabel>Address</FormLabel><FormControl><Textarea {...field} disabled={!isEditing} /></FormControl><FormMessage /></FormItem>)} />
+                                    <FormField control={form.control} name="address.addressLine1" render={({ field }) => (<FormItem><FormLabel>Address</FormLabel><FormControl><Textarea placeholder="Enter your full address" {...field} disabled={!isEditing} /></FormControl><FormMessage /></FormItem>)} />
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        <FormField control={form.control} name="pincode" render={({ field }) => (<FormItem><FormLabel>Pincode</FormLabel><FormControl><Input {...field} disabled={!isEditing} /></FormControl><FormMessage /></FormItem>)} />
+                                        <FormField control={form.control} name="address.pincode" render={({ field }) => (<FormItem><FormLabel>Pincode</FormLabel><FormControl><Input placeholder="e.g., 413001" {...field} disabled={!isEditing} /></FormControl><FormMessage /></FormItem>)} />
                                     </div>
                                 </AccordionContent>
                             </AccordionItem>
@@ -204,7 +203,7 @@ export default function ProfileSettingsPage({ user: initialUser }: ProfileSettin
                                              <FormItem>
                                                  <FormLabel>Beneficiary Type</FormLabel>
                                                  <FormControl>
-                                                     <RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="flex flex-row space-x-4 pt-2" disabled={!isEditing}>
+                                                     <RadioGroup onValueChange={field.onChange} value={field.value} className="flex flex-row space-x-4 pt-2" disabled={!isEditing}>
                                                         <FormItem className="flex items-center space-x-3 space-y-0"><RadioGroupItem value="Adult" id="type-adult"/><FormLabel className="font-normal" htmlFor="type-adult">Adult</FormLabel></FormItem>
                                                         <FormItem className="flex items-center space-x-3 space-y-0"><RadioGroupItem value="Old Age" id="type-old"/><FormLabel className="font-normal" htmlFor="type-old">Old Age</FormLabel></FormItem>
                                                         <FormItem className="flex items-center space-x-3 space-y-0"><RadioGroupItem value="Kid" id="type-kid"/><FormLabel className="font-normal" htmlFor="type-kid">Kid</FormLabel></FormItem>
@@ -245,6 +244,6 @@ export default function ProfileSettingsPage({ user: initialUser }: ProfileSettin
                     </CardContent>
                 </Card>
             </form>
-        </Form>
+        </FormProvider>
     );
 }
