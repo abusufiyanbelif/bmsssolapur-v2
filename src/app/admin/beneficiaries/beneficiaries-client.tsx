@@ -1,3 +1,4 @@
+
 // src/app/admin/beneficiaries/beneficiaries-client.tsx
 "use client";
 

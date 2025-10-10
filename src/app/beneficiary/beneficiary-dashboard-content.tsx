@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
@@ -15,8 +14,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { getAllDonations } from "@/services/donation-service";
-import { getAllLeads } from "@/services/lead-service";
+import { MainMetricsCard } from "@/app/admin/dashboard-cards";
 
 const statusColors: Record<LeadStatus, string> = {
     "Open": "bg-blue-500/20 text-blue-700 border-blue-500/30",
@@ -32,40 +30,9 @@ export function BeneficiaryDashboardContent({ cases, quotes, settings }: { cases
     const isMobile = useIsMobile();
     const [currentPage, setCurrentPage] = useState(1);
     const [itemsPerPage, setItemsPerPage] = useState(5);
-    const [loadingStats, setLoadingStats] = useState(true);
-    const [mainMetrics, setMainMetrics] = useState<any[]>([]);
     
     const dashboardSettings = settings.dashboard;
     const allowBeneficiaryRequests = settings.leadConfiguration?.allowBeneficiaryRequests ?? true;
-
-    useEffect(() => {
-        const fetchStats = async () => {
-            setLoadingStats(true);
-            const [allDonations, allLeads] = await Promise.all([
-                getAllDonations(),
-                getAllLeads()
-            ]);
-            
-            const totalRaised = allDonations.reduce((acc, d) => (d.status === 'Verified' || d.status === 'Allocated') ? acc + d.amount : acc, 0);
-            const totalDistributed = allLeads.reduce((acc, l) => acc + l.helpGiven, 0);
-            const pendingToDisburse = Math.max(0, totalRaised - totalDistributed);
-            const helpedBeneficiaryIds = new Set(allLeads.map(l => l.beneficiaryId));
-            const beneficiariesHelpedCount = helpedBeneficiaryIds.size;
-            const casesClosed = allLeads.filter(l => l.caseAction === 'Closed').length;
-            const casesPublished = allLeads.filter(l => l.caseAction === 'Publish').length;
-            
-            setMainMetrics([
-                { id: 'mainMetrics', title: "Total Verified Funds", value: `₹${totalRaised.toLocaleString()}`, icon: TrendingUp, description: "Total verified donations received by the Organization.", href: "/public-leads" },
-                { id: 'mainMetrics', title: "Total Distributed", value: `₹${totalDistributed.toLocaleString()}`, icon: HandCoins, description: "Total funds given to all beneficiaries.", href: "/public-leads" },
-                { id: 'fundsInHand', title: "Funds in Hand", value: `₹${pendingToDisburse.toLocaleString()}`, icon: Banknote, description: "Verified funds ready for disbursement.", href: "/public-leads" },
-                { id: 'mainMetrics', title: "Cases Closed", value: casesClosed.toString(), icon: CheckCircle, description: "Total help requests successfully completed.", href: "/public-leads" },
-                { id: 'mainMetrics', title: "Published Leads", value: casesPublished.toString(), icon: Eye, description: "Cases currently visible to the public.", href: "/public-leads" },
-                { id: 'mainMetrics', title: "Beneficiaries Helped", value: beneficiariesHelpedCount.toString(), icon: UsersIcon, description: "Total unique individuals and families supported.", href: "/public-leads" },
-            ]);
-            setLoadingStats(false);
-        };
-        fetchStats();
-    }, []);
     
     // Beneficiary specific stats
     const { totalAidReceived, activeCases, casesClosed: myCasesClosed, totalRequested } = useMemo(() => {
@@ -223,29 +190,8 @@ export function BeneficiaryDashboardContent({ cases, quotes, settings }: { cases
 
     return (
         <div className="space-y-6">
-            <InspirationalQuotes quotes={quotes} loading={false} />
-            <Card>
-                <CardHeader>
-                    <CardTitle className="text-primary">Organization Impact</CardTitle>
-                    <CardDescription>A real-time overview of our collective efforts.</CardDescription>
-                </CardHeader>
-                <CardContent className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                    {loadingStats ? (
-                        Array.from({ length: 6 }).map((_, i) => <div key={i} className="p-4 border rounded-lg h-32 bg-muted animate-pulse" />)
-                    ) : (
-                        mainMetrics.filter(m => dashboardSettings?.[m.id]?.visibleTo.includes('Beneficiary')).map((metric) => (
-                            <Link href={metric.href} key={metric.title}>
-                                <div className="p-4 border rounded-lg h-full hover:bg-muted transition-colors">
-                                    <metric.icon className="h-6 w-6 text-muted-foreground mb-2" />
-                                    <p className="text-2xl font-bold">{metric.value}</p>
-                                    <p className="text-sm font-medium text-primary">{metric.title}</p>
-                                </div>
-                            </Link>
-                        ))
-                    )}
-                </CardContent>
-            </Card>
-
+            <InspirationalQuotes quotes={quotes} />
+            
             {dashboardSettings?.beneficiarySummary?.visibleTo.includes('Beneficiary') && (
                 <Card>
                     <CardHeader>
@@ -319,23 +265,7 @@ export function BeneficiaryDashboardContent({ cases, quotes, settings }: { cases
     )
 }
 
-function InspirationalQuotes({ quotes, loading }: { quotes: Quote[], loading: boolean }) {
-    if (loading) {
-        return (
-             <Card>
-                <CardHeader>
-                    <CardTitle className="flex items-center gap-2 text-primary">
-                        <QuoteIcon />
-                        Wisdom & Reflection
-                    </CardTitle>
-                </CardHeader>
-                <CardContent>
-                    <div className="flex justify-center items-center p-8"><Loader2 className="animate-spin h-6 w-6 text-primary" /></div>
-                </CardContent>
-            </Card>
-        )
-    }
-
+function InspirationalQuotes({ quotes }: { quotes: Quote[] }) {
     if (quotes.length === 0) {
         return null;
     }

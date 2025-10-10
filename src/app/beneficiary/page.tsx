@@ -1,4 +1,5 @@
 
+// src/app/beneficiary/page.tsx
 'use client';
 
 import { Suspense, useEffect, useState } from "react";
@@ -11,17 +12,8 @@ import { getAppSettings } from "@/services/app-settings-service";
 import { getLeadsByBeneficiaryId } from "@/services/lead-service";
 import { getQuotes } from "@/app/home/actions";
 
-function BeneficiaryPageLoader({ userId }: { userId: string | null }) {
-  if (!userId) {
-    return (
-      <Alert variant="destructive">
-        <AlertCircle className="h-4 w-4" />
-        <AlertTitle>Access Denied</AlertTitle>
-        <AlertDescription>You must be logged in to view the Beneficiary Dashboard.</AlertDescription>
-      </Alert>
-    );
-  }
-
+function BeneficiaryPageLoader() {
+  const [userId, setUserId] = useState<string | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [cases, setCases] = useState<Lead[]>([]);
   const [quotes, setQuotes] = useState<Quote[]>([]);
@@ -30,6 +22,18 @@ function BeneficiaryPageLoader({ userId }: { userId: string | null }) {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    const storedUserId = localStorage.getItem('userId');
+    if (storedUserId) {
+        setUserId(storedUserId);
+    } else {
+        setError("You must be logged in to view the Beneficiary Dashboard.");
+        setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!userId) return;
+
     const fetchData = async () => {
       try {
         const [
@@ -97,28 +101,10 @@ function BeneficiaryPageLoader({ userId }: { userId: string | null }) {
   );
 }
 
-
-function BeneficiaryPageWithAuth() {
-  const [userId, setUserId] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const storedUserId = localStorage.getItem('userId');
-    setUserId(storedUserId);
-    setLoading(false);
-  }, []);
-
-  if (loading) {
-     return <div className="flex justify-center items-center p-8"><Loader2 className="animate-spin h-8 w-8 text-primary" /></div>;
-  }
-
-  return (
-    <Suspense fallback={<div className="flex justify-center items-center p-8"><Loader2 className="animate-spin h-8 w-8 text-primary" /></div>}>
-        <BeneficiaryPageLoader userId={userId} />
-    </Suspense>
-  )
-}
-
 export default function BeneficiaryDashboardPage() {
-    return <BeneficiaryPageWithAuth />;
+    return (
+        <Suspense fallback={<div className="flex justify-center items-center p-8"><Loader2 className="animate-spin h-8 w-8 text-primary" /></div>}>
+            <BeneficiaryPageLoader />
+        </Suspense>
+    );
 }
