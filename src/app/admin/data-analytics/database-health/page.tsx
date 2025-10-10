@@ -13,6 +13,8 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { format, formatDistanceToNow } from 'date-fns';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Badge } from '@/components/ui/badge';
+import { cn } from '@/lib/utils';
 
 
 const chartConfig = {
@@ -50,6 +52,12 @@ export default function DatabaseHealthPage() {
         count: s.count,
         orphans: s.orphanCheck?.orphanCount || 0,
     }));
+    
+    const typeColors: Record<CollectionStat['type'], string> = {
+        'Application Data': 'bg-blue-100 text-blue-800',
+        'Configuration': 'bg-purple-100 text-purple-800',
+        'System': 'bg-gray-200 text-gray-800',
+    };
 
     const renderContent = () => {
         if (loading) {
@@ -89,6 +97,7 @@ export default function DatabaseHealthPage() {
                 <TableHeader>
                     <TableRow>
                         <TableHead>Collection</TableHead>
+                        <TableHead>Type</TableHead>
                         <TableHead>Description</TableHead>
                         <TableHead className="text-right">Record Count</TableHead>
                         <TableHead className="text-center">Last Modified</TableHead>
@@ -99,6 +108,9 @@ export default function DatabaseHealthPage() {
                     {stats.map(stat => (
                         <TableRow key={stat.name}>
                             <TableCell className="font-semibold">{stat.name}</TableCell>
+                            <TableCell>
+                                <Badge variant="outline" className={cn(typeColors[stat.type])}>{stat.type}</Badge>
+                            </TableCell>
                             <TableCell className="text-muted-foreground text-sm">{stat.description}</TableCell>
                             <TableCell className="text-right font-mono">{stat.count.toLocaleString()}</TableCell>
                             <TableCell className="text-center text-xs text-muted-foreground">

@@ -7,6 +7,7 @@ import type { Lead, Donation, User } from '@/services/types';
 export interface CollectionStat {
     name: string;
     description: string;
+    type: 'Application Data' | 'Configuration' | 'System';
     count: number;
     lastModified?: Date;
     orphanCheck?: {
@@ -18,18 +19,22 @@ export interface CollectionStat {
 
 // This map provides metadata for known collections.
 // Any new collections will be discovered automatically and given a default description.
-const collectionsMetadata: Record<string, { description: string; timestampField?: string; orphanField?: string, orphanCollection?: string }> = {
-    users: { description: 'Stores all user profiles, including donors, beneficiaries, and admins.', timestampField: 'updatedAt' },
-    leads: { description: 'Contains all help requests (cases) for beneficiaries.', timestampField: 'updatedAt', orphanField: 'beneficiaryId', orphanCollection: 'users' },
-    donations: { description: 'Holds all donation records, both online and manually entered.', timestampField: 'updatedAt', orphanField: 'donorId', orphanCollection: 'users' },
-    campaigns: { description: 'Stores fundraising campaign details.', timestampField: 'updatedAt' },
-    activityLog: { description: 'A log of all significant user and system actions.', timestampField: 'timestamp', orphanField: 'userId', orphanCollection: 'users' },
-    organizations: { description: 'Stores the main organization profile details.' },
-    settings: { description: 'Contains global application configurations.' },
-    publicLeads: { description: 'Sanitized, public-facing copies of leads marked for publication.' },
-    publicCampaigns: { description: 'Public-facing copies of active and upcoming campaigns.' },
-    publicData: { description: 'Stores other public data like the main organization profile.' },
-    inspirationalQuotes: { description: 'A collection of quotes used throughout the application.' },
+const collectionsMetadata: Record<string, { description: string; type: CollectionStat['type']; timestampField?: string; orphanField?: string, orphanCollection?: string }> = {
+    users: { description: 'Stores all user profiles, including donors, beneficiaries, and admins.', type: 'Application Data', timestampField: 'updatedAt' },
+    leads: { description: 'Contains all help requests (cases) for beneficiaries.', type: 'Application Data', timestampField: 'updatedAt', orphanField: 'beneficiaryId', orphanCollection: 'users' },
+    donations: { description: 'Holds all donation records, both online and manually entered.', type: 'Application Data', timestampField: 'updatedAt', orphanField: 'donorId', orphanCollection: 'users' },
+    campaigns: { description: 'Stores fundraising campaign details.', type: 'Application Data', timestampField: 'updatedAt' },
+    activityLog: { description: 'A log of all significant user and system actions.', type: 'Application Data', timestampField: 'timestamp', orphanField: 'userId', orphanCollection: 'users' },
+    inspirationalQuotes: { description: 'A collection of quotes used throughout the application.', type: 'Application Data' },
+    
+    publicLeads: { description: 'Sanitized, public-facing copies of leads marked for publication.', type: 'Application Data' },
+    publicCampaigns: { description: 'Public-facing copies of active and upcoming campaigns.', type: 'Application Data' },
+    publicData: { description: 'Stores other public data like the main organization profile.', type: 'Application Data' },
+
+    organizations: { description: 'Stores the main organization profile details.', type: 'Configuration' },
+    settings: { description: 'Contains global application configurations.', type: 'Configuration' },
+
+    'permission-check': { description: 'A system collection used to verify database connectivity.', type: 'System' },
 };
 
 export async function getDatabaseHealthStats(): Promise<CollectionStat[]> {
@@ -41,7 +46,7 @@ export async function getDatabaseHealthStats(): Promise<CollectionStat[]> {
 
         for (const collectionRef of collections) {
             const colId = collectionRef.id;
-            const metadata = collectionsMetadata[colId] || { description: 'No description available.' };
+            const metadata = collectionsMetadata[colId] || { description: 'No description available.', type: 'Application Data' };
 
             try {
                 // Fetch count and last modified doc in parallel
@@ -65,6 +70,7 @@ export async function getDatabaseHealthStats(): Promise<CollectionStat[]> {
                 const stat: CollectionStat = {
                     name: colId,
                     description: metadata.description,
+                    type: metadata.type,
                     count,
                     lastModified,
                 };
@@ -86,6 +92,7 @@ export async function getDatabaseHealthStats(): Promise<CollectionStat[]> {
                 stats.push({
                     name: colId,
                     description: metadata.description,
+                    type: metadata.type,
                     count: 0,
                     orphanCheck: { checked: false, orphanCount: 0, details: `Error analyzing collection: ${error instanceof Error ? error.message : 'Unknown error'}` }
                 });
