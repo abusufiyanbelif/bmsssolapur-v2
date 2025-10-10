@@ -83,10 +83,18 @@ export const getPublicLeads = async (): Promise<Lead[]> => {
     } catch (e) {
         if (e instanceof Error && (e.message.includes('Could not refresh access token') || e.message.includes('permission-denied'))) {
             console.warn("Firestore permission error in getPublicLeads. Returning empty array. Please check IAM roles.");
-            return []; // Return empty array to prevent crash
+            return []; // Gracefully fail
         }
-        if (e instanceof Error && e.message.includes('index')) {
-            console.error("Firestore index missing. Please create a descending index on 'dateCreated' for the 'publicLeads' collection.");
+        if (e instanceof Error && (e.message.includes('index') || e.message.includes('Could not find a valid index'))) {
+            console.error("Firestore index missing for 'publicLeads' on 'dateCreated' (desc). Please create it. Falling back to unsorted data.");
+             try {
+                const fallbackSnapshot = await adminDb.collection(PUBLIC_LEADS_COLLECTION).get();
+                const fallbackLeads = fallbackSnapshot.docs.map(doc => doc.data() as Lead);
+                return await Promise.all(fallbackLeads.map(async (lead) => ({ ...lead, beneficiary: await getUser(lead.beneficiaryId) })));
+             } catch (fallbackError) {
+                 console.error("Fallback query failed for getPublicLeads", fallbackError);
+                 return [];
+             }
         } else {
              console.error("Error fetching public leads:", e);
         }
@@ -177,10 +185,25 @@ export const getPublicCampaigns = async (): Promise<(Campaign & { raisedAmount: 
     } catch (e) {
         if (e instanceof Error && (e.message.includes('Could not refresh access token') || e.message.includes('permission-denied'))) {
             console.warn("Firestore permission error in getPublicCampaigns. Returning empty array. Please check IAM roles.");
-            return []; // Return empty array to prevent crash
+            return []; // Gracefully fail
         }
-        if (e instanceof Error && e.message.includes('index')) {
-            console.error("Firestore index missing. Please create a descending index on 'startDate' for the 'publicCampaigns' collection.");
+        if (e instanceof Error && (e.message.includes('index') || e.message.includes('Could not find a valid index'))) {
+            console.error("Firestore index missing for 'publicCampaigns' on 'startDate' (desc). Please create it. Falling back to unsorted data.");
+             try {
+                const fallbackSnapshot = await adminDb.collection(PUBLIC_CAMPAIGNS_COLLECTION).get();
+                 const campaigns = fallbackSnapshot.docs.map(doc => {
+                    const data = doc.data();
+                    return {
+                        ...data,
+                        startDate: (data.startDate as Timestamp)?.toDate(),
+                        endDate: (data.endDate as Timestamp)?.toDate(),
+                    } as (Campaign & { raisedAmount: number, fundingProgress: number });
+                });
+                return campaigns.sort((a,b) => b.startDate.getTime() - a.startDate.getTime());
+             } catch (fallbackError) {
+                 console.error("Fallback query failed for getPublicCampaigns", fallbackError);
+                 return [];
+             }
         } else {
             console.error("Error fetching public campaigns:", e);
         }

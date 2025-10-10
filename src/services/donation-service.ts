@@ -1,3 +1,4 @@
+
 // src/services/donation-service.ts
 /**
  * @fileOverview Donation service for interacting with Firestore.
@@ -280,10 +281,33 @@ export const getAllDonations = async (): Promise<Donation[]> => {
         });
         return donations;
     } catch (error) {
-        console.error("Error getting all donations: ", error);
-        if (error instanceof Error && error.message.includes('index')) {
-             console.error("Firestore index missing for 'donations' collection on 'donationDate' (desc).");
+        if (error instanceof Error && (error.message.includes('index') || error.message.includes('Could not find a valid index'))) {
+             console.error("Firestore index missing for 'donations' collection on 'donationDate' (desc). Please create it. Falling back to unsorted data.");
+             // Fallback to fetching without order and sorting in memory
+             try {
+                const fallbackQuery = query(collection(db, DONATIONS_COLLECTION));
+                const fallbackSnapshot = await getDocs(fallbackQuery);
+                const donations: Donation[] = [];
+                 fallbackSnapshot.forEach((doc) => {
+                    const data = doc.data();
+                    const allocations = (data.allocations || []).map((alloc: Allocation) => ({
+                        ...alloc,
+                        allocatedAt: (alloc.allocatedAt as Timestamp)?.toDate(),
+                    }));
+                    donations.push({ 
+                        id: doc.id, ...data, createdAt: (data.createdAt as Timestamp)?.toDate(),
+                        donationDate: data.donationDate ? (data.donationDate as Timestamp).toDate() : new Date(),
+                        updatedAt: data.updatedAt ? (data.updatedAt as Timestamp).toDate() : undefined,
+                        allocations,
+                    } as Donation);
+                });
+                return donations.sort((a,b) => b.createdAt.getTime() - a.createdAt.getTime());
+             } catch (fallbackError) {
+                 console.error("Fallback query failed for getAllDonations", fallbackError);
+                 return [];
+             }
         }
+        console.error("Error getting all donations: ", error);
         return [];
     }
 }

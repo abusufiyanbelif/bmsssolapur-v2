@@ -1,3 +1,4 @@
+
 /**
  * @fileOverview User service for interacting with Firestore.
  * This service should only be called from server-side components or server actions.
@@ -545,7 +546,20 @@ export const getAllUsers = async (): Promise<User[]> => {
             throw new Error('permission-denied');
         }
         if (error instanceof Error && error.message.includes('index')) {
-             console.error("Firestore index missing. Please create a descending index on 'createdAt' for the 'users' collection.");
+             console.error("Firestore index missing for 'users' collection on 'createdAt' (desc). Please create it. Falling back to unsorted data.");
+             // Fallback to unsorted query if index is missing
+             try {
+                const adminDb = getAdminDb();
+                const fallbackSnapshot = await adminDb.collection(USERS_COLLECTION).get();
+                const users: User[] = [];
+                fallbackSnapshot.forEach((doc) => {
+                    users.push(convertToUser(doc) as User);
+                });
+                return users;
+             } catch (fallbackError) {
+                 console.error("Fallback query failed for getAllUsers:", fallbackError);
+                 return [];
+             }
         } else {
              console.error("Error getting all users: ", error);
         }
