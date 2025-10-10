@@ -55,7 +55,7 @@ export async function getQuotes(count: number = 3): Promise<Quote[]> {
         return JSON.parse(JSON.stringify(quotes));
     } catch (error) {
         console.error("Server action getQuotes failed:", error);
-        // Fallback to a simple list if service fails
+        // Fallback to a simple list if service fails. The service layer will log specifics.
         return [
             { id: 'fb1', number: 1, text: "The believer's shade on the Day of Resurrection will be their charity.", source: "Tirmidhi", category: "Hadith", categoryTypeNumber: 2 },
             { id: 'fb2', number: 2, text: "Charity does not decrease wealth.", source: "Sahih Muslim", category: "Hadith", categoryTypeNumber: 2 },

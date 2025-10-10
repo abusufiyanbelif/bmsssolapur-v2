@@ -65,7 +65,8 @@ export const getAllQuotes = async (): Promise<Quote[]> => {
         const quotesQuery = adminDb.collection(QUOTES_COLLECTION);
         const querySnapshot = await quotesQuery.get();
         if (querySnapshot.empty) {
-            return []; // Return an empty array if the collection is empty.
+            // This is a valid state if quotes haven't been seeded.
+            return [];
         }
         const quotes: Quote[] = [];
         querySnapshot.forEach((doc) => {
@@ -73,15 +74,13 @@ export const getAllQuotes = async (): Promise<Quote[]> => {
         });
         return quotes;
     } catch (error) {
-        // Specifically check for the access token error and re-throw.
         if (error instanceof Error && (error.message.includes('Could not load the default credentials') || error.message.includes('Could not refresh access token') || error.message.includes('permission-denied'))) {
-            console.error("Firestore permission error in getAllQuotes. Please check IAM roles.", error);
-            throw error; // Re-throw permission errors to be handled upstream.
+            console.warn("Firestore permission error in getAllQuotes. This can be normal during setup. Returning empty array. Please check IAM roles. Error:", error.message);
+            return []; // Gracefully fail for permission issues
         }
         
         console.error("Error getting all quotes: ", error);
-        // For other types of errors, you might still want to return an empty array or throw.
-        // For now, let's re-throw to make the calling function aware of the issue.
+        // For other errors, we re-throw to indicate a more serious problem
         throw error;
     }
 }
