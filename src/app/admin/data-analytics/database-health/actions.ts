@@ -132,6 +132,7 @@ async function checkForOrphans(db: FirebaseFirestore.Firestore, collectionName: 
  */
 export async function getDatabaseDetails(): Promise<{ projectId: string } | null> {
     try {
+        // Ensure initialization before getting details
         const adminDb = getAdminDb();
         return {
             projectId: adminDb.project.id,
