@@ -1,21 +1,43 @@
+
 # Troubleshooting Guide
 
 This document provides solutions to common issues encountered during development.
 
 ---
 
-## 1. "API key not valid" for Gemini / Google AI
+## 1. "Could not refresh access token" / "Getting metadata from plugin failed" (Local Development / Seeding)
+
+**Error Message:** `Seeding Failed - UNKNOWN: Getting metadata from plugin failed with error: Could not refresh access token: Request failed with status code 500` or a similar authentication error when running the seeder.
+
+**Cause:**
+This is the most common issue for local development. It means your local machine is not authenticated with Google Cloud, so the server-side Firebase Admin SDK cannot access your project's database.
+
+**Solution:**
+
+You must authenticate your local development environment using the Google Cloud CLI. This is a **one-time setup**.
+
+1.  **Install the gcloud CLI**: If you don't already have it, [follow the official installation instructions](https://cloud.google.com/sdk/docs/install).
+2.  **Run the Login Command**: Open your terminal and run the following command. It will open a browser window for you to log in with your Google account.
+    ```bash
+    gcloud auth application-default login
+    ```
+3.  After successful login, a credential file is stored on your local machine. The application will automatically use this file to authenticate with Google Cloud services.
+4.  **Retry Seeding**: Go back to the `/admin/seed` page and try the "Seed Initial Data" action again. It should now succeed.
+
+---
+
+## 2. "API key not valid" for Gemini / Google AI
 
 **Error Message:** `[400 Bad Request] API key not valid. Please pass a valid API key.` or a similar message indicating an authentication failure.
 
 **Cause:**
-This is the most common issue. It means the application is trying to use a generative AI feature (like scanning a receipt or generating text), but it cannot authenticate with the Google AI service. The `GEMINI_API_KEY` is either missing, incorrect, or not properly configured for your project.
+This means the application is trying to use a generative AI feature (like scanning a receipt or generating text), but it cannot authenticate with the Google AI service. The `GEMINI_API_KEY` is either missing, incorrect, or not properly configured for your project.
 
 **Solution:**
 
 You must obtain a free API key from Google AI Studio and add it as a secret to your Firebase project.
 
-**Step 1: Get Your API Key**
+**Step 1: Get Your API key**
 
 1.  Go to **[Google AI Studio](https://aistudio.google.com/app/apikey)**.
 2.  If you are not already logged in, sign in with your Google account.
@@ -36,7 +58,7 @@ You must obtain a free API key from Google AI Studio and add it as a secret to y
 
 ---
 
-## 2. "Could not reach Cloud Firestore backend" or "Could not refresh access token"
+## 3. "Could not reach Cloud Firestore backend" or "7 PERMISSION_DENIED" (Deployed App)
 
 **Error Message:** `Firestore (11.9.0): Could not reach Cloud Firestore backend.`, `Could not refresh access token`, or `7 PERMISSION_DENIED: Missing or insufficient permissions.`
 
