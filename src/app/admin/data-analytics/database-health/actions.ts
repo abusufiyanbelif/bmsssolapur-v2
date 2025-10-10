@@ -130,9 +130,14 @@ async function checkForOrphans(db: FirebaseFirestore.Firestore, collectionName: 
  * Gets basic details about the current Firebase project.
  * @returns An object with the project ID.
  */
-export async function getDatabaseDetails(): Promise<{ projectId: string }> {
-    const adminDb = getAdminDb();
-    return {
-        projectId: adminDb.project.id,
-    };
+export async function getDatabaseDetails(): Promise<{ projectId: string } | null> {
+    try {
+        const adminDb = getAdminDb();
+        return {
+            projectId: adminDb.project.id,
+        };
+    } catch (error) {
+        console.error("Error getting database details:", error);
+        return null;
+    }
 }
