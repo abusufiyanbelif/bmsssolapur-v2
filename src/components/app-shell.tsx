@@ -182,9 +182,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                     localStorage.removeItem('showRoleSwitcher'); 
                 } else {
                     switch (activeRole) {
-                        case 'Donor': router.push('/donor'); break;
-                        case 'Beneficiary': router.push('/beneficiary'); break;
-                        case 'Referral': router.push('/referral'); break;
+                        case 'Donor': router.push('/home'); break;
+                        case 'Beneficiary': router.push('/home'); break;
+                        case 'Referral': router.push('/home'); break;
                         case 'Admin': case 'Super Admin': case 'Finance Admin':
                             router.push('/admin'); break;
                         default: router.push('/'); break;
@@ -269,16 +269,19 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         }
     };
     
-    const HeaderTitle = () => (
-        <Link href="/" className="flex items-center gap-3" title="Baitul Mal Samajik Sanstha (Solapur)">
-            <Logo className="h-14 w-14" logoUrl={organization?.logoUrl} />
-             <div className="flex flex-col leading-tight">
-                <span className="font-bold font-headline text-primary text-sm">{organization?.footer?.organizationInfo.titleLine1 || 'Baitul Mal'}</span>
-                <span className="font-bold font-headline text-accent text-sm">{organization?.footer?.organizationInfo.titleLine2 || 'Samajik Sanstha'}</span>
-                 <span className="font-bold font-headline text-primary text-xs">{organization?.footer?.organizationInfo.titleLine3 || '(Solapur)'}</span>
-            </div>
-        </Link>
-    );
+    const HeaderTitle = () => {
+        const orgInfo = organization?.footer?.organizationInfo;
+        return (
+            <Link href="/" className="flex items-center gap-3" title="Baitul Mal Samajik Sanstha (Solapur)">
+                <Logo className="h-14 w-14" logoUrl={organization?.logoUrl} />
+                <div className="flex flex-col leading-tight">
+                    <span className="font-bold font-headline text-primary text-sm">{orgInfo?.titleLine1 || 'Baitul Mal'}</span>
+                    <span className="font-bold font-headline text-accent text-sm">{orgInfo?.titleLine2 || 'Samajik Sanstha'}</span>
+                    <span className="font-bold font-headline text-primary text-xs">{orgInfo?.titleLine3 || '(Solapur)'}</span>
+                </div>
+            </Link>
+        )
+    };
 
     if (permissionError) return <PermissionErrorState error={permissionError} />;
     if (sessionState === 'loading' || !sessionUser) return <LoadingState />;
