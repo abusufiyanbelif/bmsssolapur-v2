@@ -3,7 +3,7 @@
 "use client";
 
 import { useState, useEffect, useMemo, Suspense } from "react";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import {
   Table,
   TableBody,
@@ -28,11 +28,8 @@ import { Label } from "@/components/ui/label";
 import type { User, UserRole } from "@/services/types";
 import { handleDeleteUser, handleToggleUserStatus, handleBulkDeleteUsers, getAllUsersAction } from "../user-management/actions";
 import { DeleteConfirmationDialog } from "@/components/delete-confirmation-dialog";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { useRouter } from 'next/navigation';
 
 
 type StatusFilter = 'all' | 'active' | 'inactive';
@@ -81,7 +78,6 @@ function BeneficiariesPageContent({ initialBeneficiaries, error: initialError }:
     const [statusInput, setStatusInput] = useState<StatusFilter>('all');
     const [typeInput, setTypeInput] = useState<TypeFilter>(initialTypeFilter);
     const [anonymityInput, setAnonymityInput] = useState<AnonymityFilter>('all');
-    const [popoverOpen, setPopoverOpen] = useState(false);
     
     // Applied filter states
     const [appliedFilters, setAppliedFilters] = useState({
@@ -611,12 +607,4 @@ function BeneficiariesPageContent({ initialBeneficiaries, error: initialError }:
         </Card>
     </div>
   )
-}
-
-export function BeneficiariesPageClient(props: { initialBeneficiaries: User[], error?: string }) {
-    return (
-        <Suspense fallback={<div className="flex items-center justify-center p-8"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>}>
-            <BeneficiariesPageContent {...props} />
-        </Suspense>
-    )
 }
