@@ -163,7 +163,7 @@ export const getCurrentOrganization = async (): Promise<Organization | null> => 
             console.warn("Firestore permission error in getCurrentOrganization. This may be an expected error if the database has not been seeded yet. Please check IAM roles. Returning null.");
             return null; 
         }
-        console.error('Error getting current organization: ', error);
+        console.error('Error getting current organization: ' + (error instanceof Error ? error.message : 'Unknown error'));
         return null;
     }
 }

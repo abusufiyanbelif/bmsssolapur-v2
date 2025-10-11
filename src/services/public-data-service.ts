@@ -1,3 +1,4 @@
+
 /**
  * @fileOverview Service for managing public-facing, sanitized data in Firestore.
  */
@@ -81,7 +82,7 @@ export const getPublicLeads = async (): Promise<Lead[]> => {
         return enrichedLeads;
     } catch (e) {
         if (e instanceof Error && (e.message.includes('Could not refresh access token') || e.message.includes('permission-denied') || e.message.includes('UNAUTHENTICATED'))) {
-            console.warn(`Permission Denied: The server environment lacks permissions to read public leads. Refer to TROUBLESHOOTING.md.`, e);
+            console.warn(`Permission Denied: The server environment lacks permissions to read public leads. Refer to TROUBLESHOOTING.md. Error: ${e.message}`);
             return []; // Gracefully fail
         }
         if (e instanceof Error && (e.message.includes('index') || e.message.includes('Could not find a valid index'))) {
@@ -112,7 +113,7 @@ export const getPublicOrganization = async (): Promise<Organization | null> => {
         const docSnap = await publicOrgRef.get();
         return docSnap.exists ? (docSnap.data() as Organization) : null;
     } catch(e) {
-        console.error("Error getting public organization:", e);
+        console.error('Error getting public organization: ' + (e instanceof Error ? e.message : 'Unknown error'));
         return null;
     }
 };
@@ -183,7 +184,7 @@ export const getPublicCampaigns = async (): Promise<(Campaign & { raisedAmount: 
         return campaigns;
     } catch (e) {
         if (e instanceof Error && (e.message.includes('Could not refresh access token') || e.message.includes('permission-denied') || e.message.includes('UNAUTHENTICATED'))) {
-            console.warn(`Permission Denied: The server environment lacks permissions to read public campaigns. Refer to TROUBLESHOOTING.md.`, e);
+            console.warn(`Permission Denied: The server environment lacks permissions to read public campaigns. Refer to TROUBLESHOOTING.md. Error: ${e.message}`);
             return []; // Gracefully fail
         }
         if (e instanceof Error && (e.message.includes('index') || e.message.includes('Could not find a valid index'))) {

@@ -77,7 +77,7 @@ export const getAllQuotes = async (): Promise<Quote[]> => {
         return quotes;
     } catch (error) {
         if (error instanceof Error && (error.message.includes('Could not refresh access token') || error.message.includes('permission-denied'))) {
-            console.warn("Firestore permission error in getAllQuotes. This may be an expected error if the database has not been seeded yet. Please check IAM roles. Returning empty array. Error:", error.message);
+            console.warn(`Permission Denied: The server environment lacks permissions to read quotes. Refer to TROUBLESHOOTING.md. Error: ${error.message}`);
             return []; // Gracefully fail for permission issues
         }
         
