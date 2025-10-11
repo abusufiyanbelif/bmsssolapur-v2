@@ -22,7 +22,7 @@ const getInspirationalQuotesFlow = ai.defineFlow(
         let allQuotes: Quote[] = [];
         try {
             allQuotes = await getAllQuotes();
-            // If the database is empty (e.g., after an erase operation), return an empty array.
+            // If the database is empty or inaccessible, return an empty array.
             if (allQuotes.length === 0) {
                 return [];
             }
