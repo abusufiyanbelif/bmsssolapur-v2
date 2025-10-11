@@ -55,7 +55,7 @@ To fix this, you must grant the necessary roles to this service account. A **Rol
 
 1.  Go to the **[IAM & Admin page](https://console.cloud.google.com/iam-admin/iam)** in your Google Cloud Console.
 2.  Make sure you have selected the correct project (`baitul-mal-connect`).
-3.  Find the service account (the "principal") with the name **"Firebase App Hosting compute engine default service account"**. Its email will look like `[PROJECT_NUMBER]-compute@developer.gserviceaccount.com`.
+3.  Find the service account (the "principal") with the name **"Firebase App Hosting compute engine default service account"**. Its email will look like `firebase-app-hosting-compute@baitul-mal-connect.iam.gserviceaccount.com`.
 4.  Click the **pencil icon** (Edit principal) for that row.
 5.  In the slide-out panel, click **+ ADD ANOTHER ROLE**.
 6.  Search for and add the roles listed above (`Cloud Datastore User`, `Storage Admin`), one by one.
@@ -71,7 +71,7 @@ As an alternative to the UI, you can grant the required roles using the `gcloud`
     gcloud config set project baitul-mal-connect
     ```
 
-2.  **Define Service Account**: Set an environment variable for the service account email. Replace `[YOUR_PROJECT_ID]` with your actual project ID.
+2.  **Define Service Account**: Set an environment variable for the service account email.
     ```bash
     export SERVICE_ACCOUNT=$(gcloud projects describe baitul-mal-connect --format='value(projectNumber)')-compute@developer.gserviceaccount.com
     ```
