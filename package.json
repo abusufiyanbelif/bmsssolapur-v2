@@ -15,7 +15,8 @@
     "test:twilio": "tsx src/scripts/test-twilio.ts",
     "test:nodemailer": "tsx src/scripts/test-nodemailer.ts",
     "test:gemini": "tsx src/scripts/test-gemini.ts",
-    "verify:iam": "node scripts/verify-iam.js"
+    "verify:iam": "node scripts/verify-iam.js",
+    "fix:iam": "node scripts/verify-iam.js --fix"
   },
   "dependencies": {
     "@genkit-ai/firebase": "^1.15.5",
