@@ -80,8 +80,8 @@ export const getAllQuotes = async (): Promise<Quote[]> => {
                 console.warn(`Permission Denied: The server environment lacks permissions to read quotes. Refer to TROUBLESHOOTING.md. Error: ${error.message}`);
                 return []; // Gracefully fail for permission issues
             }
-             if (error.message.includes('collection not found') || error.message.includes('resource not found')) {
-                 console.warn("The 'inspirationalQuotes' collection does not exist. Returning empty array.");
+             if (error.message.includes('collection not found') || error.message.includes('resource not found') || error.message.includes('The specified collection does not exist')) {
+                 console.warn("The 'inspirationalQuotes' collection does not exist. Returning empty array. This is expected before seeding.");
                  return [];
             }
         }
