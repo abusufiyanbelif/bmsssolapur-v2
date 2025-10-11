@@ -18,6 +18,33 @@ This is the most common category of errors. It means your application's environm
 
 ---
 
+### Solution for Deployed App (Firebase App Hosting)
+
+If you see this error in your deployed application, it means the App Hosting service account needs to be granted permission to access other Google Cloud services.
+
+#### What is the App Hosting Service Account?
+Think of a service account as a special, non-human "user" that represents your application. When your Next.js code runs on Firebase's servers, it uses the **"Firebase App Hosting compute engine default service account"** as its identity.
+
+When this backend code tries to access Firestore or Cloud Storage, it tells Google Cloud, "I am the App Hosting service account for project 'baitul-mal-connect'." Google Cloud then checks what permissions (IAM roles) that account has. By default, it doesn't have permission to access other services, which is why you see the `UNAUTHENTICATED` error.
+
+#### The Fix: Granting Permissions (IAM Roles)
+
+To fix this, you must grant the necessary roles to this service account. This is a one-time setup for your project.
+
+1.  Go to the **[IAM & Admin page](https://console.cloud.google.com/iam-admin/iam)** in your Google Cloud Console.
+2.  Make sure you have selected the correct project (`baitul-mal-connect`).
+3.  Find the service account (the "principal") with the name **"Firebase App Hosting compute engine default service account"**. Its email will look like `[PROJECT_NUMBER]-compute@developer.gserviceaccount.com`.
+4.  Click the **pencil icon** (Edit principal) for that row.
+5.  In the slide-out panel, click **+ ADD ANOTHER ROLE**.
+6.  Search for and add the following roles, one by one:
+    *   **`Cloud Datastore User`**: **Required**. Allows reading from and writing to Firestore.
+    *   **`Storage Admin`**: **Required**. Allows uploading, reading, and deleting files in Firebase Storage.
+    *   **`Firebase Admin`**: A broader role that often covers most necessary permissions if the others don't work.
+7.  Click **SAVE**.
+8.  The change should take effect within a minute or two. The application will then have the correct permissions to access all backend services.
+
+---
+
 ### Solution for Local Development (Your Machine)
 
 If you see this error while running the app on your local computer (e.g., when seeding data from `/admin/seed`), you must authenticate your local environment. This is a **one-time setup**.
@@ -29,22 +56,6 @@ If you see this error while running the app on your local computer (e.g., when s
     ```
 3.  After successful login, a credential file is stored on your local machine. The application's server-side code (Firebase Admin SDK) will automatically use this file to authenticate.
 4.  **Restart your application** and retry the action.
-
----
-
-### Solution for Deployed App (Firebase App Hosting)
-
-If you see this error in your deployed application, it means the App Hosting service account needs to be granted permission to access the database.
-
-1.  Go to the **[IAM & Admin page](https://console.cloud.google.com/iam-admin/iam)** in your Google Cloud Console.
-2.  Make sure you have selected the correct project (`baitul-mal-connect`).
-3.  Find the service account with the name **"Firebase App Hosting compute engine default service account"**. Its email will look like `[PROJECT_NUMBER]-compute@developer.gserviceaccount.com`.
-4.  Click the **pencil icon** (Edit principal) for that row.
-5.  In the slide-out panel, click **+ ADD ANOTHER ROLE**.
-6.  In the "Select a role" search box, type **`Cloud Datastore User`**.
-7.  Select the **Cloud Datastore User** role from the results.
-8.  Click **SAVE**.
-9.  The change should take effect within a minute or two. The application will then have the correct permissions to access the database.
 
 ---
 
