@@ -5,24 +5,46 @@ This document provides solutions to common issues encountered during development
 
 ---
 
-## 1. "Could not refresh access token" / "Getting metadata from plugin failed" (Local Development / Seeding)
+## 1. "UNAUTHENTICATED" / "PERMISSION_DENIED" / "Could not reach Cloud Firestore backend" (Local & Deployed)
 
-**Error Message:** `Seeding Failed - UNKNOWN: Getting metadata from plugin failed with error: Could not refresh access token: Request failed with status code 500` or a similar authentication error when running the seeder.
+**Error Message(s):**
+- `16 UNAUTHENTICATED: Request had invalid authentication credentials.`
+- `Could not reach Cloud Firestore backend.`
+- `7 PERMISSION_DENIED: Missing or insufficient permissions.`
+- `Seeding Failed - UNKNOWN: Getting metadata from plugin failed with error: Could not refresh access token`
 
 **Cause:**
-This is the most common issue for local development. It means your local machine is not authenticated with Google Cloud, so the server-side Firebase Admin SDK cannot access your project's database.
+This is the most common category of errors. It means your application's environment—whether it's your local machine or the deployed Firebase App Hosting server—is not authorized to communicate with your Google Cloud services, especially Firestore.
 
-**Solution:**
+---
 
-You must authenticate your local development environment using the Google Cloud CLI. This is a **one-time setup**.
+### Solution for Local Development (Your Machine)
+
+If you see this error while running the app on your local computer (e.g., when seeding data from `/admin/seed`), you must authenticate your local environment. This is a **one-time setup**.
 
 1.  **Install the gcloud CLI**: If you don't already have it, [follow the official installation instructions](https://cloud.google.com/sdk/docs/install).
 2.  **Run the Login Command**: Open your terminal and run the following command. It will open a browser window for you to log in with your Google account.
     ```bash
     gcloud auth application-default login
     ```
-3.  After successful login, a credential file is stored on your local machine. The application will automatically use this file to authenticate with Google Cloud services.
-4.  **Retry Seeding**: Go back to the `/admin/seed` page and try the "Seed Initial Data" action again. It should now succeed.
+3.  After successful login, a credential file is stored on your local machine. The application's server-side code (Firebase Admin SDK) will automatically use this file to authenticate.
+4.  **Restart your application** and retry the action.
+
+---
+
+### Solution for Deployed App (Firebase App Hosting)
+
+If you see this error in your deployed application, it means the App Hosting service account needs to be granted permission to access the database.
+
+1.  Go to the **[IAM & Admin page](https://console.cloud.google.com/iam-admin/iam)** in your Google Cloud Console.
+2.  Make sure you have selected the correct project (`baitul-mal-connect`).
+3.  Find the service account with the name **"Firebase App Hosting compute engine default service account"**. Its email will look like `[PROJECT_NUMBER]-compute@developer.gserviceaccount.com`.
+4.  Click the **pencil icon** (Edit principal) for that row.
+5.  In the slide-out panel, click **+ ADD ANOTHER ROLE**.
+6.  In the "Select a role" search box, type **`Cloud Datastore User`**.
+7.  Select the **Cloud Datastore User** role from the results.
+8.  Click **SAVE**.
+9.  The change should take effect within a minute or two. The application will then have the correct permissions to access the database.
 
 ---
 
@@ -55,26 +77,3 @@ You must obtain a free API key from Google AI Studio and add it as a secret to y
 7.  For the "Secret value", paste the API key you copied from Google AI Studio.
 8.  Click **Create secret** and then **Save**.
 9.  The application will automatically redeploy with the new secret. The AI features should now work correctly.
-
----
-
-## 3. "Could not reach Cloud Firestore backend" or "7 PERMISSION_DENIED" (Deployed App)
-
-**Error Message:** `Firestore (11.9.0): Could not reach Cloud Firestore backend.`, `Could not refresh access token`, or `7 PERMISSION_DENIED: Missing or insufficient permissions.`
-
-**Cause:**
-This error means the server environment itself (Firebase App Hosting) doesn't have the necessary permission to access the database (Firestore). This is an infrastructure-level permission issue. The App Hosting service account needs to be explicitly granted permission to read from and write to the database.
-
-**Solution:**
-
-You need to grant the **"Cloud Datastore User"** role to your App Hosting service account.
-
-1.  Go to the **[IAM & Admin page](https://console.cloud.google.com/iam-admin/iam)** in your Google Cloud Console.
-2.  Make sure you have selected the correct project (`baitul-mal-connect`).
-3.  Find the service account with the name **"Firebase App Hosting compute engine default service account"**. Its email will look like `[PROJECT_NUMBER]-compute@developer.gserviceaccount.com`.
-4.  Click the **pencil icon** (Edit principal) for that row.
-5.  In the slide-out panel, click **+ ADD ANOTHER ROLE**.
-6.  In the "Select a role" search box, type **`Cloud Datastore User`**.
-7.  Select the **Cloud Datastore User** role from the results.
-8.  Click **SAVE**.
-9.  The application should now have the correct permissions to access the database. The error should resolve within a minute or two.
