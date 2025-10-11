@@ -1,4 +1,3 @@
-
 // src/app/admin/beneficiaries/beneficiaries-client.tsx
 "use client";
 
@@ -51,7 +50,7 @@ const typeOptions: { value: TypeFilter, label: string, icon?: React.ElementType 
 type SortableColumn = 'name' | 'createdAt';
 type SortDirection = 'asc' | 'desc';
 
-function BeneficiariesPageContent({ initialBeneficiaries, error: initialError }: { initialBeneficiaries: User[], error?: string }) {
+export function BeneficiariesPageClient({ initialBeneficiaries, error: initialError }: { initialBeneficiaries: User[], error?: string }) {
     const searchParams = useSearchParams();
     const router = useRouter();
     const typeFromUrl = searchParams.get('type');
@@ -384,7 +383,7 @@ function BeneficiariesPageContent({ initialBeneficiaries, error: initialError }:
                                 {user.isActive ? 'Active' : 'Inactive'}
                             </Badge>
                         </TableCell>
-                        <TableCell>{format(user.createdAt as Date, "dd MMM yyyy")}</TableCell>
+                        <TableCell>{format(new Date(user.createdAt), "dd MMM yyyy")}</TableCell>
                         <TableCell className="text-right">
                              {renderActions(user)}
                         </TableCell>
@@ -607,4 +606,34 @@ function BeneficiariesPageContent({ initialBeneficiaries, error: initialError }:
         </Card>
     </div>
   )
+}
+```
+  <change>
+    <file>src/app/admin/donors/page.tsx</file>
+    <content><![CDATA[// src/app/admin/donors/page.tsx
+import { Suspense } from "react";
+import { Loader2 } from "lucide-react";
+import { DonorsPageClient } from "./donors-client";
+import { getAllUsersAction } from "@/app/admin/user-management/actions";
+
+// This is now a pure Server Component for fetching data.
+async function DonorsPageDataLoader() {
+  try {
+    const allUsers = await getAllUsersAction();
+    const initialDonors = allUsers.filter(u => u.roles.includes('Donor'));
+    
+    // The server action now handles serialization, so this is safe.
+    return <DonorsPageClient initialDonors={initialDonors} />;
+  } catch (e) {
+    const error = e instanceof Error ? e.message : "An unknown error occurred.";
+    return <DonorsPageClient initialDonors={[]} error={error} />;
+  }
+}
+
+export default function DonorsPage() {
+    return (
+        <Suspense fallback={<div className="flex items-center justify-center p-8"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>}>
+            <DonorsPageDataLoader />
+        </Suspense>
+    )
 }

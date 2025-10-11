@@ -20,8 +20,4 @@ async function DonorsPageDataLoader() {
 
 export default function DonorsPage() {
     return (
-        <Suspense fallback={<div className="flex items-center justify-center p-8"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>}>
-            <DonorsPageDataLoader />
-        </Suspense>
-    )
-}
+        <Suspense fallback={<div className="flex items-center justify-center p-8"><Loader2 className="h

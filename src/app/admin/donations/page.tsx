@@ -6,7 +6,7 @@ import { getAllDonations } from "@/services/donation-service";
 import { getAllUsers } from "@/services/user-service";
 import { getAllLeads } from "@/services/lead-service";
 import { getAllCampaigns } from "@/services/campaign-service";
-import { getCurrentOrganization } from "@/app/admin/settings/actions";
+import { getCurrentOrganization } from "@/services/organization-service";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
 
@@ -20,7 +20,7 @@ async function DonationsPageData() {
             getCurrentOrganization(),
         ]);
         
-        // Serialize data before passing to client component
+        // Serialize data before passing to Client Component
         return <DonationsPageClient 
             initialDonations={JSON.parse(JSON.stringify(donations))}
             initialUsers={JSON.parse(JSON.stringify(users))}

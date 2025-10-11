@@ -1,5 +1,4 @@
-
-
+// src/app/admin/donations/add/page.tsx
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { AddDonationForm } from "./add-donation-form";
@@ -43,10 +42,10 @@ export default async function AddDonationPage() {
                 </CardHeader>
                 <CardContent>
                     <AddDonationForm 
-                        users={users} 
-                        leads={linkableLeads} 
-                        campaigns={linkableCampaigns}
-                        settings={settings}
+                        users={JSON.parse(JSON.stringify(users))} 
+                        leads={JSON.parse(JSON.stringify(linkableLeads))} 
+                        campaigns={JSON.parse(JSON.stringify(linkableCampaigns))}
+                        settings={JSON.parse(JSON.stringify(settings))}
                     />
                 </CardContent>
             </Card>

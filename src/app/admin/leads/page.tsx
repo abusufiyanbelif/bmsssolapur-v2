@@ -6,7 +6,7 @@ import { getAllLeads } from "@/services/lead-service";
 import { getAllUsers } from "@/services/user-service";
 import { getAppSettings } from "@/services/app-settings-service";
 
-// This is now a pure Server Component for fetching data.
+// This is now a true Server Component that fetches all data.
 async function LeadsPageData() {
     try {
         const [leads, users, settings] = await Promise.all([
