@@ -80,8 +80,8 @@ export const getPublicLeads = async (): Promise<Lead[]> => {
 
         return enrichedLeads;
     } catch (e) {
-        if (e instanceof Error && (e.message.includes('Could not refresh access token') || e.message.includes('permission-denied'))) {
-            console.warn("Firestore permission error in getPublicLeads. Returning empty array. Please check IAM roles.");
+        if (e instanceof Error && (e.message.includes('Could not refresh access token') || e.message.includes('permission-denied') || e.message.includes('UNAUTHENTICATED'))) {
+            console.warn(`Permission Denied: The server environment lacks permissions to read public leads. Refer to TROUBLESHOOTING.md.`, e);
             return []; // Gracefully fail
         }
         if (e instanceof Error && (e.message.includes('index') || e.message.includes('Could not find a valid index'))) {
@@ -182,8 +182,8 @@ export const getPublicCampaigns = async (): Promise<(Campaign & { raisedAmount: 
         });
         return campaigns;
     } catch (e) {
-        if (e instanceof Error && (e.message.includes('Could not refresh access token') || e.message.includes('permission-denied'))) {
-            console.warn("Firestore permission error in getPublicCampaigns. Returning empty array. Please check IAM roles.");
+        if (e instanceof Error && (e.message.includes('Could not refresh access token') || e.message.includes('permission-denied') || e.message.includes('UNAUTHENTICATED'))) {
+            console.warn(`Permission Denied: The server environment lacks permissions to read public campaigns. Refer to TROUBLESHOOTING.md.`, e);
             return []; // Gracefully fail
         }
         if (e instanceof Error && (e.message.includes('index') || e.message.includes('Could not find a valid index'))) {
