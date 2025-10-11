@@ -67,6 +67,7 @@ export const getAllQuotes = async (): Promise<Quote[]> => {
         const querySnapshot = await quotesQuery.get();
         if (querySnapshot.empty) {
             // This is a valid state if quotes haven't been seeded.
+            console.log("Quotes collection is empty, returning empty array.");
             return [];
         }
         const quotes: Quote[] = [];

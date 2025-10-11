@@ -51,8 +51,12 @@ export async function getQuotes(count: number = 3): Promise<Quote[]> {
         const quotes = await getInspirationalQuotes(count);
         // The result from a server action to a client component must be serializable.
         return JSON.parse(JSON.stringify(quotes));
-    } catch (error) {
-        console.error("Server action getQuotes failed:", error);
+    } catch (error: any) {
+        console.error("Server action getQuotes failed:", {
+            message: error?.message,
+            stack: error?.stack,
+            code: error?.code,
+        });
         // Fallback to a simple list if service fails. The service layer will log specifics.
         return [
             { id: 'fb1', number: 1, text: "The believer's shade on the Day of Resurrection will be their charity.", source: "Tirmidhi", category: "Hadith", categoryTypeNumber: 2 },
