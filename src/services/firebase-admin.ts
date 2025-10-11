@@ -1,3 +1,4 @@
+
 /**
  * @fileOverview Initializes the Firebase Admin SDK.
  * This file is carefully constructed to have NO internal project dependencies
@@ -82,7 +83,7 @@ export const ensureCollectionsExist = async (): Promise<{ success: boolean; crea
             }
         } catch (e) {
             const errorMsg = `CRITICAL ERROR: Failed to ensure collection "${collectionName}" exists.`;
-            console.error(errorMsg, e);
+            console.error(errorMsg, { message: (e as Error)?.message, stack: (e as Error)?.stack });
             errors.push(errorMsg);
         }
     }
@@ -100,7 +101,7 @@ const initializeFirebaseAdmin = async () => {
       });
       console.log('Firebase Admin SDK initialized successfully.');
     } catch (e) {
-      console.error("Firebase Admin SDK initialization error:", e);
+      console.error("Firebase Admin SDK initialization error:", { message: (e as Error)?.message, stack: (e as Error)?.stack });
       throw new Error("Failed to initialize Firebase Admin SDK. Check server logs and credentials.");
     }
   }
