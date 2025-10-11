@@ -1,22 +1,35 @@
+
 // src/app/page.tsx
 import { Suspense } from "react";
 import { PublicHomePage } from "./home/public-home-page";
 import { Loader2 } from "lucide-react";
 import { getOpenGeneralLeads, getPublicCampaigns, getPublicDashboardData, getQuotes } from "@/app/home/actions";
+import type { Quote } from "@/services/types";
 
 // This Server Component fetches all necessary data for the public homepage.
 async function PublicHomePageLoader() {
+  
+  let quotes: Quote[];
   const [
     publicLeads, 
     publicCampaigns, 
     dashboardData, 
-    quotes
   ] = await Promise.all([
     getOpenGeneralLeads(),
     getPublicCampaigns(),
     getPublicDashboardData(),
-    getQuotes(3),
   ]);
+
+  try {
+      // Isolate the potentially failing call
+      quotes = await getQuotes(3);
+  } catch (error) {
+      console.error("Critical Error: getQuotes() failed in /page.tsx. Using fallback.", error);
+      // Provide a hardcoded fallback to prevent the page from crashing.
+      quotes = [
+          { id: 'fb1', number: 1, text: "The believer's shade on the Day of Resurrection will be their charity.", source: "Tirmidhi", category: "Hadith", categoryTypeNumber: 2 },
+      ];
+  }
 
   return (
     <PublicHomePage

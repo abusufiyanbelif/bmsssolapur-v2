@@ -1,3 +1,4 @@
+
 // src/app/home/page.tsx
 import { Suspense } from "react";
 import { Loader2 } from "lucide-react";
@@ -9,25 +10,37 @@ import { getAllDonations } from "@/services/donation-service";
 import { getAllLeads } from "@/services/lead-service";
 import { getAllUsers } from "@/services/user-service";
 import { getPublicCampaigns, getQuotes } from "./actions";
+import type { Quote } from "@/services/types";
 
 // This is now a true Server Component that fetches all data.
 async function HomePageData() {
     try {
+        let quotes: Quote[];
         const [
             settings,
             allDonations,
             allLeads,
             allUsers,
             allCampaigns,
-            quotes,
         ] = await Promise.all([
             getAppSettings(),
             getAllDonations(),
             getAllLeads(),
             getAllUsers(),
             getPublicCampaigns(),
-            getQuotes(3),
         ]);
+        
+        try {
+            // Isolate the potentially failing call
+            quotes = await getQuotes(3);
+        } catch (error) {
+            console.error("Critical Error: getQuotes() failed in /home/page.tsx. Using fallback.", error);
+            // Provide a hardcoded fallback to prevent the page from crashing.
+            quotes = [
+                { id: 'fb1', number: 1, text: "The believer's shade on the Day of Resurrection will be their charity.", source: "Tirmidhi", category: "Hadith", categoryTypeNumber: 2 },
+            ];
+        }
+
 
         // All data is serialized here before being passed to the client component.
         return (
