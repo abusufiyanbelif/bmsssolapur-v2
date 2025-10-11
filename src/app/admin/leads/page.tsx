@@ -1,4 +1,3 @@
-
 // src/app/admin/leads/page.tsx
 import { Suspense } from "react";
 import { Loader2 } from "lucide-react";
@@ -7,6 +6,7 @@ import { getAllLeads } from "@/services/lead-service";
 import { getAllUsers } from "@/services/user-service";
 import { getAppSettings } from "@/services/app-settings-service";
 
+// This is now a pure Server Component for fetching data.
 async function LeadsPageData() {
     try {
         const [leads, users, settings] = await Promise.all([
@@ -15,6 +15,7 @@ async function LeadsPageData() {
             getAppSettings(),
         ]);
         
+        // Serialize all data with timestamps before passing to the client.
         return <LeadsPageClient 
             initialLeads={JSON.parse(JSON.stringify(leads))}
             initialUsers={JSON.parse(JSON.stringify(users))}

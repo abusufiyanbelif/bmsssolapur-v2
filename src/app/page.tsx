@@ -1,10 +1,10 @@
-
 // src/app/page.tsx
 import { Suspense } from "react";
 import { PublicHomePage } from "./home/public-home-page";
 import { Loader2 } from "lucide-react";
 import { getOpenGeneralLeads, getPublicCampaigns, getPublicDashboardData, getQuotes } from "@/app/home/actions";
 
+// This Server Component fetches all necessary data for the public homepage.
 async function PublicHomePageLoader() {
   const [
     publicLeads, 

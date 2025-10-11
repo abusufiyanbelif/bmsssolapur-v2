@@ -1,4 +1,3 @@
-
 // src/app/admin/campaigns/page.tsx
 import { Suspense } from "react";
 import { Loader2 } from "lucide-react";
@@ -8,6 +7,7 @@ import { CampaignsClient } from "./campaigns-client";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
 
+// This is now a pure Server Component for fetching data.
 async function CampaignsPageData() {
     try {
         const [campaigns, leads] = await Promise.all([

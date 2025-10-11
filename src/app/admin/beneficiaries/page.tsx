@@ -1,10 +1,10 @@
-
 // src/app/admin/beneficiaries/page.tsx
 import { Suspense } from "react";
 import { Loader2 } from "lucide-react";
 import { BeneficiariesPageClient } from "./beneficiaries-client";
 import { getAllUsersAction } from "@/app/admin/user-management/actions";
 
+// This is now a pure Server Component for fetching data.
 async function BeneficiariesPageDataLoader() {
   try {
     const allUsers = await getAllUsersAction();

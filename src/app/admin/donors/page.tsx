@@ -1,10 +1,10 @@
-
 // src/app/admin/donors/page.tsx
 import { Suspense } from "react";
 import { Loader2 } from "lucide-react";
 import { DonorsPageClient } from "./donors-client";
 import { getAllUsersAction } from "@/app/admin/user-management/actions";
 
+// This is now a pure Server Component for fetching data.
 async function DonorsPageDataLoader() {
   try {
     const allUsers = await getAllUsersAction();

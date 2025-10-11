@@ -1,4 +1,3 @@
-
 import { getLead } from "@/services/lead-service";
 import { notFound } from "next/navigation";
 import { EditLeadForm } from "./edit-lead-form";
@@ -40,5 +39,3 @@ export default async function EditLeadPage({ params }: { params: { id: string } 
         </div>
     );
 }
-
-    

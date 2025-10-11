@@ -1,4 +1,3 @@
-
 // src/app/home/page.tsx
 import { Suspense } from "react";
 import { Loader2 } from "lucide-react";
@@ -30,6 +29,7 @@ async function HomePageData() {
             getQuotes(3),
         ]);
 
+        // All data is serialized here before being passed to the client component.
         return (
             <HomeClient
                 settings={JSON.parse(JSON.stringify(settings))}

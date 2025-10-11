@@ -1,4 +1,3 @@
-
 // src/app/admin/user-management/page.tsx
 import { Suspense } from "react";
 import { Loader2 } from "lucide-react";
@@ -8,6 +7,7 @@ import { getAllUsersAction } from "./actions";
 // This is now a Server Component that fetches data
 async function UsersPageDataLoader() {
   try {
+    // This server action now correctly fetches and serializes the user data.
     const allUsers = await getAllUsersAction();
     return <UserManagementPageClient initialUsers={allUsers} />;
   } catch (e) {
