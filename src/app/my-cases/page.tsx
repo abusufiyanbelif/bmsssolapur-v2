@@ -1,3 +1,4 @@
+// src/app/my-cases/page.tsx
 
 'use client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
@@ -55,7 +56,7 @@ export default function MyCasesPage() {
             setLoading(false);
         }
         
-        getAppSettings().then(setSettings).catch(() => setError("Could not load app settings."));
+        getAppSettings().then(s => setSettings(JSON.parse(JSON.stringify(s)))).catch(() => setError("Could not load app settings."));
     }, []);
 
     useEffect(() => {
@@ -65,7 +66,7 @@ export default function MyCasesPage() {
             try {
                 setLoading(true);
                 const userCases = await getLeadsByBeneficiaryId(userId);
-                setCases(userCases);
+                setCases(JSON.parse(JSON.stringify(userCases)));
             } catch (e) {
                 const errorMessage = e instanceof Error ? e.message : "An unknown error occurred.";
                 setError(`Failed to load your cases: ${errorMessage}`);
@@ -151,7 +152,7 @@ export default function MyCasesPage() {
                     return (
                         <TableRow key={caseItem.id}>
                             <TableCell>{(currentPage - 1) * itemsPerPage + index + 1}</TableCell>
-                            <TableCell>{format(caseItem.dateCreated, "dd MMM yyyy")}</TableCell>
+                            <TableCell>{format(new Date(caseItem.dateCreated), "dd MMM yyyy")}</TableCell>
                             <TableCell>{caseItem.purpose}{caseItem.category && ` (${caseItem.category})`}</TableCell>
                             <TableCell>
                                 <Badge variant="outline" className={cn("capitalize", statusColors[caseAction])}>

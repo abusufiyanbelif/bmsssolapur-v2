@@ -1,4 +1,3 @@
-
 /**
  * @fileOverview User service for interacting with Firestore.
  * This service should only be called from server-side components or server actions.
@@ -47,7 +46,7 @@ const convertToUser = (doc: admin.firestore.DocumentSnapshot): User | null => {
         roles: getUnique(data.roles),
         groups: getUnique(data.groups),
         privileges: getUnique(data.privileges),
-        createdAt: (data.createdAt as Timestamp)?.toDate(),
+        createdAt: (data.createdAt as Timestamp)?.toDate() || new Date(),
         updatedAt: data.updatedAt ? (data.updatedAt as Timestamp).toDate() : undefined,
         dateOfBirth: data.dateOfBirth ? (data.dateOfBirth as Timestamp).toDate() : undefined,
     } as User;
