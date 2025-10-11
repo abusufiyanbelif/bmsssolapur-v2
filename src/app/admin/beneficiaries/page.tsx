@@ -1,10 +1,9 @@
 
 // src/app/admin/beneficiaries/page.tsx
 import { Suspense } from "react";
-import { Loader2, AlertCircle } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { BeneficiariesPageClient } from "./beneficiaries-client";
 import { getAllUsersAction } from "@/app/admin/user-management/actions";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 async function BeneficiariesPageDataLoader() {
   try {

@@ -1,5 +1,4 @@
 
-
 'use server';
 
 import { getAllDonations } from "@/services/donation-service";
@@ -51,7 +50,6 @@ export async function getQuotes(count: number = 3): Promise<Quote[]> {
     try {
         const quotes = await getInspirationalQuotes(count);
         // The result from a server action to a client component must be serializable.
-        // Genkit flows might return objects with non-serializable properties.
         return JSON.parse(JSON.stringify(quotes));
     } catch (error) {
         console.error("Server action getQuotes failed:", error);
@@ -72,7 +70,6 @@ export async function getQuotes(count: number = 3): Promise<Quote[]> {
 export async function getOpenGeneralLeads(): Promise<Lead[]> {
     try {
         const leads = await getPublicLeads();
-        // The data is automatically serialized when returned from a server action.
         return JSON.parse(JSON.stringify(leads));
     } catch (error) {
         console.error("Error fetching public leads:", error);

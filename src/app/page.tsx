@@ -1,3 +1,4 @@
+
 // src/app/page.tsx
 import { Suspense } from "react";
 import { PublicHomePage } from "./home/public-home-page";
