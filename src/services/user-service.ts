@@ -544,7 +544,7 @@ export const getAllUsers = async (): Promise<User[]> => {
             return []; // Gracefully fail
         }
         if (error instanceof Error && (error.message.includes('index') || error.message.includes('Could not find a valid index'))) {
-             console.error("Firestore index missing for 'users' collection on 'createdAt' (desc). Please create it. Falling back to unsorted data.");
+             console.warn("Firestore index missing for 'users' on 'createdAt' (desc). Please create it. Falling back to an unsorted query.");
              // Fallback to unsorted query if index is missing
              try {
                 const adminDb = getAdminDb();

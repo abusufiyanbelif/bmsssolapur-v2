@@ -66,7 +66,6 @@ export const getAllQuotes = async (): Promise<Quote[]> => {
         const quotesQuery = adminDb.collection(QUOTES_COLLECTION);
         const querySnapshot = await quotesQuery.get();
         if (querySnapshot.empty) {
-            // This is a valid state if quotes haven't been seeded.
             console.log("Quotes collection is empty, returning empty array.");
             return [];
         }
@@ -76,9 +75,15 @@ export const getAllQuotes = async (): Promise<Quote[]> => {
         });
         return quotes;
     } catch (error) {
-        if (error instanceof Error && (error.message.includes('Could not refresh access token') || error.message.includes('permission-denied') || error.message.includes('UNAUTHENTICATED'))) {
-            console.warn(`Permission Denied: The server environment lacks permissions to read quotes. Refer to TROUBLESHOOTING.md. Error: ${error.message}`);
-            return []; // Gracefully fail for permission issues
+        if (error instanceof Error) {
+            if (error.message.includes('Could not refresh access token') || error.message.includes('permission-denied') || error.message.includes('UNAUTHENTICATED')) {
+                console.warn(`Permission Denied: The server environment lacks permissions to read quotes. Refer to TROUBLESHOOTING.md. Error: ${error.message}`);
+                return []; // Gracefully fail for permission issues
+            }
+             if (error.message.includes('collection not found') || error.message.includes('resource not found')) {
+                 console.warn("The 'inspirationalQuotes' collection does not exist. Returning empty array.");
+                 return [];
+            }
         }
         
         console.error("Error getting all quotes: ", error);

@@ -26,7 +26,7 @@ This document tracks errors found during the build process and the steps taken t
 3.  **App Crash on Missing Firestore Indexes**:
     -   **Description**: The application would crash if a query required a Firestore index that had not been created yet (e.g., ordering leads by date).
     -   **Resolution**:
-        -   Refactored all data-fetching services (`lead-service`, `donation-service`, etc.) to be resilient to missing indexes.
+        -   Refactored all data-fetching services (`lead-service`, `donation-service`, `user-service`) to be resilient to missing indexes.
         -   Each function now uses a `try...catch` block. It first attempts the query *with* sorting. If it fails due to a missing index, the `catch` block retries the query *without* sorting and then sorts the data in memory.
         -   This prevents the app from crashing and ensures data is always displayed, while also logging a clear, developer-friendly error message indicating which index needs to be created.
 

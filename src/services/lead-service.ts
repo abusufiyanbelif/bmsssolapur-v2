@@ -316,10 +316,23 @@ export const getAllLeads = async (): Promise<Lead[]> => {
         });
         return leads;
     } catch (error) {
-        console.error("Error getting all leads: ", error);
-        if (error instanceof Error && error.message.includes('index')) {
-             console.error("Firestore index missing. Please create a descending index on 'dateCreated' for the 'leads' collection.");
+        if (error instanceof Error && (error.message.includes('index') || error.message.includes('Could not find a valid index'))) {
+             console.warn("Firestore index missing for 'leads' collection on 'dateCreated' (desc). Falling back to an unsorted query. Please create the index in your Firebase console for optimal performance.");
+             try {
+                const fallbackQuery = query(collection(db, LEADS_COLLECTION));
+                const fallbackSnapshot = await getDocs(fallbackQuery);
+                const leads: Lead[] = [];
+                 fallbackSnapshot.forEach((doc) => {
+                    const data = doc.data();
+                    leads.push({ id: doc.id, ...data, dateCreated: (data.dateCreated as Timestamp).toDate() } as Lead);
+                });
+                return leads.sort((a, b) => b.dateCreated.getTime() - a.dateCreated.getTime());
+             } catch (fallbackError) {
+                 console.error("Fallback query failed for getAllLeads:", fallbackError);
+                 return [];
+             }
         }
+        console.error("Error getting all leads: ", error);
         return [];
     }
 }

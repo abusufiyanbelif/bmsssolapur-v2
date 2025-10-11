@@ -282,7 +282,7 @@ export const getAllDonations = async (): Promise<Donation[]> => {
         return donations;
     } catch (error) {
         if (error instanceof Error && (error.message.includes('index') || error.message.includes('Could not find a valid index'))) {
-             console.error("Firestore index missing for 'donations' collection on 'donationDate' (desc). Please create it. Falling back to unsorted data.");
+             console.warn("Firestore index missing for 'donations' on 'donationDate' (desc). Please create it. Falling back to unsorted data.");
              // Fallback to fetching without order and sorting in memory
              try {
                 const fallbackQuery = query(collection(db, DONATIONS_COLLECTION));
@@ -301,7 +301,7 @@ export const getAllDonations = async (): Promise<Donation[]> => {
                         allocations,
                     } as Donation);
                 });
-                return donations.sort((a,b) => b.createdAt.getTime() - a.createdAt.getTime());
+                return donations.sort((a,b) => (b.donationDate as Date).getTime() - (a.donationDate as Date).getTime());
              } catch (fallbackError) {
                  console.error("Fallback query failed for getAllDonations", fallbackError);
                  return [];
