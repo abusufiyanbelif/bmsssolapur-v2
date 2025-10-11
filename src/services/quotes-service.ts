@@ -76,8 +76,8 @@ export const getAllQuotes = async (): Promise<Quote[]> => {
         });
         return quotes;
     } catch (error) {
-        if (error instanceof Error && (error.message.includes('Could not load the default credentials') || error.message.includes('Could not refresh access token') || error.message.includes('permission-denied'))) {
-            console.warn("Firestore permission error in getAllQuotes. This can be normal during setup. Returning empty array. Please check IAM roles. Error:", error.message);
+        if (error instanceof Error && (error.message.includes('Could not refresh access token') || error.message.includes('permission-denied'))) {
+            console.warn("Firestore permission error in getAllQuotes. This may be an expected error if the database has not been seeded yet. Please check IAM roles. Returning empty array. Error:", error.message);
             return []; // Gracefully fail for permission issues
         }
         
