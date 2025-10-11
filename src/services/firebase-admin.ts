@@ -1,4 +1,5 @@
 
+
 /**
  * @fileOverview Initializes the Firebase Admin SDK.
  * This file is carefully constructed to have NO internal project dependencies
@@ -46,7 +47,7 @@ const ensureSystemUserExists = async (db: AdminFirestore, userData: Partial<User
             console.log(`Default system user "${userData.userId}" created successfully.`);
         }
     } catch (e) {
-        console.error(`CRITICAL ERROR: Failed to ensure system user "${userData.userId}" exists.`, e);
+        console.error(`CRITICAL ERROR: Failed to ensure system user "${userData.userId}" exists.`, { message: (e as Error)?.message, stack: (e as Error)?.stack });
     }
 };
 
@@ -95,7 +96,9 @@ export const ensureCollectionsExist = async (): Promise<{ success: boolean; crea
 const initializeFirebaseAdmin = async () => {
   if (admin.apps.length === 0) {
     try {
-      console.log("Initializing Firebase Admin SDK...");
+      console.log("Initializing Firebase Admin SDK using Application Default Credentials...");
+      // In a Google Cloud environment (like App Hosting), this automatically uses
+      // the runtime service account. For local dev, it uses gcloud auth application-default login credentials.
       admin.initializeApp({
         projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || 'baitul-mal-connect',
       });
