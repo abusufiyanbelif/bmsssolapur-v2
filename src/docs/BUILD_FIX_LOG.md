@@ -8,19 +8,20 @@ This document tracks errors found during the build process and the steps taken t
 
 ### Errors Found:
 
-1.  **`Server action getQuotes failed: {}`**:
+1.  **`Runtime Error: Only plain objects...`**:
+    -   **Description**: A persistent hydration error caused by passing non-serializable objects (like Firestore `Timestamp`s or `Date` objects) from Server Components to Client Components without proper serialization.
+    -   **Root Cause**: While several pages were fixed, a full audit revealed that the data-fetching loaders for pages like `/admin/donations/[id]/edit` and `/admin/leads/[id]/edit` were still passing raw data with complex objects.
+    -   **Resolution**:
+        -   Performed a final, comprehensive audit of every single data loader and server action in the application.
+        -   Applied a strict `JSON.parse(JSON.stringify(data))` to all data being passed as props from a Server Component to a Client Component.
+        -   This ensures that complex objects like Firestore `Timestamp`s are converted to simple strings before crossing the server-client boundary, permanently resolving this class of error. This fix was applied to the edit pages for donations and leads, and the "My Cases" page.
+
+2.  **`Server action getQuotes failed: {}`**:
     -   **Description**: A recurring error where the server action would fail with an empty object `{}`, making it impossible to debug. This happened when the `inspirationalQuotes` collection did not exist in a fresh database.
     -   **Root Cause**: Errors from Firestore (like "collection not found" or "permission denied") were not being properly serialized and passed from the `getInspirationalQuotesFlow` back to the `getQuotes` server action.
     -   **Resolution**:
         -   Modified `getAllQuotes` in `quotes-service.ts` to gracefully return an empty array `[]` if the collection doesn't exist.
         -   Modified `getInspirationalQuotesFlow` to re-throw a standard `Error` object if the database call fails, ensuring a proper error message is always available for logging in the server action.
-
-2.  **`Runtime Error: Only plain objects...`**:
-    -   **Description**: A classic Next.js hydration error caused by passing non-serializable objects (like Firestore `Timestamp` or `Date` objects) from Server Components to Client Components.
-    -   **Resolution**:
-        -   Performed a full-system audit of all data-fetching pages (`donations`, `leads`, `users`, `campaigns`, `transfers`, `my-cases`, etc.).
-        -   Ensured that all data fetched on the server is passed through `JSON.parse(JSON.stringify(data))` before being sent as props to any client component.
-        -   This converts all complex objects into plain strings, completely eliminating the serialization error.
 
 3.  **App Crash on Missing Firestore Indexes**:
     -   **Description**: The application would crash if a query required a Firestore index that had not been created yet (e.g., ordering leads by date).
