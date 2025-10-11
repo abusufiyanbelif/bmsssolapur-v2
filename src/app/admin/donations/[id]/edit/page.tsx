@@ -52,16 +52,16 @@ export default async function EditDonationPage({ params }: { params: { id: strin
                         </CardHeader>
                         <CardContent>
                              <AddDonationForm 
-                                users={allUsers} 
-                                leads={linkableLeads} 
-                                campaigns={linkableCampaigns} 
+                                users={JSON.parse(JSON.stringify(allUsers))} 
+                                leads={JSON.parse(JSON.stringify(linkableLeads))} 
+                                campaigns={JSON.parse(JSON.stringify(linkableCampaigns))} 
                                 existingDonation={JSON.parse(JSON.stringify(donation))}
-                                currentUser={currentUser}
-                                settings={settings}
+                                currentUser={JSON.parse(JSON.stringify(currentUser))}
+                                settings={JSON.parse(JSON.stringify(settings))}
                             />
                         </CardContent>
                     </Card>
-                    <LinkedLeadsCard donation={donation} leads={allLeads} />
+                    <LinkedLeadsCard donation={JSON.parse(JSON.stringify(donation))} leads={JSON.parse(JSON.stringify(allLeads))} />
                 </div>
                  <div className="lg:col-span-1">
                     <AuditTrail activityLogs={JSON.parse(JSON.stringify(activityLogs))} />

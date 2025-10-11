@@ -113,6 +113,7 @@ export interface Donation {
   amount: number;
   type: DonationType;
   purpose?: DonationPurpose;
+  category?: string; // New field for sub-purpose
   status: DonationStatus;
   isAnonymous?: boolean;
   leadId?: string;
@@ -241,8 +242,9 @@ export interface Lead {
     fundingGoal?: number; // New field for organization's target
     helpGiven: number;
     caseStatus: LeadStatus;
-    caseAction?: LeadAction;
+    caseAction: LeadAction;
     caseVerification: LeadVerificationStatus;
+    verifiedStatus: LeadVerificationStatus; // Legacy field, use caseVerification
     verifiers: Verifier[];
     donations: LeadDonationAllocation[];
     fundTransfers?: FundTransfer[];
@@ -450,7 +452,7 @@ export interface AppSettings {
         otp: { enabled: boolean };
         google: { enabled: boolean };
     };
-    notificationSettings?: {
+    notificationSettings: {
         sms: {
             provider: 'twilio' | 'firebase';
             twilio: {
@@ -493,7 +495,7 @@ export interface AppSettings {
         upi: { enabled: boolean };
         other: { enabled: boolean };
     };
-    paymentGateway?: {
+    paymentGateway: {
         razorpay: GatewayConfig;
         phonepe: GatewayConfig;
         paytm: GatewayConfig;
@@ -501,10 +503,10 @@ export interface AppSettings {
         instamojo: GatewayConfig;
         stripe: GatewayConfig;
     };
-    donationConfiguration?: {
+    donationConfiguration: {
         allowDonorSelfServiceDonations?: boolean;
     };
-    leadConfiguration?: {
+    leadConfiguration: {
         purposes: LeadPurpose[];
         workflow?: Record<LeadStatus, LeadStatus[]>;
         approvalProcessDisabled?: boolean;
@@ -515,9 +517,9 @@ export interface AppSettings {
         schoolYearOptions?: string[];
         collegeYearOptions?: string[];
     };
-    userConfiguration?: UserConfiguration;
-    dashboard?: DashboardSettings;
-    analyticsDashboard?: AnalyticsDashboardSettings;
+    userConfiguration: UserConfiguration;
+    dashboard: DashboardSettings;
+    analyticsDashboard: AnalyticsDashboardSettings;
     updatedAt?: FieldValue;
 }
 

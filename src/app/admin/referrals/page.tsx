@@ -9,6 +9,8 @@ async function ReferralsPageDataLoader() {
   try {
     const allUsers = await getAllUsersAction();
     const initialReferrals = allUsers.filter(u => u.roles.includes('Referral'));
+    
+    // The server action now handles serialization.
     return <ReferralsPageClient initialReferrals={initialReferrals} />;
   } catch (e) {
     const error = e instanceof Error ? e.message : "An unknown error occurred.";
