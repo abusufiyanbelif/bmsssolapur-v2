@@ -1,5 +1,4 @@
 
-
 /**
  * @fileOverview Initializes the Firebase Admin SDK.
  * This file is carefully constructed to have NO internal project dependencies
@@ -47,7 +46,7 @@ const ensureSystemUserExists = async (db: AdminFirestore, userData: Partial<User
             console.log(`Default system user "${userData.userId}" created successfully.`);
         }
     } catch (e) {
-        console.error(`CRITICAL ERROR: Failed to ensure system user "${userData.userId}" exists.`, { message: (e as Error)?.message, stack: (e as Error)?.stack });
+        console.error(`CRITICAL ERROR: Failed to ensure system user "${userData.userId}" exists.`, e);
     }
 };
 
@@ -84,7 +83,8 @@ export const ensureCollectionsExist = async (): Promise<{ success: boolean; crea
             }
         } catch (e) {
             const errorMsg = `CRITICAL ERROR: Failed to ensure collection "${collectionName}" exists.`;
-            console.error(errorMsg, { message: (e as Error)?.message, stack: (e as Error)?.stack });
+            // Log the raw error 'e' to see the actual message instead of a useless empty object.
+            console.error(errorMsg, e); 
             errors.push(errorMsg);
         }
     }
@@ -104,7 +104,7 @@ const initializeFirebaseAdmin = async () => {
       });
       console.log('Firebase Admin SDK initialized successfully.');
     } catch (e) {
-      console.error("Firebase Admin SDK initialization error:", { message: (e as Error)?.message, stack: (e as Error)?.stack });
+      console.error("Firebase Admin SDK initialization error:", e);
       throw new Error("Failed to initialize Firebase Admin SDK. Check server logs and credentials.");
     }
   }
