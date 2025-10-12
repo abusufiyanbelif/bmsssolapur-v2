@@ -21,6 +21,9 @@ const spaceGrotesk = Space_Grotesk({
 export const metadata: Metadata = {
   title: 'Baitul Mal Samajik Sanstha (Solapur)',
   description: 'Visualize your Firebase and external service configurations.',
+  icons: {
+    icon: "data:,",
+  },
 };
 
 export default function RootLayout({
