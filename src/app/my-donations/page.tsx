@@ -1,3 +1,4 @@
+
 'use client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -63,20 +64,20 @@ export default function MyDonationsPage() {
         ]);
         
         if (userDonations) {
-            userDonations.sort((a, b) => (b.donationDate as Date).getTime() - (a.donationDate as Date).getTime());
-            setDonations(userDonations);
+            userDonations.sort((a, b) => (new Date(b.donationDate)).getTime() - (new Date(a.donationDate)).getTime());
+            setDonations(JSON.parse(JSON.stringify(userDonations)));
         } else {
             setError("Could not retrieve your donation history.");
         }
 
         if (fetchedUser) {
-            setUser(fetchedUser);
+            setUser(JSON.parse(JSON.stringify(fetchedUser)));
         } else {
              setError("Could not retrieve your user profile.");
         }
         
         if(fetchedOrg) {
-            setOrganization(fetchedOrg);
+            setOrganization(JSON.parse(JSON.stringify(fetchedOrg)));
         }
         
         if (!userDonations || !fetchedUser || !fetchedOrg) {
@@ -128,7 +129,7 @@ export default function MyDonationsPage() {
             {paginatedDonations.map((donation, index) => (
                 <TableRow key={donation.id}>
                     <TableCell>{(currentPage - 1) * itemsPerPage + index + 1}</TableCell>
-                    <TableCell>{format(donation.donationDate, "dd MMM yyyy")}</TableCell>
+                    <TableCell>{format(new Date(donation.donationDate), "dd MMM yyyy")}</TableCell>
                     <TableCell className="font-semibold">₹{donation.amount.toLocaleString()}</TableCell>
                     <TableCell>{donation.type}</TableCell>
                     <TableCell>{donation.purpose || 'N/A'}</TableCell>

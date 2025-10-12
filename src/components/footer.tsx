@@ -36,7 +36,7 @@ export function Footer({ organization }: FooterProps) {
       )
   }
   
-  const { footer } = organization;
+  const { footer } = JSON.parse(JSON.stringify(organization));
 
   return (
     <footer className="border-t bg-card text-card-foreground">

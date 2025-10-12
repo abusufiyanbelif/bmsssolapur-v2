@@ -1,5 +1,4 @@
 
-
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Building, Mail, Phone, Globe, Hash, ShieldCheck, CreditCard, Award, Users, Banknote, MapPin, AlertCircle } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -142,7 +141,7 @@ export default async function OrganizationPage() {
                             </div>
                         </div>
                         {organization.qrCodeUrl && (
-                             <OrganizationQrCodeDialog organization={organization}>
+                             <OrganizationQrCodeDialog organization={JSON.parse(JSON.stringify(organization))}>
                                 <div className="flex flex-col items-center justify-center gap-4 p-4 border rounded-lg bg-muted/50 cursor-pointer hover:bg-muted transition-colors">
                                     <div className="relative w-56 h-56">
                                         <Image src={organization.qrCodeUrl} alt="UPI QR Code" fill className="object-contain rounded-md" data-ai-hint="qr code" />

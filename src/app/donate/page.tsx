@@ -620,10 +620,10 @@ function DonatePageContent() {
             getAllCampaigns(),
           ]);
           
-          setSettings(appSettings);
-          setOrganization(orgData);
-          setOpenLeads(allLeads.filter(l => l.caseAction === 'Publish' || l.caseAction === 'Partial'));
-          setActiveCampaigns(allCampaigns.filter(c => c.status === 'Active' || c.status === 'Upcoming'));
+          setSettings(JSON.parse(JSON.stringify(appSettings)));
+          setOrganization(JSON.parse(JSON.stringify(orgData)));
+          setOpenLeads(JSON.parse(JSON.stringify(allLeads.filter(l => l.caseAction === 'Publish' || l.caseAction === 'Partial'))));
+          setActiveCampaigns(JSON.parse(JSON.stringify(allCampaigns.filter(c => c.status === 'Active' || c.status === 'Upcoming'))));
   
           if (storedUserId) {
               const fetchedUser = await getUser(storedUserId);

@@ -53,7 +53,7 @@ export default async function LayoutSettingsPage() {
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <LayoutSettingsForm organization={orgData} />
+                    <LayoutSettingsForm organization={JSON.parse(JSON.stringify(orgData))} />
                 </CardContent>
             </Card>
         </div>
