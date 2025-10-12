@@ -87,7 +87,7 @@ export function DonorsPageClient({ initialDonors, error: initialError }: { initi
         });
     };
     
-    const fetchUsers = async () => {
+    const fetchUsers = () => {
         router.refresh();
     };
 
@@ -156,7 +156,7 @@ export function DonorsPageClient({ initialDonors, error: initialError }: { initi
 
             let comparison = 0;
             if (aValue instanceof Date && bValue instanceof Date) {
-                comparison = aValue.getTime() - bValue.getTime();
+                comparison = new Date(aValue).getTime() - new Date(bValue).getTime();
             } else if (typeof aValue === 'string' && typeof bValue === 'string') {
                 comparison = aValue.localeCompare(bValue);
             }
@@ -340,7 +340,7 @@ export function DonorsPageClient({ initialDonors, error: initialError }: { initi
                                 {user.isActive ? 'Active' : 'Inactive'}
                             </Badge>
                         </TableCell>
-                        <TableCell>{format(user.createdAt as Date, "dd MMM yyyy")}</TableCell>
+                        <TableCell>{format(new Date(user.createdAt), "dd MMM yyyy")}</TableCell>
                         <TableCell className="text-right">
                            {renderActions(user)}
                         </TableCell>

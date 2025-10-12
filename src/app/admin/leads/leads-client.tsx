@@ -155,10 +155,9 @@ export function LeadsPageClient({ initialLeads, initialUsers, initialSettings, e
     
     const filteredLeads = useMemo(() => {
         let filtered = leads.filter(lead => {
-            // Ensure lead has a name property before calling toLowerCase
             const nameMatch = appliedFilters.name === '' || (lead.name && lead.name.toLowerCase().includes(appliedFilters.name.toLowerCase()));
             const purposeMatch = appliedFilters.purpose === 'all' || lead.purpose === appliedFilters.purpose;
-            const statusMatch = appliedFilters.status === 'all' || lead.caseStatus === appliedFilters.status;
+            const statusMatch = appliedFilters.status === 'all' || lead.caseAction === appliedFilters.status;
             const verificationMatch = appliedFilters.verification === 'all' || lead.caseVerification === appliedFilters.verification;
             
             return nameMatch && purposeMatch && statusMatch && verificationMatch;
@@ -169,8 +168,11 @@ export function LeadsPageClient({ initialLeads, initialUsers, initialSettings, e
             const bValue = b[sortColumn];
     
             let comparison = 0;
+            const aDate = aValue ? new Date(aValue as any) : new Date(0);
+            const bDate = bValue ? new Date(bValue as any) : new Date(0);
+
             if (aValue instanceof Date && bValue instanceof Date) {
-                comparison = aValue.getTime() - bValue.getTime();
+                 comparison = aDate.getTime() - bDate.getTime();
             } else if (typeof aValue === 'number' && typeof bValue === 'number') {
                 comparison = aValue - bValue;
             } else if (String(aValue) > String(bValue)) {
@@ -210,7 +212,7 @@ export function LeadsPageClient({ initialLeads, initialUsers, initialSettings, e
     };
     
     const renderContent = () => {
-        if (loading || !initialSettings) {
+        if (loading) {
             return (
                 <div className="flex items-center justify-center py-10">
                     <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -243,7 +245,7 @@ export function LeadsPageClient({ initialLeads, initialUsers, initialSettings, e
             )
         }
         
-        if (paginatedLeads.length === 0) {
+        if (filteredLeads.length === 0) {
              return (
                 <div className="text-center py-10">
                     <p className="text-muted-foreground">No leads match your current filters.</p>

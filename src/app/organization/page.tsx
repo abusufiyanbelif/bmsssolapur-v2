@@ -1,5 +1,4 @@
-
-
+// src/app/organization/page.tsx
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Building, Mail, Phone, Globe, Hash, ShieldCheck, CreditCard, Award, Users, Banknote, MapPin, AlertCircle } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -8,8 +7,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import type { User, Organization } from "@/services/types";
 import { OrganizationQrCodeDialog } from "@/components/organization-qr-code-dialog";
 import { getAllUsers } from "@/services/user-service";
-import { getPublicOrganization } from "@/services/public-data-service";
-import { getCurrentOrganization } from "../admin/settings/actions";
+import { getCurrentOrganization } from "@/app/admin/settings/actions";
 
 const groupMapping: Record<string, string> = {
     'Founder': 'founder',
@@ -111,6 +109,9 @@ export default async function OrganizationPage() {
         );
     };
     
+    // Serialize data before passing to client component
+    const safeOrganization = JSON.parse(JSON.stringify(organization));
+    
     return (
         <div className="flex-1 space-y-6">
             <h2 className="text-3xl font-bold tracking-tight font-headline text-primary">About Our Organization</h2>
@@ -142,7 +143,7 @@ export default async function OrganizationPage() {
                             </div>
                         </div>
                         {organization.qrCodeUrl && (
-                             <OrganizationQrCodeDialog organization={JSON.parse(JSON.stringify(organization))}>
+                             <OrganizationQrCodeDialog organization={safeOrganization}>
                                 <div className="flex flex-col items-center justify-center gap-4 p-4 border rounded-lg bg-muted/50 cursor-pointer hover:bg-muted transition-colors">
                                     <div className="relative w-56 h-56">
                                         <Image src={organization.qrCodeUrl} alt="UPI QR Code" fill className="object-contain rounded-md" data-ai-hint="qr code" />

@@ -1,11 +1,10 @@
-
-
+// src/app/campaigns/page.tsx
+import { Suspense } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { getAllPublicCampaigns } from "./actions";
 import { CampaignList } from "./campaign-list";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Loader2, AlertCircle } from "lucide-react";
-import { Suspense } from "react";
 
 async function CampaignsData() {
     try {

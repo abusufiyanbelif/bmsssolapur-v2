@@ -1,4 +1,3 @@
-
 /**
  * @fileOverview Service for managing inspirational quotes in Firestore.
  */
@@ -27,7 +26,7 @@ const ALL_QUOTES: Omit<Quote, 'id'>[] = [
  * @returns A status message.
  */
 export const seedInitialQuotes = async (): Promise<string> => {
-  const adminDb = await getAdminDb();
+  const adminDb = getAdminDb();
   const quotesCollection = adminDb.collection(QUOTES_COLLECTION);
   const snapshot = await quotesCollection.limit(1).get();
 
@@ -64,7 +63,7 @@ export const seedInitialQuotes = async (): Promise<string> => {
 export const getAllQuotes = async (): Promise<Quote[]> => {
     let adminDb;
     try {
-        adminDb = await getAdminDb();
+        adminDb = getAdminDb();
     } catch (e) {
         console.warn(`[Graceful Failure] Could not initialize Admin DB in getAllQuotes: ${(e as Error).message}. Returning empty array.`);
         return [];
@@ -98,7 +97,7 @@ export const getAllQuotes = async (): Promise<Quote[]> => {
  * @returns The number of quotes deleted.
  */
 export const eraseAllQuotes = async (): Promise<number> => {
-    const adminDb = await getAdminDb();
+    const adminDb = getAdminDb();
     const quotesCollection = adminDb.collection(QUOTES_COLLECTION);
     const snapshot = await quotesCollection.limit(500).get(); // Process in batches of 500
 

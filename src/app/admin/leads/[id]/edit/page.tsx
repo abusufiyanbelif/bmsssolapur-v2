@@ -1,4 +1,4 @@
-
+// src/app/admin/leads/[id]/edit/page.tsx
 
 import { getLead } from "@/services/lead-service";
 import { notFound } from "next/navigation";

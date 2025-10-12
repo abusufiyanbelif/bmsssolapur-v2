@@ -5,6 +5,7 @@ import { getAdminDb } from '@/services/firebase-admin';
 import { getUser as getUserService, type User } from '@/services/user-service';
 import { getAllLeads as getAllLeadsService, type Lead } from '@/services/lead-service';
 import { getAllDonations as getAllDonationsService, type Donation } from '@/services/donation-service';
+import { getRawTextFromImage as getRawTextFromImageFlow } from '@/ai/flows/extract-raw-text-flow';
 
 
 /**
@@ -15,7 +16,7 @@ import { getAllDonations as getAllDonationsService, type Donation } from '@/serv
  */
 export async function performPermissionCheck(): Promise<{success: boolean, error?: string}> {
     try {
-        const adminDb = await getAdminDb();
+        const adminDb = getAdminDb();
         // Attempt to access a non-existent document. This is a lightweight operation.
         const nonExistentDocRef = adminDb.collection("permission-check").doc("heartbeat");
         await nonExistentDocRef.get();
@@ -83,8 +84,6 @@ export async function getAdminNotificationData(): Promise<{ pendingLeads: Lead[]
 
 export const getRawTextFromImage = async (formData: FormData): Promise<{ success: boolean; rawText?: string; error?: string }> => {
     try {
-        const { extractRawTextFlow } = await import('@/ai/flows/extract-raw-text-flow');
-
         const files = Array.from(formData.values()) as File[];
         if (files.length === 0) {
             return { success: false, error: 'No files were uploaded.' };
@@ -99,7 +98,7 @@ export const getRawTextFromImage = async (formData: FormData): Promise<{ success
             });
         }));
 
-        const result = await extractRawTextFlow({ photoDataUris: dataUris });
+        const result = await getRawTextFromImageFlow({ photoDataUris: dataUris });
         return { success: true, rawText: result.rawText };
 
     } catch (e) {

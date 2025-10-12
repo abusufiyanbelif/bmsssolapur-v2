@@ -1,4 +1,3 @@
-
 /**
  * @fileOverview Initializes the Firebase Admin SDK.
  * This file is carefully constructed to have NO internal project dependencies
@@ -52,7 +51,12 @@ const ensureSystemUserExists = async (db: AdminFirestore, userData: Partial<User
  * @returns An object with a list of created collections and any errors.
  */
 export const ensureCollectionsExist = async (): Promise<{ success: boolean; created: string[]; errors: string[], message?: string, details?: string[] }> => {
-    const db = await getAdminDb(); // Use the async getter
+    // This function must use an already initialized db instance.
+    if (!adminDbInstance) {
+        console.warn("ensureCollectionsExist called before DB was initialized.");
+        return { success: false, created: [], errors: ["DB not initialized"] };
+    }
+    const db = adminDbInstance;
     const coreCollections = [
         'users', 'leads', 'donations', 'campaigns', 'activityLog',
         'settings', 'organizations', 'publicLeads', 'publicCampaigns',
@@ -97,9 +101,7 @@ const initializeFirebaseAdmin = async () => {
     if (admin.apps.length === 0) {
         try {
             console.log("Initializing Firebase Admin SDK...");
-            admin.initializeApp({
-                credential: admin.credential.applicationDefault(),
-            });
+            admin.initializeApp();
             console.log('Firebase Admin SDK initialized successfully.');
         } catch (e) {
             console.error("Firebase Admin SDK initialization error:", e);
@@ -113,8 +115,6 @@ const initializeFirebaseAdmin = async () => {
     if (!adminAuthInstance) {
         adminAuthInstance = admin.auth();
     }
-    
-    // The recursive calls are removed from here.
 };
 
 
@@ -168,12 +168,23 @@ const getInitializationPromise = () => {
 
 // Use getters to ensure initialization happens on first use.
 // This is now async to handle the initialization promise.
-export const getAdminDb = async (): Promise<AdminFirestore> => {
-  await getInitializationPromise();
-  return adminDbInstance!;
+export const getAdminDb = (): AdminFirestore => {
+  if (!adminDbInstance) {
+    // This should ideally not happen in an async context, but as a safeguard.
+    throw new Error("getAdminDb called before async initialization completed. This is an application error.");
+  }
+  return adminDbInstance;
 };
 
-export const getAdminAuth = async (): Promise<admin.auth.Auth> => {
-  await getInitializationPromise();
-  return adminAuthInstance!;
+export const getAdminAuth = (): admin.auth.Auth => {
+  if (!adminAuthInstance) {
+     throw new Error("getAdminAuth called before async initialization completed. This is an application error.");
+  }
+  return adminAuthInstance;
 };
+
+// A new top-level function to ensure everything is ready
+export const ensureFirebaseAdminInitialized = getInitializationPromise;
+
+// Run initialization as soon as this module is loaded.
+ensureFirebaseAdminInitialized();
