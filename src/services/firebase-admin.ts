@@ -94,21 +94,12 @@ export const ensureCollectionsExist = async (): Promise<{ success: boolean; crea
 
 const initializeFirebaseAdmin = async () => {
   if (admin.apps.length === 0) {
-    console.log("Initializing Firebase Admin SDK...");
     try {
-      const keyData = process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON;
-      if (!keyData) {
-        // Fallback to application default credentials if the env var is not set
-        console.log("GOOGLE_APPLICATION_CREDENTIALS_JSON not found. Falling back to Application Default Credentials.");
-        admin.initializeApp({
-            credential: admin.credential.applicationDefault(),
-        });
-      } else {
-        const credentials = JSON.parse(keyData);
-        admin.initializeApp({
-            credential: admin.credential.cert(credentials),
-        });
-      }
+      console.log("Initializing Firebase Admin SDK...");
+      admin.initializeApp({
+        // Use application default credentials, which is the standard for both local (gcloud auth) and deployed Google Cloud environments.
+        credential: admin.credential.applicationDefault(),
+      });
       console.log('Firebase Admin SDK initialized successfully.');
     } catch (e) {
       console.error("Firebase Admin SDK initialization error:", e);

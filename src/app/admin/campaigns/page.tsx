@@ -23,13 +23,7 @@ async function CampaignsPageData() {
 
     } catch (e) {
         const error = e instanceof Error ? e.message : "An unknown error occurred.";
-        return (
-            <Alert variant="destructive">
-                <AlertCircle className="h-4 w-4" />
-                <AlertTitle>Error Loading Campaigns</AlertTitle>
-                <AlertDescription>{error}</AlertDescription>
-            </Alert>
-        );
+        return <CampaignsClient initialCampaigns={[]} initialLeads={[]} error={error} />;
     }
 }
 

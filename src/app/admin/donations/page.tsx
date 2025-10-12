@@ -31,13 +31,7 @@ async function DonationsPageData() {
 
     } catch (e) {
         const error = e instanceof Error ? e.message : "An unknown error occurred.";
-        return (
-             <Alert variant="destructive">
-                <AlertCircle className="h-4 w-4" />
-                <AlertTitle>Error Loading Donations Page</AlertTitle>
-                <AlertDescription>{error}</AlertDescription>
-            </Alert>
-        )
+        return <DonationsPageClient initialDonations={[]} initialUsers={[]} initialLeads={[]} initialCampaigns={[]} organization={null} error={error} />
     }
 }
 

@@ -48,16 +48,16 @@ export default async function EditCampaignPage({ params }: { params: { id: strin
             <div className="grid gap-6 lg:grid-cols-3">
                 <div className="lg:col-span-2 space-y-6">
                     <CampaignForm 
-                        campaign={campaignWithStats} 
-                        completedCampaigns={completedCampaigns} 
-                        unassignedLeads={unassignedLeads}
-                        beneficiaryUsers={beneficiaryUsers}
+                        campaign={JSON.parse(JSON.stringify(campaignWithStats))} 
+                        completedCampaigns={JSON.parse(JSON.stringify(completedCampaigns))} 
+                        unassignedLeads={JSON.parse(JSON.stringify(unassignedLeads))}
+                        beneficiaryUsers={JSON.parse(JSON.stringify(beneficiaryUsers))}
                     />
-                    <LinkedLeadsCard leads={allLeads.filter(l => l.campaignId === campaign.id)} />
-                    <LinkedDonationsCard donations={allDonations} />
+                    <LinkedLeadsCard leads={JSON.parse(JSON.stringify(allLeads.filter(l => l.campaignId === campaign.id)))} />
+                    <LinkedDonationsCard donations={JSON.parse(JSON.stringify(allDonations))} />
                 </div>
                  <div className="lg:col-span-1">
-                    <CampaignAuditTrail activityLogs={activityLogs} />
+                    <CampaignAuditTrail activityLogs={JSON.parse(JSON.stringify(activityLogs))} />
                  </div>
             </div>
         </div>
