@@ -7,7 +7,7 @@
 
 import admin from 'firebase-admin';
 import { getFirestore as getAdminFirestore, Firestore as AdminFirestore, Timestamp } from 'firebase-admin/firestore';
-import type { User } from './types'; // We can safely import types
+import type { User, AppSettings } from './types'; // We can safely import types
 
 let adminDbInstance: AdminFirestore | null = null;
 let adminAuthInstance: admin.auth.Auth | null = null;
@@ -75,6 +75,7 @@ export const ensureCollectionsExist = async (): Promise<{ success: boolean; crea
             const snapshot = await collectionRef.limit(1).get();
             if (snapshot.empty) {
                 console.log(`Collection "${collectionName}" not found. Creating it...`);
+                // Add a placeholder document to create the collection.
                 await collectionRef.doc('_init_').set({
                     initializedAt: Timestamp.now(),
                     description: `This document was automatically created to initialize the ${collectionName} collection.`
@@ -86,6 +87,16 @@ export const ensureCollectionsExist = async (): Promise<{ success: boolean; crea
             console.error(errorMsg, e);
             errors.push(errorMsg);
         }
+    }
+    
+    // Specifically check for the main settings document and create if it doesn't exist
+    try {
+        const { getAppSettings } = await import('./app-settings-service');
+        await getAppSettings(); // This will auto-create default settings if they don't exist
+    } catch (e) {
+         const errorMsg = `CRITICAL ERROR: Failed to ensure 'settings' document exists.`;
+         console.error(errorMsg, e);
+         errors.push(errorMsg);
     }
 
     const message = created.length > 0 

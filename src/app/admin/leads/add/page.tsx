@@ -1,3 +1,4 @@
+
 // src/app/admin/leads/add/page.tsx
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -11,76 +12,45 @@ import { Suspense } from "react";
 import { Loader2 } from "lucide-react";
 
 async function AddLeadPageLoader() {
-    let settings;
-    let users;
-    let campaigns;
-    let error: string | null = null;
-
     try {
-        [settings, users, campaigns] = await Promise.all([
+        const [settings, users, campaigns] = await Promise.all([
             getAppSettings(),
             getAllUsers(),
             getAllCampaigns(),
         ]);
-    } catch (e) {
-        error = e instanceof Error ? e.message : "An unknown error occurred while loading settings.";
-        console.error(error);
-        // Create a default settings object to allow the form to render
-        settings = { 
-            userConfiguration: {},
-            leadConfiguration: { purposes: [] },
-        } as any;
-        users = [];
-        campaigns = [];
-    }
-
-    if (error) {
-         return (
+        
+        return (
+            <Card>
+                <CardHeader>
+                    <CardTitle className="text-primary">Lead Details</CardTitle>
+                    <CardDescription className="text-muted-foreground">
+                        Fill in the form below to create a new help case (lead). You can also upload documents and use the AI to auto-fill the form.
+                    </CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <AddLeadForm 
+                        users={JSON.parse(JSON.stringify(users))} 
+                        campaigns={JSON.parse(JSON.stringify(campaigns))} 
+                        settings={JSON.parse(JSON.stringify(settings))}
+                    />
+                </CardContent>
+            </Card>
+        )
+    } catch(e) {
+        const error = e instanceof Error ? e.message : "An unknown error occurred fetching initial data.";
+        return (
              <div className="flex-1 space-y-4">
-                 <Alert variant="destructive">
+                <Alert variant="destructive">
                     <AlertCircle className="h-4 w-4" />
-                    <AlertTitle>Warning: Could Not Load App Settings</AlertTitle>
+                    <AlertTitle>Error Loading Form</AlertTitle>
                     <AlertDescription>
-                        The form is available, but some settings (like Lead Purposes) may not be loaded due to a database permission error. Please refer to the troubleshooting guide.
+                        There was an issue loading required data like users or settings. Please check the server logs.
                         <p className="mt-2 text-xs font-mono bg-destructive/20 p-2 rounded">Details: {error}</p>
                     </AlertDescription>
                 </Alert>
-                <Card>
-                    <CardHeader>
-                        <CardTitle className="text-primary">Lead Details</CardTitle>
-                        <CardDescription className="text-muted-foreground">
-                            Fill in the form below to create a new help case (lead). You can also upload documents and use the AI to auto-fill the form.
-                        </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <AddLeadForm 
-                            users={users} 
-                            campaigns={campaigns} 
-                            settings={settings}
-                        />
-                    </CardContent>
-                </Card>
             </div>
-         )
+        );
     }
-
-    return (
-        <Card>
-            <CardHeader>
-                <CardTitle className="text-primary">Lead Details</CardTitle>
-                <CardDescription className="text-muted-foreground">
-                    Fill in the form below to create a new help case (lead). You can also upload documents and use the AI to auto-fill the form.
-                </CardDescription>
-            </CardHeader>
-            <CardContent>
-                <AddLeadForm 
-                    users={users} 
-                    campaigns={campaigns} 
-                    settings={settings}
-                />
-            </CardContent>
-        </Card>
-    )
 }
 
 

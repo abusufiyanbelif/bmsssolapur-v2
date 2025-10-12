@@ -1,3 +1,4 @@
+
 // src/app/admin/donors/page.tsx
 import { Suspense } from "react";
 import { Loader2 } from "lucide-react";
@@ -10,7 +11,7 @@ async function DonorsPageDataLoader() {
     const allUsers = await getAllUsersAction();
     const initialDonors = allUsers.filter(u => u.roles.includes('Donor'));
     
-    // The data is now properly serialized by the server action before being passed.
+    // The data is now properly serialized by the server action.
     return <DonorsPageClient initialDonors={initialDonors} />;
   } catch (e) {
     const error = e instanceof Error ? e.message : "An unknown error occurred.";

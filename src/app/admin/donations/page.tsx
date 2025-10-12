@@ -1,3 +1,4 @@
+
 // src/app/admin/donations/page.tsx
 import { Suspense } from "react";
 import { Loader2 } from "lucide-react";
@@ -10,22 +11,27 @@ import { getCurrentOrganization } from "@/services/organization-service";
 
 async function DonationsPageData() {
     // Fetch all data on the server
-    const [donations, users, leads, campaigns, organization] = await Promise.all([
-        getAllDonations(),
-        getAllUsers(),
-        getAllLeads(),
-        getAllCampaigns(),
-        getCurrentOrganization(),
-    ]);
+    try {
+        const [donations, users, leads, campaigns, organization] = await Promise.all([
+            getAllDonations(),
+            getAllUsers(),
+            getAllLeads(),
+            getAllCampaigns(),
+            getCurrentOrganization(),
+        ]);
 
-    // Serialize all data with timestamps before passing to the client.
-    return <DonationsPageClient 
-        initialDonations={JSON.parse(JSON.stringify(donations))}
-        initialUsers={JSON.parse(JSON.stringify(users))}
-        initialLeads={JSON.parse(JSON.stringify(leads))}
-        initialCampaigns={JSON.parse(JSON.stringify(campaigns))}
-        organization={JSON.parse(JSON.stringify(organization))}
-    />;
+        // Serialize all data with timestamps before passing to the client.
+        return <DonationsPageClient 
+            initialDonations={JSON.parse(JSON.stringify(donations))}
+            initialUsers={JSON.parse(JSON.stringify(users))}
+            initialLeads={JSON.parse(JSON.stringify(leads))}
+            initialCampaigns={JSON.parse(JSON.stringify(campaigns))}
+            organization={JSON.parse(JSON.stringify(organization))}
+        />;
+    } catch (e) {
+        const error = e instanceof Error ? e.message : "An unknown error occurred fetching data.";
+        return <DonationsPageClient initialDonations={[]} initialUsers={[]} initialLeads={[]} initialCampaigns={[]} organization={null} error={error} />;
+    }
 }
 
 
