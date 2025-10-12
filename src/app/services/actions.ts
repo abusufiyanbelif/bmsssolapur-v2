@@ -1,5 +1,4 @@
 
-
 'use server';
 
 import { getAdminDb } from '@/services/firebase-admin';
@@ -17,8 +16,8 @@ import { genkit } from 'genkit';
  * @returns {Promise<{success: boolean, error?: string}>}
  */
 export async function checkDatabaseConnection(): Promise<{success: boolean, error?: string}> {
-    const adminDb = getAdminDb();
     try {
+        const adminDb = await getAdminDb();
         // Attempt to access a non-existent document. This is a lightweight operation.
         const nonExistentDocRef = adminDb.collection("permission-check").doc("heartbeat");
         await nonExistentDocRef.get();

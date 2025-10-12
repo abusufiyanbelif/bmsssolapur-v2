@@ -1,3 +1,4 @@
+
 /**
  * @fileOverview Initializes the Firebase Admin SDK.
  * This file is carefully constructed to have NO internal project dependencies
@@ -97,24 +98,26 @@ export const ensureCollectionsExist = async (): Promise<{ success: boolean; crea
 
 
 const initializeFirebaseAdmin = async () => {
-    // The check `admin.apps` can be undefined in some contexts, causing the error.
-    // A safer check is `admin.apps && admin.apps.length === 0`.
-    if (!admin.apps || admin.apps.length === 0) {
-        try {
-            console.log("Initializing Firebase Admin SDK...");
-            admin.initializeApp();
-            console.log('Firebase Admin SDK initialized successfully.');
+  if (admin.apps && admin.apps.length === 0) {
+    try {
+      console.log("Initializing Firebase Admin SDK...");
+      admin.initializeApp();
+      console.log('Firebase Admin SDK initialized successfully.');
 
-            adminDbInstance = getAdminFirestore();
-            adminAuthInstance = admin.auth();
-            
-            // Run post-init tasks only once after successful initialization
-            await runPostInitTasks();
-        } catch (e) {
-            console.error("Firebase Admin SDK initialization error:", e);
-            throw new Error("Failed to initialize Firebase Admin SDK. Check server logs and credentials.");
-        }
+      adminDbInstance = getAdminFirestore();
+      adminAuthInstance = admin.auth();
+      
+      // Run post-init tasks only once after successful initialization
+      await runPostInitTasks();
+    } catch (e) {
+      console.error("Firebase Admin SDK initialization error:", e);
+      throw new Error("Failed to initialize Firebase Admin SDK. Check server logs and credentials.");
     }
+  } else if (admin.apps && admin.apps.length > 0 && !adminDbInstance) {
+      // Already initialized but instances not set (can happen with hot-reloading)
+      adminDbInstance = getAdminFirestore();
+      adminAuthInstance = admin.auth();
+  }
 };
 
 const runPostInitTasks = async () => {

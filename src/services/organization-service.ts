@@ -18,7 +18,7 @@ const PUBLIC_DATA_COLLECTION = 'publicData';
 
 // Function to check for duplicate organizations
 const checkDuplicates = async (name: string, registrationNumber: string): Promise<boolean> => {
-    const adminDb = getAdminDb();
+    const adminDb = await getAdminDb();
     const nameQuery = query(collection(adminDb, ORGANIZATIONS_COLLECTION), where("name", "==", name), limit(1));
     const regQuery = query(collection(adminDb, ORGANIZATIONS_COLLECTION), where("registrationNumber", "==", registrationNumber), limit(1));
 
@@ -33,7 +33,7 @@ const checkDuplicates = async (name: string, registrationNumber: string): Promis
 
 // Function to create an organization
 export const createOrganization = async (orgData: Omit<Organization, 'id' | 'createdAt' | 'updatedAt'>) => {
-  const adminDb = getAdminDb();
+  const adminDb = await getAdminDb();
   try {
     const isDuplicate = await checkDuplicates(orgData.name, orgData.registrationNumber);
     if (isDuplicate) {
@@ -61,8 +61,8 @@ export const createOrganization = async (orgData: Omit<Organization, 'id' | 'cre
 
 // Function to get an organization by ID
 export const getOrganization = async (id: string): Promise<Organization | null> => {
-  const adminDb = getAdminDb();
   try {
+    const adminDb = await getAdminDb();
     const orgDoc = await getDoc(doc(adminDb, ORGANIZATIONS_COLLECTION, id));
     if (orgDoc.exists()) {
       const data = orgDoc.data();
@@ -82,8 +82,8 @@ export const getOrganization = async (id: string): Promise<Organization | null> 
 
 // Function to update an organization
 export const updateOrganization = async (id: string, updates: Partial<Omit<Organization, 'id' | 'createdAt'>>) => {
-  const adminDb = getAdminDb();
   try {
+    const adminDb = await getAdminDb();
     const orgRef = doc(adminDb, ORGANIZATIONS_COLLECTION, id);
     await updateDoc(orgRef, {
         ...updates,
@@ -103,8 +103,8 @@ export const updateOrganization = async (id: string, updates: Partial<Omit<Organ
 };
 
 export const updateOrganizationFooter = async (id: string, footerData: OrganizationFooter) => {
-    const adminDb = getAdminDb();
     try {
+        const adminDb = await getAdminDb();
         const orgRef = doc(adminDb, ORGANIZATIONS_COLLECTION, id);
         await updateDoc(orgRef, {
             footer: footerData,
@@ -138,9 +138,9 @@ const convertGsToHttps = (gsUri?: string): string | undefined => {
 // For now, we will assume one organization for simplicity. This can be expanded later.
 export const getCurrentOrganization = async (): Promise<Organization | null> => {
     try {
-        const adminDb = getAdminDb();
+        const adminDb = await getAdminDb();
         const orgQuery = adminDb.collection(ORGANIZATIONS_COLLECTION).limit(1);
-        const querySnapshot = await orgQuery.get();
+        const querySnapshot = await getDocs(orgQuery);
         if (!querySnapshot.empty) {
             const docSnap = querySnapshot.docs[0];
             const data = docSnap.data();

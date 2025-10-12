@@ -21,7 +21,7 @@ const PUBLIC_DATA_COLLECTION = 'publicData';
  * @param lead - The full lead object from the private collection.
  */
 export const updatePublicLead = async (lead: Lead): Promise<void> => {
-  const adminDb = getAdminDb();
+  const adminDb = await getAdminDb();
   const publicLeadRef = adminDb.collection(PUBLIC_LEADS_COLLECTION).doc(lead.id);
 
   if (lead.caseAction !== 'Publish') {
@@ -56,7 +56,7 @@ export const updatePublicLead = async (lead: Lead): Promise<void> => {
  * @param org - The full organization object.
  */
 export const updatePublicOrganization = async (org: Organization): Promise<void> => {
-  const adminDb = getAdminDb();
+  const adminDb = await getAdminDb();
   const publicOrgRef = adminDb.collection(PUBLIC_DATA_COLLECTION).doc('organization');
   await publicOrgRef.set(org);
 };
@@ -67,8 +67,8 @@ export const updatePublicOrganization = async (org: Organization): Promise<void>
  * @returns An array of sanitized public lead objects.
  */
 export const getPublicLeads = async (): Promise<Lead[]> => {
-    const adminDb = getAdminDb();
     try {
+        const adminDb = await getAdminDb();
         const q = adminDb.collection(PUBLIC_LEADS_COLLECTION).orderBy("dateCreated", "desc");
         const snapshot = await q.get();
         const leads = snapshot.docs.map(doc => doc.data() as Lead);
@@ -88,6 +88,7 @@ export const getPublicLeads = async (): Promise<Lead[]> => {
         if (e instanceof Error && (e.message.includes('index') || e.message.includes('Could not find a valid index'))) {
             console.error("Firestore index missing for 'publicLeads' on 'dateCreated' (desc). Please create it. Falling back to unsorted data.");
              try {
+                const adminDb = await getAdminDb();
                 const fallbackSnapshot = await adminDb.collection(PUBLIC_LEADS_COLLECTION).get();
                 const fallbackLeads = fallbackSnapshot.docs.map(doc => doc.data() as Lead);
                 return await Promise.all(fallbackLeads.map(async (lead) => ({ ...lead, beneficiary: await getUser(lead.beneficiaryId) })));
@@ -108,7 +109,7 @@ export const getPublicLeads = async (): Promise<Lead[]> => {
  */
 export const getPublicOrganization = async (): Promise<Organization | null> => {
     try {
-        const adminDb = getAdminDb();
+        const adminDb = await getAdminDb();
         const publicOrgRef = adminDb.collection(PUBLIC_DATA_COLLECTION).doc('organization');
         const docSnap = await publicOrgRef.get();
         return docSnap.exists ? (docSnap.data() as Organization) : null;
@@ -123,7 +124,7 @@ export const getPublicOrganization = async (): Promise<Organization | null> => {
  * @param stats - The stats object to save.
  */
 export const updatePublicStats = async (stats: PublicStats): Promise<void> => {
-    const adminDb = getAdminDb();
+    const adminDb = await getAdminDb();
     const publicStatsRef = adminDb.collection(PUBLIC_DATA_COLLECTION).doc('stats');
     await publicStatsRef.set(stats, { merge: true });
 };
@@ -133,7 +134,7 @@ export const updatePublicStats = async (stats: PublicStats): Promise<void> => {
  * @returns The public stats object or null.
  */
 export const getPublicStats = async (): Promise<PublicStats | null> => {
-    const adminDb = getAdminDb();
+    const adminDb = await getAdminDb();
     const publicStatsRef = adminDb.collection(PUBLIC_DATA_COLLECTION).doc('stats');
     const docSnap = await publicStatsRef.get();
     return docSnap.exists() ? (docSnap.data() as PublicStats) : null;
@@ -149,7 +150,7 @@ export const updatePublicCampaign = async (
   campaign: Campaign & { raisedAmount?: number; fundingProgress?: number },
   forceDelete = false
 ): Promise<void> => {
-    const adminDb = getAdminDb();
+    const adminDb = await getAdminDb();
     const publicCampaignRef = adminDb.collection(PUBLIC_CAMPAIGNS_COLLECTION).doc(campaign.id!);
 
     const isPublic = ['Active', 'Upcoming'].includes(campaign.status);
@@ -167,8 +168,8 @@ export const updatePublicCampaign = async (
  * @returns An array of public campaign objects.
  */
 export const getPublicCampaigns = async (): Promise<(Campaign & { raisedAmount: number, fundingProgress: number })[]> => {
-    const adminDb = getAdminDb();
     try {
+        const adminDb = await getAdminDb();
         const q = adminDb.collection(PUBLIC_CAMPAIGNS_COLLECTION).orderBy("startDate", "desc");
         const snapshot = await q.get();
         const campaigns = snapshot.docs.map(doc => {
@@ -190,6 +191,7 @@ export const getPublicCampaigns = async (): Promise<(Campaign & { raisedAmount: 
         if (e instanceof Error && (e.message.includes('index') || e.message.includes('Could not find a valid index'))) {
             console.error("Firestore index missing for 'publicCampaigns' on 'startDate' (desc). Please create it. Falling back to unsorted data.");
              try {
+                const adminDb = await getAdminDb();
                 const fallbackSnapshot = await adminDb.collection(PUBLIC_CAMPAIGNS_COLLECTION).get();
                  const campaigns = fallbackSnapshot.docs.map(doc => {
                     const data = doc.data();

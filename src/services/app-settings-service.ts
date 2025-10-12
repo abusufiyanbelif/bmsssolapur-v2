@@ -214,8 +214,8 @@ const mergeDeep = (target: any, source: any) => {
  * @returns The application settings object.
  */
 export const getAppSettings = async (): Promise<AppSettings> => {
-  const adminDb = getAdminDb();
   try {
+    const adminDb = await getAdminDb();
     const settingsDocRef = adminDb.collection(SETTINGS_COLLECTION).doc(MAIN_SETTINGS_DOC_ID);
     const settingsDoc = await settingsDocRef.get();
     
@@ -261,8 +261,8 @@ export const getAppSettings = async (): Promise<AppSettings> => {
  * @param updates A partial object of the settings to update.
  */
 export const updateAppSettings = async (updates: Partial<Omit<AppSettings, 'id'| 'updatedAt'>>) => {
-  const adminDb = getAdminDb();
   try {
+    const adminDb = await getAdminDb();
     const settingsDocRef = adminDb.collection(SETTINGS_COLLECTION).doc(MAIN_SETTINGS_DOC_ID);
     
     // Use a transaction or batched write for safer updates if needed in the future

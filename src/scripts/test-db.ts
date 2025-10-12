@@ -1,3 +1,4 @@
+
 import { getAdminDb, ensureFirebaseAdminInitialized } from '../services/firebase-admin';
 
 async function testDatabaseConnection() {
@@ -7,7 +8,7 @@ async function testDatabaseConnection() {
     await ensureFirebaseAdminInitialized();
     
     // Now that initialization is complete, we can safely get the DB instance.
-    const adminDb = getAdminDb();
+    const adminDb = await getAdminDb();
     
     // Perform a simple read operation to confirm permissions.
     const nonExistentDocRef = adminDb.collection("permission-check-script").doc("heartbeat");

@@ -39,7 +39,7 @@ export const collectionsMetadata: Record<string, { description: string; type: Co
 };
 
 export async function getDatabaseHealthStats(): Promise<CollectionStat[]> {
-    const adminDb = getAdminDb();
+    const adminDb = await getAdminDb();
     const stats: CollectionStat[] = [];
     
     try {
@@ -141,7 +141,7 @@ async function checkForOrphans(db: FirebaseFirestore.Firestore, collectionName: 
 export async function getDatabaseDetails(): Promise<{ projectId: string } | null> {
     try {
         // Ensure initialization before getting details
-        const adminDb = getAdminDb();
+        const adminDb = await getAdminDb();
         return {
             projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || 'Not Found',
         };
