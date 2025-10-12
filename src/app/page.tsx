@@ -34,12 +34,12 @@ async function PublicHomePageLoader() {
 
   return (
     <PublicHomePage
-      publicLeads={publicLeads}
-      publicCampaigns={publicCampaigns}
-      allLeads={dashboardData.leads}
-      allDonations={dashboardData.donations}
-      allUsers={dashboardData.users}
-      quotes={quotes}
+      publicLeads={JSON.parse(JSON.stringify(publicLeads))}
+      publicCampaigns={JSON.parse(JSON.stringify(publicCampaigns))}
+      allLeads={JSON.parse(JSON.stringify(dashboardData.leads))}
+      allDonations={JSON.parse(JSON.stringify(dashboardData.donations))}
+      allUsers={JSON.parse(JSON.stringify(dashboardData.users))}
+      quotes={JSON.parse(JSON.stringify(quotes))}
       loading={false} // Data is now loaded on the server
     />
   );

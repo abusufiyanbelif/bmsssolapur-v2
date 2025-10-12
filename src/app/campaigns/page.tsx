@@ -10,7 +10,8 @@ import { Suspense } from "react";
 async function CampaignsData() {
     try {
         const campaigns = await getAllPublicCampaigns();
-        return <CampaignList campaigns={campaigns} />;
+        // Serialize the data before passing to client component
+        return <CampaignList campaigns={JSON.parse(JSON.stringify(campaigns))} />;
     } catch (e) {
         const error = e instanceof Error ? e.message : "An unknown server error occurred.";
         return (
