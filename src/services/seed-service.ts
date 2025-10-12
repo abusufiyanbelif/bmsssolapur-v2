@@ -3,30 +3,13 @@
  * @fileOverview A service to seed the database with initial data.
  */
 
-import admin from "firebase-admin";
 import { getFirestore, Timestamp, FieldValue } from 'firebase-admin/firestore';
 import type { User, UserRole, Lead, Verifier, LeadDonationAllocation, Donation, Campaign, FundTransfer, LeadAction, AppSettings, OrganizationFooter } from './types';
 import { quranQuotes } from './quotes/quran';
 import { hadithQuotes } from './quotes/hadith';
 import { scholarQuotes } from './quotes/scholars';
+import { getAdminDb, getAdminAuth } from './firebase-admin'; // Import the async getters
 
-// Initialize the Firebase Admin SDK if not already initialized
-if (!admin.apps.length) {
-  try {
-    admin.initializeApp({
-      // Use application default credentials, which works for both local development
-      // (gcloud auth application-default login) and deployed Google Cloud environments.
-      credential: admin.credential.applicationDefault(),
-    });
-     console.log('Firebase Admin SDK initialized successfully for seeding.');
-  } catch (e: any) {
-     console.error('Firebase Admin SDK initialization error', e);
-     // Exit gracefully if we can't connect, as no seed scripts can run.
-     process.exit(1);
-  }
-}
-
-const db = getFirestore();
 
 // Re-export type for backward compatibility
 export type { User, UserRole };
@@ -95,6 +78,7 @@ export type SeedResult = {
 };
 
 const seedUsers = async (users: Omit<User, 'id' | 'createdAt' | 'userKey'>[]): Promise<string[]> => {
+    const db = await getAdminDb();
     const results: string[] = [];
 
     for (const userData of users) {
@@ -127,6 +111,7 @@ const seedUsers = async (users: Omit<User, 'id' | 'createdAt' | 'userKey'>[]): P
 };
 
 const seedOrganization = async (): Promise<string> => {
+    const db = await getAdminDb();
     const orgCollectionRef = db.collection('organizations');
     const existingOrgSnapshot = await orgCollectionRef.limit(1).get();
 

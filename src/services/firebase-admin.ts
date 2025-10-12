@@ -93,74 +93,87 @@ export const ensureCollectionsExist = async (): Promise<{ success: boolean; crea
 
 
 const initializeFirebaseAdmin = async () => {
-  if (admin.apps.length === 0) {
-    try {
-      console.log("Initializing Firebase Admin SDK...");
-      admin.initializeApp({
-        credential: admin.credential.applicationDefault(),
-      });
-      console.log('Firebase Admin SDK initialized successfully.');
-    } catch (e) {
-      console.error("Firebase Admin SDK initialization error:", e);
-      throw new Error("Failed to initialize Firebase Admin SDK. Check server logs and credentials.");
+    // This function now handles only the core SDK initialization.
+    if (admin.apps.length === 0) {
+        try {
+            console.log("Initializing Firebase Admin SDK...");
+            admin.initializeApp({
+                credential: admin.credential.applicationDefault(),
+            });
+            console.log('Firebase Admin SDK initialized successfully.');
+        } catch (e) {
+            console.error("Firebase Admin SDK initialization error:", e);
+            throw new Error("Failed to initialize Firebase Admin SDK. Check server logs and credentials.");
+        }
     }
-  }
 
-  if (!adminDbInstance) {
-    adminDbInstance = getAdminFirestore();
-  }
-  if (!adminAuthInstance) {
-    adminAuthInstance = admin.auth();
-  }
+    if (!adminDbInstance) {
+        adminDbInstance = getAdminFirestore();
+    }
+    if (!adminAuthInstance) {
+        adminAuthInstance = admin.auth();
+    }
+    
+    // The recursive calls are removed from here.
+};
 
-  // These can run concurrently after basic initialization
-  await Promise.all([
-    ensureCollectionsExist(),
-    ensureSystemUserExists(adminDbInstance, {
-        name: "admin",
-        userId: "admin",
-        firstName: "Admin",
-        lastName: "User",
-        fatherName: "System",
-        email: "admin@example.com",
-        phone: "9999999999",
-        password: "password",
-        roles: ["Super Admin"],
-        privileges: ["all"],
-        isActive: true,
-        gender: 'Male',
-        source: 'Seeded',
-    }),
-    ensureSystemUserExists(adminDbInstance, {
-        name: "Anonymous Donor",
-        userId: "anonymous_donor",
-        firstName: "Anonymous",
-        lastName: "Donor",
-        email: "anonymous@system.local",
-        phone: "0000000000",
-        password: "N/A",
-        roles: [],
-        isActive: false,
-        gender: 'Other',
-        source: 'Seeded',
-    })
-  ]);
+
+const runPostInitTasks = async () => {
+    // This function is called once after initialization succeeds.
+    if (!adminDbInstance) return;
+    
+    try {
+        await Promise.all([
+            ensureCollectionsExist(),
+            ensureSystemUserExists(adminDbInstance, {
+                name: "admin",
+                userId: "admin",
+                firstName: "Admin",
+                lastName: "User",
+                fatherName: "System",
+                email: "admin@example.com",
+                phone: "9999999999",
+                password: "password",
+                roles: ["Super Admin"],
+                privileges: ["all"],
+                isActive: true,
+                gender: 'Male',
+                source: 'Seeded',
+            }),
+            ensureSystemUserExists(adminDbInstance, {
+                name: "Anonymous Donor",
+                userId: "anonymous_donor",
+                firstName: "Anonymous",
+                lastName: "Donor",
+                email: "anonymous@system.local",
+                phone: "0000000000",
+                password: "N/A",
+                roles: [],
+                isActive: false,
+                gender: 'Other',
+                source: 'Seeded',
+            })
+        ]);
+    } catch(e) {
+        console.error("A post-initialization task failed:", e);
+    }
+}
+
+const getInitializationPromise = () => {
+    if (!initializationPromise) {
+        initializationPromise = initializeFirebaseAdmin().then(runPostInitTasks);
+    }
+    return initializationPromise;
 };
 
 // Use getters to ensure initialization happens on first use.
 // This is now async to handle the initialization promise.
 export const getAdminDb = async (): Promise<AdminFirestore> => {
-  if (!initializationPromise) {
-    initializationPromise = initializeFirebaseAdmin();
-  }
-  await initializationPromise;
+  await getInitializationPromise();
   return adminDbInstance!;
 };
 
 export const getAdminAuth = async (): Promise<admin.auth.Auth> => {
-  if (!initializationPromise) {
-    initializationPromise = initializeFirebaseAdmin();
-  }
-  await initializationPromise;
+  await getInitializationPromise();
   return adminAuthInstance!;
 };
