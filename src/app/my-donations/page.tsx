@@ -19,7 +19,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
 import { DonationReceiptDialog } from "@/components/donation-receipt-dialog";
-import { getCurrentOrganization } from "@/app/admin/settings/actions";
+import { getCurrentOrganization } from "@/services/organization-service";
 
 const statusColors: Record<DonationStatus, string> = {
     "Pending": "bg-yellow-500/20 text-yellow-700 border-yellow-500/30",
@@ -64,7 +64,8 @@ export default function MyDonationsPage() {
         ]);
         
         if (userDonations) {
-            userDonations.sort((a, b) => (new Date(b.donationDate)).getTime() - (new Date(a.donationDate)).getTime());
+            userDonations.sort((a, b) => new Date(b.donationDate).getTime() - new Date(a.donationDate).getTime());
+            // Serialize data
             setDonations(JSON.parse(JSON.stringify(userDonations)));
         } else {
             setError("Could not retrieve your donation history.");

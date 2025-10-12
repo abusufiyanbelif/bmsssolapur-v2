@@ -1,3 +1,4 @@
+
 // src/app/admin/donations/[id]/edit/page.tsx
 
 import { getDonation } from "@/services/donation-service";
@@ -15,6 +16,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { getAppSettings } from "@/services/app-settings-service";
 
 export default async function EditDonationPage({ params }: { params: { id: string } }) {
+    // The `getDonation` function now returns a plain object, but we still need to serialize the others.
     const donation = await getDonation(decodeURIComponent(params.id));
 
     if (!donation) {

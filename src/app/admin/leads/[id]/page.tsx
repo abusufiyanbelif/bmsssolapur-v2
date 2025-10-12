@@ -73,7 +73,7 @@ export default async function LeadDetailPage({ params }: { params: { id: string 
     const [beneficiary, activityLogs, allUsers, allDonations, appSettings] = await Promise.all([
         lead.beneficiaryId ? getUser(lead.beneficiaryId) : Promise.resolve(null),
         lead.beneficiaryId ? getUserActivity(lead.beneficiaryId) : Promise.resolve([]),
-        getAllUsers(), // Fetch all users to identify approvers
+        getAllUsers(),
         getAllDonations(),
         getAppSettings(),
     ]);
@@ -189,7 +189,7 @@ export default async function LeadDetailPage({ params }: { params: { id: string 
                                          <span className="text-muted-foreground mr-2">Due Date:</span> 
                                          <Badge variant="outline" className="text-destructive border-destructive/50">
                                             <CalendarIcon className="mr-1 h-3 w-3" />
-                                            {format(dueDate, "dd MMM yyyy")}
+                                            {format(new Date(dueDate), "dd MMM yyyy")}
                                         </Badge>
                                     </div>
                                 )}
@@ -198,7 +198,7 @@ export default async function LeadDetailPage({ params }: { params: { id: string 
                                          <span className="text-muted-foreground mr-2">Closed Date:</span> 
                                          <Badge variant="outline" className="bg-green-100 text-green-800">
                                             <CheckCircle className="mr-1 h-3 w-3" />
-                                            {format(closedDate, "dd MMM yyyy")}
+                                            {format(new Date(closedDate), "dd MMM yyyy")}
                                         </Badge>
                                     </div>
                                 )}
@@ -275,7 +275,7 @@ export default async function LeadDetailPage({ params }: { params: { id: string 
                                         {lead.fundTransfers.map((transfer, index) => (
                                             <TableRow key={index}>
                                                 <TableCell>
-                                                  <p>{format(transfer.transferredAt as any, "dd MMM yyyy, p")}</p>
+                                                  <p>{format(new Date(transfer.transferredAt), "dd MMM yyyy, p")}</p>
                                                   <p className="text-xs text-muted-foreground">{transfer.paymentApp} ({transfer.status})</p>
                                                 </TableCell>
                                                 <TableCell className="font-semibold">₹{transfer.amount.toLocaleString()}</TableCell>
@@ -357,7 +357,7 @@ export default async function LeadDetailPage({ params }: { params: { id: string 
                                     <TableBody>
                                         {allocatedDonations.map(donation => (
                                             <TableRow key={donation.id}>
-                                                <TableCell>{format(donation.allocatedAt, 'dd MMM yyyy, p')}</TableCell>
+                                                <TableCell>{format(new Date(donation.allocatedAt), 'dd MMM yyyy, p')}</TableCell>
                                                 <TableCell>{donation.allocatedByUserName || 'N/A'}</TableCell>
                                                 <TableCell>
                                                     <p>{donation.donorName}</p>
@@ -459,7 +459,7 @@ export default async function LeadDetailPage({ params }: { params: { id: string 
                                     </div>
                                     <div className="flex justify-between">
                                         <span className="text-muted-foreground">Member Since</span>
-                                        <span className="font-semibold">{format((beneficiary.createdAt as any).toDate ? (beneficiary.createdAt as any).toDate() : new Date(beneficiary.createdAt), 'dd MMM yyyy')}</span>
+                                        <span className="font-semibold">{format(new Date(beneficiary.createdAt), 'dd MMM yyyy')}</span>
                                     </div>
                                 </>
                             ) : (

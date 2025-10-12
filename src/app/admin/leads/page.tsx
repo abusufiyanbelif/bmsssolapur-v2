@@ -1,3 +1,4 @@
+
 // src/app/admin/leads/page.tsx
 import { Suspense } from "react";
 import { Loader2 } from "lucide-react";
@@ -6,31 +7,19 @@ import { getAllLeads } from "@/services/lead-service";
 import { getAllUsers } from "@/services/user-service";
 import { getAppSettings } from "@/services/app-settings-service";
 
-// This is now a true Server Component that fetches all data.
 async function LeadsPageData() {
-    try {
-        const [leads, users, settings] = await Promise.all([
-            getAllLeads(),
-            getAllUsers(),
-            getAppSettings(),
-        ]);
-        
-        // Serialize all data with timestamps before passing to the client.
-        return <LeadsPageClient 
-            initialLeads={JSON.parse(JSON.stringify(leads))}
-            initialUsers={JSON.parse(JSON.stringify(users))}
-            initialSettings={JSON.parse(JSON.stringify(settings))}
-        />
+    const [leads, users, settings] = await Promise.all([
+        getAllLeads(),
+        getAllUsers(),
+        getAppSettings(),
+    ]);
 
-    } catch (e) {
-        const error = e instanceof Error ? e.message : "An unknown error occurred.";
-        return <LeadsPageClient 
-            initialLeads={[]}
-            initialUsers={[]}
-            initialSettings={null}
-            error={error}
-        />
-    }
+    // Serialize all data with timestamps before passing to the client.
+    return <LeadsPageClient 
+        initialLeads={JSON.parse(JSON.stringify(leads))}
+        initialUsers={JSON.parse(JSON.stringify(users))}
+        initialSettings={JSON.parse(JSON.stringify(settings))}
+    />;
 }
 
 

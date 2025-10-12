@@ -1,5 +1,4 @@
 
-
 // src/app/my-cases/page.tsx
 'use client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
@@ -67,6 +66,7 @@ export default function MyCasesPage() {
             try {
                 setLoading(true);
                 const userCases = await getLeadsByBeneficiaryId(userId);
+                // Serialize the data immediately after fetching
                 setCases(JSON.parse(JSON.stringify(userCases)));
             } catch (e) {
                 const errorMessage = e instanceof Error ? e.message : "An unknown error occurred.";
@@ -97,7 +97,7 @@ export default function MyCasesPage() {
             if (typeof aValue === 'number' && typeof bValue === 'number') {
                 comparison = aValue - bValue;
             } else if (aValue instanceof Date && bValue instanceof Date) {
-                comparison = aValue.getTime() - bValue.getTime();
+                comparison = new Date(aValue).getTime() - new Date(bValue).getTime();
             } else if (typeof aValue === 'string' && typeof bValue === 'string') {
                 comparison = aValue.localeCompare(bValue);
             }

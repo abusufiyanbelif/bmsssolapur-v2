@@ -1,6 +1,5 @@
 
 
-      
 import { getUser } from "@/services/user-service";
 import { notFound } from "next/navigation";
 import { EditUserForm } from "./edit-user-form";
@@ -41,4 +40,3 @@ export default async function EditUserPage({ params }: { params: { id: string } 
     );
 }
 
-    
