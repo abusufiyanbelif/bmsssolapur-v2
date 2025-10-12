@@ -1,3 +1,4 @@
+
 #!/usr/bin/env node
 /**
  * Verify & Auto-Fix IAM roles for Firebase App Hosting backend service account.

@@ -83,7 +83,6 @@ export const ensureCollectionsExist = async (): Promise<{ success: boolean; crea
             }
         } catch (e) {
             const errorMsg = `CRITICAL ERROR: Failed to ensure collection "${collectionName}" exists.`;
-            // Log the raw error 'e' to see the actual message instead of a useless empty object.
             console.error(errorMsg, e); 
             errors.push(errorMsg);
         }
