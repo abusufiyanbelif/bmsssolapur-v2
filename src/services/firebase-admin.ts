@@ -4,7 +4,7 @@
  * to prevent circular import issues.
  */
 
-import * as admin from 'firebase-admin';
+import admin from 'firebase-admin';
 import { getFirestore as getAdminFirestore, Firestore as AdminFirestore, Timestamp } from 'firebase-admin/firestore';
 import type { User } from './types'; // We can safely import types
 
@@ -97,31 +97,28 @@ export const ensureCollectionsExist = async (): Promise<{ success: boolean; crea
 
 
 const initializeFirebaseAdmin = async () => {
-    // This function now handles only the core SDK initialization.
-    if (admin.apps.length === 0) {
+    // The check `admin.apps` can be undefined in some contexts, causing the error.
+    // A safer check is `admin.apps && admin.apps.length === 0`.
+    if (!admin.apps || admin.apps.length === 0) {
         try {
             console.log("Initializing Firebase Admin SDK...");
             admin.initializeApp();
             console.log('Firebase Admin SDK initialized successfully.');
+
+            adminDbInstance = getAdminFirestore();
+            adminAuthInstance = admin.auth();
+            
+            // Run post-init tasks only once after successful initialization
+            await runPostInitTasks();
         } catch (e) {
             console.error("Firebase Admin SDK initialization error:", e);
             throw new Error("Failed to initialize Firebase Admin SDK. Check server logs and credentials.");
         }
     }
-
-    if (!adminDbInstance) {
-        adminDbInstance = getAdminFirestore();
-    }
-    if (!adminAuthInstance) {
-        adminAuthInstance = admin.auth();
-    }
 };
 
-
 const runPostInitTasks = async () => {
-    // This function is called once after initialization succeeds.
     if (!adminDbInstance) return;
-    
     try {
         await Promise.all([
             ensureCollectionsExist(),
@@ -159,24 +156,26 @@ const runPostInitTasks = async () => {
     }
 }
 
+// This function creates a singleton promise to ensure initialization runs only once.
 const getInitializationPromise = () => {
     if (!initializationPromise) {
-        initializationPromise = initializeFirebaseAdmin().then(runPostInitTasks);
+        initializationPromise = initializeFirebaseAdmin();
     }
     return initializationPromise;
 };
 
 // Use getters to ensure initialization happens on first use.
-// This is now async to handle the initialization promise.
-export const getAdminDb = (): AdminFirestore => {
+// This is now an async function.
+export const getAdminDb = async (): Promise<AdminFirestore> => {
+  await getInitializationPromise();
   if (!adminDbInstance) {
-    // This should ideally not happen in an async context, but as a safeguard.
     throw new Error("getAdminDb called before async initialization completed. This is an application error.");
   }
   return adminDbInstance;
 };
 
-export const getAdminAuth = (): admin.auth.Auth => {
+export const getAdminAuth = async (): Promise<admin.auth.Auth> => {
+  await getInitializationPromise();
   if (!adminAuthInstance) {
      throw new Error("getAdminAuth called before async initialization completed. This is an application error.");
   }
@@ -187,4 +186,5 @@ export const getAdminAuth = (): admin.auth.Auth => {
 export const ensureFirebaseAdminInitialized = getInitializationPromise;
 
 // Run initialization as soon as this module is loaded.
+// This ensures that for serverless function cold starts, the setup begins immediately.
 ensureFirebaseAdminInitialized();

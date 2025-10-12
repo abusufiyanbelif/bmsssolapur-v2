@@ -8,7 +8,7 @@ import type { User, UserRole, Lead, Verifier, LeadDonationAllocation, Donation, 
 import { quranQuotes } from './quotes/quran';
 import { hadithQuotes } from './quotes/hadith';
 import { scholarQuotes } from './quotes/scholars';
-import { getAdminDb, getAdminAuth } from './firebase-admin'; // Import the async getters
+import { getAdminDb, getAdminAuth, ensureFirebaseAdminInitialized } from './firebase-admin'; // Import the async getters
 
 
 // Re-export type for backward compatibility
@@ -78,7 +78,8 @@ export type SeedResult = {
 };
 
 const seedUsers = async (users: Omit<User, 'id' | 'createdAt' | 'userKey'>[]): Promise<string[]> => {
-    const db = await getAdminDb();
+    await ensureFirebaseAdminInitialized();
+    const db = getAdminDb();
     const results: string[] = [];
 
     for (const userData of users) {
@@ -111,7 +112,8 @@ const seedUsers = async (users: Omit<User, 'id' | 'createdAt' | 'userKey'>[]): P
 };
 
 const seedOrganization = async (): Promise<string> => {
-    const db = await getAdminDb();
+    await ensureFirebaseAdminInitialized();
+    const db = getAdminDb();
     const orgCollectionRef = db.collection('organizations');
     const existingOrgSnapshot = await orgCollectionRef.limit(1).get();
 
