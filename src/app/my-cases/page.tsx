@@ -1,4 +1,3 @@
-
 // src/app/my-cases/page.tsx
 'use client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";

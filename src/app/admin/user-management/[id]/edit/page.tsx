@@ -31,7 +31,7 @@ export default async function EditUserPage({ params }: { params: { id: string } 
                 <AlertCircle className="h-4 w-4" />
                 <AlertTitle>Editing User Account</AlertTitle>
                 <AlertDescription>
-                   You are editing a user&apos;s record. Changes made here will affect their access and information across the app.
+                   You are editing a user's record. Changes made here will affect their access and information across the app.
                 </AlertDescription>
             </Alert>
             
@@ -39,4 +39,3 @@ export default async function EditUserPage({ params }: { params: { id: string } 
         </div>
     );
 }
-
