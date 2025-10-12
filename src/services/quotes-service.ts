@@ -58,6 +58,7 @@ export const seedInitialQuotes = async (): Promise<string> => {
 
 /**
  * Fetches all quotes from the database.
+ * This function is now resilient to missing collections and permission errors.
  * @returns An array of all quote objects.
  */
 export const getAllQuotes = async (): Promise<Quote[]> => {
@@ -76,18 +77,15 @@ export const getAllQuotes = async (): Promise<Quote[]> => {
         return quotes;
     } catch (error) {
         if (error instanceof Error) {
-            if (error.message.includes('Could not refresh access token') || error.message.includes('permission-denied') || error.message.includes('UNAUTHENTICATED')) {
-                console.warn(`Permission Denied: The server environment lacks permissions to read quotes. Refer to TROUBLESHOOTING.md. Error: ${error.message}`);
-                return []; // Gracefully fail for permission issues
-            }
-             if (error.message.includes('collection not found') || error.message.includes('resource not found') || error.message.includes('The specified collection does not exist') || error.message.includes('NOT_FOUND')) {
-                 console.warn("The 'inspirationalQuotes' collection does not exist. Returning empty array. This is expected before seeding.");
-                 return [];
+            // Gracefully handle common "not found" or "permission" errors without crashing.
+            const errMsg = error.message.toLowerCase();
+            if (errMsg.includes('permission-denied') || errMsg.includes('unauthenticated') || errMsg.includes('collection not found') || errMsg.includes('resource not found') || errMsg.includes('not_found')) {
+                console.warn(`[Graceful Failure] Could not fetch quotes: ${error.message}. This is expected on a fresh database or with incorrect IAM permissions. Returning empty array.`);
+                return []; // <<<<<<<<<<< THE CRITICAL FIX
             }
         }
-        
-        console.error("Error getting all quotes: ", error);
-        // For other errors, we re-throw to indicate a more serious problem
+        // For any other, more serious error, log it and re-throw to be caught by the server action.
+        console.error("An unexpected error occurred in getAllQuotes:", error);
         throw error;
     }
 }

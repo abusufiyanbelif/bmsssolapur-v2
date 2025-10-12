@@ -19,28 +19,26 @@ const getInspirationalQuotesFlow = ai.defineFlow(
         outputSchema: z.array(QuoteSchema),
     },
     async ({count}) => {
-        let allQuotes: Quote[] = [];
         try {
-            allQuotes = await getAllQuotes();
-            // If the database is empty (e.g., after an erase operation), return an empty array.
+            const allQuotes = await getAllQuotes();
+            // If the database is empty or inaccessible, getAllQuotes now returns an empty array.
             if (allQuotes.length === 0) {
                 return [];
             }
+            
+            // Shuffle and return the requested number of quotes
+            const shuffled = allQuotes.sort(() => 0.5 - Math.random());
+            return shuffled.slice(0, count);
+
         } catch (error) {
-            console.error("Error getting quotes from database in flow, re-throwing a standard error.", {
-                message: (error as Error)?.message,
-                stack: (error as Error)?.stack,
-            });
+            // This will now only catch unexpected errors from the service layer.
+            console.error("Critical error in getInspirationalQuotesFlow. This should not happen if the service layer is working correctly.", error);
             // Re-throw a standard serializable error object so the server action can log it.
             if (error instanceof Error) {
                 throw new Error(error.message);
             }
-            throw new Error("An unknown error occurred while fetching quotes from the database.");
+            throw new Error("An unknown error occurred while fetching quotes.");
         }
-        
-        // Shuffle and return the requested number of quotes
-        const shuffled = allQuotes.sort(() => 0.5 - Math.random());
-        return shuffled.slice(0, count);
     }
 );
 
