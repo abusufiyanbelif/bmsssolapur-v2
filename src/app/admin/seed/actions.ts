@@ -16,10 +16,11 @@ import {
     eraseAppSettings,
     syncUsersToFirebaseAuth,
     eraseFirebaseAuthUsers,
-    type SeedResult
+    type SeedResult,
+    ensureCollectionsExist as ensureCollectionsExistService
 } from "@/services/seed-service";
 
-type SeedTask = 'initial' | 'coreTeam' | 'organization' | 'paymentGateways' | 'sampleData' | 'appSettings' | 'syncFirebaseAuth';
+type SeedTask = 'initial' | 'coreTeam' | 'organization' | 'paymentGateways' | 'sampleData' | 'appSettings' | 'syncFirebaseAuth' | 'ensureCollections';
 
 export async function handleSeedAction(task: SeedTask): Promise<{success: boolean; data?: SeedResult; error?: string}> {
     try {
@@ -45,6 +46,20 @@ export async function handleSeedAction(task: SeedTask): Promise<{success: boolea
                 break;
             case 'syncFirebaseAuth':
                 result = await syncUsersToFirebaseAuth();
+                break;
+            case 'ensureCollections':
+                const collectionResult = await ensureCollectionsExistService();
+                 result = {
+                    message: collectionResult.created.length > 0
+                        ? `Successfully created ${collectionResult.created.length} missing collection(s).`
+                        : "All essential collections already exist.",
+                    details: collectionResult.created.length > 0
+                        ? [`Created: ${collectionResult.created.join(', ')}`]
+                        : []
+                };
+                if (!collectionResult.success) {
+                    throw new Error(collectionResult.errors.join(', '));
+                }
                 break;
             default:
                 throw new Error("Invalid seed task provided.");

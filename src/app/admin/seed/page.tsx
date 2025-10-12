@@ -4,7 +4,7 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { CheckCircle, AlertCircle, Database, UserCheck, Quote, Users, HandCoins, RefreshCcw, Building, FileText, Trash2, CreditCard, Settings, Fingerprint, UserX as AnonymousUserIcon } from "lucide-react";
+import { CheckCircle, AlertCircle, Database, UserCheck, Quote, Users, HandCoins, RefreshCcw, Building, FileText, Trash2, CreditCard, Settings, Fingerprint, UserX as AnonymousUserIcon, ListChecks } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { Loader2 } from "lucide-react";
@@ -13,7 +13,7 @@ import { useRouter } from "next/navigation";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 
 type SeedStatus = 'idle' | 'loading' | 'success' | 'error';
-type SeedTask = 'initial' | 'coreTeam' | 'organization' | 'paymentGateways' | 'sampleData' | 'appSettings' | 'syncFirebaseAuth';
+type SeedTask = 'initial' | 'coreTeam' | 'organization' | 'paymentGateways' | 'sampleData' | 'appSettings' | 'syncFirebaseAuth' | 'ensureCollections';
 type SeedResult = {
     message: string;
     details?: string[];
@@ -28,7 +28,8 @@ export default function SeedPage() {
         appSettings: 'idle',
         paymentGateways: 'idle',
         sampleData: 'idle',
-        syncFirebaseAuth: 'idle'
+        syncFirebaseAuth: 'idle',
+        ensureCollections: 'idle',
     });
     const [eraseStatuses, setEraseStatuses] = useState<Record<SeedTask, SeedStatus>>({
         initial: 'idle',
@@ -38,6 +39,7 @@ export default function SeedPage() {
         paymentGateways: 'idle',
         sampleData: 'idle',
         syncFirebaseAuth: 'idle',
+        ensureCollections: 'idle',
     });
     const [results, setResults] = useState<Record<SeedTask, SeedResult | null>>({
         initial: null,
@@ -47,6 +49,7 @@ export default function SeedPage() {
         paymentGateways: null,
         sampleData: null,
         syncFirebaseAuth: null,
+        ensureCollections: null,
     });
 
     const handleSeed = async (task: SeedTask) => {
@@ -125,12 +128,29 @@ export default function SeedPage() {
                     </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-8">
+                     {/* Ensure Collections */}
+                    <div className="p-4 border rounded-lg space-y-4">
+                        <div className="flex flex-col md:flex-row justify-between md:items-center gap-4">
+                             <div>
+                                <h3 className="font-semibold flex items-center gap-2"><ListChecks className="h-5 w-5 text-primary" />Ensure Collections Exist</h3>
+                                <p className="text-sm text-muted-foreground mt-1">Checks if essential collections exist and creates them if they don't. This is run automatically on server start but can be triggered manually.</p>
+                             </div>
+                             <div className="flex items-center gap-2">
+                                <Button onClick={() => handleSeed('ensureCollections')} disabled={statuses.ensureCollections === 'loading'}>
+                                    {statuses.ensureCollections === 'loading' && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}
+                                    Run Check & Create
+                                </Button>
+                             </div>
+                        </div>
+                        <ResultAlert seedStatus={statuses.ensureCollections} eraseStatus={eraseStatuses.ensureCollections} result={results.ensureCollections} />
+                    </div>
+
                     {/* Initial Seed */}
                     <div className="p-4 border rounded-lg space-y-4">
                         <div className="flex flex-col md:flex-row justify-between md:items-center gap-4">
                              <div>
                                 <h3 className="font-semibold flex items-center gap-2"><Building className="h-5 w-5 text-primary" />Initial Setup</h3>
-                                <p className="text-sm text-muted-foreground mt-1">Seeds the Organization Profile and Inspirational Quotes. This is the first step to make the app usable.</p>
+                                <p className="text-sm text-muted-foreground mt-1">Seeds the Organization Profile and Inspirational Quotes. Note: The 'admin' and 'anonymous_donor' users are automatically created on startup.</p>
                              </div>
                              <div className="flex items-center gap-2">
                                 <Button variant="destructive" onClick={() => handleErase('initial')} disabled={eraseStatuses.initial === 'loading'}>
@@ -271,7 +291,7 @@ export default function SeedPage() {
                                             </li>
                                             <li>
                                                 <strong>Winter Relief 2024 Campaign (Active):</strong> 2 open leads for winter kits.
-                                            </li>
+                                             </li>
                                              <li>
                                                 <strong>Ramadan 2026 Campaign (Upcoming):</strong> 2 leads for future ration kits.
                                              </li>
