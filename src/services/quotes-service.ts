@@ -62,7 +62,14 @@ export const seedInitialQuotes = async (): Promise<string> => {
  * @returns An array of all quote objects.
  */
 export const getAllQuotes = async (): Promise<Quote[]> => {
-    const adminDb = getAdminDb();
+    let adminDb;
+    try {
+        adminDb = getAdminDb();
+    } catch (e) {
+        console.warn(`[Graceful Failure] Could not initialize Admin DB in getAllQuotes: ${(e as Error).message}. Returning empty array.`);
+        return [];
+    }
+    
     try {
         const quotesQuery = adminDb.collection(QUOTES_COLLECTION);
         const querySnapshot = await quotesQuery.get();
