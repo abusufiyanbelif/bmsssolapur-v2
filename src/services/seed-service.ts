@@ -6,8 +6,7 @@
 import { createUser, User, UserRole, getUserByEmail, getUserByPhone, getAllUsers, updateUser, getUser, getUserByUserId, generateNextUserKey } from './user-service';
 import { createOrganization, Organization, getCurrentOrganization, OrganizationFooter, updateOrganizationFooter } from './organization-service';
 import { seedInitialQuotes as seedQuotesService, eraseAllQuotes } from './quotes-service';
-import { db } from './firebase';
-import { collection, getDocs, query, where, Timestamp, setDoc, doc, writeBatch, orderBy, getCountFromServer, limit, updateDoc, serverTimestamp, getDoc, deleteDoc, FieldValue } from 'firebase-admin/firestore';
+import { Timestamp, FieldValue } from 'firebase-admin/firestore';
 import { getAdminDb, getAdminAuth } from './firebase-admin';
 import type { Lead, Verifier, LeadDonationAllocation, Donation, Campaign, FundTransfer, LeadAction, AppSettings } from './types';
 import { createLead, getLead, updateLead } from './lead-service';
@@ -306,11 +305,10 @@ const seedUsers = async (users: Omit<User, 'id' | 'createdAt' | 'userKey'>[]): P
 };
 
 const seedOrganization = async (): Promise<string> => {
+    const adminDb = getAdminDb();
     const existingOrg = await getCurrentOrganization();
     if (existingOrg) {
-        // Use the server-side `updateDoc` which requires a plain object
-        const adminDb = getAdminDb();
-        await adminDb.collection('organizations').doc(existingOrg.id).update({ ...organizationToSeed, updatedAt: Timestamp.now() });
+        await adminDb.collection('organizations').doc(existingOrg.id).set({ ...organizationToSeed, updatedAt: Timestamp.now() }, { merge: true });
         return "Organization profile updated with seed data.";
     }
     await createOrganization(organizationToSeed);
@@ -417,7 +415,7 @@ const seedCampaignAndData = async (campaignData: Omit<Campaign, 'createdAt' | 'u
     const campaignRef = adminDb.collection('campaigns').doc(campaignId);
     
     // Create the campaign using the predefined ID with set and merge
-    await setDoc(campaignRef, { ...campaignData }, { merge: true });
+    await campaignRef.set({ ...campaignData }, { merge: true });
     results.push(`Campaign "${campaignData.name}" created or updated.`);
     const campaign = await getCampaign(campaignId);
     if(!campaign) throw new Error(`Failed to retrieve campaign ${campaignId} after seeding.`);
