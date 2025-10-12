@@ -97,15 +97,18 @@ const initializeFirebaseAdmin = async () => {
     try {
       const keyData = process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON;
       if (!keyData) {
-        throw new Error("Missing GOOGLE_APPLICATION_CREDENTIALS_JSON env var. Cannot initialize Admin SDK.");
+        // Fallback to application default credentials if the env var is not set
+        console.log("GOOGLE_APPLICATION_CREDENTIALS_JSON not found. Falling back to Application Default Credentials.");
+        admin.initializeApp({
+            credential: admin.credential.applicationDefault(),
+        });
+      } else {
+        const credentials = JSON.parse(keyData);
+        admin.initializeApp({
+            credential: admin.credential.cert(credentials),
+        });
       }
-      
-      const credentials = JSON.parse(keyData);
-      admin.initializeApp({
-        credential: admin.credential.cert(credentials),
-      });
-
-      console.log('Firebase Admin SDK initialized successfully using environment variable.');
+      console.log('Firebase Admin SDK initialized successfully.');
     } catch (e) {
       console.error("Firebase Admin SDK initialization error:", e);
       throw new Error("Failed to initialize Firebase Admin SDK. Check server logs and credentials.");
