@@ -55,7 +55,7 @@ const ensureSystemUserExists = async (db: AdminFirestore, userData: Partial<User
  * document if they don't. This prevents errors on fresh deployments.
  * @returns An object with a list of created collections and any errors.
  */
-export const ensureCollectionsExist = async (): Promise<{ success: boolean; created: string[]; errors: string[] }> => {
+export const ensureCollectionsExist = async (): Promise<{ success: boolean; created: string[]; errors: string[], message?: string, details?: string[] }> => {
     const db = getAdminDb();
     const coreCollections = [
         'users', 'leads', 'donations', 'campaigns', 'activityLog',
@@ -87,12 +87,17 @@ export const ensureCollectionsExist = async (): Promise<{ success: boolean; crea
             errors.push(errorMsg);
         }
     }
+
+    const message = created.length > 0 
+        ? `Successfully created ${created.length} missing collection(s).` 
+        : "All essential collections already exist.";
+    const details = created.length > 0 ? [`Created: ${created.join(', ')}`] : [];
     
-    return { success: errors.length === 0, created, errors };
+    return { success: errors.length === 0, created, errors, message, details };
 };
 
 
-const initializeFirebaseAdmin = () => {
+const initializeFirebaseAdmin = async (forceRecheck = false) => {
   if (admin.apps.length === 0) {
     try {
       console.log("Initializing Firebase Admin SDK...");
@@ -113,11 +118,53 @@ const initializeFirebaseAdmin = () => {
   if (!adminAuthInstance) {
     adminAuthInstance = admin.auth();
   }
+
+  // On the very first initialization of the server, check for critical system users and collections.
+  if ((isFirstInit || forceRecheck) && adminDbInstance) {
+    if (isFirstInit) isFirstInit = false; // Ensure this only runs once per server start, unless forced
+    
+    // Auto-create essential collections
+    await ensureCollectionsExist();
+    
+    // Auto-create the main 'admin' user
+    await ensureSystemUserExists(adminDbInstance, {
+        name: "admin",
+        userId: "admin",
+        firstName: "Admin",
+        lastName: "User",
+        fatherName: "System",
+        email: "admin@example.com",
+        phone: "9999999999",
+        password: "password",
+        roles: ["Super Admin"],
+        privileges: ["all"],
+        isActive: true,
+        gender: 'Male',
+        source: 'Seeded',
+    });
+
+    // Auto-create the 'anonymous_donor' user
+    await ensureSystemUserExists(adminDbInstance, {
+        name: "Anonymous Donor",
+        userId: "anonymous_donor",
+        firstName: "Anonymous",
+        lastName: "Donor",
+        email: "anonymous@system.local",
+        phone: "0000000000",
+        password: "N/A",
+        roles: [],
+        isActive: false,
+        gender: 'Other',
+        source: 'Seeded',
+    });
+  }
 };
 
 // Use getters to ensure initialization happens on first use.
 export const getAdminDb = (): AdminFirestore => {
   if (!adminDbInstance) {
+    // Note: We can't await here, but initializeApp is synchronous if not awaited.
+    // The async checks for system users and collections will run in the background on first call.
     initializeFirebaseAdmin();
   }
   return adminDbInstance!;
