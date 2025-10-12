@@ -3,18 +3,35 @@
  * @fileOverview A service to seed the database with initial data.
  */
 
+import admin from "firebase-admin";
 import { getFirestore, Timestamp, FieldValue } from 'firebase-admin/firestore';
-import type { User, UserRole, Lead, Verifier, LeadDonationAllocation, Donation, Campaign, FundTransfer, LeadAction, AppSettings } from './types';
-import { getAdminDb, getAdminAuth } from './firebase-admin';
+import type { User, UserRole, Lead, Verifier, LeadDonationAllocation, Donation, Campaign, FundTransfer, LeadAction, AppSettings, OrganizationFooter } from './types';
+import { quranQuotes } from './quotes/quran';
+import { hadithQuotes } from './quotes/hadith';
+import { scholarQuotes } from './quotes/scholars';
+
+// Initialize the Firebase Admin SDK if not already initialized
+if (!admin.apps.length) {
+  try {
+    admin.initializeApp({
+      // Use application default credentials, which works for both local development
+      // (gcloud auth application-default login) and deployed Google Cloud environments.
+      credential: admin.credential.applicationDefault(),
+    });
+     console.log('Firebase Admin SDK initialized successfully for seeding.');
+  } catch (e: any) {
+     console.error('Firebase Admin SDK initialization error', e);
+     // Exit gracefully if we can't connect, as no seed scripts can run.
+     process.exit(1);
+  }
+}
+
+const db = getFirestore();
 
 // Re-export type for backward compatibility
 export type { User, UserRole };
 
 const USERS_COLLECTION = 'users';
-
-// The admin and anonymous users are now hardcoded/auto-created, so they are removed from this initial seed.
-const initialUsersToSeed: Omit<User, 'id' | 'createdAt' | 'userKey'>[] = [];
-
 
 const coreTeamUsersToSeed: Omit<User, 'id' | 'createdAt' | 'userKey'>[] = [
      { 
@@ -78,11 +95,10 @@ export type SeedResult = {
 };
 
 const seedUsers = async (users: Omit<User, 'id' | 'createdAt' | 'userKey'>[]): Promise<string[]> => {
-    const adminDb = getAdminDb();
     const results: string[] = [];
 
     for (const userData of users) {
-        const usersRef = adminDb.collection('users');
+        const usersRef = db.collection('users');
         const q = usersRef.where('phone', '==', userData.phone).limit(1);
         const existingUserSnapshot = await q.get();
 
@@ -90,7 +106,7 @@ const seedUsers = async (users: Omit<User, 'id' | 'createdAt' | 'userKey'>[]): P
             results.push(`User ${userData.name}: Skipped (already exists)`);
         } else {
             try {
-                const userRef = adminDb.collection('users').doc();
+                const userRef = db.collection('users').doc();
                 const userKeySnapshot = await usersRef.count().get();
                 const userKey = `USR${(userKeySnapshot.data().count + 1).toString().padStart(2, '0')}`;
                 
@@ -111,8 +127,7 @@ const seedUsers = async (users: Omit<User, 'id' | 'createdAt' | 'userKey'>[]): P
 };
 
 const seedOrganization = async (): Promise<string> => {
-    const adminDb = getAdminDb();
-    const orgCollectionRef = adminDb.collection('organizations');
+    const orgCollectionRef = db.collection('organizations');
     const existingOrgSnapshot = await orgCollectionRef.limit(1).get();
 
     if (!existingOrgSnapshot.empty) {
@@ -195,4 +210,60 @@ export const eraseFirebaseAuthUsers = async (): Promise<SeedResult> => {
 
 export const syncUsersToFirebaseAuth = async (): Promise<SeedResult> => {
     return { message: "Sync to Firebase Auth is not fully implemented yet." };
+};
+
+// --- DATA TO BE SEEDED ---
+
+const organizationToSeed = {
+    id: "main_org",
+    name: "Baitul Mal Samajik Sanstha (Solapur)",
+    address: "123 Muslim Peth",
+    city: "Solapur",
+    registrationNumber: "MAHA/123/2024/SOLAPUR",
+    panNumber: "ABCDE1234F",
+    contactEmail: "contact@baitulmalsolapur.org",
+    contactPhone: "+91 9372145889",
+    website: "https://www.baitulmalsolapur.org",
+    bankAccountName: "BAITULMAL SAMAJIK SANSTHA",
+    bankAccountNumber: "012345678901",
+    bankIfscCode: "ICIC0001234",
+    upiId: "baitulmal.solapur@okaxis",
+    footer: {
+      organizationInfo: {
+        titleLine1: "BAITUL MAL",
+        titleLine2: "SAMAJIK SANSTHA",
+        titleLine3: "(SOLAPUR)",
+        description: "A registered charitable organization dedicated to providing financial assistance for education, healthcare, and relief to the underprivileged, adhering to Islamic principles of charity.",
+        registrationInfo: "Reg. No. MAHA/123/2024/SOLAPUR",
+        taxInfo: "PAN: ABCDE1234F"
+      },
+      contactUs: {
+        title: "Contact Us",
+        address: "123 Muslim Peth, Solapur, Maharashtra 413001, India",
+        email: "contact@baitulmalsolapur.org"
+      },
+      keyContacts: {
+        title: "Key Contacts",
+        contacts: [
+          { name: "Abusufiyan Belif", phone: "7887646583" },
+          { name: "Moosa Shaikh", phone: "8421708907" }
+        ]
+      },
+      connectWithUs: {
+        title: "Connect With Us",
+        socialLinks: [
+          { platform: 'Facebook', url: 'https://facebook.com' },
+          { platform: 'Instagram', url: 'https://instagram.com' }
+        ]
+      },
+      ourCommitment: {
+        title: "Our Commitment",
+        text: "We are committed to transparency and accountability in all our operations, ensuring that your contributions make a real impact.",
+        linkText: "Learn More",
+        linkUrl: "/organization"
+      },
+      copyright: {
+        text: `© ${new Date().getFullYear()} Baitul Mal Samajik Sanstha (Solapur). All Rights Reserved.`
+      }
+    }
 };
