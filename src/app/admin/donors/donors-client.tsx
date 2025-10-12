@@ -43,7 +43,7 @@ const anonymityOptions: AnonymityFilter[] = ["all", "anonymous", "not-anonymous"
 type SortableColumn = 'name' | 'createdAt';
 type SortDirection = 'asc' | 'desc';
 
-function DonorsPageContent({ initialDonors, error: initialError }: { initialDonors: User[], error?: string }) {
+export function DonorsPageClient({ initialDonors, error: initialError }: { initialDonors: User[], error?: string }) {
     const searchParams = useSearchParams();
     const router = useRouter();
     const nameFromUrl = searchParams.get('name');
@@ -548,12 +548,4 @@ function DonorsPageContent({ initialDonors, error: initialError }: { initialDono
         </Card>
     </div>
   )
-}
-
-export function DonorsPageClient(props: { initialDonors: User[], error?: string }) {
-    return (
-        <Suspense fallback={<div className="flex items-center justify-center p-8"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>}>
-            <DonorsPageContent {...props} />
-        </Suspense>
-    )
 }

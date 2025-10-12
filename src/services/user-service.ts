@@ -70,6 +70,12 @@ export const getUser = async (id?: string): Promise<User | null> => {
 export const getUserByUserId = async (userId: string): Promise<User | null> => {
     if (!userId) return null;
     
+    // Hardcoded check for the admin user for initial login before DB is ready
+    if (userId === 'admin') {
+        const user = await getUser('admin');
+        if (user) return user;
+    }
+    
     try {
         const adminDb = getAdminDb();
         const q = adminDb.collection(USERS_COLLECTION).where("userId", "==", userId).limit(1);

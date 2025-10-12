@@ -108,4 +108,3 @@ export const getRawTextFromImage = async (formData: FormData): Promise<{ success
         return { success: false, error };
     }
 };
-
