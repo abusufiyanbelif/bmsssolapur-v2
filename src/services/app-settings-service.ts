@@ -219,14 +219,11 @@ export const getAppSettings = async (): Promise<AppSettings> => {
     const settingsDocRef = adminDb.collection(SETTINGS_COLLECTION).doc(MAIN_SETTINGS_DOC_ID);
     const settingsDoc = await settingsDocRef.get();
     
+    let data;
     if (settingsDoc.exists) {
-      const data = settingsDoc.data();
+      data = settingsDoc.data();
       // Deep merge with defaults to handle nested objects and new settings
-      const mergedSettings = mergeDeep({ ...defaultSettings }, data);
-       if (mergedSettings.updatedAt instanceof Timestamp) {
-        mergedSettings.updatedAt = mergedSettings.updatedAt.toDate();
-      }
-      return { id: settingsDoc.id, ...mergedSettings } as AppSettings;
+      data = mergeDeep({ ...defaultSettings }, data);
     } else {
       // Document doesn't exist, so create it with defaults
       console.log("No settings document found. Creating one with default values.");
@@ -235,8 +232,16 @@ export const getAppSettings = async (): Promise<AppSettings> => {
         updatedAt: Timestamp.now(),
       };
       await settingsDocRef.set(newSettings);
-      return { id: MAIN_SETTINGS_DOC_ID, ...defaultSettings, updatedAt: new Date() } as AppSettings;
+      data = newSettings;
     }
+    
+    // Ensure timestamps are converted to Dates for serialization
+    if (data.updatedAt instanceof Timestamp) {
+        data.updatedAt = data.updatedAt.toDate();
+    }
+    
+    return { id: settingsDoc.id || MAIN_SETTINGS_DOC_ID, ...data } as AppSettings;
+
   } catch (error) {
     if (error instanceof Error && (error.message.includes('Could not load the default credentials') || error.message.includes('Could not refresh access token') || error.message.includes('permission-denied'))) {
         const permissionError = new Error("Permission Denied: The server's service account does not have permission to access Firestore. Please grant the 'Cloud Datastore User' role in IAM. Refer to TROUBLESHOOTING.md for details.");
@@ -259,11 +264,16 @@ export const updateAppSettings = async (updates: Partial<Omit<AppSettings, 'id'|
   const adminDb = getAdminDb();
   try {
     const settingsDocRef = adminDb.collection(SETTINGS_COLLECTION).doc(MAIN_SETTINGS_DOC_ID);
-    const updateWithTimestamp: Partial<AppSettings> & { updatedAt: FieldValue } = {
-        ...updates,
-        updatedAt: Timestamp.now(),
+    
+    // Use a transaction or batched write for safer updates if needed in the future
+    const updatePayload = {
+      ...updates,
+      updatedAt: FieldValue.serverTimestamp(),
     };
-    await settingsDocRef.update(updateWithTimestamp);
+
+    // Deep merge to avoid overwriting nested objects unintentionally
+    await settingsDocRef.set(updatePayload, { merge: true });
+
   } catch (error) {
     console.error("Error updating app settings: ", error);
     if (error instanceof Error) {
