@@ -1,5 +1,4 @@
 
-
 'use server';
 
 import { getAllDonations } from "@/services/donation-service";
@@ -50,6 +49,17 @@ export async function updateUser(userId: string, updates: Partial<User>) {
 export async function getQuotes(count: number = 3): Promise<Quote[]> {
     try {
         const quotes = await getInspirationalQuotes(count);
+        
+        // If the database returns no quotes (e.g., it's empty), use the fallback.
+        if (quotes.length === 0) {
+            console.log("No quotes found in DB, using fallback list.");
+            return [
+                { id: 'fb1', number: 1, text: "The believer's shade on the Day of Resurrection will be their charity.", source: "Tirmidhi", category: "Hadith", categoryTypeNumber: 2 },
+                { id: 'fb2', number: 2, text: "Charity does not decrease wealth.", source: "Sahih Muslim", category: "Hadith", categoryTypeNumber: 2 },
+                { id: 'fb3', number: 3, text: "And be steadfast in prayer and regular in charity: And whatever good ye send forth for your souls before you, ye shall find it with Allah.", source: "Quran 2:110", category: "Quran", categoryTypeNumber: 1 },
+            ];
+        }
+        
         // The result from a server action to a client component must be serializable.
         return JSON.parse(JSON.stringify(quotes));
     } catch (error) {

@@ -27,7 +27,10 @@ const getInspirationalQuotesFlow = ai.defineFlow(
                 return [];
             }
         } catch (error) {
-            console.error("Error getting quotes from database in flow, re-throwing a standard error.", error);
+            console.error("Error getting quotes from database in flow, re-throwing a standard error.", {
+                message: (error as Error)?.message,
+                stack: (error as Error)?.stack,
+            });
             // Re-throw a standard serializable error object so the server action can log it.
             if (error instanceof Error) {
                 throw new Error(error.message);
