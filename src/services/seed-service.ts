@@ -79,7 +79,7 @@ export type SeedResult = {
 
 const seedUsers = async (users: Omit<User, 'id' | 'createdAt' | 'userKey'>[]): Promise<string[]> => {
     await ensureFirebaseAdminInitialized();
-    const db = getAdminDb();
+    const db = await getAdminDb();
     const results: string[] = [];
 
     for (const userData of users) {
@@ -113,7 +113,7 @@ const seedUsers = async (users: Omit<User, 'id' | 'createdAt' | 'userKey'>[]): P
 
 const seedOrganization = async (): Promise<string> => {
     await ensureFirebaseAdminInitialized();
-    const db = getAdminDb();
+    const db = await getAdminDb();
     const orgCollectionRef = db.collection('organizations');
     const existingOrgSnapshot = await orgCollectionRef.limit(1).get();
 
