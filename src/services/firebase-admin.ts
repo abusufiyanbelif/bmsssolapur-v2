@@ -82,7 +82,7 @@ export const ensureCollectionsExist = async (): Promise<{ success: boolean; crea
             }
         } catch (e) {
             const errorMsg = `CRITICAL ERROR: Failed to ensure collection "${collectionName}" exists.`;
-            console.error(errorMsg, e instanceof Error ? { message: e.message, stack: e.stack } : e);
+            console.error(errorMsg, e);
             errors.push(errorMsg);
         }
     }
@@ -93,15 +93,19 @@ export const ensureCollectionsExist = async (): Promise<{ success: boolean; crea
 
 const initializeFirebaseAdmin = async () => {
   if (admin.apps.length === 0) {
+    console.log("Initializing Firebase Admin SDK...");
     try {
-      console.log("Initializing Firebase Admin SDK using Application Default Credentials...");
+      const keyData = process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON;
+      if (!keyData) {
+        throw new Error("Missing GOOGLE_APPLICATION_CREDENTIALS_JSON env var. Cannot initialize Admin SDK.");
+      }
+      
+      const credentials = JSON.parse(keyData);
       admin.initializeApp({
-        // Using applicationDefault() is the standard and most portable way.
-        // It works automatically in Cloud environments and locally with `gcloud auth application-default login`.
-        credential: admin.credential.applicationDefault(),
-        projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || 'baitul-mal-connect',
+        credential: admin.credential.cert(credentials),
       });
-      console.log('Firebase Admin SDK initialized successfully.');
+
+      console.log('Firebase Admin SDK initialized successfully using environment variable.');
     } catch (e) {
       console.error("Firebase Admin SDK initialization error:", e);
       throw new Error("Failed to initialize Firebase Admin SDK. Check server logs and credentials.");
