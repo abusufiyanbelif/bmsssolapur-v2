@@ -2,11 +2,10 @@
 import { config } from 'dotenv';
 config();
 
-// Import the 'ai' object to ensure it is initialized before flows are defined.
+// This must be the first import to avoid circular dependencies.
 import '@/ai/genkit';
 
-// This file is now the central point for importing and registering all Genkit flows.
-// This resolves the circular dependency that was causing the server to crash.
+// Import all flow files to register them with the Genkit AI instance.
 import '@/ai/flows/configuration-validator';
 import '@/ai/flows/extract-beneficiary-details-flow';
 import '@/ai/flows/extract-donation-details-flow';
