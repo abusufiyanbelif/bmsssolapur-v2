@@ -1,4 +1,5 @@
 
+
 'use server';
 
 import { getAllDonations } from "@/services/donation-service";
@@ -63,9 +64,9 @@ export async function getQuotes(count: number = 3): Promise<Quote[]> {
         // The result from a server action to a client component must be serializable.
         return JSON.parse(JSON.stringify(quotes));
     } catch (error) {
-        // Log the full error to the server console for debugging.
-        console.error("Server action getQuotes failed:", error);
-        // Fallback to a simple list if service fails. The service layer will log specifics.
+        // This will now receive a proper error object with a message.
+        console.error("Server action getQuotes failed:", error instanceof Error ? error.message : error);
+        // Fallback to a simple list if service fails.
         return [
             { id: 'fb1', number: 1, text: "The believer's shade on the Day of Resurrection will be their charity.", source: "Tirmidhi", category: "Hadith", categoryTypeNumber: 2 },
             { id: 'fb2', number: 2, text: "Charity does not decrease wealth.", source: "Sahih Muslim", category: "Hadith", categoryTypeNumber: 2 },
