@@ -99,16 +99,16 @@ export const eraseAllQuotes = async (): Promise<number> => {
         return 0;
     }
 
-    const batch = adminDb.batch();
-    snapshot.docs.forEach(doc => {
-        batch.delete(doc.ref);
-    });
-    await batch.commit();
-
-    // If there might be more than 500, recurse
-    if (snapshot.size === 500) {
-        return snapshot.size + await eraseAllQuotes();
+    let deletedCount = 0;
+    // Process in batches of 500
+    for (let i = 0; i < snapshot.docs.length; i += 500) {
+        const batch = adminDb.batch();
+        const chunk = snapshot.docs.slice(i, i + 500);
+        chunk.forEach(doc => {
+            batch.delete(doc.ref);
+        });
+        await batch.commit();
+        deletedCount += chunk.length;
     }
-
-    return snapshot.size;
+    return deletedCount;
 }

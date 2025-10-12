@@ -6,7 +6,7 @@ import { Loader2 } from "lucide-react";
 import { getOpenGeneralLeads, getPublicCampaigns, getPublicDashboardData, getQuotes } from "@/app/home/actions";
 import type { Quote } from "@/services/types";
 
-// This Server Component fetches all necessary data for the public homepage.
+// This is now a true Server Component that fetches all data for the public page.
 async function PublicHomePageLoader() {
   
   let quotes: Quote[];
@@ -30,6 +30,7 @@ async function PublicHomePageLoader() {
           { id: 'fb1', number: 1, text: "The believer's shade on the Day of Resurrection will be their charity.", source: "Tirmidhi", category: "Hadith", categoryTypeNumber: 2 },
       ];
   }
+
 
   return (
     <PublicHomePage
