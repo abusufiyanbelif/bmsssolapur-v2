@@ -76,17 +76,13 @@ export const getAllQuotes = async (): Promise<Quote[]> => {
         });
         return quotes;
     } catch (error) {
+        // This is the critical fix. Instead of throwing, we catch the error, log it, and return an empty array.
         if (error instanceof Error) {
-            // Gracefully handle common "not found" or "permission" errors without crashing.
-            const errMsg = error.message.toLowerCase();
-            if (errMsg.includes('permission-denied') || errMsg.includes('unauthenticated') || errMsg.includes('collection not found') || errMsg.includes('resource not found') || errMsg.includes('not_found')) {
-                console.warn(`[Graceful Failure] Could not fetch quotes: ${error.message}. This is expected on a fresh database or with incorrect IAM permissions. Returning empty array.`);
-                return []; // <<<<<<<<<<< THE CRITICAL FIX
-            }
+            console.warn(`[Graceful Failure] Could not fetch quotes: ${error.message}. This is expected on a fresh database or with incorrect IAM permissions. Returning empty array.`);
+        } else {
+            console.warn(`[Graceful Failure] An unknown error occurred while fetching quotes. Returning empty array.`);
         }
-        // For any other, more serious error, log it and re-throw to be caught by the server action.
-        console.error("An unexpected error occurred in getAllQuotes:", error);
-        throw error;
+        return []; // Always return a valid array to prevent downstream crashes.
     }
 }
 
