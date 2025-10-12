@@ -15,7 +15,7 @@ import { getAllDonations as getAllDonationsService, type Donation } from '@/serv
  */
 export async function performPermissionCheck(): Promise<{success: boolean, error?: string}> {
     try {
-        const adminDb = getAdminDb();
+        const adminDb = await getAdminDb();
         // Attempt to access a non-existent document. This is a lightweight operation.
         const nonExistentDocRef = adminDb.collection("permission-check").doc("heartbeat");
         await nonExistentDocRef.get();
