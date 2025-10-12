@@ -113,50 +113,6 @@ const initializeFirebaseAdmin = () => {
   if (!adminAuthInstance) {
     adminAuthInstance = admin.auth();
   }
-
-  // On the very first initialization of the server, check for critical system users and collections.
-  if (isFirstInit && adminDbInstance) {
-    isFirstInit = false; // Ensure this only runs once per server start
-    
-    const runInitialChecks = async () => {
-        // Auto-create essential collections
-        await ensureCollectionsExist();
-        
-        // Auto-create the main 'admin' user
-        await ensureSystemUserExists(adminDbInstance!, {
-            name: "admin",
-            userId: "admin",
-            firstName: "Admin",
-            lastName: "User",
-            fatherName: "System",
-            email: "admin@example.com",
-            phone: "9999999999",
-            password: "password",
-            roles: ["Super Admin"],
-            privileges: ["all"],
-            isActive: true,
-            gender: 'Male',
-            source: 'Seeded',
-        });
-
-        // Auto-create the 'anonymous_donor' user
-        await ensureSystemUserExists(adminDbInstance!, {
-            name: "Anonymous Donor",
-            userId: "anonymous_donor",
-            firstName: "Anonymous",
-            lastName: "Donor",
-            email: "anonymous@system.local",
-            phone: "0000000000",
-            password: "N/A",
-            roles: [],
-            isActive: false,
-            gender: 'Other',
-            source: 'Seeded',
-        });
-    };
-    // Run these checks in the background without blocking the main thread
-    runInitialChecks().catch(console.error);
-  }
 };
 
 // Use getters to ensure initialization happens on first use.

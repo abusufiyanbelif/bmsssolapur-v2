@@ -18,6 +18,7 @@
     "seed:payment-gateways": "tsx src/scripts/seed/seed-payment-gateways.ts",
     "seed:sample-data": "tsx src/scripts/seed/seed-sample-data.ts",
     "seed:sync-auth": "tsx src/scripts/seed/sync-auth.ts",
+    "seed:ensure-collections": "tsx src/scripts/seed/ensure-collections.ts",
     "test:db": "tsx src/scripts/test-db.ts",
     "test:twilio": "tsx src/scripts/test-twilio.ts",
     "test:nodemailer": "tsx src/scripts/test-nodemailer.ts",

@@ -1,9 +1,10 @@
 
+
 /**
  * @fileOverview Centralized type definitions for the application's data models.
  */
 
-import type { Timestamp, FieldValue } from 'firebase/firestore';
+import type { Timestamp, FieldValue } from 'firebase-admin/firestore';
 
 // User-related types
 export type UserRole = 
