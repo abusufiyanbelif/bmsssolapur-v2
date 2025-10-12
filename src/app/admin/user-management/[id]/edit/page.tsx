@@ -1,4 +1,5 @@
 
+
       
 import { getUser } from "@/services/user-service";
 import { notFound } from "next/navigation";
@@ -15,7 +16,7 @@ export default async function EditUserPage({ params }: { params: { id: string } 
     if (!user) {
         notFound();
     }
-
+    
     // CRITICAL FIX: Ensure the user object is plain and serializable
     // by stringifying and parsing it before passing to the Client Component.
     const plainUser = JSON.parse(JSON.stringify(user));

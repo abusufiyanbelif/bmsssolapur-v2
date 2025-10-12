@@ -124,7 +124,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 getCurrentOrganization()
             ]);
 
-            setOrganization(orgData);
+            setOrganization(orgData ? JSON.parse(JSON.stringify(orgData)) : null);
 
             if (!permissionResult.success && permissionResult.error) {
                 setPermissionError(permissionResult.error);

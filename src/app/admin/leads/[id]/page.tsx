@@ -24,7 +24,7 @@ import { AuditTrail } from "./audit-trail";
 import { VerificationStatusCard } from "./verification-status-card";
 import { getAllUsers } from "@/services/user-service";
 import { AllocateDonationsDialog } from "./allocate-donations-dialog";
-import { getAppSettings } from "@/app/admin/settings/actions";
+import { getAppSettings } from "@/services/app-settings-service";
 
 // Helper data for styling statuses
 const statusColors: Record<Lead['caseAction'], string> = {
@@ -256,7 +256,7 @@ export default async function LeadDetailPage({ params }: { params: { id: string 
                             </div>
                             <div className="flex gap-2">
                                  <AddTransferDialog leadId={lead.id!} />
-                                 <AllocateDonationsDialog lead={lead} allDonations={allDonations} />
+                                 <AllocateDonationsDialog lead={JSON.parse(JSON.stringify(lead))} allDonations={JSON.parse(JSON.stringify(allDonations))} />
                             </div>
                         </CardHeader>
                         <CardContent>
@@ -374,7 +374,7 @@ export default async function LeadDetailPage({ params }: { params: { id: string 
                          </CardContent>
                     </Card>
                     
-                    <AuditTrail lead={lead} activityLogs={activityLogs} />
+                    <AuditTrail lead={JSON.parse(JSON.stringify(lead))} activityLogs={JSON.parse(JSON.stringify(activityLogs))} />
 
                 </div>
                 
@@ -433,7 +433,7 @@ export default async function LeadDetailPage({ params }: { params: { id: string 
                         </CardContent>
                     </Card>
                     {showVerificationStatusCard && (
-                         <VerificationStatusCard lead={lead} allApprovers={allUsers} />
+                         <VerificationStatusCard lead={JSON.parse(JSON.stringify(lead))} allApprovers={JSON.parse(JSON.stringify(allUsers))} />
                     )}
                     <Card>
                         <CardHeader>
@@ -459,7 +459,7 @@ export default async function LeadDetailPage({ params }: { params: { id: string 
                                     </div>
                                     <div className="flex justify-between">
                                         <span className="text-muted-foreground">Member Since</span>
-                                        <span className="font-semibold">{format(beneficiary.createdAt, 'dd MMM yyyy')}</span>
+                                        <span className="font-semibold">{format((beneficiary.createdAt as any).toDate ? (beneficiary.createdAt as any).toDate() : new Date(beneficiary.createdAt), 'dd MMM yyyy')}</span>
                                     </div>
                                 </>
                             ) : (
