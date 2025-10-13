@@ -290,7 +290,10 @@ export default function SeedPage() {
                                                 </ul>
                                             </li>
                                             <li>
-                                                <strong>Winter Relief 2024 Campaign (Active):</strong> 2 open leads for winter kits.
+                                                <strong>Winter Relief 2025 Campaign (Active):</strong> 2 open leads for winter kits.
+                                             </li>
+                                             <li>
+                                                <strong>SIO Flood Relief Campaign 2024 (Active):</strong> A campaign for immediate flood relief efforts.
                                              </li>
                                              <li>
                                                 <strong>Ramadan 2026 Campaign (Upcoming):</strong> 2 leads for future ration kits.
