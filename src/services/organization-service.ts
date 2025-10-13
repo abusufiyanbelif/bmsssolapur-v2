@@ -1,4 +1,3 @@
-
 /**
  * @fileOverview Service for managing organization data in Firestore.
  */
@@ -137,8 +136,15 @@ const convertGsToHttps = (gsUri?: string): string | undefined => {
 
 // For now, we will assume one organization for this project.
 export const getCurrentOrganization = async (): Promise<Organization | null> => {
+    let adminDb;
     try {
-        const adminDb = await getAdminDb();
+        adminDb = await getAdminDb();
+    } catch (initError) {
+        console.warn(`[Graceful Failure] Could not initialize Admin DB in getCurrentOrganization: ${(initError as Error).message}. This may happen if credentials are not set up.`);
+        return null;
+    }
+    
+    try {
         const orgQuery = query(adminDb.collection(ORGANIZATIONS_COLLECTION), limit(1));
         const querySnapshot = await getDocs(orgQuery);
         if (!querySnapshot.empty) {
