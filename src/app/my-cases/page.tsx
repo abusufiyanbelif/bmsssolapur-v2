@@ -15,7 +15,7 @@ import { format } from "date-fns";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import type { Lead, LeadAction, AppSettings } from "@/services/types";
-import { getAppSettings } from "@/services/app-settings-service";
+import { getAppSettings } from "@/app/admin/settings/actions";
 
 const statusColors: Record<LeadAction, string> = {
     "Pending": "bg-yellow-500/20 text-yellow-700 border-yellow-500/30",

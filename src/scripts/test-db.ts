@@ -1,13 +1,9 @@
 
-import { getAdminDb, ensureFirebaseAdminInitialized } from './../services/firebase-admin';
+import { getAdminDb } from './../services/firebase-admin';
 
 async function testDatabaseConnection() {
   console.log('Attempting to connect to Firestore using Application Default Credentials...');
   try {
-    // Await the initialization to ensure everything is ready
-    await ensureFirebaseAdminInitialized();
-    
-    // Now that initialization is complete, we can safely get the DB instance.
     const adminDb = await getAdminDb();
     
     // Perform a simple read operation to confirm permissions.

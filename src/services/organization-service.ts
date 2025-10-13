@@ -135,7 +135,7 @@ const convertGsToHttps = (gsUri?: string): string | undefined => {
 };
 
 
-// For now, we will assume one organization for simplicity. This can be expanded later.
+// For now, we will assume one organization for this project.
 export const getCurrentOrganization = async (): Promise<Organization | null> => {
     try {
         const adminDb = await getAdminDb();
