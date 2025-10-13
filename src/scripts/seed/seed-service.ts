@@ -4,12 +4,9 @@
  */
 
 import { getFirestore, Timestamp, FieldValue } from 'firebase-admin/firestore';
-import type { User, UserRole, Lead, Verifier, LeadDonationAllocation, Donation, Campaign, FundTransfer, LeadAction, AppSettings, OrganizationFooter } from '../types';
-import { quranQuotes } from '../quotes/quran';
-import { hadithQuotes } from '../quotes/hadith';
-import { scholarQuotes } from '../quotes/scholars';
-import { getAdminDb, getAdminAuth, ensureFirebaseAdminInitialized } from '../firebase-admin'; // Import the async getters
-
+import type { User, UserRole, Lead, Verifier, LeadDonationAllocation, Donation, Campaign, FundTransfer, LeadAction, AppSettings, OrganizationFooter } from '@/services/types';
+import { seedInitialQuotes } from '@/services/quotes-service';
+import { getAdminDb, getAdminAuth } from '@/services/firebase-admin';
 
 // Re-export type for backward compatibility
 export type { User, UserRole };
@@ -77,7 +74,7 @@ export type SeedResult = {
     details?: string[];
 };
 
-const seedUsers = async (users: Omit<User, 'id' | 'createdAt' | 'userKey'>[]): Promise<string[]> => {
+export const seedUsers = async (users: Omit<User, 'id' | 'createdAt' | 'userKey'>[]): Promise<string[]> => {
     const db = await getAdminDb();
     const results: string[] = [];
 
@@ -112,21 +109,17 @@ const seedUsers = async (users: Omit<User, 'id' | 'createdAt' | 'userKey'>[]): P
 
 const seedOrganization = async (): Promise<string> => {
     const db = await getAdminDb();
-    const orgCollectionRef = db.collection('organizations');
-    const existingOrgSnapshot = await orgCollectionRef.limit(1).get();
-
-    if (!existingOrgSnapshot.empty) {
-        const orgDocRef = existingOrgSnapshot.docs[0].ref;
-        await orgDocRef.set({ ...organizationToSeed, updatedAt: FieldValue.serverTimestamp() }, { merge: true });
-        return "Organization profile updated with seed data.";
-    }
+    const orgDocRef = db.collection('organizations').doc('main_org');
     
-    await orgCollectionRef.doc('main_org').set({ ...organizationToSeed, createdAt: FieldValue.serverTimestamp(), updatedAt: FieldValue.serverTimestamp() });
-    return "Organization profile created successfully.";
+    // Always overwrite with the seed data to ensure consistency.
+    await orgDocRef.set({ ...organizationToSeed, updatedAt: FieldValue.serverTimestamp() }, { merge: false });
+    
+    return "Organization profile seeded/updated successfully.";
 };
 
+
 /**
- * Deletes all documents in a collection in batches of 500.
+ * Deletes all documents in a collection in batches.
  * @param collectionPath The path of the collection to delete.
  * @returns A message indicating the result.
  */
@@ -135,28 +128,29 @@ const deleteCollection = async (collectionPath: string): Promise<string> => {
     const collectionRef = db.collection(collectionPath);
     let totalDeleted = 0;
     
-    // eslint-disable-next-line no-constant-condition
+    // eslint-disable-next-line no-constant-expression
     while (true) {
-        // Fetch the next batch of documents to delete
         const snapshot = await collectionRef.limit(500).get();
-
-        // When there are no documents left, we are done
-        if (snapshot.size === 0) {
-            break; // No more documents to delete
+        if (snapshot.empty) {
+            break; 
         }
         
-        // Delete documents in a batch
         const batch = db.batch();
         snapshot.docs.forEach(doc => {
-            batch.delete(doc.ref);
+            // CRITICAL FIX: Do NOT delete the _init_ document. If the collection is needed again, it should exist.
+            if (doc.id !== '_init_') {
+                 batch.delete(doc.ref);
+            }
         });
 
-        await batch.commit();
-        totalDeleted += snapshot.size;
+        const deletedInBatch = snapshot.docs.filter(d => d.id !== '_init_').length;
+        if(deletedInBatch > 0) {
+          await batch.commit();
+          totalDeleted += deletedInBatch;
+        }
         
-        // This check is the fix. The loop will only exit when the snapshot is truly empty.
-        // It's a bit of a safeguard in case the limit() behavior isn't what's expected.
-        if (snapshot.size < 500) {
+        // If the only doc left is _init_ or snapshot size is less than batch size, we are done
+        if (snapshot.size < 500 || (snapshot.size === 1 && snapshot.docs[0].id === '_init_')) {
             break;
         }
     }
@@ -171,14 +165,14 @@ const deleteCollection = async (collectionPath: string): Promise<string> => {
 
 
 // --- EXPORTED SEEDING FUNCTIONS ---
-export { ensureCollectionsExist } from './firebase-admin';
+export { ensureCollectionsExist } from '@/services/firebase-admin';
 
 export const seedInitialUsersAndQuotes = async (): Promise<SeedResult> => {
     const orgStatus = await seedOrganization();
-    // seedQuotesService is now handled inside ensureCollectionsExist on startup
+    const quotesStatus = await seedInitialQuotes();
     return {
         message: 'Initial Seeding Complete',
-        details: [orgStatus, "The 'admin' and 'anonymous_donor' users are automatically created on startup."]
+        details: [orgStatus, quotesStatus, "The 'admin' and 'anonymous_donor' users are automatically created on startup."]
     };
 };
 
@@ -206,8 +200,64 @@ export const seedPaymentGateways = async (): Promise<SeedResult> => {
     return { message: "Payment Gateway seeding is not fully implemented yet." };
 };
 
+export const seedCampaigns = async (campaigns: Omit<Campaign, 'createdAt' | 'updatedAt'>[]): Promise<string> => {
+    const db = await getAdminDb();
+    const batch = db.batch();
+    let count = 0;
+    
+    for (const campaignData of campaigns) {
+        const docRef = db.collection('campaigns').doc(campaignData.id);
+        const dataToWrite = { ...campaignData, createdAt: FieldValue.serverTimestamp(), updatedAt: FieldValue.serverTimestamp() };
+        batch.set(docRef, dataToWrite, { merge: true });
+        
+        const enriched = await enrichCampaignWithPublicStats(dataToWrite as Campaign);
+        await updatePublicCampaign(enriched, enriched.status === 'Cancelled');
+        
+        count++;
+    }
+
+    await batch.commit();
+    return `Seeded ${count} campaigns.`;
+}
+
+export const seedLeads = async (leads: Omit<Lead, 'id' | 'createdAt' | 'updatedAt'>[]): Promise<string> => {
+    const db = await getAdminDb();
+    const batch = db.batch();
+    let count = 0;
+
+    for (const leadData of leads) {
+        const userKey = (await db.collection('users').doc(leadData.beneficiaryId!).get()).data()?.userKey || `U${count}`;
+        const leadCount = (await db.collection('leads').where('beneficiaryId', '==', leadData.beneficiaryId!).count().get()).data().count;
+        const leadId = `${userKey}_${leadCount + 1}_${format(new Date(), 'ddMMyyyy')}`;
+
+        const docRef = db.collection('leads').doc(leadId);
+        batch.set(docRef, { ...leadData, dateCreated: Timestamp.now(), createdAt: FieldValue.serverTimestamp(), updatedAt: FieldValue.serverTimestamp() }, { merge: true });
+        count++;
+    }
+
+    await batch.commit();
+    return `Seeded ${count} leads.`;
+}
+
+export const seedDonations = async (donations: Omit<Donation, 'id'>[]): Promise<string> => {
+    const db = await getAdminDb();
+    const batch = db.batch();
+    let count = 0;
+
+    for (const donationData of donations) {
+        const docRef = db.collection('donations').doc(); // Auto-generate ID for donations
+        batch.set(docRef, { ...donationData, createdAt: FieldValue.serverTimestamp() }, { merge: true });
+        count++;
+    }
+
+    await batch.commit();
+    return `Seeded ${count} donations.`;
+}
+
+
 export const seedSampleData = async (): Promise<SeedResult> => {
-    return { message: "Sample Data seeding is not fully implemented yet." };
+    const { seedSampleData: doSeed } = await import('../scripts/seed/seed-sample-data');
+    return doSeed();
 };
 
 export const eraseInitialUsersAndQuotes = async (): Promise<SeedResult> => {
@@ -226,7 +276,6 @@ export const eraseCoreTeam = async (): Promise<SeedResult> => {
         return { message: "No core team members defined in the seed file." };
     }
 
-    // Firestore has a limit of 10 items for 'in' queries. Process in chunks.
     const chunks = [];
     for (let i = 0; i < coreTeamPhones.length; i += 10) {
         chunks.push(coreTeamPhones.slice(i, i + 10));
@@ -239,10 +288,9 @@ export const eraseCoreTeam = async (): Promise<SeedResult> => {
         if (!snapshot.empty) {
             for (const userDoc of snapshot.docs) {
                 try {
-                    // Delete from Auth first
                     await auth.deleteUser(userDoc.id);
                 } catch (e: any) {
-                    if (e.code !== 'auth/user-not-found') throw e; // Re-throw if it's not a "not found" error
+                    if (e.code !== 'auth/user-not-found') throw e;
                 }
                 await userDoc.ref.delete();
                 deletedCount++;
@@ -270,6 +318,17 @@ export const eraseSampleData = async (): Promise<SeedResult> => {
     for (const collection of collectionsToDelete) {
         results.push(await deleteCollection(collection));
     }
+    // Also remove sample users
+    const db = await getAdminDb();
+    const sampleUsersQuery = db.collection(USERS_COLLECTION).where('source', '==', 'Seeded');
+    const sampleUsersSnapshot = await sampleUsersQuery.get();
+    if (!sampleUsersSnapshot.empty) {
+      const batch = db.batch();
+      sampleUsersSnapshot.docs.forEach(doc => batch.delete(doc.ref));
+      await batch.commit();
+      results.push(`Deleted ${sampleUsersSnapshot.size} sample user documents.`);
+    }
+
     return { message: "Sample data erased.", details: results };
 };
 
@@ -292,7 +351,58 @@ export const eraseFirebaseAuthUsers = async (): Promise<SeedResult> => {
 };
 
 export const syncUsersToFirebaseAuth = async (): Promise<SeedResult> => {
-    return { message: "Sync to Firebase Auth is not fully implemented yet." };
+    const adminDb = await getAdminDb();
+    const adminAuth = await getAdminAuth();
+    
+    const usersSnapshot = await adminDb.collection(USERS_COLLECTION).get();
+    
+    let createdCount = 0;
+    let skippedCount = 0;
+    let failedCount = 0;
+    const details: string[] = [];
+
+    for (const userDoc of usersSnapshot.docs) {
+        const user = userDoc.data() as User;
+        const userId = userDoc.id;
+
+        try {
+            // Check if user already exists in Auth
+            await adminAuth.getUser(userId);
+            skippedCount++;
+        } catch (error: any) {
+            if (error.code === 'auth/user-not-found') {
+                // User does not exist, so create them
+                try {
+                    const authUserPayload: admin.auth.CreateRequest = {
+                        uid: userId,
+                        email: user.email,
+                        phoneNumber: user.phone ? `+91${user.phone}` : undefined,
+                        displayName: user.name,
+                        password: user.password,
+                        disabled: !user.isActive,
+                    };
+
+                    await adminAuth.createUser(authUserPayload);
+                    createdCount++;
+                    details.push(`Created Auth record for ${user.name} (${user.email || user.phone}).`);
+                } catch (creationError: any) {
+                    failedCount++;
+                    const errorMessage = `Failed to create Auth record for ${user.name}: ${creationError.message}`;
+                    console.error(errorMessage);
+                    details.push(errorMessage);
+                }
+            } else {
+                // Some other error occurred when checking for the user
+                failedCount++;
+                const errorMessage = `Error checking Auth status for ${user.name}: ${error.message}`;
+                console.error(errorMessage);
+                details.push(errorMessage);
+            }
+        }
+    }
+
+    const message = `Sync complete. Created: ${createdCount}, Skipped: ${skippedCount}, Failed: ${failedCount}.`;
+    return { message, details };
 };
 
 // --- DATA TO BE SEEDED ---
@@ -300,6 +410,7 @@ export const syncUsersToFirebaseAuth = async (): Promise<SeedResult> => {
 const organizationToSeed = {
     id: "main_org",
     name: "Baitul Mal Samajik Sanstha (Solapur)",
+    logoUrl: "https://firebasestorage.googleapis.com/v0/b/baitul-mal-connect.appspot.com/o/app-assets%2Flogo-new.png?alt=media&token=e5079a49-2723-4d22-b91c-297c357662c2",
     address: "123 Muslim Peth",
     city: "Solapur",
     registrationNumber: "MAHA/123/2024/SOLAPUR",
@@ -311,6 +422,7 @@ const organizationToSeed = {
     bankAccountNumber: "012345678901",
     bankIfscCode: "ICIC0001234",
     upiId: "baitulmal.solapur@okaxis",
+    qrCodeUrl: "https://firebasestorage.googleapis.com/v0/b/baitul-mal-connect.appspot.com/o/app-assets%2Fupi-qr-code.png?alt=media&token=c1374b76-b568-450f-90de-3f191195a63c",
     hero: {
         title: "Empowering Our Community, One Act of Kindness at a Time.",
         description: "Join BaitulMal Samajik Sanstha (Solapur) to make a lasting impact. Your contribution brings hope, changes lives, and empowers our community."
@@ -355,4 +467,3 @@ const organizationToSeed = {
     }
 };
 
-    
