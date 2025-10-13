@@ -95,18 +95,18 @@ A lead progresses through several stages, primarily managed by its `caseVerifica
 
 2.  **Verification (`Verified` / `Rejected`):**
     -   An admin reviews the lead's details and documents.
-    -   If approved, `caseVerification` becomes **'Verified'**. The system automatically updates `caseAction` to **'Ready For Help'**.
+    -   If approved, `caseVerification` becomes **'Verified'**. The `caseAction` status is automatically updated to **'Ready For Help'**.
     -   If rejected, `caseVerification` becomes **'Rejected'**, and the lead is removed from active queues.
 
 3.  **Publishing (`Publish`):**
     -   A lead with the `caseAction` of **'Ready For Help'** appears in the "Leads Ready for Publishing" section on the Admin Dashboard.
-    -   An admin can choose to publish the lead, which sets its `caseAction` to **'Publish'**.
+    -   An admin can click "Publish" on the dashboard or edit the lead and set the `caseAction` to **'Publish'**.
     -   This action makes the lead visible on the `/public-leads` page for public donation.
 
 4.  **Funding (`Partial` / `Complete`):**
     -   As donations are allocated to the lead, its `helpGiven` amount increases.
     -   If `helpGiven` is greater than 0 but less than `helpRequested`, the `caseAction` can be considered **'Partial'**.
-    -   Once `helpGiven` meets or exceeds `helpRequested`, the `caseStatus` becomes **'Complete'**.
+    -   Once `helpGiven` meets or exceeds `helpRequested`, the `caseAction` becomes **'Complete'**.
 
 5.  **Closure (`Closed`):**
     -   After funds are fully transferred to the beneficiary, an admin manually sets the `caseAction` to **'Closed'**.

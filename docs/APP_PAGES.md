@@ -73,6 +73,7 @@ These pages are for administrative and management tasks. Access may vary slightl
 | **Organization Profile** | `/admin/organization` | Edit the organization's public details, contact info, and payment settings. |
 | **Board Members** | `/admin/board-management` | View and manage the list of official board members. |
 | **Letterhead** | `/admin/organization/letterhead` | Generate and download official organization letterhead. |
+| **Layout & Footer** | `/admin/organization/layout` | Customize the content of the main site header and footer. |
 
 ### Campaign Management
 | Page | Path | Description |

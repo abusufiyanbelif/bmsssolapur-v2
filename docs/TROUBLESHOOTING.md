@@ -1,4 +1,3 @@
-
 # Troubleshooting Guide
 
 This document provides solutions to common issues encountered during development.
@@ -12,9 +11,10 @@ This document provides solutions to common issues encountered during development
 - `Could not reach Cloud Firestore backend.`
 - `7 PERMISSION_DENIED: Missing or insufficient permissions.`
 - `Seeding Failed - UNKNOWN: Getting metadata from plugin failed with error: Could not refresh access token`
+- `Credential implementation provided to initializeApp() via the "credential" property has insufficient permission...`
 
 **Cause:**
-This is the most common category of errors. It means your application's environment—whether it's your local machine or the deployed Firebase App Hosting server—is not authorized to communicate with your Google Cloud services, especially Firestore.
+This is the most common category of errors. It means your application's environment—whether it's your local machine or the deployed Firebase App Hosting server—is not authorized to communicate with your Google Cloud services, especially Firestore and Firebase Authentication.
 
 ---
 
@@ -36,17 +36,31 @@ If you see this error while running the app on your local computer (e.g., when s
 
 If you see this error in your deployed application, it means the App Hosting service account needs to be granted permission to access the database and other services.
 
-1.  Go to the **[IAM & Admin page](https://console.cloud.google.com/iam-admin/iam)** in your Google Cloud Console.
-2.  Make sure you have selected the correct project (`baitul-mal-connect`).
-3.  Find the service account with the name **"Firebase App Hosting compute engine default service account"**. Its email will look like `[PROJECT_NUMBER]-compute@developer.gserviceaccount.com`.
-4.  Click the **pencil icon** (Edit principal) for that row.
-5.  In the slide-out panel, click **+ ADD ANOTHER ROLE**.
-6.  Search for and add the following roles, one by one:
-    *   **Cloud Datastore User**: Required for reading from and writing to Firestore.
-    *   **Firebase Admin**: **Required for managing users in Firebase Authentication (e.g., creating, deleting, or syncing them from the seed page).**
-    *   **Storage Admin**: Required for listing and accessing files in Firebase Storage.
-7.  Click **SAVE**.
-8.  The change should take effect within a minute or two. The application will then have the correct permissions to access all backend services.
+1.  **Run the Verification Script**: The easiest way to diagnose and fix this is to use the built-in script. Run the following command in your terminal:
+    ```bash
+    npm run verify:iam
+    ```
+    This will check for missing roles.
+
+2.  **Run the Fix Script**: If the verification script reports missing roles, run the auto-fix command:
+    ```bash
+    npm run fix:iam
+    ```
+    This script will automatically grant all the necessary roles to your App Hosting service account.
+
+3.  **Manual Steps (If Needed)**: If the script fails, you can perform the steps manually:
+    -   Go to the **[IAM & Admin page](https://console.cloud.google.com/iam-admin/iam)** in your Google Cloud Console.
+    -   Make sure you have selected the correct project (`baitul-mal-connect`).
+    -   Find the service account with the name **"Firebase App Hosting compute engine default service account"**. Its email will look like `[PROJECT_NUMBER]-compute@developer.gserviceaccount.com`.
+    -   Click the **pencil icon** (Edit principal) for that row.
+    -   In the slide-out panel, click **+ ADD ANOTHER ROLE**.
+    -   Search for and add the following roles, one by one:
+        *   **Firebase Admin**: **(Critical)** Required for managing users in Firebase Authentication (creating, deleting, or syncing them).
+        *   **Cloud Datastore User**: Required for reading from and writing to Firestore.
+        *   **AI Platform User**: Required for generative AI features to work.
+        *   **Storage Admin**: Required for listing and accessing files in Firebase Storage.
+        *   **Logging Viewer**: Recommended for debugging server logs.
+    -   Click **SAVE**. The application will then have the correct permissions.
 
 ---
 
