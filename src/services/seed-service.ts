@@ -143,22 +143,15 @@ const deleteCollection = async (collectionPath: string): Promise<string> => {
         }
         
         const batch = db.batch();
-        let docsInBatch = 0;
         snapshot.docs.forEach(doc => {
-            // Do not delete the placeholder document used for creation
-            if(doc.id !== '_init_') {
-              batch.delete(doc.ref);
-              docsInBatch++;
-            }
+            batch.delete(doc.ref);
         });
 
         await batch.commit();
-        totalDeleted += docsInBatch;
+        totalDeleted += snapshot.size;
         
-        // If we deleted less than the batch size, we're done.
-        if (snapshot.size < 500) {
-            break;
-        }
+        // This check is the fix. We continue the loop as long as we deleted something.
+        // The loop will only exit when the snapshot is truly empty.
     }
 
     if (totalDeleted === 0) {
@@ -225,15 +218,16 @@ export const eraseCoreTeam = async (): Promise<SeedResult> => {
         const q = db.collection(USERS_COLLECTION).where('phone', '==', phone);
         const snapshot = await q.get();
         if (!snapshot.empty) {
-            const userDoc = snapshot.docs[0];
-            try {
-                // Delete from Auth first
-                await auth.deleteUser(userDoc.id);
-            } catch (e: any) {
-                if (e.code !== 'auth/user-not-found') throw e; // Re-throw if it's not a "not found" error
+            for (const userDoc of snapshot.docs) {
+                try {
+                    // Delete from Auth first
+                    await auth.deleteUser(userDoc.id);
+                } catch (e: any) {
+                    if (e.code !== 'auth/user-not-found') throw e; // Re-throw if it's not a "not found" error
+                }
+                await userDoc.ref.delete();
+                deletedCount++;
             }
-            await userDoc.ref.delete();
-            deletedCount++;
         }
     }
     return { message: `Erased ${deletedCount} core team member(s) from Firestore and Firebase Auth.` };
