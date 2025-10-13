@@ -138,21 +138,8 @@ const runPostInitTasks = async () => {
     try {
         await Promise.all([
             ensureCollectionsExist(),
-            ensureSystemUserExists(adminDbInstance, {
-                name: "admin",
-                userId: "admin",
-                firstName: "Admin",
-                lastName: "User",
-                fatherName: "System",
-                email: "admin@example.com",
-                phone: "9999999999",
-                password: "password",
-                roles: ["Super Admin"],
-                privileges: ["all"],
-                isActive: true,
-                gender: 'Male',
-                source: 'Seeded',
-            }),
+            // The 'admin' user is now seeded via seed-core-team.
+            // Only the anonymous user is auto-created here.
             ensureSystemUserExists(adminDbInstance, {
                 name: "Anonymous Donor",
                 userId: "anonymous_donor",

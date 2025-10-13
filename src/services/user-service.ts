@@ -579,7 +579,7 @@ export async function checkAvailability(field: string, value: string): Promise<A
         switch (field) {
             case 'userId':
                 // Check document ID first for special users like 'admin'
-                existingUser = await getUser(value) || await getUserByUserId(value);
+                existingUser = await getUser(value);
                 break;
             case 'email':
                 existingUser = await getUserByEmail(value);

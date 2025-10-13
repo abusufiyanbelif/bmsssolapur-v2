@@ -1,3 +1,4 @@
+
 /**
  * @fileOverview A service to seed the database with initial data.
  */
@@ -15,28 +16,21 @@ export type { User, UserRole };
 const USERS_COLLECTION = 'users';
 
 const coreTeamUsersToSeed: Omit<User, 'id' | 'createdAt' | 'userKey'>[] = [
-     { 
-        name: "Abusufiyan Belif", 
-        userId: "abusufiyan.belif", 
-        firstName: "Abusufiyan", 
-        middleName: "", 
-        lastName: "Belif",
-        fatherName: "Abdur Rauf", 
-        email: "abusufiyan.belif@gmail.com", 
+    { 
+        name: "admin", 
+        userId: "admin", 
+        firstName: "Admin", 
+        lastName: "User", 
+        fatherName: "System", 
+        email: "admin@example.com", 
         phone: "7887646583", 
         password: "admin", 
-        roles: ["Super Admin", "Donor", "Beneficiary"], 
+        roles: ["Super Admin", "Admin", "Donor", "Beneficiary"], 
         privileges: ["all"], 
-        groups: ["Member of Organization", "Mandatory Lead Approver"], 
+        groups: ["Founder", "Mandatory Lead Approver"], 
         isActive: true, 
         gender: 'Male', 
         address: { addressLine1: '123 Admin Lane', city: 'Solapur', state: 'Maharashtra', country: 'India', pincode: '413001' }, 
-        panNumber: 'ABCDE1234F', 
-        aadhaarNumber: '123456789012',
-        bankAccountName: 'Abusufiyan Belif',
-        bankAccountNumber: '1234567890123456',
-        bankIfscCode: 'ICIC0001234',
-        upiIds: ['abusufiyan.belief5@okicici'],
         source: 'Seeded' 
     },
     
@@ -88,7 +82,10 @@ export const seedUsers = async (users: Omit<User, 'id' | 'createdAt' | 'userKey'
             results.push(`User ${userData.name}: Skipped (already exists)`);
         } else {
             try {
-                const userRef = db.collection('users').doc();
+                // Use a predictable ID for the admin user, generate for others.
+                const userDocId = userData.userId === 'admin' ? 'admin' : undefined;
+                const userRef = userDocId ? db.collection('users').doc(userDocId) : db.collection('users').doc();
+                
                 const userKeySnapshot = await usersRef.count().get();
                 const userKey = `USR${(userKeySnapshot.data().count + 1).toString().padStart(2, '0')}`;
                 
@@ -173,7 +170,7 @@ export const seedInitialUsersAndQuotes = async (): Promise<SeedResult> => {
     const quotesStatus = await seedInitialQuotes();
     return {
         message: 'Initial Seeding Complete',
-        details: [orgStatus, quotesStatus, "The 'admin' and 'anonymous_donor' users are automatically created on startup."]
+        details: [orgStatus, quotesStatus, "The 'anonymous_donor' user is automatically created on startup."]
     };
 };
 
