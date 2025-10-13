@@ -146,7 +146,7 @@ export const getCurrentOrganization = async (): Promise<Organization | null> => 
     }
     
     try {
-        const orgQuery = query(adminDb.collection(ORGANIZATIONS_COLLECTION), limit(1));
+        const orgQuery = query(collection(adminDb, ORGANIZATIONS_COLLECTION), limit(1));
         const querySnapshot = await getDocs(orgQuery);
         if (!querySnapshot.empty) {
             const docSnap = querySnapshot.docs[0];
