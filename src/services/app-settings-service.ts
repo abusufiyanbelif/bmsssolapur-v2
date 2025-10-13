@@ -1,3 +1,4 @@
+
 /**
  * @fileOverview Service for managing global application settings in Firestore.
  * This service should only be called from server-side components or server actions.

@@ -1,3 +1,4 @@
+
 /**
  * @fileOverview Service for managing inspirational quotes in Firestore.
  */
@@ -101,21 +102,31 @@ export const getAllQuotes = async (): Promise<Quote[]> => {
  * @param collectionPath The path of the collection to delete.
  * @returns The number of documents deleted.
  */
-async function deleteCollection(collectionRef: FirebaseFirestore.CollectionReference, batchSize: number): Promise<number> {
-    const snapshot = await collectionRef.limit(batchSize).get();
+async function deleteCollection(collectionPath: string): Promise<number> {
+    const adminDb = await getAdminDb();
+    const collectionRef = adminDb.collection(collectionPath);
+    let totalDeleted = 0;
+    
+    // eslint-disable-next-line no-constant-condition
+    while (true) {
+        // Fetch the next batch of documents to delete
+        const snapshot = await collectionRef.limit(500).get();
 
-    if (snapshot.empty) {
-        return 0;
+        // When there are no documents left, we are done
+        if (snapshot.size === 0) {
+            break;
+        }
+
+        // Delete documents in a batch
+        const batch = collectionRef.firestore.batch();
+        snapshot.docs.forEach(doc => {
+            batch.delete(doc.ref);
+        });
+
+        await batch.commit();
+        totalDeleted += snapshot.size;
     }
-
-    const batch = collectionRef.firestore.batch();
-    snapshot.docs.forEach(doc => {
-        batch.delete(doc.ref);
-    });
-
-    await batch.commit();
-
-    return snapshot.size;
+    return totalDeleted;
 }
 
 /**
@@ -123,18 +134,6 @@ async function deleteCollection(collectionRef: FirebaseFirestore.CollectionRefer
  * @returns The total number of quotes deleted.
  */
 export const eraseAllQuotes = async (): Promise<number> => {
-    const adminDb = await getAdminDb();
-    const quotesCollection = adminDb.collection(QUOTES_COLLECTION);
-    let totalDeleted = 0;
-    
-    // eslint-disable-next-line no-constant-condition
-    while (true) {
-        const deletedCount = await deleteCollection(quotesCollection, 500);
-        totalDeleted += deletedCount;
-        if (deletedCount < 500) {
-            break; // All documents have been deleted
-        }
-    }
-    
+    const totalDeleted = await deleteCollection(QUOTES_COLLECTION);
     return totalDeleted;
 }

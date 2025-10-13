@@ -8,26 +8,6 @@ This document tracks errors found during the build process and the steps taken t
 
 ### Errors Found:
 
-1.  **Incomplete Data Deletion**:
-    -   **Description**: The "Erase" functions on the seed page were only deleting a single document or batch of documents from each collection instead of clearing them completely. This was due to a flawed `while` loop in the `deleteCollection` utility.
-    -   **Resolution**: Corrected the loop in `seed-service.ts` to continuously fetch and delete batches of documents until the collection is empty, ensuring a full and proper erase operation every time.
-
-2.  **Core Team Deletion Failure**:
-    -   **Description**: The "Erase Core Team" function consistently reported "Erased 0 core team member(s)" because it was failing to correctly query for the users to be deleted.
-    -   **Resolution**: Fixed the query logic in `eraseCoreTeam` within `seed-service.ts` to correctly identify and delete the specified user accounts from both Firestore and Firebase Authentication.
-
-3.  **Auth Deletion Permission Error**:
-    -   **Description**: The "Erase All Auth Users" function failed with an "insufficient permission" error because the application's service account lacked the necessary IAM role to manage Firebase Authentication.
-    -   **Resolution**:
-        1.  Updated the `scripts/verify-iam.js` file to include `roles/firebase.admin` in its list of required roles.
-        2.  Updated `docs/TROUBLESHOOTING.md` to reflect this new requirement, ensuring users can fix this permission issue by running `npm run fix:iam`.
-
----
-
-## Build Pass 5
-
-### Errors Found:
-
 1.  **`Runtime Error: Only plain objects...`**:
     -   **Description**: A persistent hydration error caused by passing non-serializable objects (like Firestore `Timestamp`s or `Date` objects) from Server Components to Client Components without proper serialization.
     -   **Root Cause**: While several pages were fixed, a full audit revealed that the data-fetching loaders for pages like `/admin/donations/[id]/edit` and `/admin/leads/[id]/edit` were still passing raw data with complex objects.
@@ -52,6 +32,26 @@ This document tracks errors found during the build process and the steps taken t
 
 ---
 
+## Build Pass 5
+
+### Errors Found:
+
+1.  **Incomplete Data Deletion**:
+    -   **Description**: The "Erase" functions on the seed page were only deleting a single document or batch of documents from each collection instead of clearing them completely. This was due to a flawed `while` loop in the `deleteCollection` utility.
+    -   **Resolution**: Corrected the loop in `seed-service.ts` to continuously fetch and delete batches of documents until the collection is empty, ensuring a full and proper erase operation every time.
+
+2.  **Core Team Deletion Failure**:
+    -   **Description**: The "Erase Core Team" function consistently reported "Erased 0 core team member(s)" because it was failing to correctly query for the users to be deleted.
+    -   **Resolution**: Fixed the query logic in `eraseCoreTeam` within `seed-service.ts` to correctly identify and delete the specified user accounts from both Firestore and Firebase Authentication.
+
+3.  **Auth Deletion Permission Error**:
+    -   **Description**: The "Erase All Auth Users" function failed with an "insufficient permission" error because the application's service account lacked the necessary IAM role to manage Firebase Authentication.
+    -   **Resolution**:
+        1.  Updated the `scripts/verify-iam.js` file to include `roles/firebase.admin` in its list of required roles.
+        2.  Updated `docs/TROUBLESHOOTING.md` to reflect this new requirement, ensuring users can fix this permission issue by running `npm run fix:iam`.
+
+---
+
 ## Build Pass 4
 
 ### Errors Found:
@@ -72,7 +72,7 @@ This document tracks errors found during the build process and the steps taken t
     -   **Resolution**: Implemented the `eraseAppSettings` and `eraseFirebaseAuthUsers` functions in `seed-service.ts` and added corresponding "Erase" buttons to the UI, providing full control over the seeding process.
 
 5.  **Build Failure due to Unterminated Template**:
-    -   **Description**: A stray `` ``` `` character at the end of `seed-service.ts` was causing the Next.js build to fail with a syntax error.
+    -   **Description**: A stray ` ```` ` character at the end of `seed-service.ts` was causing the Next.js build to fail with a syntax error.
     -   **Resolution**: Removed the invalid character from the file.
 
 6.  **Build Failure: `LeadsPageClient` Not Found**:

@@ -1,5 +1,5 @@
 
-import { getAdminDb } from './../services/firebase-admin';
+import { getAdminDb } from '../services/firebase-admin';
 
 async function testDatabaseConnection() {
   console.log('Attempting to connect to Firestore using Application Default Credentials...');
@@ -19,10 +19,10 @@ async function testDatabaseConnection() {
     console.error('Error Details:', e.message);
     console.error('------------------------------------------');
     
-    if (e.code === 5 || e.message.includes('NOT_FOUND')) {
+    if (e.code === 5 || (e.message && e.message.includes('NOT_FOUND'))) {
       console.log('\n✅ However, this specific "NOT_FOUND" error confirms that the connection and authentication were successful.');
       console.log('The script simply failed to find its own temporary test document, which is not a critical issue.');
-    } else if (e.message.includes('permission-denied') || e.message.includes('UNAUTHENTICATED')) {
+    } else if (e.message && (e.message.includes('permission-denied') || e.message.includes('UNAUTHENTICATED'))) {
       console.log('\nPossible causes:');
       console.log('1. You may not be authenticated. Run `gcloud auth application-default login` in your terminal.');
       console.log('2. The service account used by this environment lacks the "Cloud Datastore User" or "Firebase Admin" IAM role.');
