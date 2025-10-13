@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { getCurrentOrganization } from "@/app/admin/settings/actions";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -36,7 +35,7 @@ export default async function LayoutSettingsPage() {
         console.error("Could not fetch organization for layout page:", e);
     }
     
-    // If no org exists, provide a default structure so the form can render for creation/editing
+    // If no org exists, provide a default structure so the form can render for creation
     const orgData = organization || defaultOrganization;
      
     return (
