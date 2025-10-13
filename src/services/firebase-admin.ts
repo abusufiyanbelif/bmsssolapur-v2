@@ -109,6 +109,11 @@ export const ensureCollectionsExist = async (): Promise<{ success: boolean; crea
 
 
 const initializeFirebaseAdmin = async () => {
+  if (admin.apps && admin.apps.length > 0 && adminDbInstance) {
+      // Already initialized
+      return;
+  }
+  
   if (admin.apps && admin.apps.length === 0) {
     try {
       console.log("Initializing Firebase Admin SDK...");
