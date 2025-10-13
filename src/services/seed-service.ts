@@ -110,17 +110,12 @@ const seedUsers = async (users: Omit<User, 'id' | 'createdAt' | 'userKey'>[]): P
 
 const seedOrganization = async (): Promise<string> => {
     const db = await getAdminDb();
-    const orgCollectionRef = db.collection('organizations');
-    const existingOrgSnapshot = await orgCollectionRef.limit(1).get();
-
-    if (!existingOrgSnapshot.empty) {
-        const orgDocRef = existingOrgSnapshot.docs[0].ref;
-        await orgDocRef.set({ ...organizationToSeed, updatedAt: FieldValue.serverTimestamp() }, { merge: true });
-        return "Organization profile updated with seed data.";
-    }
+    const orgDocRef = db.collection('organizations').doc('main_org');
     
-    await orgCollectionRef.doc('main_org').set({ ...organizationToSeed, createdAt: FieldValue.serverTimestamp(), updatedAt: FieldValue.serverTimestamp() });
-    return "Organization profile created successfully.";
+    // Always overwrite with the seed data to ensure consistency on re-seed.
+    await orgDocRef.set({ ...organizationToSeed, updatedAt: FieldValue.serverTimestamp() }, { merge: true });
+    
+    return "Organization profile seeded/updated successfully.";
 };
 
 /**
@@ -148,8 +143,6 @@ const deleteCollection = async (collectionPath: string): Promise<string> => {
         await batch.commit();
         totalDeleted += snapshot.size;
         
-        // This check is the fix. The loop will only exit when the snapshot is truly empty.
-        // It's a bit of a safeguard in case the limit() behavior isn't what's expected.
         if (snapshot.size < 500) {
             break;
         }
@@ -220,7 +213,6 @@ export const eraseCoreTeam = async (): Promise<SeedResult> => {
         return { message: "No core team members defined in the seed file." };
     }
 
-    // Firestore has a limit of 10 items for 'in' queries. Process in chunks.
     const chunks = [];
     for (let i = 0; i < coreTeamPhones.length; i += 10) {
         chunks.push(coreTeamPhones.slice(i, i + 10));
@@ -233,10 +225,9 @@ export const eraseCoreTeam = async (): Promise<SeedResult> => {
         if (!snapshot.empty) {
             for (const userDoc of snapshot.docs) {
                 try {
-                    // Delete from Auth first
                     await auth.deleteUser(userDoc.id);
                 } catch (e: any) {
-                    if (e.code !== 'auth/user-not-found') throw e; // Re-throw if it's not a "not found" error
+                    if (e.code !== 'auth/user-not-found') throw e;
                 }
                 await userDoc.ref.delete();
                 deletedCount++;
@@ -348,6 +339,8 @@ const organizationToSeed = {
       }
     }
 };
+
+    
 
     
 
