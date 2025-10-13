@@ -1,4 +1,3 @@
-
 /**
  * @fileOverview Service for managing inspirational quotes in Firestore.
  */
@@ -79,6 +78,10 @@ export const getAllQuotes = async (): Promise<Quote[]> => {
         }
         const quotes: Quote[] = [];
         querySnapshot.forEach((doc) => {
+            // CRITICAL FIX: Ignore the placeholder document.
+            if (doc.id === '_init_') {
+                return;
+            }
             quotes.push({ id: doc.id, ...doc.data() } as Quote);
         });
         return quotes;

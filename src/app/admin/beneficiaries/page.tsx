@@ -10,7 +10,7 @@ async function BeneficiariesPageDataLoader() {
     const allUsers = await getAllUsersAction();
     const initialBeneficiaries = allUsers.filter(u => u.roles.includes('Beneficiary'));
     
-    // The data is now properly serialized by the server action before being passed.
+    // The data is now properly serialized by the server action.
     return <BeneficiariesPageClient initialBeneficiaries={initialBeneficiaries} />;
   } catch (e) {
     const error = e instanceof Error ? e.message : "An unknown error occurred.";

@@ -1,3 +1,4 @@
+
 // src/app/my-cases/page.tsx
 'use client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
@@ -95,10 +96,12 @@ export default function MyCasesPage() {
             let comparison = 0;
             if (typeof aValue === 'number' && typeof bValue === 'number') {
                 comparison = aValue - bValue;
-            } else if (aValue instanceof Date && bValue instanceof Date) {
-                comparison = new Date(aValue).getTime() - new Date(bValue).getTime();
-            } else if (typeof aValue === 'string' && typeof bValue === 'string') {
-                comparison = aValue.localeCompare(bValue);
+            } else if (aValue && bValue) { // Check for existence before creating date
+                 if (sortColumn === 'createdAt') {
+                    comparison = new Date(aValue as string).getTime() - new Date(bValue as string).getTime();
+                } else if (typeof aValue === 'string' && typeof bValue === 'string') {
+                    comparison = aValue.localeCompare(bValue);
+                }
             }
 
             return sortDirection === 'asc' ? comparison : -comparison;

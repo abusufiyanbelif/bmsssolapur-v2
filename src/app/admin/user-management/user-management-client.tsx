@@ -24,11 +24,12 @@ import { cn } from "@/lib/utils";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { DeleteConfirmationDialog } from "@/components/delete-confirmation-dialog";
-import { handleBulkDeleteUsers, getAllUsersAction, handleToggleUserStatus } from "./actions";
+import { handleBulkDeleteUsers, handleToggleUserStatus } from "./actions";
 import type { User, UserRole } from "@/services/types";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
+import { useRouter } from "next/navigation";
 
 
 const allRoles: (UserRole | 'all')[] = ["all", "Donor", "Beneficiary", "Admin", "Finance Admin", "Super Admin", "Referral"];
@@ -52,6 +53,7 @@ export function UserManagementPageClient({ initialUsers, error: initialError }: 
     const [currentUserId, setCurrentUserId] = useState<string | null>(null);
     const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
     const [adminUserId, setAdminUserId] = useState<string | null>(null);
+    const router = useRouter();
 
     // Input states
     const [nameInput, setNameInput] = useState('');
@@ -74,17 +76,7 @@ export function UserManagementPageClient({ initialUsers, error: initialError }: 
     const [itemsPerPage, setItemsPerPage] = useState(10);
 
     const fetchUsers = async () => {
-        try {
-            setLoading(true);
-            const fetchedUsers = await getAllUsersAction();
-            setUsers(fetchedUsers);
-            setError(null);
-        } catch (e) {
-            setError("Failed to fetch users. Please try again later.");
-            console.error(e);
-        } finally {
-            setLoading(false);
-        }
+        router.refresh();
     };
     
     useEffect(() => {
@@ -329,7 +321,7 @@ export function UserManagementPageClient({ initialUsers, error: initialError }: 
                                 {user.isActive ? 'Active' : 'Inactive'}
                             </Badge>
                         </TableCell>
-                        <TableCell>{format(user.createdAt, "dd MMM yyyy")}</TableCell>
+                        <TableCell>{format(new Date(user.createdAt), "dd MMM yyyy")}</TableCell>
                         <TableCell className="text-right">
                            {renderActions(user)}
                         </TableCell>
@@ -381,7 +373,7 @@ export function UserManagementPageClient({ initialUsers, error: initialError }: 
                                 </div>
                                 <div className="flex justify-between text-xs text-muted-foreground pt-2">
                                      <span>Joined On</span>
-                                     <span>{format(user.createdAt, "dd MMM yyyy")}</span>
+                                     <span>{format(new Date(user.createdAt), "dd MMM yyyy")}</span>
                                 </div>
                             </CardContent>
                         </Link>
