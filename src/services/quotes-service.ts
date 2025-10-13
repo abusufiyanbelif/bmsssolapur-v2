@@ -29,15 +29,16 @@ const ALL_QUOTES: Omit<Quote, 'id'>[] = [
 export const seedInitialQuotes = async (): Promise<string> => {
   const adminDb = await getAdminDb();
   const quotesCollection = adminDb.collection(QUOTES_COLLECTION);
-  const snapshot = await quotesCollection.limit(1).get();
+  const snapshot = await quotesCollection.get();
 
-  if (!snapshot.empty) {
+  // FIX: Check if the collection is truly empty by ignoring the _init_ doc
+  if (!snapshot.empty && (snapshot.size > 1 || (snapshot.size === 1 && snapshot.docs[0].id !== '_init_'))) {
     const msg = "Quotes collection is not empty. Skipped seeding.";
     console.log(msg);
     return msg;
   }
 
-  console.log("Quotes collection is empty. Seeding initial quotes from hardcoded list...");
+  console.log("Quotes collection is empty or contains only init doc. Seeding initial quotes...");
   try {
     const batch: WriteBatch = adminDb.batch();
     ALL_QUOTES.forEach((quote) => {
@@ -113,7 +114,7 @@ async function deleteCollection(collectionPath: string): Promise<number> {
         const snapshot = await collectionRef.limit(500).get();
 
         // When there are no documents left, we are done
-        if (snapshot.size === 0) {
+        if (snapshot.empty) {
             break;
         }
 
@@ -137,3 +138,5 @@ export const eraseAllQuotes = async (): Promise<number> => {
     const totalDeleted = await deleteCollection(QUOTES_COLLECTION);
     return totalDeleted;
 }
+
+    

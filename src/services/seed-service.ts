@@ -5,10 +5,8 @@
 
 import { getFirestore, Timestamp, FieldValue } from 'firebase-admin/firestore';
 import type { User, UserRole, Lead, Verifier, LeadDonationAllocation, Donation, Campaign, FundTransfer, LeadAction, AppSettings, OrganizationFooter } from './types';
-import { quranQuotes } from './quotes/quran';
-import { hadithQuotes } from './quotes/hadith';
-import { scholarQuotes } from './quotes/scholars';
-import { getAdminDb, getAdminAuth, ensureFirebaseAdminInitialized } from './firebase-admin'; // Import the async getters
+import { seedInitialQuotes } from './quotes-service';
+import { getAdminDb, getAdminAuth } from './firebase-admin';
 
 
 // Re-export type for backward compatibility
@@ -171,10 +169,10 @@ export { ensureCollectionsExist } from './firebase-admin';
 
 export const seedInitialUsersAndQuotes = async (): Promise<SeedResult> => {
     const orgStatus = await seedOrganization();
-    // seedQuotesService is now handled inside ensureCollectionsExist on startup
+    const quotesStatus = await seedInitialQuotes();
     return {
         message: 'Initial Seeding Complete',
-        details: [orgStatus, "The 'admin' and 'anonymous_donor' users are automatically created on startup."]
+        details: [orgStatus, quotesStatus, "The 'admin' and 'anonymous_donor' users are automatically created on startup."]
     };
 };
 
@@ -353,3 +351,4 @@ const organizationToSeed = {
 
     
 
+    
