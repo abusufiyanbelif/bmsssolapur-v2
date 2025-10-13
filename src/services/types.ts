@@ -352,6 +352,10 @@ export interface Organization {
     upiId?: string;
     qrCodeUrl?: string;
     footer?: OrganizationFooter;
+    hero?: {
+        title: string;
+        description: string;
+    };
     createdAt: Date;
     updatedAt: Date;
 }

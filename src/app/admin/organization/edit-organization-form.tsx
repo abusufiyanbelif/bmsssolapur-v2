@@ -24,6 +24,7 @@ import { Organization } from "@/services/organization-service";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
 import Image from "next/image";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 
 const formSchema = z.object({
   name: z.string().min(1, "Organization name is required."),
@@ -42,6 +43,8 @@ const formSchema = z.object({
   upiId: z.string().min(1, "UPI ID is required."),
   qrCodeUrl: z.string().url("Please enter a valid URL.").optional().or(z.literal('')),
   qrCodeFile: z.any().optional(),
+  "hero.title": z.string().min(10, "Title is required."),
+  "hero.description": z.string().min(10, "Description is required."),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -79,6 +82,8 @@ export function EditOrganizationForm({ organization }: EditOrganizationFormProps
       upiId: organization.upiId || '',
       qrCodeUrl: organization.qrCodeUrl || '',
       qrCodeFile: null,
+      "hero.title": organization.hero?.title || "Empowering Our Community, One Act of Kindness at a Time.",
+      "hero.description": organization.hero?.description || "Join BaitulMal Samajik Sanstha (Solapur) to make a lasting impact. Your contribution brings hope, changes lives, and empowers our community."
     },
   });
 
@@ -154,6 +159,7 @@ export function EditOrganizationForm({ organization }: EditOrganizationFormProps
             <Form {...form}>
             <form className="space-y-8">
                 <fieldset disabled={!isEditing && !isCreating} className="space-y-8">
+                    <h3 className="text-lg font-semibold border-b pb-2">Public Profile</h3>
                     <div className="grid md:grid-cols-3 gap-8">
                         <div className="md:col-span-2 space-y-8">
                             <FormField
@@ -247,9 +253,12 @@ export function EditOrganizationForm({ organization }: EditOrganizationFormProps
                             </div>
                         </div>
                     </div>
+                    
+                    <h3 className="text-lg font-semibold border-b pb-2">Homepage Settings</h3>
+                    <FormField control={form.control} name="hero.title" render={({ field }) => (<FormItem><FormLabel>Hero Title</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
+                    <FormField control={form.control} name="hero.description" render={({ field }) => (<FormItem><FormLabel>Hero Description</FormLabel><FormControl><Textarea {...field} /></FormControl><FormMessage /></FormItem>)} />
 
                     <h3 className="text-lg font-semibold border-b pb-2">Contact & Payment Details</h3>
-
                     <div className="grid md:grid-cols-2 gap-8">
                         <FormField
                             control={form.control}

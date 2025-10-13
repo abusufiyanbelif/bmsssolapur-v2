@@ -1,10 +1,10 @@
-
 // src/app/page.tsx
 import { Suspense } from "react";
 import { PublicHomePage } from "./home/public-home-page";
 import { Loader2 } from "lucide-react";
 import { getOpenGeneralLeads, getPublicCampaigns, getPublicDashboardData, getQuotes } from "@/app/home/actions";
 import type { Quote } from "@/services/types";
+import { getCurrentOrganization } from "@/services/organization-service";
 
 // This is now a true Server Component that fetches all data for the public page.
 async function PublicHomePageLoader() {
@@ -13,11 +13,13 @@ async function PublicHomePageLoader() {
   const [
     publicLeads, 
     publicCampaigns, 
-    dashboardData, 
+    dashboardData,
+    organization,
   ] = await Promise.all([
     getOpenGeneralLeads(),
     getPublicCampaigns(),
     getPublicDashboardData(),
+    getCurrentOrganization(),
   ]);
 
   try {
@@ -39,6 +41,7 @@ async function PublicHomePageLoader() {
       allLeads={JSON.parse(JSON.stringify(dashboardData.leads))}
       allDonations={JSON.parse(JSON.stringify(dashboardData.donations))}
       allUsers={JSON.parse(JSON.stringify(dashboardData.users))}
+      organization={JSON.parse(JSON.stringify(organization))}
       quotes={JSON.parse(JSON.stringify(quotes))}
       loading={false} // Data is now loaded on the server
     />

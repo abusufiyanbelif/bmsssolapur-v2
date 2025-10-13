@@ -51,6 +51,10 @@ export async function handleUpdateOrganization(
         bankIfscCode: formData.get('bankIfscCode') as string,
         upiId: formData.get('upiId') as string,
         qrCodeUrl: qrCodeUrl,
+        hero: {
+            title: formData.get('hero.title') as string,
+            description: formData.get('hero.description') as string,
+        }
     };
     
     if(isCreating) {
@@ -62,8 +66,8 @@ export async function handleUpdateOrganization(
     revalidatePath("/admin/organization");
     revalidatePath("/organization");
     revalidatePath("/campaigns");
-    // Also revalidate pages that use the logo in the header/footer
-    revalidatePath("/");
+    // Revalidate pages that use the header, footer, or hero text
+    revalidatePath("/", "layout");
     revalidatePath("/home", "layout");
 
 

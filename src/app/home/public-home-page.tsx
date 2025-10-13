@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { ArrowRight, HandHeart, FileText, Loader2, Quote as QuoteIcon } from "lucide-react";
-import type { Quote, Lead, Campaign, Donation, User } from "@/services/types";
+import type { Quote, Lead, Campaign, Donation, User, Organization } from "@/services/types";
 import { Progress } from '@/components/ui/progress';
 import { useEffect, useState, useMemo, Suspense } from "react";
 import { useRouter } from 'next/navigation';
@@ -61,11 +61,12 @@ interface PublicHomePageProps {
     allLeads: Lead[];
     allDonations: Donation[];
     allUsers: User[];
+    organization: Organization | null;
     quotes: Quote[];
     loading: boolean;
 }
 
-export function PublicHomePage({ publicLeads, publicCampaigns, allLeads, allDonations, allUsers, quotes, loading }: PublicHomePageProps) {
+export function PublicHomePage({ publicLeads, publicCampaigns, allLeads, allDonations, allUsers, organization, quotes, loading }: PublicHomePageProps) {
   const router = useRouter();
   
   const handleDonateClick = (leadId?: string) => {
@@ -88,13 +89,16 @@ export function PublicHomePage({ publicLeads, publicCampaigns, allLeads, allDona
       );
   }
 
+  const heroTitle = organization?.hero?.title || "Empowering Our Community, One Act of Kindness at a Time.";
+  const heroDescription = organization?.hero?.description || "Join BaitulMal Samajik Sanstha (Solapur) to make a lasting impact. Your contribution brings hope, changes lives, and empowers our community.";
+
   return (
     <div className="flex-1 space-y-8">
       <Card className="text-center shadow-lg bg-primary/5">
         <CardHeader>
-        <CardTitle className="text-4xl md:text-5xl font-extrabold font-headline text-primary">Empowering Our Community, One Act of Kindness at a Time.</CardTitle>
+        <CardTitle className="text-4xl md:text-5xl font-extrabold font-headline text-primary">{heroTitle}</CardTitle>
         <CardDescription className="max-w-2xl mx-auto text-lg text-muted-foreground pt-2">
-            Join BaitulMal Samajik Sanstha (Solapur) to make a lasting impact. Your contribution brings hope, changes lives, and empowers our community.
+            {heroDescription}
         </CardDescription>
         </CardHeader>
         <CardContent>
