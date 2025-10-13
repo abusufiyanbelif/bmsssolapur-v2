@@ -128,6 +128,7 @@ const seedOrganization = async (): Promise<string> => {
 }
 
 // --- EXPORTED SEEDING FUNCTIONS ---
+export { ensureCollectionsExist } from './firebase-admin';
 
 export const seedInitialUsersAndQuotes = async (): Promise<SeedResult> => {
     const orgStatus = await seedOrganization();
