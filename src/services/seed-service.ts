@@ -166,7 +166,7 @@ const deleteCollection = async (collectionPath: string): Promise<string> => {
 
 
 // --- EXPORTED SEEDING FUNCTIONS ---
-export { ensureCollectionsExist };
+export { ensureCollectionsExistFromAdmin as ensureCollectionsExist }
 
 export const seedInitialUsersAndQuotes = async (): Promise<SeedResult> => {
     const orgStatus = await seedOrganization();
@@ -405,4 +405,3 @@ const organizationToSeed = {
     
 
     
-
