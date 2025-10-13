@@ -6,8 +6,7 @@
 import { getAdminDb } from './firebase-admin';
 import type { Lead, Organization, Campaign, PublicStats, User } from './types';
 import { getUser } from './user-service';
-import { getLeadsByCampaignId } from './lead-service';
-import { Timestamp, collection, getDocs as getAdminDocs, orderBy } from 'firebase-admin/firestore'; // aliasing to avoid confusion
+import { Timestamp, FieldValue } from 'firebase-admin/firestore'; // aliasing to avoid confusion
 import { getDonationsByCampaignId } from './donation-service';
 
 

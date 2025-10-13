@@ -4,7 +4,7 @@
  * @fileOverview Service for logging user activities.
  */
 
-import { Timestamp } from 'firebase-admin/firestore';
+import { Timestamp, FieldValue } from 'firebase-admin/firestore';
 import { getAdminDb } from './firebase-admin';
 import type { ActivityLog } from './types';
 
