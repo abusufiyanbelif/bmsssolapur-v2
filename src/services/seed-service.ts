@@ -125,33 +125,49 @@ const seedOrganization = async (): Promise<string> => {
     return "Organization profile created successfully.";
 };
 
-// Generic function to delete all documents in a collection
+/**
+ * Deletes all documents in a collection in batches.
+ * @param collectionPath The path of the collection to delete.
+ * @returns A message indicating the result.
+ */
 const deleteCollection = async (collectionPath: string): Promise<string> => {
     const db = await getAdminDb();
     const collectionRef = db.collection(collectionPath);
-    const snapshot = await collectionRef.limit(500).get();
+    let totalDeleted = 0;
     
-    if (snapshot.empty) {
+    // eslint-disable-next-line no-constant-condition
+    while (true) {
+        const snapshot = await collectionRef.limit(500).get();
+        if (snapshot.empty) {
+            break; // No more documents to delete
+        }
+        
+        const batch = db.batch();
+        let docsInBatch = 0;
+        snapshot.docs.forEach(doc => {
+            // Do not delete the placeholder document used for creation
+            if(doc.id !== '_init_') {
+              batch.delete(doc.ref);
+              docsInBatch++;
+            }
+        });
+
+        await batch.commit();
+        totalDeleted += docsInBatch;
+        
+        // If we deleted less than the batch size, we're done.
+        if (snapshot.size < 500) {
+            break;
+        }
+    }
+
+    if (totalDeleted === 0) {
         return `Collection '${collectionPath}' is already empty.`;
     }
 
-    const batch = db.batch();
-    snapshot.docs.forEach(doc => {
-        // Do not delete the placeholder document used for creation
-        if(doc.id !== '_init_') {
-          batch.delete(doc.ref);
-        }
-    });
-
-    await batch.commit();
-
-    if (snapshot.size < 500) {
-        return `Successfully deleted ${snapshot.size} documents from '${collectionPath}'.`;
-    } else {
-        // There might be more documents, prompt to run again
-        return `Deleted a batch of 500 documents from '${collectionPath}'. Run again to delete more.`;
-    }
+    return `Successfully deleted ${totalDeleted} documents from '${collectionPath}'.`;
 };
+
 
 // --- EXPORTED SEEDING FUNCTIONS ---
 export { ensureCollectionsExist } from './firebase-admin';
@@ -320,3 +336,5 @@ const organizationToSeed = {
       }
     }
 };
+
+    
