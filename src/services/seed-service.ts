@@ -307,6 +307,10 @@ const organizationToSeed = {
     bankAccountNumber: "012345678901",
     bankIfscCode: "ICIC0001234",
     upiId: "baitulmal.solapur@okaxis",
+    hero: {
+        title: "Empowering Our Community, One Act of Kindness at a Time.",
+        description: "Join BaitulMal Samajik Sanstha (Solapur) to make a lasting impact. Your contribution brings hope, changes lives, and empowers our community."
+    },
     footer: {
       organizationInfo: {
         titleLine1: "BAITUL MAL",
@@ -348,3 +352,4 @@ const organizationToSeed = {
 };
 
     
+
