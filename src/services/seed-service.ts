@@ -112,7 +112,6 @@ const seedOrganization = async (): Promise<string> => {
     const db = await getAdminDb();
     const orgDocRef = db.collection('organizations').doc('main_org');
     
-    // Always overwrite with the seed data to ensure consistency on re-seed.
     await orgDocRef.set({ ...organizationToSeed, updatedAt: FieldValue.serverTimestamp() }, { merge: true });
     
     return "Organization profile seeded/updated successfully.";
@@ -132,7 +131,7 @@ const deleteCollection = async (collectionPath: string): Promise<string> => {
     while (true) {
         const snapshot = await collectionRef.limit(500).get();
         if (snapshot.empty) {
-            break; // No more documents to delete
+            break; 
         }
         
         const batch = db.batch();
@@ -277,7 +276,58 @@ export const eraseFirebaseAuthUsers = async (): Promise<SeedResult> => {
 };
 
 export const syncUsersToFirebaseAuth = async (): Promise<SeedResult> => {
-    return { message: "Sync to Firebase Auth is not fully implemented yet." };
+    const adminDb = await getAdminDb();
+    const adminAuth = await getAdminAuth();
+    
+    const usersSnapshot = await adminDb.collection(USERS_COLLECTION).get();
+    
+    let createdCount = 0;
+    let skippedCount = 0;
+    let failedCount = 0;
+    const details: string[] = [];
+
+    for (const userDoc of usersSnapshot.docs) {
+        const user = userDoc.data() as User;
+        const userId = userDoc.id;
+
+        try {
+            // Check if user already exists in Auth
+            await adminAuth.getUser(userId);
+            skippedCount++;
+        } catch (error: any) {
+            if (error.code === 'auth/user-not-found') {
+                // User does not exist, so create them
+                try {
+                    const authUserPayload: admin.auth.CreateRequest = {
+                        uid: userId,
+                        email: user.email,
+                        phoneNumber: user.phone ? `+91${user.phone}` : undefined,
+                        displayName: user.name,
+                        password: user.password,
+                        disabled: !user.isActive,
+                    };
+
+                    await adminAuth.createUser(authUserPayload);
+                    createdCount++;
+                    details.push(`Created Auth record for ${user.name} (${user.email || user.phone}).`);
+                } catch (creationError: any) {
+                    failedCount++;
+                    const errorMessage = `Failed to create Auth record for ${user.name}: ${creationError.message}`;
+                    console.error(errorMessage);
+                    details.push(errorMessage);
+                }
+            } else {
+                // Some other error occurred when checking for the user
+                failedCount++;
+                const errorMessage = `Error checking Auth status for ${user.name}: ${error.message}`;
+                console.error(errorMessage);
+                details.push(errorMessage);
+            }
+        }
+    }
+
+    const message = `Sync complete. Created: ${createdCount}, Skipped: ${skippedCount}, Failed: ${failedCount}.`;
+    return { message, details };
 };
 
 // --- DATA TO BE SEEDED ---

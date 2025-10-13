@@ -18,7 +18,7 @@ import {
     eraseFirebaseAuthUsers,
     type SeedResult,
     ensureCollectionsExist
-} from "@/services/seed-service";
+} from '@/services/seed-service';
 
 type SeedTask = 'initial' | 'coreTeam' | 'organization' | 'paymentGateways' | 'sampleData' | 'appSettings' | 'syncFirebaseAuth' | 'ensureCollections';
 
