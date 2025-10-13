@@ -109,12 +109,12 @@ export const ensureCollectionsExist = async (): Promise<{ success: boolean; crea
 
 
 const initializeFirebaseAdmin = async () => {
-  if (admin.apps && admin.apps.length > 0 && adminDbInstance) {
+  if (admin.apps.length > 0 && adminDbInstance) {
       // Already initialized
       return;
   }
   
-  if (admin.apps && admin.apps.length === 0) {
+  if (admin.apps.length === 0) {
     try {
       console.log("Initializing Firebase Admin SDK...");
       admin.initializeApp();
@@ -129,7 +129,7 @@ const initializeFirebaseAdmin = async () => {
       console.error("Firebase Admin SDK initialization error:", e);
       throw new Error("Failed to initialize Firebase Admin SDK. Check server logs and credentials.");
     }
-  } else if (admin.apps && admin.apps.length > 0 && !adminDbInstance) {
+  } else if (admin.apps.length > 0 && !adminDbInstance) {
       // Already initialized but instances not set (can happen with hot-reloading)
       adminDbInstance = getAdminFirestore();
       adminAuthInstance = admin.auth();

@@ -126,7 +126,7 @@ const seedOrganization = async (): Promise<string> => {
 };
 
 /**
- * Deletes all documents in a collection in batches.
+ * Deletes all documents in a collection in batches of 500.
  * @param collectionPath The path of the collection to delete.
  * @returns A message indicating the result.
  */
@@ -150,8 +150,11 @@ const deleteCollection = async (collectionPath: string): Promise<string> => {
         await batch.commit();
         totalDeleted += snapshot.size;
         
-        // This check is the fix. We continue the loop as long as we deleted something.
-        // The loop will only exit when the snapshot is truly empty.
+        // This check is the fix. The loop will only exit when the snapshot is truly empty.
+        // It's a bit of a safeguard in case the limit() behavior isn't what's expected.
+        if (snapshot.size < 500) {
+            break;
+        }
     }
 
     if (totalDeleted === 0) {
@@ -160,6 +163,7 @@ const deleteCollection = async (collectionPath: string): Promise<string> => {
 
     return `Successfully deleted ${totalDeleted} documents from '${collectionPath}'.`;
 };
+
 
 
 // --- EXPORTED SEEDING FUNCTIONS ---
@@ -211,12 +215,23 @@ export const eraseInitialUsersAndQuotes = async (): Promise<SeedResult> => {
 export const eraseCoreTeam = async (): Promise<SeedResult> => {
     const db = await getAdminDb();
     const auth = await getAdminAuth();
-    const userIdsToDelete = coreTeamUsersToSeed.map(u => u.phone); // Use phone as a reliable unique ID
+    const coreTeamPhones = coreTeamUsersToSeed.map(u => u.phone);
     let deletedCount = 0;
     
-    for (const phone of userIdsToDelete) {
-        const q = db.collection(USERS_COLLECTION).where('phone', '==', phone);
+    if (coreTeamPhones.length === 0) {
+        return { message: "No core team members defined in the seed file." };
+    }
+
+    // Firestore has a limit of 10 items for 'in' queries. Process in chunks.
+    const chunks = [];
+    for (let i = 0; i < coreTeamPhones.length; i += 10) {
+        chunks.push(coreTeamPhones.slice(i, i + 10));
+    }
+    
+    for (const chunk of chunks) {
+        const q = db.collection(USERS_COLLECTION).where('phone', 'in', chunk);
         const snapshot = await q.get();
+
         if (!snapshot.empty) {
             for (const userDoc of snapshot.docs) {
                 try {
@@ -230,6 +245,7 @@ export const eraseCoreTeam = async (): Promise<SeedResult> => {
             }
         }
     }
+
     return { message: `Erased ${deletedCount} core team member(s) from Firestore and Firebase Auth.` };
 };
 

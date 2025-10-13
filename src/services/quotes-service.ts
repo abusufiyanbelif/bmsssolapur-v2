@@ -97,28 +97,44 @@ export const getAllQuotes = async (): Promise<Quote[]> => {
 }
 
 /**
- * Deletes all quotes from the database.
- * @returns The number of quotes deleted.
+ * Deletes all documents in a collection.
+ * @param collectionPath The path of the collection to delete.
+ * @returns The number of documents deleted.
  */
-export const eraseAllQuotes = async (): Promise<number> => {
-    const adminDb = await getAdminDb();
-    const quotesCollection = adminDb.collection(QUOTES_COLLECTION);
-    const snapshot = await quotesCollection.limit(500).get(); // Process in batches of 500
+async function deleteCollection(collectionRef: FirebaseFirestore.CollectionReference, batchSize: number): Promise<number> {
+    const snapshot = await collectionRef.limit(batchSize).get();
 
     if (snapshot.empty) {
         return 0;
     }
 
-    let deletedCount = 0;
-    // Process in batches of 500
-    for (let i = 0; i < snapshot.docs.length; i += 500) {
-        const batch = adminDb.batch();
-        const chunk = snapshot.docs.slice(i, i + 500);
-        chunk.forEach(doc => {
-            batch.delete(doc.ref);
-        });
-        await batch.commit();
-        deletedCount += chunk.length;
+    const batch = collectionRef.firestore.batch();
+    snapshot.docs.forEach(doc => {
+        batch.delete(doc.ref);
+    });
+
+    await batch.commit();
+
+    return snapshot.size;
+}
+
+/**
+ * Deletes all quotes from the database recursively in batches.
+ * @returns The total number of quotes deleted.
+ */
+export const eraseAllQuotes = async (): Promise<number> => {
+    const adminDb = await getAdminDb();
+    const quotesCollection = adminDb.collection(QUOTES_COLLECTION);
+    let totalDeleted = 0;
+    
+    // eslint-disable-next-line no-constant-condition
+    while (true) {
+        const deletedCount = await deleteCollection(quotesCollection, 500);
+        totalDeleted += deletedCount;
+        if (deletedCount < 500) {
+            break; // All documents have been deleted
+        }
     }
-    return deletedCount;
+    
+    return totalDeleted;
 }

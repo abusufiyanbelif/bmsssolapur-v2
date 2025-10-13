@@ -43,8 +43,8 @@ If you see this error in your deployed application, it means the App Hosting ser
 5.  In the slide-out panel, click **+ ADD ANOTHER ROLE**.
 6.  Search for and add the following roles, one by one:
     *   **Cloud Datastore User**: Required for reading from and writing to Firestore.
+    *   **Firebase Admin**: **Required for managing users in Firebase Authentication (e.g., creating, deleting, or syncing them from the seed page).**
     *   **Storage Admin**: Required for listing and accessing files in Firebase Storage.
-    *   **Firebase Admin**: A broader role that often covers most necessary permissions.
 7.  Click **SAVE**.
 8.  The change should take effect within a minute or two. The application will then have the correct permissions to access all backend services.
 
