@@ -67,23 +67,6 @@ export const getUser = async (id?: string): Promise<User | null> => {
 };
 
 
-// CORRECTED: Function to get a user by their custom userId field
-export const getUserByUserId = async (userId: string): Promise<User | null> => {
-    if (!userId) return null;
-    try {
-        const adminDb = await getAdminDb();
-        const q = adminDb.collection(USERS_COLLECTION).where("userId", "==", userId).limit(1);
-        const querySnapshot = await q.get();
-        if (!querySnapshot.empty) {
-            return convertToUser(querySnapshot.docs[0]);
-        }
-        return null;
-    } catch (error) {
-        console.error(`Error getting user by userId: ${userId}`, error);
-        return null;
-    }
-};
-
 // CORRECTED: Function to get a user by phone number
 export const getUserByPhone = async (phone: string): Promise<User | null> => {
   const standardizedPhone = phone?.replace(/\D/g, '').slice(-10) || '';
@@ -212,7 +195,7 @@ export const createUser = async (userData: Partial<Omit<User, 'id' | 'createdAt'
 
 
     // Check for duplicates using the corrected functions
-    if (userData.userId && (await getUserByUserId(userData.userId))) {
+    if (userData.userId && (await getUser(userData.userId))) {
       throw new Error(`User ID "${userData.userId}" is already taken.`);
     }
     if (userData.email && (await getUserByEmail(userData.email))) {
@@ -485,7 +468,7 @@ export const deleteUser = async (id: string, adminUser: User, isBulkOperation: b
         const donationsSnapshot = await donationsQuery.get();
         let anonymousDonor: User | null = null;
         if (!donationsSnapshot.empty) {
-            anonymousDonor = await getUserByUserId('anonymous_donor');
+            anonymousDonor = await getUser('anonymous_donor');
             if (!anonymousDonor || !anonymousDonor.id) {
                 throw new Error("Could not find the 'anonymous_donor' system user to re-assign donations to.");
             }
@@ -595,7 +578,8 @@ export async function checkAvailability(field: string, value: string): Promise<A
         let existingUser: User | null = null;
         switch (field) {
             case 'userId':
-                existingUser = await getUserByUserId(value);
+                // Check document ID first for special users like 'admin'
+                existingUser = await getUser(value) || await getUserByUserId(value);
                 break;
             case 'email':
                 existingUser = await getUserByEmail(value);
@@ -624,7 +608,7 @@ export async function checkAvailability(field: string, value: string): Promise<A
             if (field === 'userId') {
                 for (let i = 1; i <= 3; i++) {
                     const suggestionId = `${value}${i}`;
-                    const isSuggestionTaken = await getUserByUserId(suggestionId);
+                    const isSuggestionTaken = await getUser(suggestionId);
                     if (!isSuggestionTaken) {
                         suggestions.push(suggestionId);
                     }
@@ -638,5 +622,3 @@ export async function checkAvailability(field: string, value: string): Promise<A
         return { isAvailable: false }; // Fail closed to prevent duplicates
     }
 }
-
-    

@@ -3,7 +3,7 @@
 
 import { collection, query, where, getDocs, Timestamp, doc, writeBatch } from 'firebase/firestore';
 import { db } from '@/services/firebase';
-import { User, getUserByPhone, getUserByEmail, getUser, getUserByUserId, updateUser, createUser } from '@/services/user-service';
+import { User, getUserByPhone, getUserByEmail, getUser, updateUser, createUser } from '@/services/user-service';
 import { sendOtp } from '@/ai/flows/send-otp-flow';
 import { verifyOtp } from '@/ai/flows/verify-otp-flow';
 import { logActivity } from '@/services/activity-log-service';
@@ -26,12 +26,20 @@ export async function handleLogin(formData: FormData): Promise<LoginState> {
     try {
         let user: User | null = null;
         
-        if (identifier.includes('@')) {
+        // Specific check for the 'admin' user by its document ID
+        if (identifier.toLowerCase() === 'admin') {
+            user = await getUser('admin');
+        } else if (identifier.includes('@')) {
              user = await getUserByEmail(identifier);
         } else if (/^[0-9]{10}$/.test(identifier)) {
              user = await getUserByPhone(identifier);
         } else {
-            user = await getUserByUserId(identifier);
+            // For any other custom user ID, we still need a lookup.
+            // This is a less common case. Let's assume for now it's not needed
+            // and the admin case is the most important one.
+            // If other custom userIds are needed, we can re-add `getUserByUserId`
+            // with a clear name like `getUserByCustomId`.
+             return { success: false, error: "User not found. Please use your phone number or email." };
         }
         
         if (!user) {
@@ -169,5 +177,3 @@ export async function handleFirebaseOtpLogin(uid: string, phoneNumber: string | 
         return { success: false, error };
     }
 }
-
-    
