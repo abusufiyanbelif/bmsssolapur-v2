@@ -34,72 +34,19 @@ If you see this error while running the app on your local computer (e.g., when s
 
 ### Solution for Deployed App (Firebase App Hosting)
 
-If you see this error in your deployed application, it means the App Hosting service account needs to be granted permission to access other Google Cloud services.
-
-#### What is the App Hosting Service Account?
-Think of a service account as a special, non-human "user" that represents your application. When your Next.js code runs on Firebase's servers, it uses the **"Firebase App Hosting compute engine default service account"** as its identity.
-
-When this backend code tries to access Firestore or Cloud Storage, it tells Google Cloud, "I am the App Hosting service account for project 'baitul-mal-connect'." Google Cloud then checks what permissions (IAM roles) that account has. By default, it doesn't have permission to access other services, which is why you see the `UNAUTHENTICATED` error.
-
-#### The Fix (Option 1: Google Cloud Console UI)
-
-To fix this, you must grant the necessary roles to this service account. A **Role** is a collection of permissions. For security, your service account is created with minimal access. You must manually grant it the "job titles" it needs to do its work.
-
-**Required Roles for This Application:**
-
-1.  **`Cloud Datastore User`**: **This is the most critical role.** It grants permission to read from and write to your Firestore database. Without this, your app cannot fetch or save any data.
-2.  **`Storage Admin`**: This role grants full control over files in Firebase Storage, which is necessary for uploading and managing user-generated content like donation proofs or profile pictures.
-3.  **(Optional) `Firebase Admin`**: A broader role that often covers most necessary permissions if the others don't work.
-
-**Step-by-Step Instructions:**
+If you see this error in your deployed application, it means the App Hosting service account needs to be granted permission to access the database and other services.
 
 1.  Go to the **[IAM & Admin page](https://console.cloud.google.com/iam-admin/iam)** in your Google Cloud Console.
 2.  Make sure you have selected the correct project (`baitul-mal-connect`).
-3.  Find the service account (the "principal") with the name **"Firebase App Hosting compute engine default service account"**. Its email will look like `firebase-app-hosting-compute@baitul-mal-connect.iam.gserviceaccount.com`.
+3.  Find the service account with the name **"Firebase App Hosting compute engine default service account"**. Its email will look like `[PROJECT_NUMBER]-compute@developer.gserviceaccount.com`.
 4.  Click the **pencil icon** (Edit principal) for that row.
 5.  In the slide-out panel, click **+ ADD ANOTHER ROLE**.
-6.  Search for and add the roles listed above (`Cloud Datastore User`, `Storage Admin`), one by one.
+6.  Search for and add the following roles, one by one:
+    *   **Cloud Datastore User**: Required for reading from and writing to Firestore.
+    *   **Firebase Admin**: **Required for managing users in Firebase Authentication (e.g., creating, deleting, or syncing them from the seed page).**
+    *   **Storage Admin**: Required for listing and accessing files in Firebase Storage.
 7.  Click **SAVE**.
 8.  The change should take effect within a minute or two. The application will then have the correct permissions to access all backend services.
-
-#### The Fix (Option 2: gcloud Command-Line)
-
-As an alternative to the UI, you can grant the required roles using the `gcloud` CLI in your terminal.
-
-1.  **Set your project**: Make sure your `gcloud` CLI is configured for the correct project:
-    ```bash
-    gcloud config set project baitul-mal-connect
-    ```
-
-2.  **Define Service Account**: Set an environment variable for the service account email.
-    ```bash
-    export SERVICE_ACCOUNT=$(gcloud projects describe baitul-mal-connect --format='value(projectNumber)')-compute@developer.gserviceaccount.com
-    ```
-
-3.  **Grant Roles**: Run the following commands one by one to grant the necessary permissions:
-    
-    *Grant Firestore access:*
-    ```bash
-    gcloud projects add-iam-policy-binding baitul-mal-connect \
-      --member="serviceAccount:$SERVICE_ACCOUNT" \
-      --role="roles/datastore.user"
-    ```
-
-    *Grant Storage access (for file uploads):*
-    ```bash
-    gcloud projects add-iam-policy-binding baitul-mal-connect \
-      --member="serviceAccount:$SERVICE_ACCOUNT" \
-      --role="roles/storage.admin"
-    ```
-    
-    *Grant broad Firebase admin access (optional, but can resolve many permission issues):*
-    ```bash
-    gcloud projects add-iam-policy-binding baitul-mal-connect \
-      --member="serviceAccount:$SERVICE_ACCOUNT" \
-      --role="roles/firebase.admin"
-    ```
-    
-4.  It may take a minute for the permissions to propagate. Redeploying your App Hosting backend may be required to apply the changes.
 
 ---
 
