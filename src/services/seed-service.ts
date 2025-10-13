@@ -78,7 +78,6 @@ export type SeedResult = {
 };
 
 const seedUsers = async (users: Omit<User, 'id' | 'createdAt' | 'userKey'>[]): Promise<string[]> => {
-    await ensureFirebaseAdminInitialized();
     const db = await getAdminDb();
     const results: string[] = [];
 
@@ -112,7 +111,6 @@ const seedUsers = async (users: Omit<User, 'id' | 'createdAt' | 'userKey'>[]): P
 };
 
 const seedOrganization = async (): Promise<string> => {
-    await ensureFirebaseAdminInitialized();
     const db = await getAdminDb();
     const orgCollectionRef = db.collection('organizations');
     const existingOrgSnapshot = await orgCollectionRef.limit(1).get();
@@ -125,7 +123,35 @@ const seedOrganization = async (): Promise<string> => {
     
     await orgCollectionRef.doc('main_org').set({ ...organizationToSeed, createdAt: FieldValue.serverTimestamp(), updatedAt: FieldValue.serverTimestamp() });
     return "Organization profile created successfully.";
-}
+};
+
+// Generic function to delete all documents in a collection
+const deleteCollection = async (collectionPath: string): Promise<string> => {
+    const db = await getAdminDb();
+    const collectionRef = db.collection(collectionPath);
+    const snapshot = await collectionRef.limit(500).get();
+    
+    if (snapshot.empty) {
+        return `Collection '${collectionPath}' is already empty.`;
+    }
+
+    const batch = db.batch();
+    snapshot.docs.forEach(doc => {
+        // Do not delete the placeholder document used for creation
+        if(doc.id !== '_init_') {
+          batch.delete(doc.ref);
+        }
+    });
+
+    await batch.commit();
+
+    if (snapshot.size < 500) {
+        return `Successfully deleted ${snapshot.size} documents from '${collectionPath}'.`;
+    } else {
+        // There might be more documents, prompt to run again
+        return `Deleted a batch of 500 documents from '${collectionPath}'. Run again to delete more.`;
+    }
+};
 
 // --- EXPORTED SEEDING FUNCTIONS ---
 export { ensureCollectionsExist } from './firebase-admin';
@@ -147,17 +173,16 @@ export const seedCoreTeam = async (): Promise<SeedResult> => {
     };
 };
 
-// Functions below are placeholders as they require more complex logic and services that might not be available yet.
-
 export const seedOrganizationProfile = async (): Promise<SeedResult> => {
     const orgStatus = await seedOrganization();
     return { message: 'Organization Profile Seeding Complete', details: [orgStatus] };
 };
 
 export const seedAppSettings = async (): Promise<SeedResult> => {
-    // This functionality depends on updateAppSettings which might be in another service.
-    // For now, we return a placeholder message.
-    return { message: "App Settings seeding is not fully implemented yet." };
+    const { updateAppSettings, getAppSettings } = await import('./app-settings-service');
+    const defaultSettings = (await getAppSettings());
+    await updateAppSettings(defaultSettings);
+    return { message: "Application settings have been reset to their default values." };
 };
 
 export const seedPaymentGateways = async (): Promise<SeedResult> => {
@@ -169,31 +194,71 @@ export const seedSampleData = async (): Promise<SeedResult> => {
 };
 
 export const eraseInitialUsersAndQuotes = async (): Promise<SeedResult> => {
-     return { message: "Erase initial data is not fully implemented yet." };
+     const quotesResult = await deleteCollection('inspirationalQuotes');
+     const orgResult = await deleteCollection('organizations');
+     return { message: 'Initial Data Erased', details: [quotesResult, orgResult] };
 };
 
 export const eraseCoreTeam = async (): Promise<SeedResult> => {
-    return { message: "Erase core team is not fully implemented yet." };
+    const db = await getAdminDb();
+    const auth = await getAdminAuth();
+    const userIdsToDelete = coreTeamUsersToSeed.map(u => u.phone); // Use phone as a reliable unique ID
+    let deletedCount = 0;
+    
+    for (const phone of userIdsToDelete) {
+        const q = db.collection(USERS_COLLECTION).where('phone', '==', phone);
+        const snapshot = await q.get();
+        if (!snapshot.empty) {
+            const userDoc = snapshot.docs[0];
+            try {
+                // Delete from Auth first
+                await auth.deleteUser(userDoc.id);
+            } catch (e: any) {
+                if (e.code !== 'auth/user-not-found') throw e; // Re-throw if it's not a "not found" error
+            }
+            await userDoc.ref.delete();
+            deletedCount++;
+        }
+    }
+    return { message: `Erased ${deletedCount} core team member(s) from Firestore and Firebase Auth.` };
 };
 
 export const eraseOrganizationProfile = async (): Promise<SeedResult> => {
-    return { message: "Erase organization profile is not fully implemented yet." };
+    const result = await deleteCollection('organizations');
+    return { message: 'Organization Profile Erased', details: [result] };
 };
 
 export const erasePaymentGateways = async (): Promise<SeedResult> => {
-    return { message: "Erase payment gateways is not fully implemented yet." };
+    const { updateAppSettings } = await import('./app-settings-service');
+    await updateAppSettings({ paymentGateway: {} });
+    return { message: 'Payment gateway settings have been cleared.' };
 };
 
 export const eraseSampleData = async (): Promise<SeedResult> => {
-    return { message: "Erase sample data is not fully implemented yet." };
+    const collectionsToDelete = ['leads', 'donations', 'campaigns', 'publicLeads', 'publicCampaigns'];
+    const results = [];
+    for (const collection of collectionsToDelete) {
+        results.push(await deleteCollection(collection));
+    }
+    return { message: "Sample data erased.", details: results };
 };
 
 export const eraseAppSettings = async (): Promise<SeedResult> => {
-    return { message: "Erase app settings is not fully implemented yet." };
+    const result = await deleteCollection('settings');
+    return { message: 'Application settings erased.', details: [result, "Settings will be recreated with defaults on next app start."] };
 };
 
 export const eraseFirebaseAuthUsers = async (): Promise<SeedResult> => {
-    return { message: "Erase Firebase Auth users is not fully implemented yet." };
+    const auth = await getAdminAuth();
+    const users = await auth.listUsers(1000);
+    let deletedCount = 0;
+    for (const user of users.users) {
+        if(user.email !== 'admin@example.com' && user.email !== 'anonymous@system.local') {
+            await auth.deleteUser(user.uid);
+            deletedCount++;
+        }
+    }
+    return { message: `Erased ${deletedCount} user(s) from Firebase Authentication. System users were preserved.` };
 };
 
 export const syncUsersToFirebaseAuth = async (): Promise<SeedResult> => {
