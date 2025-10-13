@@ -1,3 +1,4 @@
+
 /**
  * @fileOverview User service for interacting with Firestore.
  * This service should only be called from server-side components or server actions.
@@ -69,13 +70,6 @@ export const getUser = async (id?: string): Promise<User | null> => {
 // CORRECTED: Function to get a user by their custom userId field
 export const getUserByUserId = async (userId: string): Promise<User | null> => {
     if (!userId) return null;
-    
-    // Hardcoded check for the admin user for initial login before DB is ready
-    if (userId === 'admin') {
-        const user = await getUser('admin');
-        if (user) return user;
-    }
-    
     try {
         const adminDb = await getAdminDb();
         const q = adminDb.collection(USERS_COLLECTION).where("userId", "==", userId).limit(1);
@@ -644,3 +638,5 @@ export async function checkAvailability(field: string, value: string): Promise<A
         return { isAvailable: false }; // Fail closed to prevent duplicates
     }
 }
+
+    

@@ -26,7 +26,6 @@ export async function handleLogin(formData: FormData): Promise<LoginState> {
     try {
         let user: User | null = null;
         
-        // This is the fix: Always fetch the user record from the database directly.
         if (identifier.includes('@')) {
              user = await getUserByEmail(identifier);
         } else if (/^[0-9]{10}$/.test(identifier)) {
@@ -39,7 +38,6 @@ export async function handleLogin(formData: FormData): Promise<LoginState> {
             return { success: false, error: "User not found. Please check your credentials." };
         }
         
-        // Check password against the record fetched from Firestore.
         if (user.password !== password) {
              return { success: false, error: "Incorrect password. Please try again." };
         }
@@ -149,11 +147,6 @@ export async function handleFirebaseOtpLogin(uid: string, phoneNumber: string | 
     try {
         const user = await getUser(uid);
         
-        // This is the critical security fix.
-        // We no longer try to find a user by phone number if the UID doesn't match.
-        // If the UID from Firebase Auth doesn't exist in our Firestore database,
-        // it means the user has not been registered in our system, even if their
-        // phone number is valid.
         if (!user) {
              return { success: false, error: 'Your phone number is not registered in our system. Please register an account first.' };
         }
@@ -176,3 +169,5 @@ export async function handleFirebaseOtpLogin(uid: string, phoneNumber: string | 
         return { success: false, error };
     }
 }
+
+    
