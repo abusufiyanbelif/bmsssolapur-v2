@@ -22,14 +22,14 @@ let initializationPromise: Promise<void> | null = null;
  */
 const ensureSystemUserExists = async (db: AdminFirestore, userData: Partial<User>) => {
     try {
-        const usersRef = db.collection('users');
-        const q = usersRef.where('userId', '==', userData.userId).limit(1);
-        const snapshot = await q.get();
+        // Use the intended document ID directly for system users
+        const userRef = db.collection('users').doc(userData.userId!);
+        const userDoc = await userRef.get();
 
-        if (snapshot.empty) {
+        if (!userDoc.exists) {
             console.log(`Default system user "${userData.userId}" not found. Creating it now...`);
             
-            const userCountSnapshot = await usersRef.count().get();
+            const userCountSnapshot = await db.collection('users').count().get();
             const userKey = `SYSTEM${(userCountSnapshot.data().count + 1).toString().padStart(2, '0')}`;
             
             const userToCreate: Omit<User, 'id'> = {
@@ -39,7 +39,7 @@ const ensureSystemUserExists = async (db: AdminFirestore, userData: Partial<User
                 updatedAt: Timestamp.now() as any,
             } as Omit<User, 'id'>;
 
-            await usersRef.doc(userData.userId!).set(userToCreate);
+            await userRef.set(userToCreate);
             console.log(`Default system user "${userData.userId}" created successfully.`);
         }
     } catch (e) {
@@ -138,11 +138,26 @@ const runPostInitTasks = async () => {
     try {
         await Promise.all([
             ensureCollectionsExist(),
-            // The 'admin' user is now seeded via seed-core-team.
-            // Only the anonymous user is auto-created here.
+            // Auto-create the 'admin' user
+            ensureSystemUserExists(adminDbInstance, {
+                name: "admin",
+                userId: "admin", // The document ID will be 'admin'
+                firstName: "Admin",
+                lastName: "User",
+                fatherName: "System",
+                email: "admin@example.com",
+                phone: "7887646583", 
+                password: "admin", 
+                roles: ["Super Admin"], 
+                privileges: ["all"],
+                isActive: true, 
+                gender: 'Male', 
+                source: 'Seeded',
+            }),
+            // Auto-create the 'anonymous_donor' user
             ensureSystemUserExists(adminDbInstance, {
                 name: "Anonymous Donor",
-                userId: "anonymous_donor",
+                userId: "anonymous_donor", // The document ID will be 'anonymous_donor'
                 firstName: "Anonymous",
                 lastName: "Donor",
                 email: "anonymous@system.local",

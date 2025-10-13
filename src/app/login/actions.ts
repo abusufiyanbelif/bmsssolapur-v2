@@ -26,23 +26,25 @@ export async function handleLogin(formData: FormData): Promise<LoginState> {
     try {
         let user: User | null = null;
         
-        if (identifier.includes('@')) {
+        // Specific check for the 'admin' user ID, which is a special case.
+        if (identifier.toLowerCase() === 'admin') {
+            user = await getUser('admin');
+        } else if (identifier.includes('@')) {
              user = await getUserByEmail(identifier);
         } else if (/^[0-9]{10}$/.test(identifier)) {
              user = await getUserByPhone(identifier);
         } else {
-             // Fallback for custom user IDs like 'admin' if needed, but primary method is phone/email.
-             user = await getUser(identifier);
-             if (!user) {
-                return { success: false, error: "User not found. Please use your phone number or email." };
-             }
+             return { success: false, error: "Please use your 10-digit phone number or email to log in." };
         }
         
         if (!user) {
             return { success: false, error: "User not found. Please check your credentials." };
         }
         
-        if (user.password !== password) {
+        // Do not check password for the hardcoded admin if it's the first time and password is not set
+        if (user.userId === 'admin' && user.password === 'password' && password === 'password') {
+            // This is the default password, allow login
+        } else if (user.password !== password) {
              return { success: false, error: "Incorrect password. Please try again." };
         }
 
