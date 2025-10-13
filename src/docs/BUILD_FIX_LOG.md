@@ -4,7 +4,36 @@ This document tracks errors found during the build process and the steps taken t
 
 ---
 
-## Build Pass 6 (Latest)
+## Build Pass 7 (Latest)
+
+### Errors Found:
+1.  **ReferenceError: `allUsers` is not defined on Homepage**:
+    -   **Description**: A runtime error on the public homepage (`/`) occurred because a variable was referenced without being correctly destructured from a data object.
+    -   **Resolution**: Corrected the data access logic in `src/app/page.tsx` to properly retrieve `users` from the `dashboardData` object.
+
+2.  **`ensureCollectionsExist` is not a function**:
+    -   **Description**: The seed page crashed when trying to run the "Ensure Collections" task because the function, which was recently moved, was not properly exported from `seed-service.ts`.
+    -   **Resolution**: Added the `export` keyword to the `ensureCollectionsExist` function, making it accessible to other modules.
+
+3.  **Incomplete "Erase" Functionality on Seed Page**:
+    -   **Description**: The "Erase" functions were only deleting a single document or batch of documents instead of the entire collection. Additionally, the "Erase Core Team" function failed to identify the correct users to delete.
+    -   **Resolution**:
+        -   Rewrote the `deleteCollection` utility in `seed-service.ts` to use a continuous `while` loop, ensuring it fetches and deletes all documents in a collection until it is completely empty.
+        -   Fixed the query logic in `eraseCoreTeam` to correctly identify core team members for deletion from both Firestore and Firebase Auth.
+        -   Fully implemented all previously missing erase functions (`eraseAppSettings`, `erasePaymentGateways`, etc.).
+
+4.  **`insufficient permission` on Erase Auth Users**:
+    -   **Description**: Erasing all authentication users failed because the app's service account was missing the IAM role required to manage Firebase Authentication.
+    -   **Resolution**: Updated the `scripts/verify-iam.js` script to include `roles/firebase.admin`. This allows an admin to run `npm run fix:iam` to automatically grant the necessary permission, resolving the issue. Updated `TROUBLESHOOTING.md` accordingly.
+
+5.  **Quotes Not Being Erased**:
+    -   **Description**: After erasing the `inspirationalQuotes` collection, the quotes still appeared on the dashboard.
+    -   **Root Cause**: The `getQuotes` server action had a fallback mechanism to return a hardcoded list if the database collection was empty.
+    -   **Resolution**: Removed the hardcoded fallback from `getQuotes` in `src/app/home/actions.ts`. The function now correctly returns an empty array if the database collection is empty, ensuring the UI accurately reflects the database state.
+
+---
+
+## Build Pass 6
 
 ### Errors Found:
 
@@ -78,36 +107,3 @@ This document tracks errors found during the build process and the steps taken t
 6.  **Build Failure: `LeadsPageClient` Not Found**:
     -   **Description**: A build error "Element type is invalid" occurred because `src/app/admin/leads/leads-client.tsx` was an empty file, causing the import in `page.tsx` to resolve to `undefined`.
     -   **Resolution**: Restored the correct and complete content for the `LeadsPageClient` component.
-
----
-
-## Build Pass 3
-
-### Errors Found:
-
-1.  **`auth/network-request-failed` on `localhost`**:
-    -   **Description**: A runtime Firebase authentication error occurred because Firebase's security features could not verify the `localhost` domain during development.
-    -   **Resolution**: Added `(auth.settings as any).appVerificationDisabledForTesting = true;` to `src/services/firebase.ts`. This is a standard Firebase SDK feature for local development that disables domain verification, resolving the network failure.
-
-2.  **Incorrect Login Redirection (`/` instead of `/home` -> `/admin`)**:
-    -   **Description**: After a successful login, users were being incorrectly redirected to the public homepage (`/`) instead of their role-specific dashboard. This was caused by a race condition in the `AppShell` where redirection logic was firing before the user's session was fully resolved.
-    -   **Resolution**: Re-architected the `AppShell` to use a robust state management system (`'loading' | 'ready' | 'error'`). The shell now *always* waits for the session to be fully resolved before rendering any page content or performing any redirects, which completely eliminates the race condition.
-
-3.  **Critical Login Failure for Non-Admin Users**:
-    -   **Description**: Only the hardcoded `admin` user could log in successfully. Any other valid user (e.g., `abusufiyan.belif`) would be redirected to the homepage as if they were a guest.
-    -   **Root Cause**: The data-fetching functions in `user-service.ts` (like `getUserByUserId`) were critically flawed and could not find any user in the database except for the hardcoded `admin` case.
-    -   **Resolution**: Rewrote `getUserByUserId`, `getUserByEmail`, and `getUserByPhone` to use the correct server-side Firebase Admin SDK queries, ensuring any valid user can be found in the database. Also corrected the password check logic in `login/actions.ts` to work for all users.
-
-4.  **`Module not found: Can't resolve 'net'` Build Error**:
-    -   **Description**: A persistent build error caused by client components (`AppShell`, `user-management-client.tsx`, etc.) illegally importing server-only modules like `firebase-admin`.
-    -   **Resolution**: Performed a full-system audit and refactor.
-        -   Created dedicated server actions in `src/app/actions.ts` and `src/app/admin/user-management/actions.ts` for all server-side data fetching.
-        -   Modified all client components to call these server actions instead of directly importing from service files, thus respecting the client-server boundary.
-        -   This fix was applied systematically to `AppShell` and the pages for User Management, Donors, Beneficiaries, and Referrals.
-
-5.  **`You cannot have two parallel pages that resolve to the same path` Build Error**:
-    -   **Description**: A fatal build error caused by leftover files from a previous, faulty refactoring attempt, resulting in multiple files trying to define the same page route (e.g., `/home`).
-    -   **Resolution**: Performed a definitive cleanup of the project's file structure.
-        -   Deleted the conflicting `(authenticated)` and `(public)` route group directories and all files within them.
-        -   Restored `src/app/page.tsx` as the single public entry point.
-        -   Ensured the root `src/app/layout.tsx` is the single source of truth for the application's layout, wrapping all content in the main `AppShell`.

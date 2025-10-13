@@ -6,8 +6,8 @@
 import { getFirestore, Timestamp, FieldValue } from 'firebase-admin/firestore';
 import type { User, UserRole, Lead, Verifier, LeadDonationAllocation, Donation, Campaign, FundTransfer, LeadAction, AppSettings, OrganizationFooter } from './types';
 import { seedInitialQuotes } from './quotes-service';
-import { getAdminDb, getAdminAuth } from './firebase-admin';
-
+import { getAdminDb, getAdminAuth, ensureCollectionsExist as ensureCollectionsExistFromAdmin } from './firebase-admin';
+import { updatePublicCampaign, enrichCampaignWithPublicStats } from './public-data-service';
 
 // Re-export type for backward compatibility
 export type { User, UserRole };
@@ -112,13 +112,15 @@ const seedOrganization = async (): Promise<string> => {
     const db = await getAdminDb();
     const orgDocRef = db.collection('organizations').doc('main_org');
     
-    await orgDocRef.set({ ...organizationToSeed, updatedAt: FieldValue.serverTimestamp() }, { merge: true });
+    // Always overwrite with the seed data to ensure consistency.
+    await orgDocRef.set({ ...organizationToSeed, updatedAt: FieldValue.serverTimestamp() }, { merge: false });
     
     return "Organization profile seeded/updated successfully.";
 };
 
+
 /**
- * Deletes all documents in a collection in batches of 500.
+ * Deletes all documents in a collection in batches.
  * @param collectionPath The path of the collection to delete.
  * @returns A message indicating the result.
  */
@@ -136,13 +138,20 @@ const deleteCollection = async (collectionPath: string): Promise<string> => {
         
         const batch = db.batch();
         snapshot.docs.forEach(doc => {
-            batch.delete(doc.ref);
+            // CRITICAL FIX: Do NOT delete the _init_ document. If the collection is needed again, it should exist.
+            if (doc.id !== '_init_') {
+                 batch.delete(doc.ref);
+            }
         });
 
-        await batch.commit();
-        totalDeleted += snapshot.size;
+        const deletedInBatch = snapshot.docs.filter(d => d.id !== '_init_').length;
+        if(deletedInBatch > 0) {
+          await batch.commit();
+          totalDeleted += deletedInBatch;
+        }
         
-        if (snapshot.size < 500) {
+        // If the only doc left is _init_ or snapshot size is less than batch size, we are done
+        if (snapshot.size < 500 || (snapshot.size === 1 && snapshot.docs[0].id === '_init_')) {
             break;
         }
     }
@@ -157,7 +166,7 @@ const deleteCollection = async (collectionPath: string): Promise<string> => {
 
 
 // --- EXPORTED SEEDING FUNCTIONS ---
-export { ensureCollectionsExist } from './firebase-admin';
+export const ensureCollectionsExist = ensureCollectionsExistFromAdmin;
 
 export const seedInitialUsersAndQuotes = async (): Promise<SeedResult> => {
     const orgStatus = await seedOrganization();
@@ -212,6 +221,7 @@ export const eraseCoreTeam = async (): Promise<SeedResult> => {
         return { message: "No core team members defined in the seed file." };
     }
 
+    // Firestore has a limit of 10 items for 'in' queries. Process in chunks.
     const chunks = [];
     for (let i = 0; i < coreTeamPhones.length; i += 10) {
         chunks.push(coreTeamPhones.slice(i, i + 10));
@@ -226,7 +236,7 @@ export const eraseCoreTeam = async (): Promise<SeedResult> => {
                 try {
                     await auth.deleteUser(userDoc.id);
                 } catch (e: any) {
-                    if (e.code !== 'auth/user-not-found') throw e;
+                    if (e.code !== 'auth/user-not-found') throw e; // Re-throw if it's not a "not found" error
                 }
                 await userDoc.ref.delete();
                 deletedCount++;
