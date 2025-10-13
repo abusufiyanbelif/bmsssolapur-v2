@@ -1,7 +1,8 @@
 
 
-import { seedUsers, seedCampaigns, seedLeads, seedDonations, type SeedResult } from '@/services/seed-service';
+import { getAdminDb } from '@/services/firebase-admin';
 import type { User, Lead, Campaign, Donation } from '@/services/types';
+import { seedUsers, seedCampaigns, seedLeads, seedDonations, type SeedResult } from '@/services/seed-service';
 import { USERS_COLLECTION, LEADS_COLLECTION, DONATIONS_COLLECTION, CAMPAIGNS_COLLECTION, PUBLIC_LEADS_COLLECTION, PUBLIC_CAMPAIGNS_COLLECTION } from '@/services/constants';
 
 const sampleBeneficiaries: Omit<User, 'id' | 'createdAt' | 'userKey'>[] = [
@@ -191,4 +192,3 @@ async function getAllLeads(): Promise<Lead[]> {
     const snapshot = await db.collection(LEADS_COLLECTION).get();
     return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Lead));
 }
-

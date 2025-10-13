@@ -110,7 +110,6 @@ async function deleteCollection(collectionPath: string): Promise<number> {
     
     // eslint-disable-next-line no-constant-condition
     while (true) {
-        // Fetch the next batch of documents to delete
         const snapshot = await collectionRef.limit(500).get();
 
         // When there are no documents left, we are done
@@ -138,5 +137,3 @@ export const eraseAllQuotes = async (): Promise<number> => {
     const totalDeleted = await deleteCollection(QUOTES_COLLECTION);
     return totalDeleted;
 }
-
-    

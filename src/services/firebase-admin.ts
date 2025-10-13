@@ -195,4 +195,5 @@ export const getAdminAuth = async (): Promise<admin.auth.Auth> => {
   return adminAuthInstance;
 };
 
+// Initiate initialization on server start
 getInitializationPromise();

@@ -75,7 +75,7 @@ export type SeedResult = {
     details?: string[];
 };
 
-const seedUsers = async (users: Omit<User, 'id' | 'createdAt' | 'userKey'>[]): Promise<string[]> => {
+export const seedUsers = async (users: Omit<User, 'id' | 'createdAt' | 'userKey'>[]): Promise<string[]> => {
     const db = await getAdminDb();
     const results: string[] = [];
 
@@ -166,7 +166,7 @@ const deleteCollection = async (collectionPath: string): Promise<string> => {
 
 
 // --- EXPORTED SEEDING FUNCTIONS ---
-export const ensureCollectionsExist = ensureCollectionsExistFromAdmin;
+export { ensureCollectionsExist };
 
 export const seedInitialUsersAndQuotes = async (): Promise<SeedResult> => {
     const orgStatus = await seedOrganization();
@@ -405,3 +405,4 @@ const organizationToSeed = {
     
 
     
+
