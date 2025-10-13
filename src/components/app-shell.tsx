@@ -28,6 +28,7 @@ import { Alert, AlertDescription, AlertTitle } from "./ui/alert";
 import { Card, CardHeader, CardContent, CardTitle, CardDescription } from "@/components/ui/card";
 import { performPermissionCheck, getCurrentUser, getAdminNotificationData } from "@/app/actions";
 import { useToast } from "@/hooks/use-toast";
+import { Skeleton } from "./ui/skeleton";
 
 const PermissionErrorState = ({ error }: { error: string }) => {
     const isPermissionDenied = error === 'permission-denied';
@@ -270,12 +271,23 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     };
     
     const HeaderTitle = () => {
-        const orgInfo = organization?.footer?.organizationInfo;
+        if (!organization) {
+            return (
+                <div className="flex items-center gap-3">
+                    <Skeleton className="h-12 w-12 rounded-full" />
+                    <div className="space-y-1">
+                        <Skeleton className="h-4 w-40" />
+                        <Skeleton className="h-3 w-32" />
+                    </div>
+                </div>
+            )
+        }
+        const orgInfo = organization.footer?.organizationInfo;
         return (
-            <Link href="/" className="flex items-center gap-3" title={organization?.name || 'Baitul Mal'}>
-                <Logo className="h-12 w-12" logoUrl={organization?.logoUrl} />
+            <Link href="/" className="flex items-center gap-3" title={organization.name}>
+                <Logo className="h-12 w-12" logoUrl={organization.logoUrl} />
                  <div className="flex flex-col leading-tight">
-                    <span className="font-bold font-headline text-primary text-sm">{orgInfo?.titleLine1 || organization?.name || 'Baitul Mal'}</span>
+                    <span className="font-bold font-headline text-primary text-sm">{orgInfo?.titleLine1 || organization.name}</span>
                     {orgInfo?.titleLine2 && <span className="font-bold font-headline text-accent text-sm">{orgInfo.titleLine2}</span>}
                     {orgInfo?.titleLine3 && <span className="font-bold font-headline text-primary text-xs">{orgInfo.titleLine3}</span>}
                 </div>

@@ -1,13 +1,13 @@
-
 /**
  * @fileOverview A service to seed the database with initial data.
  */
 
 import { getFirestore, Timestamp, FieldValue } from 'firebase-admin/firestore';
-import type { User, UserRole, Lead, Verifier, LeadDonationAllocation, Donation, Campaign, FundTransfer, LeadAction, AppSettings, OrganizationFooter } from './types';
-import { seedInitialQuotes } from './quotes-service';
+import type { User, UserRole, Lead, Verifier, LeadDonationAllocation, Donation, Campaign, FundTransfer, LeadAction, AppSettings, OrganizationFooter } from '@/services/types';
+import { seedInitialQuotes } from '@/services/quotes-service';
 import { getAdminDb, getAdminAuth, ensureCollectionsExist as ensureCollectionsExistFromAdmin } from './firebase-admin';
 import { updatePublicCampaign, enrichCampaignWithPublicStats } from './public-data-service';
+import { format } from 'date-fns';
 
 // Re-export type for backward compatibility
 export type { User, UserRole };
@@ -201,6 +201,61 @@ export const seedPaymentGateways = async (): Promise<SeedResult> => {
     return { message: "Payment Gateway seeding is not fully implemented yet." };
 };
 
+export const seedCampaigns = async (campaigns: Omit<Campaign, 'createdAt' | 'updatedAt'>[]): Promise<string> => {
+    const db = await getAdminDb();
+    const batch = db.batch();
+    let count = 0;
+    
+    for (const campaignData of campaigns) {
+        const docRef = db.collection('campaigns').doc(campaignData.id);
+        const dataToWrite = { ...campaignData, createdAt: FieldValue.serverTimestamp(), updatedAt: FieldValue.serverTimestamp() };
+        batch.set(docRef, dataToWrite, { merge: true });
+        
+        const enriched = await enrichCampaignWithPublicStats(dataToWrite as Campaign);
+        await updatePublicCampaign(enriched, enriched.status === 'Cancelled');
+        
+        count++;
+    }
+
+    await batch.commit();
+    return `Seeded ${count} campaigns.`;
+}
+
+export const seedLeads = async (leads: Omit<Lead, 'id' | 'createdAt' | 'updatedAt'>[]): Promise<string> => {
+    const db = await getAdminDb();
+    const batch = db.batch();
+    let count = 0;
+
+    for (const leadData of leads) {
+        const userKey = (await db.collection('users').doc(leadData.beneficiaryId!).get()).data()?.userKey || `U${count}`;
+        const leadCount = (await db.collection('leads').where('beneficiaryId', '==', leadData.beneficiaryId!).count().get()).data().count;
+        const leadId = `${userKey}_${leadCount + 1}_${format(new Date(), 'ddMMyyyy')}`;
+
+        const docRef = db.collection('leads').doc(leadId);
+        batch.set(docRef, { ...leadData, dateCreated: Timestamp.now(), createdAt: FieldValue.serverTimestamp(), updatedAt: FieldValue.serverTimestamp() }, { merge: true });
+        count++;
+    }
+
+    await batch.commit();
+    return `Seeded ${count} leads.`;
+}
+
+export const seedDonations = async (donations: Omit<Donation, 'id'>[]): Promise<string> => {
+    const db = await getAdminDb();
+    const batch = db.batch();
+    let count = 0;
+
+    for (const donationData of donations) {
+        const docRef = db.collection('donations').doc(); // Auto-generate ID for donations
+        batch.set(docRef, { ...donationData, createdAt: FieldValue.serverTimestamp() }, { merge: true });
+        count++;
+    }
+
+    await batch.commit();
+    return `Seeded ${count} donations.`;
+}
+
+
 export const seedSampleData = async (): Promise<SeedResult> => {
     const { seedSampleData: doSeed } = await import('../scripts/seed/seed-sample-data');
     return doSeed();
@@ -265,6 +320,17 @@ export const eraseSampleData = async (): Promise<SeedResult> => {
     for (const collection of collectionsToDelete) {
         results.push(await deleteCollection(collection));
     }
+    // Also remove sample users
+    const db = await getAdminDb();
+    const sampleUsersQuery = db.collection(USERS_COLLECTION).where('source', '==', 'Seeded');
+    const sampleUsersSnapshot = await sampleUsersQuery.get();
+    if (!sampleUsersSnapshot.empty) {
+      const batch = db.batch();
+      sampleUsersSnapshot.docs.forEach(doc => batch.delete(doc.ref));
+      await batch.commit();
+      results.push(`Deleted ${sampleUsersSnapshot.size} sample user documents.`);
+    }
+
     return { message: "Sample data erased.", details: results };
 };
 
