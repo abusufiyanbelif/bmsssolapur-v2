@@ -87,15 +87,18 @@ function verifyAndFixRoles(autoFix = false) {
     } else {
       missingRoles++;
       console.log(`❌ ${role} (Missing)`);
-      const fixCmd = `gcloud projects add-iam-policy-binding ${projectId} --member="serviceAccount:${serviceAccount}" --role="${role}"`;
+      // FIX: Add --condition=None to handle projects with existing conditional bindings
+      const fixCmd = `gcloud projects add-iam-policy-binding ${projectId} --member="serviceAccount:${serviceAccount}" --role="${role}" --condition=None`;
       console.log(`   ➜ To fix manually: ${fixCmd}`);
       if (autoFix) {
         console.log("   ⚙️  Applying fix automatically...");
         try {
-          run(fixCmd);
+          run(fixCmd, true); // Run silently
           console.log(`   ✅ ${role} added successfully.`);
-        } catch {
-          console.error(`   ❌ Failed to add ${role}. Please run the command manually.`);
+        } catch (err) {
+          console.error(`   ❌ Failed to add ${role}. Please check the error output above or run the command manually.`);
+          // Log the actual error from the command if available
+          if (err.stderr) console.error(`   Error details: ${err.stderr}`);
         }
       }
     }
@@ -105,6 +108,8 @@ function verifyAndFixRoles(autoFix = false) {
       console.log("\n✅ All required IAM roles are present. Your App Hosting backend should have the necessary permissions.");
   } else if (!autoFix) {
       console.log(`\n⚠️  Found ${missingRoles} missing role(s). Run \`npm run fix:iam\` to grant them automatically or add them manually in the Google Cloud Console.`);
+  } else {
+      console.log(`\n✅ Finished attempting to fix ${missingRoles} role(s).`);
   }
 
   console.log("\n✅ IAM verification complete.\n");
