@@ -42,9 +42,7 @@ export async function handleLogin(formData: FormData): Promise<LoginState> {
         }
         
         // Password validation logic
-        if (user.userId === 'admin' && user.password === 'password' && password === 'password') {
-            // Special case for initial admin login with default password
-        } else if (user.password !== password) {
+        if (user.password !== password) {
              return { success: false, error: "Incorrect password. Please try again." };
         }
 
