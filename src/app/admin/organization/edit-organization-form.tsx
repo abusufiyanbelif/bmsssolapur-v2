@@ -51,18 +51,16 @@ type FormValues = z.infer<typeof formSchema>;
 
 interface EditOrganizationFormProps {
     organization: Organization;
+    isCreating: boolean;
 }
 
-export function EditOrganizationForm({ organization }: EditOrganizationFormProps) {
+export function EditOrganizationForm({ organization, isCreating: initialIsCreating }: EditOrganizationFormProps) {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [qrCodePreviewUrl, setQrCodePreviewUrl] = useState(organization.qrCodeUrl || '');
   const [logoPreviewUrl, setLogoPreviewUrl] = useState(organization.logoUrl || '');
-  const [isEditing, setIsEditing] = useState(false);
+  const [isEditing, setIsEditing] = useState(initialIsCreating);
   
-  // If the organization has a real `createdAt` timestamp, it exists. Otherwise, it's a new one.
-  const isCreating = !organization.createdAt || Object.keys(organization.createdAt).length === 0;
-
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -108,18 +106,18 @@ export function EditOrganizationForm({ organization }: EditOrganizationFormProps
         }
     });
     
-    const result = await handleUpdateOrganization(organization.id!, formData, isCreating);
+    const result = await handleUpdateOrganization(organization.id!, formData, initialIsCreating);
 
     setIsSubmitting(false);
 
     if (result.success) {
       toast({
-        title: isCreating ? "Organization Created" : "Organization Details Saved",
+        title: initialIsCreating ? "Organization Created" : "Organization Details Saved",
         description: `The organization profile has been updated successfully.`,
       });
       // Reset the form with the new values, which marks it as "not dirty"
       form.reset(values);
-      setIsEditing(isCreating); // Stay in editing mode if we just created it
+      setIsEditing(initialIsCreating); // Stay in editing mode if we just created it
     } else {
       toast({
         variant: "destructive",
@@ -139,17 +137,17 @@ export function EditOrganizationForm({ organization }: EditOrganizationFormProps
                         Update your organization's public information, contact details, and payment settings. These details will be visible on the public-facing pages.
                     </CardDescription>
                 </div>
-                 {!isEditing && !isCreating ? (
+                 {!isEditing ? (
                     <Button onClick={() => setIsEditing(true)}>
                         <Edit className="mr-2 h-4 w-4" />
                         Edit
                     </Button>
                 ) : (
                     <div className="flex gap-2">
-                        {!isCreating && <Button type="button" variant="outline" onClick={handleCancel}><X className="mr-2 h-4 w-4" /> Cancel</Button>}
+                        {!initialIsCreating && <Button type="button" variant="outline" onClick={handleCancel}><X className="mr-2 h-4 w-4" /> Cancel</Button>}
                          <Button onClick={form.handleSubmit(onSubmit)} disabled={isSubmitting || !isDirty}>
                             {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-                            {isCreating ? "Create Profile" : "Save Changes"}
+                            {initialIsCreating ? "Create Profile" : "Save Changes"}
                         </Button>
                     </div>
                 )}
@@ -158,7 +156,7 @@ export function EditOrganizationForm({ organization }: EditOrganizationFormProps
         <CardContent>
             <Form {...form}>
             <form className="space-y-8">
-                <fieldset disabled={!isEditing && !isCreating} className="space-y-8">
+                <fieldset disabled={!isEditing} className="space-y-8">
                     <h3 className="text-lg font-semibold border-b pb-2">Public Profile</h3>
                     <div className="grid md:grid-cols-3 gap-8">
                         <div className="md:col-span-2 space-y-8">
@@ -312,7 +310,7 @@ export function EditOrganizationForm({ organization }: EditOrganizationFormProps
                                     <Input {...field} placeholder="e.g., BAITULMAL SAMAJIK SANSTHA" />
                                 </FormControl>
                                 <FormMessage />
-                            </FormItem>
+                                </FormItem>
                         )}
                     />
                     <div className="grid md:grid-cols-2 gap-8">

@@ -1,4 +1,5 @@
 
+
 import { getCurrentOrganization } from "@/services/organization-service";
 import { EditOrganizationForm } from "./edit-organization-form";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -48,13 +49,16 @@ export default async function OrganizationSettingsPage() {
         )
     }
 
-    // If no organization exists, use the default empty object to render the form for creation
-    const orgData = organization || defaultOrganization;
+    // Determine if we are creating a new org.
+    // This is true if the fetched organization's name is the default placeholder,
+    // which happens when the database is empty.
+    const isCreating = !organization || organization.name === "Default Organization Name";
+
 
     return (
         <div className="flex-1 space-y-4">
             <h2 className="text-3xl font-bold tracking-tight font-headline text-primary">Organization Profile</h2>
-            {!organization && (
+            {isCreating && (
                  <Alert>
                     <AlertCircle className="h-4 w-4" />
                     <AlertTitle>No Organization Profile Found</AlertTitle>
@@ -63,7 +67,7 @@ export default async function OrganizationSettingsPage() {
                     </AlertDescription>
                 </Alert>
             )}
-            <EditOrganizationForm organization={orgData} />
+            <EditOrganizationForm organization={organization || defaultOrganization} isCreating={isCreating} />
         </div>
     );
 }
