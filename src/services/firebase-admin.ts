@@ -52,7 +52,7 @@ const ensureSystemUserExists = async (db: AdminFirestore, userData: Partial<User
  * document if they don't. This prevents errors on fresh deployments.
  * @returns An object with a list of created collections and any errors.
  */
-export const ensureCollectionsExist = async (): Promise<{ success: boolean; message: string; created: string[]; errors: string[] }> => {
+export const ensureCollectionsExist = async (): Promise<{ success: boolean; message: string; details: string[]; errors: string[] }> => {
     const db = await getAdminDb();
     const coreCollections = [
         'users', 'leads', 'donations', 'campaigns', 'activityLog',
@@ -64,6 +64,7 @@ export const ensureCollectionsExist = async (): Promise<{ success: boolean; mess
     
     const created: string[] = [];
     const errors: string[] = [];
+    const details: string[] = [];
 
     for (const collectionName of coreCollections) {
         try {
@@ -77,6 +78,8 @@ export const ensureCollectionsExist = async (): Promise<{ success: boolean; mess
                     description: `This document was automatically created to initialize the ${collectionName} collection.`
                 });
                 created.push(collectionName);
+            } else {
+                details.push(`Collection '${collectionName}' already exists.`);
             }
         } catch (e) {
             const errorMsg = `CRITICAL ERROR: Failed to ensure collection "${collectionName}" exists.`;
@@ -87,8 +90,8 @@ export const ensureCollectionsExist = async (): Promise<{ success: boolean; mess
     
     return { 
         success: errors.length === 0, 
-        message: errors.length > 0 ? "Some collections could not be verified." : "All collections verified.",
-        created, 
+        message: errors.length > 0 ? "Some collections could not be verified." : created.length > 0 ? "Successfully created missing collections." : "All essential collections already exist.",
+        details: created, 
         errors 
     };
 };
@@ -134,7 +137,7 @@ const runPostInitTasks = async () => {
                 fatherName: "System",
                 email: "admin@example.com",
                 phone: "7887646583", 
-                password: "admin", 
+                password: "password", 
                 roles: ["Super Admin"], 
                 privileges: ["all"],
                 isActive: true, 

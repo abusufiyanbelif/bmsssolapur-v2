@@ -46,7 +46,7 @@ If you see this error in your deployed application, it means the App Hosting ser
     ```bash
     npm run fix:iam
     ```
-    This script will automatically attempt to grant all the necessary roles to your App Hosting service account.
+    This script will automatically grant all the necessary roles to your App Hosting service account.
 
 3.  **Manual Steps (If Needed)**: If the script fails, you can perform the steps manually:
     -   Go to the **[IAM & Admin page](https://console.cloud.google.com/iam-admin/iam)** in your Google Cloud Console.
