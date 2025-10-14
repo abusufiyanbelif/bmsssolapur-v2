@@ -51,8 +51,6 @@ async function runHealthCheck() {
         const output = await new Promise<string>((resolve, reject) => {
           exec(test.command, (error, stdout, stderr) => {
             const combinedOutput = stdout + stderr;
-            // The script may exit with an error code but still contain a "Warning" or "Success" message.
-            // We prioritize parsing the status from stdout over the exit code.
             if (error && !combinedOutput.includes('✅') && !combinedOutput.includes('⚠️')) {
               reject(new Error(stderr || stdout));
               return;
@@ -64,8 +62,7 @@ async function runHealthCheck() {
         const duration = performance.now() - testStartTime;
         let status: TestStatus = 'Failed'; // Default to failed
         
-        if (output.includes('✅ SUCCESS')) status = 'Passed';
-        else if (output.includes('✅ All required IAM roles are present')) status = 'Passed'; // Special case for IAM
+        if (output.includes('✅ SUCCESS') || output.includes('✅ All required IAM roles are present')) status = 'Passed';
         else if (output.includes('⚠️ WARNING')) status = 'Warning';
         else if (output.includes('❌ ERROR')) status = 'Failed';
 
@@ -104,7 +101,7 @@ async function runHealthCheck() {
   await runFileCheckTests(uiConfigTests, 'UI Configuration Files');
 
   const overallEndTime = performance.now();
-  const totalDuration = (overallEndTime - startTime) / 1000;
+  const totalDuration = (overallEndTime - overallStartTime) / 1000;
 
   console.log('\n--- Health Check Summary ---');
   const summary = allResults.reduce((acc, result) => {
@@ -119,6 +116,7 @@ async function runHealthCheck() {
   const warningCount = summary['Warning']?.length || 0;
 
   const printResults = (results: TestResult[], status: 'PASSED' | 'FAILED' | 'WARNING') => {
+      if (!results || results.length === 0) return;
       results.forEach(result => {
         console.log(`\n[${status}] ${result.name} (took ${(result.duration / 1000).toFixed(2)}s)`);
         console.log('------------------------------------------');
@@ -127,18 +125,18 @@ async function runHealthCheck() {
         console.log('------------------------------------------');
       });
   }
-
+  
+  // Print detailed logs for all categories
   if (failedCount > 0) {
-      console.log(`\n❌ Critical Issues Found: ${failedCount} test(s) failed.`);
+      console.log(`\n❌ CRITICAL ISSUES FOUND: ${failedCount} test(s) failed.`);
       printResults((summary['Failed'] || []).concat(summary['Error'] || []), 'FAILED');
   }
    if (warningCount > 0) {
-      console.log(`\n⚠️ Warnings: ${warningCount} test(s) returned a warning.`);
+      console.log(`\n⚠️ WARNINGS: ${warningCount} test(s) returned a warning.`);
       printResults(summary['Warning'] || [], 'WARNING');
   }
-  
   if (passedCount > 0) {
-      console.log(`\n✅ Passed Checks: ${passedCount} test(s) passed successfully.`);
+      console.log(`\n✅ PASSED CHECKS: ${passedCount} test(s) passed successfully.`);
       printResults(summary['Passed'] || [], 'PASSED');
   }
 
