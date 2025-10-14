@@ -10,11 +10,26 @@
 import { execSync } from "child_process";
 
 const REQUIRED_ROLES = [
-  "roles/firebase.admin",
-  "roles/datastore.user",
-  "roles/logging.viewer",
-  "roles/aiplatform.user",
-  "roles/storage.admin"
+  {
+    role: "roles/firebase.admin",
+    description: "(Critical for Firebase Authentication, e.g., creating/syncing users for OTP login)",
+  },
+  {
+    role: "roles/datastore.user",
+    description: "(Required for reading from and writing to the Firestore database)",
+  },
+  {
+    role: "roles/logging.viewer",
+    description: "(Recommended for debugging server logs)",
+  },
+  {
+    role: "roles/aiplatform.user",
+    description: "(Required for all Generative AI features)",
+  },
+  {
+    role: "roles/storage.admin",
+    description: "(Required for uploading and accessing files in Cloud Storage)",
+  }
 ];
 
 function run(cmd, silent = false) {
@@ -75,7 +90,8 @@ function verifyAndFixRoles(autoFix = false) {
   let missingRoles = 0;
   console.log("🧾 Checking for required IAM roles...\n");
 
-  REQUIRED_ROLES.forEach((role) => {
+  REQUIRED_ROLES.forEach((roleInfo) => {
+    const { role, description } = roleInfo;
     const found = policy.some(
       (entry) =>
         entry.bindings &&
@@ -84,10 +100,10 @@ function verifyAndFixRoles(autoFix = false) {
     );
 
     if (found) {
-      console.log(`✅ ${role}`);
+      console.log(`✅ ${role} ${description}`);
     } else {
       missingRoles++;
-      console.log(`❌ ${role} (Missing)`);
+      console.log(`❌ ${role} (Missing) ${description}`);
       // FIX: Add --condition=None to handle projects with existing conditional bindings
       const fixCmd = `gcloud projects add-iam-policy-binding ${projectId} --member="serviceAccount:${serviceAccount}" --role="${role}" --condition=None`;
       console.log(`   ➜ To fix manually: ${fixCmd}`);
