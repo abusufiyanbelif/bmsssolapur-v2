@@ -24,7 +24,8 @@
     "test:nodemailer": "tsx src/scripts/test-nodemailer.ts",
     "test:gemini": "tsx src/scripts/test-gemini.ts",
     "verify:iam": "node scripts/verify-iam.js",
-    "fix:iam": "AUTO_FIX=true node scripts/verify-iam.js"
+    "fix:iam": "AUTO_FIX=true node scripts/verify-iam.js",
+    "health-check": "tsx src/scripts/health-check.ts"
   },
   "dependencies": {
     "@genkit-ai/firebase": "^1.15.5",
