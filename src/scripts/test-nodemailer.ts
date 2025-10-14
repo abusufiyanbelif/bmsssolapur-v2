@@ -1,4 +1,3 @@
-
 import { testNodemailerConnection } from '../app/services/actions';
 import dotenv from 'dotenv';
 
@@ -24,7 +23,8 @@ async function runTest() {
   } catch (e: any) {
     console.error('\n❌ UNEXPECTED ERROR:', e.message);
   } finally {
-    process.exit();
+    // A small delay to ensure all logs are flushed before exiting
+    setTimeout(() => process.exit(), 100);
   }
 }
 

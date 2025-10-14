@@ -1,4 +1,3 @@
-
 import { getAdminDb } from '../services/firebase-admin';
 import dotenv from 'dotenv';
 
@@ -24,13 +23,12 @@ async function testDatabaseConnection() {
     console.error('------------------------------------------');
     
     if (e.message && (e.message.includes('permission-denied') || e.message.includes('UNAUTHENTICATED') || e.message.includes('Could not load the default credentials'))) {
-      console.log('\n[DIAGNOSIS] This is a permissions issue.');
-      console.log('\nPossible causes:');
-      console.log('1. You are running this locally and have not authenticated. Run `gcloud auth application-default login` in your terminal.');
-      console.log('2. The service account used by your App Hosting backend is missing the "Cloud Datastore User" IAM role. Run `npm run verify:iam` to check.');
-      console.log('3. The Firebase project ID might be misconfigured in your .env file.');
+      console.log('\n[DIAGNOSIS] This is a permissions issue. The application server cannot authenticate with Google Cloud.');
+      console.log('\nTo fix this:');
+      console.log('1. If running locally: Run `gcloud auth application-default login` in your terminal and restart the server.');
+      console.log('2. If this is a deployed App Hosting backend: The service account is missing the "Cloud Datastore User" IAM role. Run `npm run fix:iam` to grant it automatically.');
     } else {
-        console.log('\n[DIAGNOSIS] This seems to be an unexpected error. Please check the server logs for more details.');
+        console.log('\n[DIAGNOSIS] An unexpected error occurred. Please check the error details above and your network connection.');
     }
 
   } finally {

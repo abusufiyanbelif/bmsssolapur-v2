@@ -1,4 +1,8 @@
 
+/**
+ * @fileOverview A comprehensive health check script for the application.
+ */
+
 import { exec } from 'child_process';
 import dotenv from 'dotenv';
 import fs from 'fs/promises';
@@ -7,108 +11,138 @@ import { performance } from 'perf_hooks';
 
 dotenv.config();
 
-const tests = [
+const backendTests = [
   { name: 'Database Connection', command: 'npm run test:db' },
-  { name: 'Admin User Login', command: 'npm run test:admin-login' },
-  { name: 'Gemini AI API', command: 'npm run test:gemini' },
+  { name: 'Default Admin Login', command: 'npm run test:admin-login' },
+];
+
+const serviceTests = [
+  { name: 'Google Gemini AI API', command: 'npm run test:gemini' },
   { name: 'Twilio SMS Service', command: 'npm run test:twilio' },
   { name: 'Nodemailer Email Service', command: 'npm run test:nodemailer' },
-  { name: 'IAM Role Permissions', command: 'npm run verify:iam' }
+];
+
+const permissionTests = [
+    { name: 'Cloud IAM Role Permissions', command: 'npm run verify:iam' },
 ];
 
 const uiConfigTests = [
-    { name: 'Tailwind Config', path: './tailwind.config.ts' },
+    { name: 'Tailwind CSS Config', path: './tailwind.config.ts' },
     { name: 'ShadCN Components Config', path: './components.json' },
-    { name: 'Global CSS', path: './src/app/globals.css' },
+    { name: 'Global CSS & Theme', path: './src/app/globals.css' },
 ];
+
+type TestStatus = 'Passed' | 'Failed' | 'Warning' | 'Error';
+type TestResult = { name: string; status: TestStatus; output: string, duration: number };
 
 async function runHealthCheck() {
   console.log('🚀 Starting Application Health Check...\n');
   const overallStartTime = performance.now();
   
-  const results: { name: string; status: 'Passed' | 'Failed' | 'Error'; output: string, duration: number }[] = [];
-  let allPassed = true;
+  const allResults: TestResult[] = [];
 
-  console.log('--- Backend & Service Connectivity ---');
-  for (const test of tests) {
-    const testStartTime = performance.now();
-    process.stdout.write(`- Running: ${test.name}... `);
+  const runCommandTests = async (tests: {name: string, command: string}[], category: string) => {
+    console.log(`--- ${category} ---`);
+    for (const test of tests) {
+      const testStartTime = performance.now();
+      process.stdout.write(`- Running: ${test.name}... `);
 
-    try {
-      const output = await new Promise<string>((resolve, reject) => {
-        exec(test.command, (error, stdout, stderr) => {
-          if (error) {
-            // Check for specific success messages even if the script exits with an error code (e.g. verify:iam)
-            if(stdout.includes('✅')) {
-               resolve(stdout);
-               return;
+      try {
+        const output = await new Promise<string>((resolve, reject) => {
+          exec(test.command, (error, stdout, stderr) => {
+            const combinedOutput = stdout + stderr;
+            // The script may exit with an error code but still contain a "Warning" or "Success" message.
+            // We prioritize parsing the status from stdout over the exit code.
+            if (error && !combinedOutput.includes('✅') && !combinedOutput.includes('⚠️')) {
+              reject(new Error(stderr || stdout));
+              return;
             }
-            reject(new Error(stderr || stdout));
-            return;
-          }
-          resolve(stdout);
+            resolve(combinedOutput);
+          });
         });
-      });
-      
-      const duration = performance.now() - testStartTime;
-      const isSuccess = output.includes('✅ SUCCESS') || output.includes('✅ All required IAM roles are present');
+        
+        const duration = performance.now() - testStartTime;
+        let status: TestStatus = 'Failed'; // Default to failed
+        
+        if (output.includes('✅ SUCCESS')) status = 'Passed';
+        else if (output.includes('✅ All required IAM roles are present')) status = 'Passed'; // Special case for IAM
+        else if (output.includes('⚠️ WARNING')) status = 'Warning';
+        else if (output.includes('❌ ERROR')) status = 'Failed';
 
-      if (isSuccess) {
-        process.stdout.write(`✅ Passed (${(duration / 1000).toFixed(2)}s)\n`);
-        results.push({ name: test.name, status: 'Passed', output, duration });
-      } else {
-        allPassed = false;
-        process.stdout.write(`❌ Failed (${(duration / 1000).toFixed(2)}s)\n`);
-        results.push({ name: test.name, status: 'Failed', output, duration });
+        const statusIcon = status === 'Passed' ? '✅' : status === 'Warning' ? '⚠️' : '❌';
+        process.stdout.write(`${statusIcon} ${status} (${(duration / 1000).toFixed(2)}s)\n`);
+        allResults.push({ name: test.name, status, output, duration });
+      } catch (e: any) {
+        const duration = performance.now() - testStartTime;
+        process.stdout.write(`❌ Error (${(duration / 1000).toFixed(2)}s)\n`);
+        allResults.push({ name: test.name, status: 'Error', output: e.message, duration });
       }
-    } catch (e: any) {
-      const duration = performance.now() - testStartTime;
-      allPassed = false;
-      process.stdout.write(`❌ Error (${(duration / 1000).toFixed(2)}s)\n`);
-      results.push({ name: test.name, status: 'Error', output: e.message, duration });
     }
   }
-  
-  console.log('\n--- UI Configuration Files ---');
-  for (const test of uiConfigTests) {
-      const testStartTime = performance.now();
-      process.stdout.write(`- Checking: ${test.name}... `);
-      try {
-          await fs.access(path.join(process.cwd(), test.path));
-          const duration = performance.now() - testStartTime;
-          process.stdout.write(`✅ Present (${duration.toFixed(2)}ms)\n`);
-          results.push({ name: test.name, status: 'Passed', output: 'File exists.', duration });
-      } catch (e) {
-          const duration = performance.now() - testStartTime;
-          allPassed = false;
-          process.stdout.write(`❌ Missing (${duration.toFixed(2)}ms)\n`);
-          results.push({ name: test.name, status: 'Failed', output: `Critical file is missing at: ${test.path}`, duration });
+
+  const runFileCheckTests = async (tests: {name: string, path: string}[], category: string) => {
+      console.log(`\n--- ${category} ---`);
+      for (const test of tests) {
+          const testStartTime = performance.now();
+          process.stdout.write(`- Checking: ${test.name}... `);
+          try {
+              await fs.access(path.join(process.cwd(), test.path));
+              const duration = performance.now() - testStartTime;
+              process.stdout.write(`✅ Passed (${duration.toFixed(2)}ms)\n`);
+              allResults.push({ name: test.name, status: 'Passed', output: 'File exists.', duration });
+          } catch (e) {
+              const duration = performance.now() - testStartTime;
+              process.stdout.write(`❌ Failed (${duration.toFixed(2)}ms)\n`);
+              allResults.push({ name: test.name, status: 'Failed', output: `Critical file is missing at: ${test.path}`, duration });
+          }
       }
   }
+
+  await runCommandTests(backendTests, 'Backend & Database');
+  await runCommandTests(serviceTests, 'External Service Integrations');
+  await runCommandTests(permissionTests, 'Cloud Permissions');
+  await runFileCheckTests(uiConfigTests, 'UI Configuration Files');
 
   const overallEndTime = performance.now();
   const totalDuration = (overallEndTime - overallStartTime) / 1000;
 
   console.log('\n--- Health Check Summary ---');
-  const failedTests = results.filter(r => r.status !== 'Passed');
-  if (failedTests.length > 0) {
-      failedTests.forEach(result => {
-        console.log(`\n❌ ${result.name}: ${result.status} (took ${(result.duration / 1000).toFixed(2)}s)`);
+  const summary = allResults.reduce((acc, result) => {
+      if (!acc[result.status]) acc[result.status] = [];
+      acc[result.status].push(result);
+      return acc;
+  }, {} as Record<TestStatus, TestResult[]>);
+
+  const totalTests = allResults.length;
+  const passedCount = summary['Passed']?.length || 0;
+  const failedCount = (summary['Failed']?.length || 0) + (summary['Error']?.length || 0);
+  const warningCount = summary['Warning']?.length || 0;
+
+  if (failedCount > 0) {
+      console.log(`\n❌ Critical Issues Found: ${failedCount} test(s) failed.`);
+      (summary['Failed'] || []).concat(summary['Error'] || []).forEach(result => {
+        console.log(`\n[FAIL] ${result.name} (took ${(result.duration / 1000).toFixed(2)}s)`);
         console.log('------------------------------------------');
-        // Clean up the output by removing the "npm run..." lines
         const cleanOutput = result.output.split('\n').filter(line => !line.startsWith('> ')).join('\n');
-        console.log(cleanOutput);
+        console.log(cleanOutput.trim());
+        console.log('------------------------------------------');
+      });
+  }
+   if (warningCount > 0) {
+      console.log(`\n⚠️ Warnings: ${warningCount} test(s) returned a warning.`);
+       (summary['Warning'] || []).forEach(result => {
+        console.log(`\n[WARN] ${result.name} (took ${(result.duration / 1000).toFixed(2)}s)`);
+        console.log('------------------------------------------');
+        const cleanOutput = result.output.split('\n').filter(line => !line.startsWith('> ')).join('\n');
+        console.log(cleanOutput.trim());
         console.log('------------------------------------------');
       });
   }
 
-  if (allPassed) {
-    console.log(`\n✅ All systems are operational! (Completed in ${totalDuration.toFixed(2)}s)`);
+  if (failedCount === 0 && warningCount === 0) {
+    console.log(`\n✅ All ${totalTests} checks passed! System is operational. (Completed in ${totalDuration.toFixed(2)}s)`);
   } else {
-    console.log(`\n⚠️  Found ${failedTests.length} issue(s). Please review the output above. (Completed in ${totalDuration.toFixed(2)}s)`);
+    console.log(`\n📊 Summary: ${passedCount} Passed, ${failedCount} Failed, ${warningCount} Warnings. (Completed in ${totalDuration.toFixed(2)}s)`);
   }
 
-  process.exit(allPassed ? 0 : 1);
-}
-
-runHealthCheck();
+  

@@ -1,4 +1,3 @@
-
 import { handleLogin } from '@/app/login/actions';
 import dotenv from 'dotenv';
 import { getUser } from '@/services/user-service';
@@ -22,7 +21,7 @@ async function testAdminLogin() {
     // First, verify the admin user exists in the database.
     const adminUser = await getUser('admin');
     if (!adminUser) {
-        throw new Error('The default "admin" user does not exist in the Firestore database. Please ensure the application has started correctly at least once to trigger its creation, or check for database connectivity issues.');
+        throw new Error('The default "admin" user does not exist in the Firestore database. Please ensure the application has started correctly at least once to trigger its creation, or run `npm run test:db` to check for database connectivity issues.');
     }
 
     const formData = new MockFormData();
@@ -45,8 +44,10 @@ async function testAdminLogin() {
       console.log('2. There is a bug in the `handleLogin` server action in `src/app/login/actions.ts`.');
     }
   } catch (e: any) {
-    console.error('\n❌ UNEXPECTED SCRIPT ERROR:', e.message);
+    console.error('\n❌ ERROR: Unexpected script error during admin login test.');
+    console.error(e.message);
   } finally {
+    // Allow time for all logs to flush before exiting
     setTimeout(() => process.exit(), 100);
   }
 }

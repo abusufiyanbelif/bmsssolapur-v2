@@ -22,11 +22,4 @@ async function runTest() {
       console.log('3. The Verify Service SID might not exist or may be from a different project.');
       console.log('4. Ensure "OTP (SMS) Login" is enabled and Twilio is selected as the provider in your app\'s Notification Settings.');
     }
-  } catch (e: any) {
-    console.error('\n❌ UNEXPECTED SCRIPT ERROR:', e.message);
-  } finally {
-    process.exit();
-  }
-}
-
-runTest();
+  } catch (e: any
