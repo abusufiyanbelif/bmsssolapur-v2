@@ -87,19 +87,19 @@ export async function handleSendOtp(phoneNumber: string): Promise<OtpState> {
         }
 
         const settings = await getAppSettings();
-        const otpProvider = settings?.notificationSettings?.sms.provider || 'firebase';
+        const otpProvider = settings?.notificationSettings?.sms.provider || 'twilio';
 
-        if (otpProvider === 'firebase') {
-            return { success: true, provider: 'firebase' };
+        // Simplified: Always use Twilio flow from the backend for now.
+        // Firebase client-side logic can be re-added if necessary, but this is more robust.
+        const fullPhoneNumber = `+91${phoneNumber}`;
+        const result = await sendOtp({ phoneNumber: fullPhoneNumber });
+
+        if (result.success) {
+            return { success: true, provider: 'twilio' };
         } else {
-            const fullPhoneNumber = `+91${phoneNumber}`;
-            const result = await sendOtp({ phoneNumber: fullPhoneNumber });
-            if (result.success) {
-                return { success: true, provider: 'twilio' };
-            } else {
-                return { success: false, error: result.error, provider: 'twilio' };
-            }
+            return { success: false, error: result.error, provider: 'twilio' };
         }
+
     } catch(e) {
         const error = e instanceof Error ? e.message : "An unknown error occurred.";
         return { success: false, error };
@@ -145,33 +145,3 @@ export async function handleVerifyOtp(formData: FormData): Promise<LoginState> {
         return { success: false, error };
     }
 }
-
-
-export async function handleFirebaseOtpLogin(uid: string, phoneNumber: string | null): Promise<LoginState> {
-    try {
-        const user = await getUser(uid);
-        
-        if (!user) {
-             return { success: false, error: 'Your phone number is not registered in our system. Please register an account first.' };
-        }
-        
-        await logActivity({
-            userId: user.id!,
-            userName: user.name,
-            userEmail: user.email,
-            role: user.roles[0],
-            activity: 'User Logged In',
-            details: { method: 'otp (firebase)' },
-        });
-
-        // Return userId for the client to handle session and redirection.
-        return { success: true, userId: user.id! };
-
-    } catch (e) {
-        console.error("Firebase OTP Login Finalization Error:", e);
-        const error = e instanceof Error ? e.message : "An unknown database error occurred.";
-        return { success: false, error };
-    }
-}
-
-    
