@@ -58,7 +58,7 @@ If you see this error in your deployed application, it means the App Hosting ser
         *   **Firebase Admin**: **(Critical)** Required for managing users in Firebase Authentication (creating, deleting, or syncing them).
         *   **Cloud Datastore User**: Required for reading from and writing to Firestore.
         *   **AI Platform User**: Required for generative AI features to work.
-        *   **Storage Admin**: Required for listing and accessing files in Firebase Storage.
+        *   **Storage Admin**: Required for uploading and accessing files in Firebase Storage.
         *   **Logging Viewer**: Recommended for debugging server logs.
     -   Click **SAVE**. The application will then have the correct permissions.
 
