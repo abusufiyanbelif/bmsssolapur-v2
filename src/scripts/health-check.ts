@@ -1,15 +1,24 @@
 
 import { exec } from 'child_process';
 import dotenv from 'dotenv';
+import fs from 'fs/promises';
+import path from 'path';
 
 dotenv.config();
 
 const tests = [
   { name: 'Database Connection', command: 'npm run test:db' },
+  { name: 'Admin User Login', command: 'npm run test:admin-login' },
   { name: 'Gemini AI API', command: 'npm run test:gemini' },
   { name: 'Twilio SMS Service', command: 'npm run test:twilio' },
   { name: 'Nodemailer Email Service', command: 'npm run test:nodemailer' },
   { name: 'IAM Role Permissions', command: 'npm run verify:iam' }
+];
+
+const uiConfigTests = [
+    { name: 'Tailwind Config', path: './tailwind.config.ts' },
+    { name: 'ShadCN Components Config', path: './components.json' },
+    { name: 'Global CSS', path: './src/app/globals.css' },
 ];
 
 async function runHealthCheck() {
@@ -18,6 +27,7 @@ async function runHealthCheck() {
   const results = [];
   let allPassed = true;
 
+  console.log('--- Backend & Service Connectivity ---');
   for (const test of tests) {
     process.stdout.write(`- Running: ${test.name}... `);
 
@@ -54,6 +64,21 @@ async function runHealthCheck() {
       results.push({ name: test.name, status: 'Error', output: e.message });
     }
   }
+  
+  console.log('\n--- UI Configuration Files ---');
+  for (const test of uiConfigTests) {
+      process.stdout.write(`- Checking: ${test.name}... `);
+      try {
+          await fs.access(path.join(process.cwd(), test.path));
+          console.log('✅ Present');
+          results.push({ name: test.name, status: 'Passed', output: 'File exists.' });
+      } catch (e) {
+          allPassed = false;
+          console.log('❌ Missing');
+          results.push({ name: test.name, status: 'Failed', output: `Critical file is missing at: ${test.path}` });
+      }
+  }
+
 
   console.log('\n--- Health Check Summary ---');
   results.forEach(result => {
