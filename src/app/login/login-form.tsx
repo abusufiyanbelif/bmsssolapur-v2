@@ -40,7 +40,7 @@ export function LoginForm() {
   const handleLoginSuccess = (userId: string) => {
     localStorage.setItem('userId', userId);
     localStorage.setItem('showRoleSwitcher', 'true');
-    // Force a full page reload to ensure AppShell re-initializes with the new session
+    // Force a full page reload to ensure the AppShell re-initializes with the new session
     window.location.href = '/home';
   };
   
@@ -66,11 +66,7 @@ export function LoginForm() {
     // Cleanup function to prevent "already rendered" errors on Fast Refresh
     return () => {
       if (window.recaptchaVerifier) {
-          window.recaptchaVerifier = undefined;
-          const recaptchaContainer = document.getElementById("recaptcha-container");
-          if (recaptchaContainer) {
-            recaptchaContainer.innerHTML = '';
-          }
+          window.recaptchaVerifier.clear();
       }
     };
   }, []);
@@ -149,6 +145,14 @@ export function LoginForm() {
         toast({ variant: "destructive", title: "Firebase OTP Verification Failed", description: "The code you entered was incorrect or has expired. Please try again." });
         setIsSubmitting(false);
       }
+    } else if (otpProvider === 'twilio') {
+        const result = await handleVerifyOtp(formData);
+        if (result.success && result.userId) {
+            handleLoginSuccess(result.userId);
+        } else {
+             toast({ variant: "destructive", title: "OTP Verification Failed", description: result.error });
+             setIsSubmitting(false);
+        }
     } else {
       toast({ variant: "destructive", title: "OTP Error", description: "Could not verify OTP. Please try sending a new one." });
       setIsSubmitting(false);
