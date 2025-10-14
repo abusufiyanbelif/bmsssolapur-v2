@@ -25,11 +25,12 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import type { User, UserRole } from "@/services/types";
-import { handleDeleteUser, handleToggleUserStatus, handleBulkDeleteUsers, getAllUsersAction } from "../user-management/actions";
+import { handleDeleteUser, handleToggleUserStatus, handleBulkDeleteUsers } from "../user-management/actions";
 import { DeleteConfirmationDialog } from "@/components/delete-confirmation-dialog";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Checkbox } from "@/components/ui/checkbox";
+import { useRouter } from 'next/navigation';
 
 
 type StatusFilter = 'all' | 'active' | 'inactive';
@@ -38,7 +39,7 @@ const statusOptions: StatusFilter[] = ["all", "active", "inactive"];
 type SortableColumn = 'name' | 'createdAt';
 type SortDirection = 'asc' | 'desc';
 
-function ReferralsPageContent({ initialReferrals, error: initialError }: { initialReferrals: User[], error?: string }) {
+export function ReferralsPageClient({ initialReferrals, error: initialError }: { initialReferrals: User[], error?: string }) {
     const [referrals, setReferrals] = useState<User[]>(initialReferrals);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(initialError || null);
@@ -47,6 +48,7 @@ function ReferralsPageContent({ initialReferrals, error: initialError }: { initi
     const [adminUserId, setAdminUserId] = useState<string | null>(null);
     const [popoverOpen, setPopoverOpen] = useState(false);
     const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
+    const router = useRouter();
 
 
     // Input states
@@ -76,7 +78,7 @@ function ReferralsPageContent({ initialReferrals, error: initialError }: { initi
     };
     
     const fetchUsers = async () => {
-        window.location.reload();
+        router.refresh();
     };
 
 
@@ -306,7 +308,7 @@ function ReferralsPageContent({ initialReferrals, error: initialError }: { initi
                                 {user.isActive ? 'Active' : 'Inactive'}
                             </Badge>
                         </TableCell>
-                        <TableCell>{format(user.createdAt as Date, "dd MMM yyyy")}</TableCell>
+                        <TableCell>{format(new Date(user.createdAt), "dd MMM yyyy")}</TableCell>
                         <TableCell className="text-right">
                            {renderActions(user)}
                         </TableCell>
