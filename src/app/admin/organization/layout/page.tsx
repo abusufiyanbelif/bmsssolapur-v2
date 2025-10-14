@@ -1,3 +1,4 @@
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { getCurrentOrganization } from "@/app/admin/settings/actions";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -52,7 +53,7 @@ export default async function LayoutSettingsPage() {
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <LayoutSettingsForm organization={orgData} />
+                    <LayoutSettingsForm organization={JSON.parse(JSON.stringify(orgData))} />
                 </CardContent>
             </Card>
         </div>

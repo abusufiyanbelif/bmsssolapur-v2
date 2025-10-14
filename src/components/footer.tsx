@@ -81,7 +81,7 @@ export function Footer({ organization }: FooterProps) {
             </div>
              <div className="space-y-3 pt-4">
                 <h5 className="font-semibold text-primary text-sm">{footer.keyContacts.title}</h5>
-                 {footer.keyContacts.contacts.map((contact, i) => (
+                 {footer.keyContacts.contacts.map((contact: {name: string, phone: string}, i: number) => (
                     <div key={i} className="flex items-center gap-3">
                         <Phone className="h-4 w-4 text-primary" />
                         <div className="text-sm">
@@ -94,7 +94,7 @@ export function Footer({ organization }: FooterProps) {
              <div className="space-y-2 text-sm pt-4">
                 <h5 className="font-semibold text-primary text-sm">{footer.connectWithUs.title}</h5>
                 <ul className="flex items-center gap-4">
-                     {footer.connectWithUs.socialLinks.map((social, i) => (
+                     {footer.connectWithUs.socialLinks.map((social: {platform: string, url: string}, i: number) => (
                         <li key={i}>
                             <a href={social.url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-muted-foreground hover:text-primary">
                                 {social.platform === 'Facebook' && <Facebook />}
