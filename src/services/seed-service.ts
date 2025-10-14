@@ -16,6 +16,31 @@ export type { User, UserRole };
 const USERS_COLLECTION = 'users';
 
 const coreTeamUsersToSeed: Omit<User, 'id' | 'createdAt' | 'userKey'>[] = [
+     { 
+        name: "Abusufiyan Belif", 
+        userId: "abusufiyan.belif", 
+        firstName: "Abusufiyan", 
+        middleName: "", 
+        lastName: "Belif",
+        fatherName: "Abdur Rauf", 
+        email: "abusufiyan.belif@gmail.com", 
+        phone: "9579209587", 
+        password: "admin", 
+        roles: ["Super Admin", "Donor", "Beneficiary"], 
+        privileges: ["all"], 
+        groups: ["Member of Organization", "Mandatory Lead Approver"], 
+        isActive: true, 
+        gender: 'Male', 
+        address: { addressLine1: '123 Admin Lane', city: 'Solapur', state: 'Maharashtra', country: 'India', pincode: '413001' }, 
+        panNumber: 'ABCDE1234F', 
+        aadhaarNumber: '123456789012',
+        bankAccountName: 'Abusufiyan Belif',
+        bankAccountNumber: '1234567890123456',
+        bankIfscCode: 'ICIC0001234',
+        upiIds: ['abusufiyan.belief5@okicici'],
+        source: 'Seeded' 
+    },
+    
     // Admins (Founders and Members)
     { 
         name: "Moosa Shaikh", 
@@ -105,7 +130,7 @@ const deleteCollection = async (collectionPath: string): Promise<string> => {
     const collectionRef = db.collection(collectionPath);
     let totalDeleted = 0;
     
-    // eslint-disable-next-line no-constant-condition
+    // eslint-disable-next-line no-constant-expression
     while (true) {
         const snapshot = await collectionRef.limit(500).get();
         if (snapshot.empty) {
@@ -490,3 +515,6 @@ const organizationToSeed = {
       }
     }
 };
+
+
+    
