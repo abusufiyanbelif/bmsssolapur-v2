@@ -88,17 +88,6 @@ export const seedUsers = async (users: Omit<User, 'id' | 'createdAt' | 'userKey'
     return results;
 };
 
-const seedOrganization = async (): Promise<string> => {
-    const db = await getAdminDb();
-    const orgDocRef = db.collection('organizations').doc('main_org');
-    
-    // Always overwrite with the seed data to ensure consistency.
-    await orgDocRef.set({ ...organizationToSeed, updatedAt: FieldValue.serverTimestamp() }, { merge: false });
-    
-    return "Organization profile seeded/updated successfully.";
-};
-
-
 /**
  * Deletes all documents in a collection in batches.
  * @param collectionPath The path of the collection to delete.
@@ -164,8 +153,13 @@ export const seedCoreTeam = async (): Promise<SeedResult> => {
 };
 
 export const seedOrganizationProfile = async (): Promise<SeedResult> => {
-    const orgStatus = await seedOrganization();
-    return { message: 'Organization Profile Seeding Complete', details: [orgStatus] };
+    const db = await getAdminDb();
+    const orgDocRef = db.collection('organizations').doc('main_org');
+    
+    // Always overwrite with the seed data to ensure consistency.
+    await orgDocRef.set({ ...organizationToSeed, updatedAt: FieldValue.serverTimestamp() }, { merge: false });
+    
+    return { message: "Organization profile seeded/updated successfully." };
 };
 
 export const seedAppSettings = async (): Promise<SeedResult> => {
@@ -241,7 +235,7 @@ export const seedSampleData = async (): Promise<SeedResult> => {
 
 export const eraseInitialUsersAndQuotes = async (): Promise<SeedResult> => {
      const quotesResult = await deleteCollection('inspirationalQuotes');
-     return { message: 'Initial Data Erased', details: [quotesResult] };
+     return { message: 'Quotes Collection Erased', details: [quotesResult] };
 };
 
 export const eraseCoreTeam = async (): Promise<SeedResult> => {
