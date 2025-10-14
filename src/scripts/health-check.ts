@@ -42,11 +42,11 @@ async function runHealthCheck() {
   const allResults: TestResult[] = [];
 
   const runCommandTests = async (tests: {name: string, command: string}[], category: string) => {
-    console.log(`--- ${category} ---`);
+    console.log(`\n--- ${category} ---\n`);
     for (const test of tests) {
       const testStartTime = performance.now();
       console.log(`\n▶️  Running: ${test.name}`);
-      console.log('------------------------------------------');
+      console.log('==========================================');
 
       try {
         const output = await new Promise<string>((resolve, reject) => {
@@ -66,11 +66,13 @@ async function runHealthCheck() {
           
           childProcess.on('close', (code) => {
             const combinedOutput = stdout + stderr;
-            if (code !== 0 && !combinedOutput.includes('✅') && !combinedOutput.includes('⚠️')) {
-              reject(new Error(stderr || stdout || `Process exited with code ${code}`));
-              return;
+            // A successful process is one that exits with code 0 OR contains specific success/warning markers
+            // This handles scripts that might have non-critical warnings but still functionally pass.
+            if (code === 0 || combinedOutput.includes('✅') || combinedOutput.includes('⚠️')) {
+                resolve(combinedOutput);
+            } else {
+                reject(new Error(stderr || stdout || `Process exited with code ${code}`));
             }
-            resolve(combinedOutput);
           });
         });
         
@@ -79,22 +81,22 @@ async function runHealthCheck() {
         
         if (output.includes('✅ SUCCESS') || output.includes('✅ All required IAM roles are present')) status = 'Passed';
         else if (output.includes('⚠️ WARNING')) status = 'Warning';
-        else if (output.includes('❌ ERROR')) status = 'Failed';
+        else if (output.includes('❌ ERROR') || output.includes('❌ Failed')) status = 'Failed';
 
         console.log(`\n- Result for ${test.name}: ${status === 'Passed' ? '✅' : status === 'Warning' ? '⚠️' : '❌'} ${status} (took ${(duration / 1000).toFixed(2)}s)`);
-        console.log('------------------------------------------');
+        console.log('==========================================');
         allResults.push({ name: test.name, status, output, duration });
       } catch (e: any) {
         const duration = performance.now() - testStartTime;
         console.log(`\n- Result for ${test.name}: ❌ Error (took ${(duration / 1000).toFixed(2)}s)`);
-        console.log('------------------------------------------');
+        console.log('==========================================');
         allResults.push({ name: test.name, status: 'Error', output: e.message, duration });
       }
     }
   }
 
   const runFileCheckTests = async (tests: {name: string, path: string}[], category: string) => {
-      console.log(`\n--- ${category} ---`);
+      console.log(`\n--- ${category} ---\n`);
       for (const test of tests) {
           const testStartTime = performance.now();
           process.stdout.write(`- Checking: ${test.name}... `);
@@ -133,8 +135,13 @@ async function runHealthCheck() {
 
   const printResults = (results: TestResult[], status: 'PASSED' | 'FAILED' | 'WARNING') => {
       if (!results || results.length === 0) return;
+      console.log(`\n--- ${status} TESTS (${results.length}) ---`);
       results.forEach(result => {
         console.log(`\n[${status}] ${result.name} (took ${(result.duration / 1000).toFixed(2)}s)`);
+        // Print the detailed output for every test
+        console.log('------------------------------------------');
+        console.log(result.output);
+        console.log('------------------------------------------');
       });
   }
   
