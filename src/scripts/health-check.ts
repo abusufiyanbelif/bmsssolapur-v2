@@ -144,5 +144,6 @@ async function runHealthCheck() {
   } else {
     console.log(`\n📊 Summary: ${passedCount} Passed, ${failedCount} Failed, ${warningCount} Warnings. (Completed in ${totalDuration.toFixed(2)}s)`);
   }
+}
 
-  
+runHealthCheck();
