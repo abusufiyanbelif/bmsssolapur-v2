@@ -104,7 +104,7 @@ async function runHealthCheck() {
   await runFileCheckTests(uiConfigTests, 'UI Configuration Files');
 
   const overallEndTime = performance.now();
-  const totalDuration = (overallEndTime - overallStartTime) / 1000;
+  const totalDuration = (overallEndTime - startTime) / 1000;
 
   console.log('\n--- Health Check Summary ---');
   const summary = allResults.reduce((acc, result) => {
@@ -118,20 +118,9 @@ async function runHealthCheck() {
   const failedCount = (summary['Failed']?.length || 0) + (summary['Error']?.length || 0);
   const warningCount = summary['Warning']?.length || 0;
 
-  if (failedCount > 0) {
-      console.log(`\n❌ Critical Issues Found: ${failedCount} test(s) failed.`);
-      (summary['Failed'] || []).concat(summary['Error'] || []).forEach(result => {
-        console.log(`\n[FAIL] ${result.name} (took ${(result.duration / 1000).toFixed(2)}s)`);
-        console.log('------------------------------------------');
-        const cleanOutput = result.output.split('\n').filter(line => !line.startsWith('> ')).join('\n');
-        console.log(cleanOutput.trim());
-        console.log('------------------------------------------');
-      });
-  }
-   if (warningCount > 0) {
-      console.log(`\n⚠️ Warnings: ${warningCount} test(s) returned a warning.`);
-       (summary['Warning'] || []).forEach(result => {
-        console.log(`\n[WARN] ${result.name} (took ${(result.duration / 1000).toFixed(2)}s)`);
+  const printResults = (results: TestResult[], status: 'PASSED' | 'FAILED' | 'WARNING') => {
+      results.forEach(result => {
+        console.log(`\n[${status}] ${result.name} (took ${(result.duration / 1000).toFixed(2)}s)`);
         console.log('------------------------------------------');
         const cleanOutput = result.output.split('\n').filter(line => !line.startsWith('> ')).join('\n');
         console.log(cleanOutput.trim());
@@ -139,11 +128,21 @@ async function runHealthCheck() {
       });
   }
 
-  if (failedCount === 0 && warningCount === 0) {
-    console.log(`\n✅ All ${totalTests} checks passed! System is operational. (Completed in ${totalDuration.toFixed(2)}s)`);
-  } else {
-    console.log(`\n📊 Summary: ${passedCount} Passed, ${failedCount} Failed, ${warningCount} Warnings. (Completed in ${totalDuration.toFixed(2)}s)`);
+  if (failedCount > 0) {
+      console.log(`\n❌ Critical Issues Found: ${failedCount} test(s) failed.`);
+      printResults((summary['Failed'] || []).concat(summary['Error'] || []), 'FAILED');
   }
+   if (warningCount > 0) {
+      console.log(`\n⚠️ Warnings: ${warningCount} test(s) returned a warning.`);
+      printResults(summary['Warning'] || [], 'WARNING');
+  }
+  
+  if (passedCount > 0) {
+      console.log(`\n✅ Passed Checks: ${passedCount} test(s) passed successfully.`);
+      printResults(summary['Passed'] || [], 'PASSED');
+  }
+
+  console.log(`\n📊 Final Summary: ${passedCount} Passed, ${failedCount} Failed, ${warningCount} Warnings. (Total duration: ${totalDuration.toFixed(2)}s)`);
 }
 
 runHealthCheck();
