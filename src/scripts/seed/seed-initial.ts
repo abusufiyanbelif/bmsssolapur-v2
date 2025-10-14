@@ -1,17 +1,23 @@
 
 
-import { seedInitialUsersAndQuotes } from '@/services/seed-service';
+import { seedInitialUsersAndQuotes, seedOrganizationProfile } from '@/services/seed-service';
 import dotenv from 'dotenv';
 
 dotenv.config();
 
 async function run() {
-  console.log('Seeding Initial Data (Inspirational Quotes)...');
+  console.log('Seeding Initial Data (Organization Profile & Quotes)...');
   try {
-    const result = await seedInitialUsersAndQuotes();
-    console.log(`\n✅ SUCCESS: ${result.message}`);
-    if (result.details) {
-        result.details.forEach(detail => console.log(`- ${detail}`));
+    // Now this script seeds both org and quotes, as it should have.
+    const orgResult = await seedOrganizationProfile();
+    const quotesResult = await seedInitialUsersAndQuotes();
+    
+    console.log(`\n✅ SUCCESS: Initial data has been seeded.`);
+    if (orgResult.details) {
+        orgResult.details.forEach(detail => console.log(`- ${detail}`));
+    }
+    if (quotesResult.details) {
+        quotesResult.details.forEach(detail => console.log(`- ${detail}`));
     }
   } catch (e: any) {
     console.error('\n❌ ERROR: Failed to seed initial data.');
@@ -25,3 +31,5 @@ async function run() {
 }
 
 run();
+
+    

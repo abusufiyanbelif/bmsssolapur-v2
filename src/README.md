@@ -1,5 +1,4 @@
 
-
 # Firebase Studio
 
 This is a NextJS starter in Firebase Studio.
@@ -34,8 +33,8 @@ These scripts allow you to populate your Firestore database with initial data. I
 | Command | Description |
 | :--- | :--- |
 | `npm run seed:ensure-collections` | Creates all necessary database collections if they are missing. Safe to run anytime. |
-| `npm run seed:initial` | Seeds the main organization profile and a collection of inspirational quotes. |
-| `npm run seed:core-team` | Creates the user accounts for the organization's founders and core administrators, **in addition to the default 'admin' user created on startup**. |
+| `npm run seed:initial` | Seeds the main organization profile and a collection of inspirational quotes. **The `admin` and `anonymous_donor` system users are created automatically on server start.** |
+| `npm run seed:core-team` | Creates the user accounts for the organization's founders and core administrators. |
 | `npm run seed:app-settings`| Seeds the default configurations for lead purposes, user fields, and dashboard visibility. **Run this before creating leads.** |
 | `npm run seed:payment-gateways` | Seeds placeholder credentials for the Razorpay payment gateway to enable online donations in test mode. |
 | `npm run seed:sample-data` | **(Optional)** Populates the database with a wide range of sample campaigns, beneficiaries, leads, and donations for demonstration purposes. |
