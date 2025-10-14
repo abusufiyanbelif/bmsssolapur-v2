@@ -1,3 +1,4 @@
+
 /**
  * @fileOverview Initializes the Firebase Admin SDK.
  * This file is carefully constructed to have NO internal project dependencies
@@ -47,6 +48,53 @@ const ensureSystemUserExists = async (db: AdminFirestore, userData: Partial<User
 };
 
 
+/**
+ * Checks if essential Firestore collections exist, and creates them with a placeholder
+ * document if they don't. This prevents errors on fresh deployments.
+ * @returns An object with a list of created collections and any errors.
+ */
+export const ensureCollectionsExist = async (): Promise<{ success: boolean; message: string; created: string[]; errors: string[] }> => {
+    const db = await getAdminDb();
+    const coreCollections = [
+        'users', 'leads', 'donations', 'campaigns', 'activityLog',
+        'settings', 'organizations', 'publicLeads', 'publicCampaigns',
+        'publicData', 'inspirationalQuotes'
+    ];
+
+    console.log("Checking for essential Firestore collections...");
+    
+    const created: string[] = [];
+    const errors: string[] = [];
+
+    for (const collectionName of coreCollections) {
+        try {
+            const collectionRef = db.collection(collectionName);
+            const snapshot = await collectionRef.limit(1).get();
+            if (snapshot.empty) {
+                console.log(`Collection "${collectionName}" not found. Creating it...`);
+                // Add a placeholder document to create the collection.
+                await collectionRef.doc('_init_').set({
+                    initializedAt: Timestamp.now(),
+                    description: `This document was automatically created to initialize the ${collectionName} collection.`
+                });
+                created.push(collectionName);
+            }
+        } catch (e) {
+            const errorMsg = `CRITICAL ERROR: Failed to ensure collection "${collectionName}" exists.`;
+            console.error(errorMsg, e);
+            errors.push(errorMsg);
+        }
+    }
+    
+    return { 
+        success: errors.length === 0, 
+        message: errors.length > 0 ? "Some collections could not be verified." : "All collections verified.",
+        created, 
+        errors 
+    };
+};
+
+
 const initializeFirebaseAdmin = async () => {
   if (admin.apps.length > 0 && adminDbInstance) {
       return;
@@ -76,7 +124,9 @@ const runPostInitTasks = async () => {
     if (!adminDbInstance) return;
     try {
         await Promise.all([
-            // Auto-create the 'admin' user
+            // Auto-create essential collections
+            ensureCollectionsExist(),
+            // Auto-create the main 'admin' user
             ensureSystemUserExists(adminDbInstance, {
                 name: "admin",
                 userId: "admin", // The document ID will be 'admin'
