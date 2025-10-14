@@ -159,7 +159,14 @@ export const seedOrganizationProfile = async (): Promise<SeedResult> => {
     // Always overwrite with the seed data to ensure consistency.
     await orgDocRef.set({ ...organizationToSeed, updatedAt: FieldValue.serverTimestamp() }, { merge: false });
     
-    return { message: "Organization profile seeded/updated successfully." };
+    return { 
+        message: "Organization Profile Seeded Successfully",
+        details: [
+            "Wrote profile to 'organizations' collection (document ID: main_org).",
+            "Seeded data includes: Public Profile, Contact Details, Bank/UPI Info, and default Header/Footer content.",
+            "The public pages at /organization and the site-wide footer will now reflect this data after a page refresh."
+        ]
+    };
 };
 
 export const seedAppSettings = async (): Promise<SeedResult> => {
@@ -380,8 +387,7 @@ export const syncUsersToFirebaseAuth = async (): Promise<SeedResult> => {
 
 // --- DATA TO BE SEEDED ---
 
-const organizationToSeed = {
-    id: "main_org",
+const organizationToSeed: Omit<Organization, 'id' | 'createdAt' | 'updatedAt'> = {
     name: "Baitul Mal Samajik Sanstha (Solapur)",
     logoUrl: "https://firebasestorage.googleapis.com/v0/b/baitul-mal-connect.appspot.com/o/app-assets%2Flogo-new.png?alt=media&token=e5079a49-2723-4d22-b91c-297c357662c2",
     address: "123 Muslim Peth",
@@ -439,3 +445,5 @@ const organizationToSeed = {
       }
     }
 };
+
+    
