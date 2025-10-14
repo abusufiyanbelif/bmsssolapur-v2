@@ -1,5 +1,4 @@
 
-
 'use server';
 /**
  * @fileOverview A Genkit flow for fetching inspirational quotes.
@@ -12,6 +11,10 @@ import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 import { Quote, QuoteSchema } from '@/ai/schemas';
 import { getAllQuotes } from '@/services/quotes-service';
+
+export async function getInspirationalQuotes(count: number = 3): Promise<Quote[]> {
+    return await getInspirationalQuotesFlow({count});
+}
 
 const getInspirationalQuotesFlow = ai.defineFlow(
     {
@@ -44,7 +47,3 @@ const getInspirationalQuotesFlow = ai.defineFlow(
         return shuffled.slice(0, count);
     }
 );
-
-export async function getInspirationalQuotes(count: number = 3): Promise<Quote[]> {
-    return await getInspirationalQuotesFlow({count});
-}

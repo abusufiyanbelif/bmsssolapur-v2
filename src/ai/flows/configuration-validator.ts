@@ -30,7 +30,7 @@ const prompt = ai.definePrompt({
   Identify any misconfigurations, security vulnerabilities, or potential problems.
 
   Firebase Configuration:
-  {{firebaseConfig}}
+  {{{firebaseConfig}}}
 
   External Service Configurations:
   {{externalServiceConfigs}}

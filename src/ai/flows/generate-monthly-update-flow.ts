@@ -6,22 +6,13 @@
 
 import { ai } from '@/ai/genkit';
 import { googleAI } from '@genkit-ai/googleai';
-import { z } from 'zod';
 import { getSafeGeminiModel } from '@/services/gemini-service';
-
-export const MonthlyUpdateInputSchema = z.object({
-  month: z.string().describe("The month and year for the report (e.g., 'August 2024')."),
-  totalDonated: z.number().describe("Total amount donated in the last month."),
-  casesClosed: z.number().describe("Number of help cases closed in the last month."),
-  fundsDistributed: z.number().describe("Total amount of funds distributed to beneficiaries in the last month."),
-  beneficiariesHelped: z.number().describe("Number of unique beneficiaries helped in the last month."),
-});
-export type MonthlyUpdateInput = z.infer<typeof MonthlyUpdateInputSchema>;
-
-export const MonthlyUpdateOutputSchema = z.object({
-    text: z.string().describe("The full, formatted WhatsApp message."),
-});
-export type MonthlyUpdateOutput = z.infer<typeof MonthlyUpdateOutputSchema>;
+import {
+  MonthlyUpdateInput,
+  MonthlyUpdateInputSchema,
+  MonthlyUpdateOutput,
+  MonthlyUpdateOutputSchema,
+} from '@/ai/schemas';
 
 export const generateMonthlyUpdate = ai.defineFlow(
   {

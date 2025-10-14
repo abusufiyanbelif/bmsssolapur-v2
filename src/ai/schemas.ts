@@ -1,5 +1,4 @@
 
-
 /**
  * @fileOverview Centralized Zod schemas and TypeScript types for Genkit flows.
  */
@@ -240,3 +239,18 @@ export const GenerateSummariesOutputSchema = z.object({
     })).describe("An array of three distinct, one-sentence summaries."),
 });
 export type GenerateSummariesOutput = z.infer<typeof GenerateSummariesOutputSchema>;
+
+// Schema for generating a monthly update
+export const MonthlyUpdateInputSchema = z.object({
+  month: z.string().describe("The month and year for the report (e.g., 'August 2024')."),
+  totalDonated: z.number().describe("Total amount donated in the last month."),
+  casesClosed: z.number().describe("Number of help cases closed in the last month."),
+  fundsDistributed: z.number().describe("Total amount of funds distributed to beneficiaries in the last month."),
+  beneficiariesHelped: z.number().describe("Number of unique beneficiaries helped in the last month."),
+});
+export type MonthlyUpdateInput = z.infer<typeof MonthlyUpdateInputSchema>;
+
+export const MonthlyUpdateOutputSchema = z.object({
+    text: z.string().describe("The full, formatted WhatsApp message."),
+});
+export type MonthlyUpdateOutput = z.infer<typeof MonthlyUpdateOutputSchema>;
