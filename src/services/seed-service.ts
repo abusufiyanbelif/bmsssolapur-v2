@@ -6,13 +6,13 @@
 import { getFirestore, Timestamp, FieldValue } from 'firebase-admin/firestore';
 import type { User, UserRole, Lead, Verifier, LeadDonationAllocation, Donation, Campaign, FundTransfer, LeadAction, AppSettings, OrganizationFooter } from '@/services/types';
 import { seedInitialQuotes } from '@/services/quotes-service';
-import { getAdminDb, getAdminAuth, ensureCollectionsExist as ensureCollectionsExistService } from './firebase-admin';
+import { getAdminDb, getAdminAuth, ensureCollectionsExist } from './firebase-admin';
 import { updatePublicCampaign, enrichCampaignWithPublicStats } from './public-data-service';
 import { format } from 'date-fns';
 
 // Re-export type for backward compatibility and the service function
 export type { User, UserRole };
-export { ensureCollectionsExistService as ensureCollectionsExist };
+export { ensureCollectionsExist };
 
 
 const USERS_COLLECTION = 'users';
@@ -148,11 +148,10 @@ const deleteCollection = async (collectionPath: string): Promise<string> => {
 // --- EXPORTED SEEDING FUNCTIONS ---
 
 export const seedInitialUsersAndQuotes = async (): Promise<SeedResult> => {
-    const orgStatus = await seedOrganization();
     const quotesStatus = await seedInitialQuotes();
     return {
         message: 'Initial Seeding Complete',
-        details: [orgStatus, quotesStatus, "The 'admin' and 'anonymous_donor' users are automatically created on startup."]
+        details: [quotesStatus, "The 'admin' and 'anonymous_donor' users are automatically created on startup and were not affected."]
     };
 };
 
@@ -242,8 +241,7 @@ export const seedSampleData = async (): Promise<SeedResult> => {
 
 export const eraseInitialUsersAndQuotes = async (): Promise<SeedResult> => {
      const quotesResult = await deleteCollection('inspirationalQuotes');
-     const orgResult = await deleteCollection('organizations');
-     return { message: 'Initial Data Erased', details: [quotesResult, orgResult] };
+     return { message: 'Initial Data Erased', details: [quotesResult] };
 };
 
 export const eraseCoreTeam = async (): Promise<SeedResult> => {

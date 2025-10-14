@@ -149,21 +149,42 @@ export default function SeedPage() {
                     <div className="p-4 border rounded-lg space-y-4">
                         <div className="flex flex-col md:flex-row justify-between md:items-center gap-4">
                              <div>
-                                <h3 className="font-semibold flex items-center gap-2"><Building className="h-5 w-5 text-primary" />Initial Setup</h3>
-                                <p className="text-sm text-muted-foreground mt-1">Seeds the Organization Profile and Inspirational Quotes. Note: The 'admin' and 'anonymous_donor' users are automatically created on startup.</p>
+                                <h3 className="font-semibold flex items-center gap-2"><Quote className="h-5 w-5 text-primary" />Initial Setup</h3>
+                                <p className="text-sm text-muted-foreground mt-1">Seeds the Inspirational Quotes. Note: The 'admin' and 'anonymous_donor' users are automatically created on startup.</p>
                              </div>
                              <div className="flex items-center gap-2">
                                 <Button variant="destructive" onClick={() => handleErase('initial')} disabled={eraseStatuses.initial === 'loading'}>
                                     {eraseStatuses.initial === 'loading' ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Trash2 className="mr-2 h-4 w-4"/>}
-                                    Erase
+                                    Erase Quotes
                                 </Button>
                                 <Button onClick={() => handleSeed('initial')} disabled={statuses.initial === 'loading'}>
                                     {statuses.initial === 'loading' && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}
-                                    Seed Initial Data
+                                    Seed Quotes
                                 </Button>
                              </div>
                         </div>
                         <ResultAlert seedStatus={statuses.initial} eraseStatus={eraseStatuses.initial} result={results.initial} />
+                    </div>
+
+                    {/* Organization Profile */}
+                    <div className="p-4 border rounded-lg space-y-4">
+                        <div className="flex flex-col md:flex-row justify-between md:items-center gap-4">
+                             <div>
+                                <h3 className="font-semibold flex items-center gap-2"><Building className="h-5 w-5 text-primary" />Organization Profile</h3>
+                                <p className="text-sm text-muted-foreground mt-1">Seeds the main profile for the organization, including contact info, bank details, and footer text.</p>
+                             </div>
+                             <div className="flex items-center gap-2">
+                                <Button variant="destructive" onClick={() => handleErase('organization')} disabled={eraseStatuses.organization === 'loading'}>
+                                    {eraseStatuses.organization === 'loading' ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Trash2 className="mr-2 h-4 w-4"/>}
+                                    Erase Profile
+                                </Button>
+                                <Button onClick={() => handleSeed('organization')} disabled={statuses.organization === 'loading'}>
+                                    {statuses.organization === 'loading' && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}
+                                    Seed Profile
+                                </Button>
+                             </div>
+                        </div>
+                        <ResultAlert seedStatus={statuses.organization} eraseStatus={eraseStatuses.organization} result={results.organization} />
                     </div>
                     
                     {/* App Settings */}

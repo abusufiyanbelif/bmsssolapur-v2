@@ -1,11 +1,12 @@
 
+
 import { seedInitialUsersAndQuotes } from '@/services/seed-service';
 import dotenv from 'dotenv';
 
 dotenv.config();
 
 async function run() {
-  console.log('Seeding Initial Data (Organization & Quotes)...');
+  console.log('Seeding Initial Data (Inspirational Quotes)...');
   try {
     const result = await seedInitialUsersAndQuotes();
     console.log(`\n✅ SUCCESS: ${result.message}`);
