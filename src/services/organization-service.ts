@@ -1,4 +1,3 @@
-
 /**
  * @fileOverview Service for managing organization data in Firestore.
  */
@@ -13,6 +12,28 @@ export type { Organization, OrganizationFooter };
 
 const ORGANIZATIONS_COLLECTION = 'organizations';
 const PUBLIC_DATA_COLLECTION = 'publicData';
+
+const defaultFooter: OrganizationFooter = {
+    organizationInfo: { titleLine1: 'Baitul Mal (System Default)', titleLine2: 'Samajik Sanstha (System Default)', titleLine3: '(Solapur) (System Default)', description: 'Default description text.', registrationInfo: 'Reg. No. (System Default)', taxInfo: 'PAN: (System Default)' },
+    contactUs: { title: 'Contact Us (System Default)', address: 'Default Address, Solapur', email: 'contact@example.com' },
+    keyContacts: { title: 'Key Contacts (System Default)', contacts: [{name: 'Default Contact', phone: '0000000000'}] },
+    connectWithUs: { title: 'Connect With Us (System Default)', socialLinks: [] },
+    ourCommitment: { title: 'Our Commitment (System Default)', text: 'Default commitment text.', linkText: 'Learn More', linkUrl: '#' },
+    copyright: { text: `© ${new Date().getFullYear()} Organization Name. All Rights Reserved. (System Default)` }
+};
+
+const defaultOrganization: Organization = {
+    id: "main_org",
+    name: "Default Organization Name",
+    address: "Default Address",
+    city: "Solapur",
+    registrationNumber: "Default Reg No",
+    contactEmail: "contact@example.com",
+    contactPhone: "0000000000",
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    footer: defaultFooter,
+};
 
 
 // Function to check for duplicate organizations
@@ -141,7 +162,7 @@ export const getCurrentOrganization = async (): Promise<Organization | null> => 
         adminDb = await getAdminDb();
     } catch (initError) {
         console.warn(`[Graceful Failure] Could not initialize Admin DB in getCurrentOrganization: ${(initError as Error).message}. This may happen if credentials are not set up.`);
-        return null;
+        return defaultOrganization; // Return default structure if DB fails to init
     }
     
     try {
@@ -151,8 +172,8 @@ export const getCurrentOrganization = async (): Promise<Organization | null> => 
             // CRITICAL FIX: Explicitly check for and ignore the _init_ document
             const docSnap = querySnapshot.docs[0];
             if (docSnap.id === '_init_') {
-                console.log("Only found _init_ document in organizations. Returning null.");
-                return null;
+                console.log("Only found _init_ document in organizations. Returning default placeholder.");
+                return defaultOrganization;
             }
             const data = docSnap.data();
 
@@ -168,13 +189,13 @@ export const getCurrentOrganization = async (): Promise<Organization | null> => 
             
             return organizationData;
         }
-        return null;
+        return defaultOrganization; // Return default if collection is empty
     } catch (error) {
         if (error instanceof Error && (error.message.includes('Could not load the default credentials') || error.message.includes('Could not refresh access token') || error.message.includes('permission-denied') || error.message.includes('UNAUTHENTICATED'))) {
-            console.warn(`Firestore permission error in getCurrentOrganization. This may be an expected error if the database has not been seeded yet. Please check IAM roles. Returning null.`);
-            return null; 
+            console.warn(`Firestore permission error in getCurrentOrganization. Returning default placeholder.`);
+            return defaultOrganization; 
         }
         console.error('Error getting current organization: ' + (error instanceof Error ? error.message : 'Unknown error'));
-        return null;
+        return defaultOrganization;
     }
 }

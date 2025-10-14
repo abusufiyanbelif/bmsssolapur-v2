@@ -1,4 +1,3 @@
-
 /**
  * @fileOverview A service to seed the database with initial data.
  */
@@ -74,6 +73,7 @@ export type SeedItemResult = { name: string; status: 'Created' | 'Updated' | 'Sk
 export type SeedResult = {
     message: string;
     details?: string[];
+    errors?: string[];
 };
 
 export const seedUsers = async (users: Omit<User, 'id' | 'createdAt' | 'userKey'>[]): Promise<string[]> => {
@@ -412,62 +412,60 @@ export const syncUsersToFirebaseAuth = async (): Promise<SeedResult> => {
 
 const organizationToSeed = {
     id: "main_org",
-    name: "Baitul Mal Samajik Sanstha (Solapur) (System Default)",
+    name: "Baitul Mal Samajik Sanstha (Solapur)",
     logoUrl: "https://firebasestorage.googleapis.com/v0/b/baitul-mal-connect.appspot.com/o/app-assets%2Flogo-new.png?alt=media&token=e5079a49-2723-4d22-b91c-297c357662c2",
-    address: "123 Muslim Peth (System Default)",
+    address: "123 Muslim Peth",
     city: "Solapur",
-    registrationNumber: "MAHA/123/2024/SOLAPUR (System Default)",
-    panNumber: "ABCDE1234F (System Default)",
-    contactEmail: "contact@baitulmalsolapur.org (System Default)",
-    contactPhone: "+91 9372145889 (System Default)",
-    website: "https://www.baitulmalsolapur.org (System Default)",
-    bankAccountName: "BAITULMAL SAMAJIK SANSTHA (System Default)",
-    bankAccountNumber: "012345678901 (System Default)",
-    bankIfscCode: "ICIC0001234 (System Default)",
-    upiId: "baitulmal.solapur@okaxis (System Default)",
+    registrationNumber: "MAHA/123/2024/SOLAPUR",
+    panNumber: "ABCDE1234F",
+    contactEmail: "contact@baitulmalsolapur.org",
+    contactPhone: "+91 9372145889",
+    website: "https://www.baitulmalsolapur.org",
+    bankAccountName: "BAITULMAL SAMAJIK SANSTHA",
+    bankAccountNumber: "012345678901",
+    bankIfscCode: "ICIC0001234",
+    upiId: "baitulmal.solapur@okaxis",
     qrCodeUrl: "https://firebasestorage.googleapis.com/v0/b/baitul-mal-connect.appspot.com/o/app-assets%2Fupi-qr-code.png?alt=media&token=c1374b76-b568-450f-90de-3f191195a63c",
     hero: {
-        title: "Empowering Our Community, One Act of Kindness at a Time. (System Default)",
-        description: "Join BaitulMal Samajik Sanstha (Solapur) to make a lasting impact. Your contribution brings hope, changes lives, and empowers our community. (System Default)"
+        title: "Empowering Our Community, One Act of Kindness at a Time.",
+        description: "Join BaitulMal Samajik Sanstha (Solapur) to make a lasting impact. Your contribution brings hope, changes lives, and empowers our community."
     },
     footer: {
       organizationInfo: {
-        titleLine1: "BAITUL MAL (System Default)",
-        titleLine2: "SAMAJIK SANSTHA (System Default)",
-        titleLine3: "(SOLAPUR) (System Default)",
-        description: "A registered charitable organization dedicated to providing financial assistance for education, healthcare, and relief to the underprivileged, adhering to Islamic principles of charity. (System Default)",
-        registrationInfo: "Reg. No. MAHA/123/2024/SOLAPUR (System Default)",
-        taxInfo: "PAN: ABCDE1234F (System Default)"
+        titleLine1: "BAITUL MAL",
+        titleLine2: "SAMAJIK SANSTHA",
+        titleLine3: "(SOLAPUR)",
+        description: "A registered charitable organization dedicated to providing financial assistance for education, healthcare, and relief to the underprivileged, adhering to Islamic principles of charity.",
+        registrationInfo: "Reg. No. MAHA/123/2024/SOLAPUR",
+        taxInfo: "PAN: ABCDE1234F"
       },
       contactUs: {
-        title: "Contact Us (System Default)",
-        address: "123 Muslim Peth, Solapur, Maharashtra 413001, India (System Default)",
-        email: "contact@baitulmalsolapur.org (System Default)"
+        title: "Contact Us",
+        address: "123 Muslim Peth, Solapur, Maharashtra 413001, India",
+        email: "contact@baitulmalsolapur.org"
       },
       keyContacts: {
-        title: "Key Contacts (System Default)",
+        title: "Key Contacts",
         contacts: [
-          { name: "Abusufiyan Belif (System Default)", phone: "7887646583" },
-          { name: "Moosa Shaikh (System Default)", phone: "8421708907" }
+          { name: "Abusufiyan Belif", phone: "7887646583" },
+          { name: "Moosa Shaikh", phone: "8421708907" }
         ]
       },
       connectWithUs: {
-        title: "Connect With Us (System Default)",
+        title: "Connect With Us",
         socialLinks: [
           { platform: 'Facebook', url: 'https://facebook.com' },
           { platform: 'Instagram', url: 'https://instagram.com' }
         ]
       },
       ourCommitment: {
-        title: "Our Commitment (System Default)",
-        text: "We are committed to transparency and accountability in all our operations, ensuring that your contributions make a real impact. (System Default)",
-        linkText: "Learn More (System Default)",
+        title: "Our Commitment",
+        text: "We are committed to transparency and accountability in all our operations, ensuring that your contributions make a real impact.",
+        linkText: "Learn More",
         linkUrl: "/organization"
       },
       copyright: {
-        text: `© ${new Date().getFullYear()} Baitul Mal Samajik Sanstha (Solapur). All Rights Reserved. (System Default)`
+        text: `© ${new Date().getFullYear()} Baitul Mal Samajik Sanstha (Solapur). All Rights Reserved.`
       }
     }
 };
-
-    
