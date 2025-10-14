@@ -35,7 +35,7 @@ These scripts allow you to populate your Firestore database with initial data. I
 | :--- | :--- |
 | `npm run seed:ensure-collections` | Creates all necessary database collections if they are missing. Safe to run anytime. |
 | `npm run seed:initial` | Seeds the main organization profile and a collection of inspirational quotes. |
-| `npm run seed:core-team` | Creates the user accounts for the organization's founders and core administrators, **including the main 'admin' user**. |
+| `npm run seed:core-team` | Creates the user accounts for the organization's founders and core administrators, **in addition to the default 'admin' user created on startup**. |
 | `npm run seed:app-settings`| Seeds the default configurations for lead purposes, user fields, and dashboard visibility. **Run this before creating leads.** |
 | `npm run seed:payment-gateways` | Seeds placeholder credentials for the Razorpay payment gateway to enable online donations in test mode. |
 | `npm run seed:sample-data` | **(Optional)** Populates the database with a wide range of sample campaigns, beneficiaries, leads, and donations for demonstration purposes. |
@@ -49,6 +49,7 @@ These scripts help you test your connections to external services and verify you
 
 | Command | Description |
 | :--- | :--- |
+| `npm run health-check` | **(Recommended)** Runs all the tests below to provide a full system health check. |
 | `npm run test:db` | Verifies the application's ability to connect to and authenticate with Firestore. |
 | `npm run test:gemini` | Verifies the connection to Google AI and checks if the `GEMINI_API_KEY` is valid. |
 | `npm run test:twilio` | Tests the connection to Twilio using your configured credentials for sending SMS. |
@@ -67,3 +68,5 @@ These scripts help you test your connections to external services and verify you
 - **[Lead Dictionary](./docs/LEAD_DICTIONARY.md)**: An explanation of the Lead data model and workflow.
 - **[Application Pages](./docs/APP_PAGES.md)**: A sitemap of all pages by user role.
 - **[UI Style Guide](./docs/UI_STYLE_GUIDE.md)**: A reference for the application's design system.
+
+    
