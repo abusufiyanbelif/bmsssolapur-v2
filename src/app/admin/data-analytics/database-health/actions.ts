@@ -2,41 +2,25 @@
 'use server';
 
 import { getAdminDb } from '@/services/firebase-admin';
-import type { Lead, Donation, User } from '@/services/types';
+import type { Lead, Donation, User, CollectionStat, CollectionsMetadata } from '@/services/types';
+import { collectionsMetadata } from '@/services/types';
 import { Timestamp } from 'firebase-admin/firestore';
 
-export interface CollectionStat {
-    name: string;
-    description: string;
-    type: 'Application Data' | 'Configuration' | 'System';
-    count: number;
-    lastModified?: Date;
-    orphanCheck?: {
-        checked: boolean;
-        orphanCount: number;
-        details?: string;
-    }
+
+// Function to check for duplicate organizations
+const checkDuplicates = async (name: string, registrationNumber: string): Promise<boolean> => {
+    const adminDb = await getAdminDb();
+    const nameQuery = adminDb.collection('organizations').where("name", "==", name).limit(1);
+    const regQuery = adminDb.collection('organizations').where("registrationNumber", "==", registrationNumber).limit(1);
+
+    const [nameSnapshot, regSnapshot] = await Promise.all([
+        nameQuery.get(),
+        regQuery.get()
+    ]);
+
+    return !nameSnapshot.empty || !regSnapshot.empty;
 }
 
-// This map provides metadata for known collections.
-// Any new collections will be discovered automatically and given a default description.
-export const collectionsMetadata: Record<string, { description: string; type: CollectionStat['type']; timestampField?: string; orphanField?: string, orphanCollection?: string }> = {
-    users: { description: 'Stores all user profiles, including donors, beneficiaries, and admins.', type: 'Application Data', timestampField: 'updatedAt' },
-    leads: { description: 'Contains all help requests (cases) for beneficiaries.', type: 'Application Data', timestampField: 'updatedAt', orphanField: 'beneficiaryId', orphanCollection: 'users' },
-    donations: { description: 'Holds all donation records, both online and manually entered.', type: 'Application Data', timestampField: 'updatedAt', orphanField: 'donorId', orphanCollection: 'users' },
-    campaigns: { description: 'Stores fundraising campaign details.', type: 'Application Data', timestampField: 'updatedAt' },
-    activityLog: { description: 'A log of all significant user and system actions.', type: 'Application Data', timestampField: 'timestamp', orphanField: 'userId', orphanCollection: 'users' },
-    inspirationalQuotes: { description: 'A collection of quotes used throughout the application.', type: 'Application Data' },
-    
-    publicLeads: { description: 'Sanitized, public-facing copies of leads marked for publication.', type: 'Application Data' },
-    publicCampaigns: { description: 'Public-facing copies of active and upcoming campaigns.', type: 'Application Data' },
-    publicData: { description: 'Stores other public data like the main organization profile.', type: 'Application Data' },
-
-    organizations: { description: 'Stores the main organization profile details.', type: 'Configuration' },
-    settings: { description: 'Contains global application configurations.', type: 'Configuration' },
-
-    'permission-check': { description: 'A system collection used to verify database connectivity.', type: 'System' },
-};
 
 export async function getDatabaseHealthStats(): Promise<CollectionStat[]> {
     const adminDb = await getAdminDb();
@@ -157,5 +141,10 @@ export async function getDatabaseDetails(): Promise<{ projectId: string } | null
  */
 export async function handleEnsureCollectionsExist(): Promise<{ success: boolean; created: string[]; errors: string[] }> {
     const { ensureCollectionsExist } = await import('@/services/firebase-admin');
-    return ensureCollectionsExist();
+    const result = await ensureCollectionsExist();
+    return {
+        success: result.success,
+        created: result.created,
+        errors: result.errors,
+    }
 }

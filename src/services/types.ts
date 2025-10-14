@@ -572,3 +572,38 @@ export interface LetterContentOptions {
     body: string;
     closingName: string;
 }
+
+// --- Database Health Types ---
+
+export interface CollectionStat {
+    name: string;
+    description: string;
+    type: 'Application Data' | 'Configuration' | 'System';
+    count: number;
+    lastModified?: Date;
+    orphanCheck?: {
+        checked: boolean;
+        orphanCount: number;
+        details?: string;
+    }
+}
+
+export const collectionsMetadata: Record<string, { description: string; type: CollectionStat['type']; timestampField?: string; orphanField?: string, orphanCollection?: string }> = {
+    users: { description: 'Stores all user profiles, including donors, beneficiaries, and admins.', type: 'Application Data', timestampField: 'updatedAt' },
+    leads: { description: 'Contains all help requests (cases) for beneficiaries.', type: 'Application Data', timestampField: 'updatedAt', orphanField: 'beneficiaryId', orphanCollection: 'users' },
+    donations: { description: 'Holds all donation records, both online and manually entered.', type: 'Application Data', timestampField: 'updatedAt', orphanField: 'donorId', orphanCollection: 'users' },
+    campaigns: { description: 'Stores fundraising campaign details.', type: 'Application Data', timestampField: 'updatedAt' },
+    activityLog: { description: 'A log of all significant user and system actions.', type: 'Application Data', timestampField: 'timestamp', orphanField: 'userId', orphanCollection: 'users' },
+    inspirationalQuotes: { description: 'A collection of quotes used throughout the application.', type: 'Application Data' },
+    
+    publicLeads: { description: 'Sanitized, public-facing copies of leads marked for publication.', type: 'Application Data' },
+    publicCampaigns: { description: 'Public-facing copies of active and upcoming campaigns.', type: 'Application Data' },
+    publicData: { description: 'Stores other public data like the main organization profile.', type: 'Application Data' },
+
+    organizations: { description: 'Stores the main organization profile details.', type: 'Configuration' },
+    settings: { description: 'Contains global application configurations.', type: 'Configuration' },
+
+    'permission-check': { description: 'A system collection used to verify database connectivity.', type: 'System' },
+};
+
+export type CollectionsMetadata = typeof collectionsMetadata;
