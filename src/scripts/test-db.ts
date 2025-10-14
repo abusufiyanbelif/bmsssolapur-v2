@@ -1,3 +1,4 @@
+
 import { getAdminDb } from '../services/firebase-admin';
 import dotenv from 'dotenv';
 
@@ -8,13 +9,14 @@ async function testDatabaseConnection() {
   try {
     const adminDb = await getAdminDb();
     
+    console.log("- Admin SDK initialized. Now performing a lightweight read operation...");
     // Perform a simple read operation to confirm permissions.
     // This targets a potentially non-existent doc, which is a lightweight check.
     const nonExistentDocRef = adminDb.collection("permission-check-script").doc("heartbeat");
     await nonExistentDocRef.get();
     
     console.log('\n✅ SUCCESS: Connection to Firestore established successfully!');
-    console.log('The environment has the necessary permissions to read from the database.');
+    console.log('This confirms the environment has the necessary permissions (like `Cloud Datastore User` role) to read from the database.');
   
   } catch (e: any) {
     console.error('\n❌ ERROR: Failed to connect to Firestore.');

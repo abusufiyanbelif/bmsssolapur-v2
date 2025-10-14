@@ -1,3 +1,4 @@
+
 import { handleLogin } from '@/app/login/actions';
 import dotenv from 'dotenv';
 import { getUser } from '@/services/user-service';
@@ -23,6 +24,7 @@ async function testAdminLogin() {
     if (!adminUser) {
         throw new Error('The default "admin" user does not exist in the Firestore database. Please ensure the application has started correctly at least once to trigger its creation, or run `npm run test:db` to check for database connectivity issues.');
     }
+    console.log('- Found "admin" user in Firestore. Now testing login action...');
 
     const formData = new MockFormData();
     formData.append('identifier', 'admin');

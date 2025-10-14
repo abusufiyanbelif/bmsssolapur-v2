@@ -1,14 +1,16 @@
+
 import { testNodemailerConnection } from '../app/services/actions';
 import dotenv from 'dotenv';
 
 dotenv.config();
 
 async function runTest() {
-  console.log('Attempting to connect to SMTP server via Nodemailer...');
+  console.log('Attempting to connect to SMTP server via Nodemailer using SMTP_* credentials...');
   try {
     const result = await testNodemailerConnection();
      if (result.success) {
       console.log('\n✅ SUCCESS: Connection to SMTP server verified!');
+      console.log('This confirms your SMTP credentials and server settings are correct.');
     } else {
       console.error('\n❌ ERROR: Failed to connect to SMTP server.');
       console.error('------------------------------------------');

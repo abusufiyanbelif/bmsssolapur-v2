@@ -1,14 +1,16 @@
+
 import { testGeminiConnection } from '../app/services/actions';
 import dotenv from 'dotenv';
 
 dotenv.config();
 
 async function runTest() {
-  console.log('Attempting to connect to Google AI (Gemini)...');
+  console.log('Attempting to connect to Google AI (Gemini) using the GEMINI_API_KEY from your environment...');
   try {
     const result = await testGeminiConnection();
     if (result.success) {
       console.log('\n✅ SUCCESS: Connection to Gemini established successfully!');
+      console.log('This confirms your API key is valid and the Generative Language API is enabled.');
     } else {
       console.error('\n❌ ERROR: Failed to connect to Gemini.');
       console.error('------------------------------------------');

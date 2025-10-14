@@ -5,7 +5,7 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 async function runTest() {
-  console.log('Attempting to connect to Twilio...');
+  console.log('Attempting to connect to Twilio using the TWILIO_* credentials from your environment...');
   try {
     const result = await testTwilioConnection();
     if (result.success) {
@@ -22,4 +22,12 @@ async function runTest() {
       console.log('3. The Verify Service SID might not exist or may be from a different project.');
       console.log('4. Ensure "OTP (SMS) Login" is enabled and Twilio is selected as the provider in your app\'s Notification Settings.');
     }
-  } catch (e: any
+  } catch (e: any) {
+    console.error('\n❌ UNEXPECTED SCRIPT ERROR:', e.message);
+  } finally {
+    // A small delay to ensure all logs are flushed before exiting
+    setTimeout(() => process.exit(), 100);
+  }
+}
+
+runTest();
