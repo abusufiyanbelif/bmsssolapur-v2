@@ -1,5 +1,4 @@
 
-
 import { seedInitialUsersAndQuotes } from '@/services/seed-service';
 import dotenv from 'dotenv';
 

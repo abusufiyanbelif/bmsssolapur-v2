@@ -1,5 +1,4 @@
 
-
 import { seedSampleData } from '@/services/seed-service';
 import dotenv from 'dotenv';
 
@@ -13,7 +12,7 @@ async function run() {
     if (result.details) {
         result.details.forEach(detail => console.log(`- ${detail}`));
     }
-  } catch (e: any {
+  } catch (e: any) {
     console.error('\n❌ ERROR: Failed to seed sample data.');
     console.error('------------------------------------------');
     console.error('Error Details:', e.message);

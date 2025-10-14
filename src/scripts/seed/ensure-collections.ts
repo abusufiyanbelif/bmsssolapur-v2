@@ -1,5 +1,4 @@
 
-
 import { ensureCollectionsExist } from '@/services/seed-service';
 import dotenv from 'dotenv';
 

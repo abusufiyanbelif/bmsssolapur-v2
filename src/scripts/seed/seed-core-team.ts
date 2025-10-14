@@ -1,5 +1,4 @@
 
-
 import { seedCoreTeam } from '@/services/seed-service';
 import dotenv from 'dotenv';
 

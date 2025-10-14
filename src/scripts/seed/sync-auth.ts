@@ -1,5 +1,4 @@
 
-
 import { syncUsersToFirebaseAuth } from '@/services/seed-service';
 import dotenv from 'dotenv';
 

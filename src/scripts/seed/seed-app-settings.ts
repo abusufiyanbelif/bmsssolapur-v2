@@ -1,5 +1,4 @@
 
-
 import { seedAppSettings } from '@/services/seed-service';
 import dotenv from 'dotenv';
 

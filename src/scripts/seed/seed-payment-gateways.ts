@@ -1,5 +1,4 @@
 
-
 import { seedPaymentGateways } from '@/services/seed-service';
 import dotenv from 'dotenv';
 
