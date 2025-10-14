@@ -4,39 +4,26 @@
 import Link from 'next/link';
 import { Facebook, Instagram, Twitter, Mail, Phone, MapPin } from 'lucide-react';
 import { Logo } from './logo';
-import type { Organization } from '@/services/types';
+import type { Organization, OrganizationFooter } from '@/services/types';
 import { Skeleton } from './ui/skeleton';
+
+
+const defaultFooter: OrganizationFooter = {
+    organizationInfo: { titleLine1: 'Baitul Mal (System Default)', titleLine2: 'Samajik Sanstha (System Default)', titleLine3: '(Solapur) (System Default)', description: 'Default description text. Please seed or create an organization profile to update this.', registrationInfo: 'Reg. No. (System Default)', taxInfo: 'PAN: (System Default)' },
+    contactUs: { title: 'Contact Us', address: 'Default Address, Solapur', email: 'contact@example.com' },
+    keyContacts: { title: 'Key Contacts', contacts: [{name: 'Default Contact', phone: '0000000000'}] },
+    connectWithUs: { title: 'Connect With Us', socialLinks: [] },
+    ourCommitment: { title: 'Our Commitment', text: 'Default commitment text. Please update this in the layout settings.', linkText: 'Learn More', linkUrl: '#' },
+    copyright: { text: `© ${new Date().getFullYear()} Organization Name. All Rights Reserved. (System Default)` }
+};
+
 
 interface FooterProps {
   organization: Organization | null;
 }
 
 export function Footer({ organization }: FooterProps) {
-  if (!organization || !organization.footer) {
-      return (
-          <footer className="border-t bg-card text-card-foreground">
-              <div className="container mx-auto px-4 lg:px-6 py-12">
-                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12">
-                        <div className="space-y-4 lg:col-span-2">
-                             <Skeleton className="h-24 w-full" />
-                             <Skeleton className="h-6 w-3/4" />
-                        </div>
-                        <div className="space-y-4">
-                            <Skeleton className="h-8 w-1/2" />
-                            <Skeleton className="h-6 w-full" />
-                            <Skeleton className="h-6 w-full" />
-                        </div>
-                        <div className="space-y-4">
-                            <Skeleton className="h-8 w-1/2" />
-                            <Skeleton className="h-16 w-full" />
-                        </div>
-                   </div>
-              </div>
-          </footer>
-      )
-  }
-  
-  const { footer } = JSON.parse(JSON.stringify(organization));
+  const footerData = organization?.footer || defaultFooter;
 
   return (
     <footer className="border-t bg-card text-card-foreground">
@@ -46,42 +33,42 @@ export function Footer({ organization }: FooterProps) {
           {/* Column 1: Organization Info */}
           <div className="space-y-4 lg:col-span-2">
              <div className="flex items-center gap-3">
-                <Logo className="h-24 w-24" logoUrl={organization.logoUrl} />
+                <Logo className="h-24 w-24" logoUrl={organization?.logoUrl} />
                 <div className="font-headline text-foreground">
-                    <h3 className="text-xl font-bold text-primary">{footer.organizationInfo.titleLine1}</h3>
-                    <h3 className="text-xl font-bold text-accent">{footer.organizationInfo.titleLine2}</h3>
-                    <h3 className="text-lg font-bold text-primary">{footer.organizationInfo.titleLine3}</h3>
+                    <h3 className="text-xl font-bold text-primary">{footerData.organizationInfo.titleLine1}</h3>
+                    <h3 className="text-xl font-bold text-accent">{footerData.organizationInfo.titleLine2}</h3>
+                    <h3 className="text-lg font-bold text-primary">{footerData.organizationInfo.titleLine3}</h3>
                 </div>
              </div>
             <p className="text-sm text-muted-foreground max-w-lg">
-                {footer.organizationInfo.description}
+                {footerData.organizationInfo.description}
             </p>
              <p className="text-xs text-muted-foreground font-mono">
-                {footer.organizationInfo.registrationInfo}
+                {footerData.organizationInfo.registrationInfo}
             </p>
             <p className="text-xs text-muted-foreground font-mono">
-                {footer.organizationInfo.taxInfo}
+                {footerData.organizationInfo.taxInfo}
             </p>
           </div>
 
           {/* Column 2: Contact Us & Socials */}
           <div className="space-y-4">
-            <h4 className="text-lg font-semibold font-headline text-primary">{footer.contactUs.title}</h4>
+            <h4 className="text-lg font-semibold font-headline text-primary">{footerData.contactUs.title}</h4>
             <div className="space-y-2 text-sm">
                 <div className="flex items-start gap-3">
                     <MapPin className="h-4 w-4 text-primary mt-1 flex-shrink-0" />
                     <p className="text-muted-foreground whitespace-pre-line">
-                        {footer.contactUs.address}
+                        {footerData.contactUs.address}
                     </p>
                 </div>
                  <div className="flex items-center gap-3">
                     <Mail className="h-4 w-4 text-primary" />
-                     <a href={`mailto:${footer.contactUs.email}`} className="text-muted-foreground hover:text-primary">{footer.contactUs.email}</a>
+                     <a href={`mailto:${footerData.contactUs.email}`} className="text-muted-foreground hover:text-primary">{footerData.contactUs.email}</a>
                 </div>
             </div>
              <div className="space-y-3 pt-4">
-                <h5 className="font-semibold text-primary text-sm">{footer.keyContacts.title}</h5>
-                 {footer.keyContacts.contacts.map((contact: {name: string, phone: string}, i: number) => (
+                <h5 className="font-semibold text-primary text-sm">{footerData.keyContacts.title}</h5>
+                 {footerData.keyContacts.contacts.map((contact: {name: string, phone: string}, i: number) => (
                     <div key={i} className="flex items-center gap-3">
                         <Phone className="h-4 w-4 text-primary" />
                         <div className="text-sm">
@@ -92,9 +79,9 @@ export function Footer({ organization }: FooterProps) {
                  ))}
              </div>
              <div className="space-y-2 text-sm pt-4">
-                <h5 className="font-semibold text-primary text-sm">{footer.connectWithUs.title}</h5>
+                <h5 className="font-semibold text-primary text-sm">{footerData.connectWithUs.title}</h5>
                 <ul className="flex items-center gap-4">
-                     {footer.connectWithUs.socialLinks.map((social: {platform: string, url: string}, i: number) => (
+                     {footerData.connectWithUs.socialLinks.map((social: {platform: string, url: string}, i: number) => (
                         <li key={i}>
                             <a href={social.url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-muted-foreground hover:text-primary">
                                 {social.platform === 'Facebook' && <Facebook />}
@@ -109,19 +96,19 @@ export function Footer({ organization }: FooterProps) {
           
           {/* Column 3: Our Commitment */}
           <div className="space-y-4">
-            <h4 className="text-lg font-semibold font-headline text-primary">{footer.ourCommitment.title}</h4>
+            <h4 className="text-lg font-semibold font-headline text-primary">{footerData.ourCommitment.title}</h4>
             <p className="text-sm text-muted-foreground">
-                {footer.ourCommitment.text}
+                {footerData.ourCommitment.text}
             </p>
-            <Link href={footer.ourCommitment.linkUrl} className="text-sm font-semibold text-primary hover:underline">
-                {footer.ourCommitment.linkText}
+            <Link href={footerData.ourCommitment.linkUrl} className="text-sm font-semibold text-primary hover:underline">
+                {footerData.ourCommitment.linkText}
             </Link>
           </div>
 
         </div>
         
         <div className="mt-12 text-center text-xs text-muted-foreground border-t pt-8">
-          <p>{footer.copyright.text}</p>
+          <p>{footerData.copyright.text}</p>
         </div>
       </div>
     </footer>
