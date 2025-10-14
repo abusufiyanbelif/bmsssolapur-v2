@@ -3,6 +3,7 @@ import { exec } from 'child_process';
 import dotenv from 'dotenv';
 import fs from 'fs/promises';
 import path from 'path';
+import { performance } from 'perf_hooks';
 
 dotenv.config();
 
@@ -23,12 +24,14 @@ const uiConfigTests = [
 
 async function runHealthCheck() {
   console.log('🚀 Starting Application Health Check...\n');
+  const overallStartTime = performance.now();
   
-  const results = [];
+  const results: { name: string; status: 'Passed' | 'Failed' | 'Error'; output: string, duration: number }[] = [];
   let allPassed = true;
 
   console.log('--- Backend & Service Connectivity ---');
   for (const test of tests) {
+    const testStartTime = performance.now();
     process.stdout.write(`- Running: ${test.name}... `);
 
     try {
@@ -46,54 +49,61 @@ async function runHealthCheck() {
           resolve(stdout);
         });
       });
+      
+      const duration = performance.now() - testStartTime;
+      const isSuccess = output.includes('✅ SUCCESS') || output.includes('✅ All required IAM roles are present');
 
-      const isSuccess = output.includes('✅ SUCCESS');
-      const isIAMSuccess = output.includes('✅ All required IAM roles are present');
-
-      if (isSuccess || isIAMSuccess) {
-        console.log('✅ Passed');
-        results.push({ name: test.name, status: 'Passed', output });
+      if (isSuccess) {
+        process.stdout.write(`✅ Passed (${(duration / 1000).toFixed(2)}s)\n`);
+        results.push({ name: test.name, status: 'Passed', output, duration });
       } else {
         allPassed = false;
-        console.log('❌ Failed');
-        results.push({ name: test.name, status: 'Failed', output });
+        process.stdout.write(`❌ Failed (${(duration / 1000).toFixed(2)}s)\n`);
+        results.push({ name: test.name, status: 'Failed', output, duration });
       }
     } catch (e: any) {
+      const duration = performance.now() - testStartTime;
       allPassed = false;
-      console.log('❌ Error');
-      results.push({ name: test.name, status: 'Error', output: e.message });
+      process.stdout.write(`❌ Error (${(duration / 1000).toFixed(2)}s)\n`);
+      results.push({ name: test.name, status: 'Error', output: e.message, duration });
     }
   }
   
   console.log('\n--- UI Configuration Files ---');
   for (const test of uiConfigTests) {
+      const testStartTime = performance.now();
       process.stdout.write(`- Checking: ${test.name}... `);
       try {
           await fs.access(path.join(process.cwd(), test.path));
-          console.log('✅ Present');
-          results.push({ name: test.name, status: 'Passed', output: 'File exists.' });
+          const duration = performance.now() - testStartTime;
+          process.stdout.write(`✅ Present (${duration.toFixed(2)}ms)\n`);
+          results.push({ name: test.name, status: 'Passed', output: 'File exists.', duration });
       } catch (e) {
+          const duration = performance.now() - testStartTime;
           allPassed = false;
-          console.log('❌ Missing');
-          results.push({ name: test.name, status: 'Failed', output: `Critical file is missing at: ${test.path}` });
+          process.stdout.write(`❌ Missing (${duration.toFixed(2)}ms)\n`);
+          results.push({ name: test.name, status: 'Failed', output: `Critical file is missing at: ${test.path}`, duration });
       }
   }
 
+  const overallEndTime = performance.now();
+  const totalDuration = (overallEndTime - overallStartTime) / 1000;
 
   console.log('\n--- Health Check Summary ---');
-  results.forEach(result => {
-    if (result.status !== 'Passed') {
-      console.log(`\n❌ ${result.name}: ${result.status}`);
-      console.log('------------------------------------------');
-      console.log(result.output);
-      console.log('------------------------------------------');
-    }
-  });
+  const failedTests = results.filter(r => r.status !== 'Passed');
+  if (failedTests.length > 0) {
+      failedTests.forEach(result => {
+        console.log(`\n❌ ${result.name}: ${result.status} (took ${(result.duration / 1000).toFixed(2)}s)`);
+        console.log('------------------------------------------');
+        console.log(result.output);
+        console.log('------------------------------------------');
+      });
+  }
 
   if (allPassed) {
-    console.log('\n✅ All systems are operational!');
+    console.log(`\n✅ All systems are operational! (Completed in ${totalDuration.toFixed(2)}s)`);
   } else {
-    console.log('\n⚠️  One or more health checks failed. Please review the output above.');
+    console.log(`\n⚠️  Found ${failedTests.length} issue(s). Please review the output above. (Completed in ${totalDuration.toFixed(2)}s)`);
   }
 
   process.exit(allPassed ? 0 : 1);
