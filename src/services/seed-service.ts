@@ -6,7 +6,7 @@
 import { getFirestore, Timestamp, FieldValue } from 'firebase-admin/firestore';
 import type { User, UserRole, Lead, Verifier, LeadDonationAllocation, Donation, Campaign, FundTransfer, LeadAction, AppSettings, OrganizationFooter } from '@/services/types';
 import { seedInitialQuotes } from '@/services/quotes-service';
-import { getAdminDb, getAdminAuth, ensureCollectionsExist as ensureCollectionsExistFromAdmin } from './firebase-admin';
+import { getAdminDb, getAdminAuth } from './firebase-admin';
 import { updatePublicCampaign, enrichCampaignWithPublicStats } from './public-data-service';
 import { format } from 'date-fns';
 
@@ -142,7 +142,53 @@ const deleteCollection = async (collectionPath: string): Promise<string> => {
 
 
 // --- EXPORTED SEEDING FUNCTIONS ---
-export { ensureCollectionsExistFromAdmin as ensureCollectionsExist }
+
+/**
+ * Checks if essential Firestore collections exist, and creates them with a placeholder
+ * document if they don't. This prevents errors on fresh deployments.
+ * @returns An object with a list of created collections and any errors.
+ */
+export const ensureCollectionsExist = async (): Promise<{ success: boolean; created: string[]; errors: string[], message?: string, details?: string[] }> => {
+    const db = await getAdminDb();
+    const coreCollections = [
+        'users', 'leads', 'donations', 'campaigns', 'activityLog',
+        'settings', 'organizations', 'publicLeads', 'publicCampaigns',
+        'publicData', 'inspirationalQuotes'
+    ];
+
+    console.log("Checking for essential Firestore collections...");
+    
+    const created: string[] = [];
+    const errors: string[] = [];
+
+    for (const collectionName of coreCollections) {
+        try {
+            const collectionRef = db.collection(collectionName);
+            const snapshot = await collectionRef.limit(1).get();
+            if (snapshot.empty) {
+                console.log(`Collection "${collectionName}" not found. Creating it...`);
+                // Add a placeholder document to create the collection.
+                await collectionRef.doc('_init_').set({
+                    initializedAt: Timestamp.now(),
+                    description: `This document was automatically created to initialize the ${collectionName} collection.`
+                });
+                created.push(collectionName);
+            }
+        } catch (e) {
+            const errorMsg = `CRITICAL ERROR: Failed to ensure collection "${collectionName}" exists.`;
+            console.error(errorMsg, e);
+            errors.push(errorMsg);
+        }
+    }
+    
+    const message = created.length > 0 
+        ? `Successfully created ${created.length} missing collection(s).` 
+        : "All essential collections already exist.";
+    const details = created.length > 0 ? [`Created: ${created.join(', ')}`] : [];
+    
+    return { success: errors.length === 0, created, errors, message, details };
+};
+
 
 export const seedInitialUsersAndQuotes = async (): Promise<SeedResult> => {
     const orgStatus = await seedOrganization();

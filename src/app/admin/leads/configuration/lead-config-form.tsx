@@ -25,6 +25,9 @@ import { AddPurposeDialog, DeletePurposeDialog, AddCategoryDialog, DeleteCategor
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Input } from "@/components/ui/input";
+import { handleUpdateLeadConfiguration } from "./actions";
+import { useToast } from "@/hooks/use-toast";
+import { useRouter } from "next/navigation";
 
 
 const formSchema = z.object({

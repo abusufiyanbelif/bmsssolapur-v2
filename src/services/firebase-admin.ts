@@ -1,4 +1,3 @@
-
 /**
  * @fileOverview Initializes the Firebase Admin SDK.
  * This file is carefully constructed to have NO internal project dependencies
@@ -7,7 +6,7 @@
 
 import admin from 'firebase-admin';
 import { getFirestore as getAdminFirestore, Firestore as AdminFirestore, Timestamp } from 'firebase-admin/firestore';
-import type { User, AppSettings } from './types'; // We can safely import types
+import type { User } from './types'; // We can safely import types
 
 let adminDbInstance: AdminFirestore | null = null;
 let adminAuthInstance: admin.auth.Auth | null = null;
@@ -47,66 +46,6 @@ const ensureSystemUserExists = async (db: AdminFirestore, userData: Partial<User
     }
 };
 
-/**
- * Checks if essential Firestore collections exist and creates them if they don't.
- * @returns An object with a list of created collections and any errors.
- */
-export const ensureCollectionsExist = async (): Promise<{ success: boolean; created: string[]; errors: string[], message?: string, details?: string[] }> => {
-    // This function must use an already initialized db instance.
-    if (!adminDbInstance) {
-        console.warn("ensureCollectionsExist called before DB was initialized.");
-        return { success: false, created: [], errors: ["DB not initialized"] };
-    }
-    const db = adminDbInstance;
-    const coreCollections = [
-        'users', 'leads', 'donations', 'campaigns', 'activityLog',
-        'settings', 'organizations', 'publicLeads', 'publicCampaigns',
-        'publicData', 'inspirationalQuotes'
-    ];
-
-    console.log("Checking for essential Firestore collections...");
-    
-    const created: string[] = [];
-    const errors: string[] = [];
-
-    for (const collectionName of coreCollections) {
-        try {
-            const collectionRef = db.collection(collectionName);
-            const snapshot = await collectionRef.limit(1).get();
-            if (snapshot.empty) {
-                console.log(`Collection "${collectionName}" not found. Creating it...`);
-                // Add a placeholder document to create the collection.
-                await collectionRef.doc('_init_').set({
-                    initializedAt: Timestamp.now(),
-                    description: `This document was automatically created to initialize the ${collectionName} collection.`
-                });
-                created.push(collectionName);
-            }
-        } catch (e) {
-            const errorMsg = `CRITICAL ERROR: Failed to ensure collection "${collectionName}" exists.`;
-            console.error(errorMsg, e);
-            errors.push(errorMsg);
-        }
-    }
-    
-    // Specifically check for the main settings document and create if it doesn't exist
-    try {
-        const { getAppSettings } = await import('./app-settings-service');
-        await getAppSettings(); // This will auto-create default settings if they don't exist
-    } catch (e) {
-         const errorMsg = `CRITICAL ERROR: Failed to ensure 'settings' document exists.`;
-         console.error(errorMsg, e);
-         errors.push(errorMsg);
-    }
-
-    const message = created.length > 0 
-        ? `Successfully created ${created.length} missing collection(s).` 
-        : "All essential collections already exist.";
-    const details = created.length > 0 ? [`Created: ${created.join(', ')}`] : [];
-    
-    return { success: errors.length === 0, created, errors, message, details };
-};
-
 
 const initializeFirebaseAdmin = async () => {
   if (admin.apps.length > 0 && adminDbInstance) {
@@ -137,7 +76,6 @@ const runPostInitTasks = async () => {
     if (!adminDbInstance) return;
     try {
         await Promise.all([
-            ensureCollectionsExist(),
             // Auto-create the 'admin' user
             ensureSystemUserExists(adminDbInstance, {
                 name: "admin",
