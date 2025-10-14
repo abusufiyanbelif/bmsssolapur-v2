@@ -4,12 +4,33 @@ This document tracks errors found during the build process and the steps taken t
 
 ---
 
-## Build Pass 7 (Latest)
+## Build Pass 8 (Latest)
+
+### Errors Found:
+1.  **`ReferenceError: allUsers is not defined` on Homepage**:
+    -   **Description**: A runtime error on the public homepage (`/`) occurred because a variable was referenced without being correctly destructured from a data object. The code was trying to access `allUsers` directly instead of `dashboardData.users`.
+    -   **Resolution**: Corrected the data access logic in `src/app/page.tsx` to properly retrieve `users` from the `dashboardData` object.
+
+2.  **Inconsistent Link on Beneficiary Dashboard**:
+    -   **Description**: The "My Cases" link on the beneficiary dashboard was incorrectly pointing to `/beneficiary` instead of the correct path `/my-cases`.
+    -   **Resolution**: Updated the `href` in `src/app/beneficiary/beneficiary-dashboard-content.tsx` to point to the correct `/my-cases` page.
+
+3.  **Outdated Workflow Documentation**:
+    -   **Description**: `LEAD_DICTIONARY.md` and `WORKFLOWS.md` described an outdated workflow where a lead status of `Ready For Help` was a prerequisite for publishing.
+    -   **Resolution**: Updated both documents to reflect the current, more direct workflow where an admin can set the `caseAction` directly to `Publish`.
+
+4.  **Inconsistent Data Dictionary**:
+    -   **Description**: The `DATA_DICTIONARY.md` file had an incorrect calculation logic for the "My Active Cases" card on the Beneficiary Dashboard.
+    -   **Resolution**: Corrected the calculation logic in the data dictionary to align with the application's implementation.
+
+---
+
+## Build Pass 7
 
 ### Errors Found:
 1.  **ReferenceError: `allUsers` is not defined on Homepage**:
     -   **Description**: A runtime error on the public homepage (`/`) occurred because a variable was referenced without being correctly destructured from a data object.
-    -   **Resolution**: Corrected the data access logic in `src/app/page.tsx` to properly retrieve `allUsers` from the `dashboardData` object.
+    -   **Resolution**: Corrected the data access logic in `src/app/page.tsx` to properly retrieve `users` from the `dashboardData` object.
 
 2.  **`ensureCollectionsExist` is not a function**:
     -   **Description**: The seed page crashed when trying to run the "Ensure Collections" task because the function, which was recently moved, was not properly exported from `seed-service.ts`.
