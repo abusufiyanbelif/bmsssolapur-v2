@@ -8,7 +8,7 @@ import { format, subDays } from "date-fns";
 import { ai } from "@/ai/genkit";
 import { googleAI } from "@genkit-ai/googleai";
 import { getSafeGeminiModel } from "@/services/gemini-service";
-import { generateMonthlyUpdate as generateMonthlyUpdateFlow } from '@/ai/flows/generate-monthly-update-flow';
+import { generateMonthlyUpdate } from '@/ai/flows/generate-monthly-update-flow';
 
 interface ActionResult {
     success: boolean;
@@ -179,7 +179,7 @@ export async function generateMonthlyUpdate(): Promise<ActionResult> {
         const totalDistributed = recentClosedLeads.reduce((sum, l) => sum + l.helpGiven, 0);
         const uniqueBeneficiaries = new Set(recentClosedLeads.map(l => l.beneficiaryId));
         
-        const message = await generateMonthlyUpdateFlow({
+        const result = await generateMonthlyUpdate({
             month: format(new Date(), 'MMMM yyyy'),
             totalDonated,
             casesClosed: recentClosedLeads.length,
@@ -187,7 +187,7 @@ export async function generateMonthlyUpdate(): Promise<ActionResult> {
             beneficiariesHelped: uniqueBeneficiaries.size
         });
 
-        return { success: true, message: message.text };
+        return { success: true, message: result.text };
 
     } catch(e) {
          const error = e instanceof Error ? e.message : "An unknown error occurred.";
