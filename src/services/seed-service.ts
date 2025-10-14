@@ -167,53 +167,7 @@ const deleteCollection = async (collectionPath: string): Promise<string> => {
 
 
 // --- EXPORTED SEEDING FUNCTIONS ---
-
-/**
- * Checks if essential Firestore collections exist, and creates them with a placeholder
- * document if they don't. This prevents errors on fresh deployments.
- * @returns An object with a list of created collections and any errors.
- */
-export const ensureCollectionsExist = async (): Promise<{ success: boolean; created: string[]; errors: string[], message?: string, details?: string[] }> => {
-    const db = await getAdminDb();
-    const coreCollections = [
-        'users', 'leads', 'donations', 'campaigns', 'activityLog',
-        'settings', 'organizations', 'publicLeads', 'publicCampaigns',
-        'publicData', 'inspirationalQuotes'
-    ];
-
-    console.log("Checking for essential Firestore collections...");
-    
-    const created: string[] = [];
-    const errors: string[] = [];
-
-    for (const collectionName of coreCollections) {
-        try {
-            const collectionRef = db.collection(collectionName);
-            const snapshot = await collectionRef.limit(1).get();
-            if (snapshot.empty) {
-                console.log(`Collection "${collectionName}" not found. Creating it...`);
-                // Add a placeholder document to create the collection.
-                await collectionRef.doc('_init_').set({
-                    initializedAt: Timestamp.now(),
-                    description: `This document was automatically created to initialize the ${collectionName} collection.`
-                });
-                created.push(collectionName);
-            }
-        } catch (e) {
-            const errorMsg = `CRITICAL ERROR: Failed to ensure collection "${collectionName}" exists.`;
-            console.error(errorMsg, e);
-            errors.push(errorMsg);
-        }
-    }
-    
-    const message = created.length > 0 
-        ? `Successfully created ${created.length} missing collection(s).` 
-        : "All essential collections already exist.";
-    const details = created.length > 0 ? [`Created: ${created.join(', ')}`] : [];
-    
-    return { success: errors.length === 0, created, errors, message, details };
-};
-
+export { ensureCollectionsExist } from '@/services/firebase-admin';
 
 export const seedInitialUsersAndQuotes = async (): Promise<SeedResult> => {
     const orgStatus = await seedOrganization();
@@ -458,63 +412,62 @@ export const syncUsersToFirebaseAuth = async (): Promise<SeedResult> => {
 
 const organizationToSeed = {
     id: "main_org",
-    name: "Baitul Mal Samajik Sanstha (Solapur)",
+    name: "Baitul Mal Samajik Sanstha (Solapur) (System Default)",
     logoUrl: "https://firebasestorage.googleapis.com/v0/b/baitul-mal-connect.appspot.com/o/app-assets%2Flogo-new.png?alt=media&token=e5079a49-2723-4d22-b91c-297c357662c2",
-    address: "123 Muslim Peth",
+    address: "123 Muslim Peth (System Default)",
     city: "Solapur",
-    registrationNumber: "MAHA/123/2024/SOLAPUR",
-    panNumber: "ABCDE1234F",
-    contactEmail: "contact@baitulmalsolapur.org",
-    contactPhone: "+91 9372145889",
-    website: "https://www.baitulmalsolapur.org",
-    bankAccountName: "BAITULMAL SAMAJIK SANSTHA",
-    bankAccountNumber: "012345678901",
-    bankIfscCode: "ICIC0001234",
-    upiId: "baitulmal.solapur@okaxis",
+    registrationNumber: "MAHA/123/2024/SOLAPUR (System Default)",
+    panNumber: "ABCDE1234F (System Default)",
+    contactEmail: "contact@baitulmalsolapur.org (System Default)",
+    contactPhone: "+91 9372145889 (System Default)",
+    website: "https://www.baitulmalsolapur.org (System Default)",
+    bankAccountName: "BAITULMAL SAMAJIK SANSTHA (System Default)",
+    bankAccountNumber: "012345678901 (System Default)",
+    bankIfscCode: "ICIC0001234 (System Default)",
+    upiId: "baitulmal.solapur@okaxis (System Default)",
     qrCodeUrl: "https://firebasestorage.googleapis.com/v0/b/baitul-mal-connect.appspot.com/o/app-assets%2Fupi-qr-code.png?alt=media&token=c1374b76-b568-450f-90de-3f191195a63c",
     hero: {
-        title: "Empowering Our Community, One Act of Kindness at a Time.",
-        description: "Join BaitulMal Samajik Sanstha (Solapur) to make a lasting impact. Your contribution brings hope, changes lives, and empowers our community."
+        title: "Empowering Our Community, One Act of Kindness at a Time. (System Default)",
+        description: "Join BaitulMal Samajik Sanstha (Solapur) to make a lasting impact. Your contribution brings hope, changes lives, and empowers our community. (System Default)"
     },
     footer: {
       organizationInfo: {
-        titleLine1: "BAITUL MAL",
-        titleLine2: "SAMAJIK SANSTHA",
-        titleLine3: "(SOLAPUR)",
-        description: "A registered charitable organization dedicated to providing financial assistance for education, healthcare, and relief to the underprivileged, adhering to Islamic principles of charity.",
-        registrationInfo: "Reg. No. MAHA/123/2024/SOLAPUR",
-        taxInfo: "PAN: ABCDE1234F"
+        titleLine1: "BAITUL MAL (System Default)",
+        titleLine2: "SAMAJIK SANSTHA (System Default)",
+        titleLine3: "(SOLAPUR) (System Default)",
+        description: "A registered charitable organization dedicated to providing financial assistance for education, healthcare, and relief to the underprivileged, adhering to Islamic principles of charity. (System Default)",
+        registrationInfo: "Reg. No. MAHA/123/2024/SOLAPUR (System Default)",
+        taxInfo: "PAN: ABCDE1234F (System Default)"
       },
       contactUs: {
-        title: "Contact Us",
-        address: "123 Muslim Peth, Solapur, Maharashtra 413001, India",
-        email: "contact@baitulmalsolapur.org"
+        title: "Contact Us (System Default)",
+        address: "123 Muslim Peth, Solapur, Maharashtra 413001, India (System Default)",
+        email: "contact@baitulmalsolapur.org (System Default)"
       },
       keyContacts: {
-        title: "Key Contacts",
+        title: "Key Contacts (System Default)",
         contacts: [
-          { name: "Abusufiyan Belif", phone: "7887646583" },
-          { name: "Moosa Shaikh", phone: "8421708907" }
+          { name: "Abusufiyan Belif (System Default)", phone: "7887646583" },
+          { name: "Moosa Shaikh (System Default)", phone: "8421708907" }
         ]
       },
       connectWithUs: {
-        title: "Connect With Us",
+        title: "Connect With Us (System Default)",
         socialLinks: [
           { platform: 'Facebook', url: 'https://facebook.com' },
           { platform: 'Instagram', url: 'https://instagram.com' }
         ]
       },
       ourCommitment: {
-        title: "Our Commitment",
-        text: "We are committed to transparency and accountability in all our operations, ensuring that your contributions make a real impact.",
-        linkText: "Learn More",
+        title: "Our Commitment (System Default)",
+        text: "We are committed to transparency and accountability in all our operations, ensuring that your contributions make a real impact. (System Default)",
+        linkText: "Learn More (System Default)",
         linkUrl: "/organization"
       },
       copyright: {
-        text: `© ${new Date().getFullYear()} Baitul Mal Samajik Sanstha (Solapur). All Rights Reserved.`
+        text: `© ${new Date().getFullYear()} Baitul Mal Samajik Sanstha (Solapur). All Rights Reserved. (System Default)`
       }
     }
 };
-
 
     
