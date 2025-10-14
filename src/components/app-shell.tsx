@@ -20,7 +20,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Nav } from "../app/nav";
-import type { User as UserType, Lead as LeadType, Donation as DonationType, Organization } from "@/services/types";
+import type { User as UserType, Lead as LeadType, Donation as DonationType, Organization, OrganizationFooter } from "@/services/types";
 import { formatDistanceToNow } from "date-fns";
 import { Logo } from "./logo";
 import { getAppSettings, getCurrentOrganization } from "@/app/admin/settings/actions";
@@ -29,6 +29,16 @@ import { Card, CardHeader, CardContent, CardTitle, CardDescription } from "@/com
 import { performPermissionCheck, getCurrentUser, getAdminNotificationData } from "@/app/actions";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "./ui/skeleton";
+
+const defaultFooter: OrganizationFooter = {
+    organizationInfo: { titleLine1: 'Baitul Mal', titleLine2: 'Samajik Sanstha', titleLine3: '(Solapur)', description: '', registrationInfo: '', taxInfo: '' },
+    contactUs: { title: 'Contact Us', address: 'Solapur, Maharashtra', email: '' },
+    keyContacts: { title: 'Key Contacts', contacts: [] },
+    connectWithUs: { title: 'Connect With Us', socialLinks: [] },
+    ourCommitment: { title: 'Our Commitment', text: '', linkText: '', linkUrl: '' },
+    copyright: { text: '' }
+};
+
 
 const PermissionErrorState = ({ error }: { error: string }) => {
     const isPermissionDenied = error === 'permission-denied';
@@ -271,23 +281,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     };
     
     const HeaderTitle = () => {
-        if (!organization) {
-            return (
-                <div className="flex items-center gap-3">
-                    <Skeleton className="h-12 w-12 rounded-full" />
-                    <div className="space-y-1">
-                        <Skeleton className="h-4 w-40" />
-                        <Skeleton className="h-3 w-32" />
-                    </div>
-                </div>
-            )
-        }
-        const orgInfo = organization.footer?.organizationInfo;
+        const orgData = organization || { name: 'Baitul Mal Samajik Sanstha', footer: defaultFooter };
+        const orgInfo = orgData.footer?.organizationInfo;
+        
         return (
-            <Link href="/" className="flex items-center gap-3" title={organization.name}>
-                <Logo className="h-12 w-12" logoUrl={organization.logoUrl} />
+            <Link href="/" className="flex items-center gap-3" title={orgData.name}>
+                <Logo className="h-12 w-12" logoUrl={orgData.logoUrl} />
                  <div className="flex flex-col leading-tight">
-                    <span className="font-bold font-headline text-primary text-sm">{orgInfo?.titleLine1 || organization.name}</span>
+                    <span className="font-bold font-headline text-primary text-sm">{orgInfo?.titleLine1 || orgData.name}</span>
                     {orgInfo?.titleLine2 && <span className="font-bold font-headline text-accent text-sm">{orgInfo.titleLine2}</span>}
                     {orgInfo?.titleLine3 && <span className="font-bold font-headline text-primary text-xs">{orgInfo.titleLine3}</span>}
                 </div>
