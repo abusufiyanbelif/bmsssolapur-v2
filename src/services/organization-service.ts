@@ -63,7 +63,7 @@ export const getOrganization = async (id: string): Promise<Organization | null> 
   try {
     const adminDb = await getAdminDb();
     const orgDoc = await adminDb.collection(ORGANIZATIONS_COLLECTION).doc(id).get();
-    if (orgDoc.exists()) {
+    if (orgDoc.exists) {
       const data = orgDoc.data();
       return { 
         id: orgDoc.id, 
