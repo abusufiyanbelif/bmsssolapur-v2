@@ -1,5 +1,4 @@
 
-
 /**
  * @fileOverview A service to seed the database with initial data.
  */
@@ -7,13 +6,14 @@
 import { getFirestore, Timestamp, FieldValue } from 'firebase-admin/firestore';
 import type { User, UserRole, Lead, Verifier, LeadDonationAllocation, Donation, Campaign, FundTransfer, LeadAction, AppSettings, OrganizationFooter } from '@/services/types';
 import { seedInitialQuotes } from '@/services/quotes-service';
-import { getAdminDb, getAdminAuth, ensureCollectionsExist } from './firebase-admin';
+import { getAdminDb, getAdminAuth, ensureCollectionsExist as ensureCollectionsExistService } from './firebase-admin';
 import { updatePublicCampaign, enrichCampaignWithPublicStats } from './public-data-service';
 import { format } from 'date-fns';
 
-// Re-export type for backward compatibility
+// Re-export type for backward compatibility and the service function
 export type { User, UserRole };
-export { ensureCollectionsExist };
+export { ensureCollectionsExistService as ensureCollectionsExist };
+
 
 const USERS_COLLECTION = 'users';
 
@@ -397,7 +397,7 @@ const organizationToSeed = {
     registrationNumber: "MAHA/123/2024/SOLAPUR",
     panNumber: "ABCDE1234F",
     contactEmail: "contact@baitulmalsolapur.org",
-    contactPhone: "+91 9372145889",
+    contactPhone: "7887646583",
     website: "https://www.baitulmalsolapur.org",
     bankAccountName: "BAITULMAL SAMAJIK SANSTHA",
     bankAccountNumber: "012345678901",
@@ -447,3 +447,5 @@ const organizationToSeed = {
       }
     }
 };
+
+    
