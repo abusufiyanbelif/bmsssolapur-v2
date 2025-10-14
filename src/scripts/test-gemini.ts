@@ -15,18 +15,30 @@ async function runTest() {
       console.error('------------------------------------------');
       console.error('Error Details:', result.error);
       console.error('------------------------------------------');
+      
       if (result.error?.includes('API key not valid')) {
-        console.log('\n[DIAGNOSIS] Your GEMINI_API_KEY is invalid.');
-        console.log('Please obtain a valid key from Google AI Studio and add it as a secret to your project.');
-      } else if(result.error?.includes('permission_denied')) {
+        console.log('\n[DIAGNOSIS] Your GEMINI_API_KEY is invalid or missing.');
+        console.log('\nTo fix this:');
+        console.log('1. Go to Google AI Studio to generate a new API key: https://aistudio.google.com/app/apikey');
+        console.log('2. In your Firebase project, go to App Hosting -> Your Backend -> Edit backend.');
+        console.log('3. Add a new secret with the name `GEMINI_API_KEY` and paste your key as the value.');
+        console.log('4. For local development, also add this key to your `.env` file.');
+
+      } else if (result.error?.includes('permission_denied') || result.error?.includes('API has not been used')) {
         console.log('\n[DIAGNOSIS] The API key is likely valid, but the Google AI API may not be enabled for your project.');
-        console.log('Please visit the Google Cloud Console for your project and enable the "Generative Language API".');
+        console.log('\nTo fix this:');
+        console.log('1. Go to the Google Cloud Console for your project: https://console.cloud.google.com/');
+        console.log('2. In the search bar, type "Generative Language API" and select it.');
+        console.log('3. Click the "Enable" button if it is not already enabled.');
+      } else {
+        console.log('\n[DIAGNOSIS] An unknown error occurred. Please check the error details above and your network connection.');
       }
     }
   } catch (e: any) {
-    console.error('\n❌ UNEXPECTED ERROR:', e.message);
+    console.error('\n❌ UNEXPECTED SCRIPT ERROR:', e.message);
   } finally {
-    process.exit();
+    // A small delay to ensure all logs are flushed before exiting
+    setTimeout(() => process.exit(), 100);
   }
 }
 

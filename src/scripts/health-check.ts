@@ -95,7 +95,9 @@ async function runHealthCheck() {
       failedTests.forEach(result => {
         console.log(`\n❌ ${result.name}: ${result.status} (took ${(result.duration / 1000).toFixed(2)}s)`);
         console.log('------------------------------------------');
-        console.log(result.output);
+        // Clean up the output by removing the "npm run..." lines
+        const cleanOutput = result.output.split('\n').filter(line => !line.startsWith('> ')).join('\n');
+        console.log(cleanOutput);
         console.log('------------------------------------------');
       });
   }
