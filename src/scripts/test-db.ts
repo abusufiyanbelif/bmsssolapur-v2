@@ -1,5 +1,9 @@
 
+
 import { getAdminDb } from '../services/firebase-admin';
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 async function testDatabaseConnection() {
   console.log('Attempting to connect to Firestore using Application Default Credentials...');
@@ -7,6 +11,7 @@ async function testDatabaseConnection() {
     const adminDb = await getAdminDb();
     
     // Perform a simple read operation to confirm permissions.
+    // This targets a potentially non-existent doc, which is a lightweight check.
     const nonExistentDocRef = adminDb.collection("permission-check-script").doc("heartbeat");
     await nonExistentDocRef.get();
     
@@ -19,16 +24,14 @@ async function testDatabaseConnection() {
     console.error('Error Details:', e.message);
     console.error('------------------------------------------');
     
-    if (e.code === 5 || (e.message && e.message.includes('NOT_FOUND'))) {
-      console.log('\n✅ However, this specific "NOT_FOUND" error confirms that the connection and authentication were successful.');
-      console.log('The script simply failed to find its own temporary test document, which is not a critical issue.');
-    } else if (e.message && (e.message.includes('permission-denied') || e.message.includes('UNAUTHENTICATED'))) {
+    if (e.message && (e.message.includes('permission-denied') || e.message.includes('UNAUTHENTICATED') || e.message.includes('Could not load the default credentials'))) {
+      console.log('\n[DIAGNOSIS] This is a permissions issue.');
       console.log('\nPossible causes:');
-      console.log('1. You may not be authenticated. Run `gcloud auth application-default login` in your terminal.');
-      console.log('2. The service account used by this environment lacks the "Cloud Datastore User" or "Firebase Admin" IAM role.');
+      console.log('1. You are running this locally and have not authenticated. Run `gcloud auth application-default login` in your terminal.');
+      console.log('2. The service account used by your App Hosting backend is missing the "Cloud Datastore User" IAM role. Run `npm run verify:iam` to check.');
       console.log('3. The Firebase project ID might be misconfigured in your .env file.');
     } else {
-        console.log('\nThis seems to be an unexpected error. Please check the server logs for more details.');
+        console.log('\n[DIAGNOSIS] This seems to be an unexpected error. Please check the server logs for more details.');
     }
 
   } finally {

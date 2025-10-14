@@ -19,7 +19,7 @@ const REQUIRED_ROLES = [
 
 function run(cmd, silent = false) {
   try {
-    const result = execSync(cmd, { stdio: silent ? "pipe" : "inherit" }).toString().trim();
+    const result = execSync(cmd, { stdio: silent ? "pipe" : "inherit", encoding: 'utf-8' }).trim();
     return result;
   } catch (err) {
     if (!silent) console.error(`❌ Command failed: ${cmd}`);
@@ -36,6 +36,19 @@ function getProjectId() {
   }
 }
 
+function getServiceAccountEmail() {
+    try {
+        const projectId = getProjectId();
+        const projectNumber = run(`gcloud projects describe ${projectId} --format="value(projectNumber)"`, true);
+        return `${projectNumber}-compute@developer.gserviceaccount.com`;
+    } catch(e) {
+        console.error("❌ Failed to determine the App Hosting service account email.");
+        console.error("   Please ensure you have permissions to describe the project.");
+        throw e;
+    }
+}
+
+
 function getIamPolicy(projectId) {
   try {
     const raw = run(
@@ -45,6 +58,7 @@ function getIamPolicy(projectId) {
     return JSON.parse(raw);
   } catch {
     console.error("❌ Failed to fetch IAM policy for project:", projectId);
+    console.error("   Ensure you have the 'resourcemanager.projects.getIamPolicy' permission.");
     process.exit(1);
   }
 }
@@ -52,13 +66,14 @@ function getIamPolicy(projectId) {
 function verifyAndFixRoles(autoFix = false) {
   console.log("\n🔍 Checking Firebase project configuration...\n");
   const projectId = getProjectId();
-  const serviceAccount = `firebase-app-hosting-compute@${projectId}.iam.gserviceaccount.com`;
+  const serviceAccount = getServiceAccountEmail();
 
   console.log(`Project ID: ${projectId}`);
   console.log(`Service Account: ${serviceAccount}\n`);
 
   const policy = getIamPolicy(projectId);
-  console.log("🧾 Checking roles...\n");
+  let missingRoles = 0;
+  console.log("🧾 Checking for required IAM roles...\n");
 
   REQUIRED_ROLES.forEach((role) => {
     const found = policy.some(
@@ -71,6 +86,7 @@ function verifyAndFixRoles(autoFix = false) {
     if (found) {
       console.log(`✅ ${role}`);
     } else {
+      missingRoles++;
       console.log(`❌ ${role} (Missing)`);
       const fixCmd = `gcloud projects add-iam-policy-binding ${projectId} --member="serviceAccount:${serviceAccount}" --role="${role}"`;
       console.log(`   ➜ To fix manually: ${fixCmd}`);
@@ -80,16 +96,27 @@ function verifyAndFixRoles(autoFix = false) {
           run(fixCmd);
           console.log(`   ✅ ${role} added successfully.`);
         } catch {
-          console.error(`   ❌ Failed to add ${role}`);
+          console.error(`   ❌ Failed to add ${role}. Please run the command manually.`);
         }
       }
     }
   });
 
+  if (missingRoles === 0) {
+      console.log("\n✅ All required IAM roles are present. Your App Hosting backend should have the necessary permissions.");
+  } else if (!autoFix) {
+      console.log(`\n⚠️  Found ${missingRoles} missing role(s). Run \`npm run fix:iam\` to grant them automatically or add them manually in the Google Cloud Console.`);
+  }
+
   console.log("\n✅ IAM verification complete.\n");
 }
 
 // Detect script type
-const args = process.argv.slice(2);
-const autoFix = args.includes("--fix") || process.env.AUTO_FIX === "true";
-verifyAndFixRoles(autoFix);
+try {
+    const args = process.argv.slice(2);
+    const autoFix = args.includes("--fix") || process.env.AUTO_FIX === "true";
+    verifyAndFixRoles(autoFix);
+} catch (error) {
+    console.error("\nScript failed to complete. Please check the error messages above.");
+    process.exit(1);
+}

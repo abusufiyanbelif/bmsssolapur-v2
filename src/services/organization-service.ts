@@ -148,7 +148,12 @@ export const getCurrentOrganization = async (): Promise<Organization | null> => 
         const orgQuery = adminDb.collection(ORGANIZATIONS_COLLECTION).limit(1);
         const querySnapshot = await orgQuery.get();
         if (!querySnapshot.empty) {
+            // CRITICAL FIX: Explicitly check for and ignore the _init_ document
             const docSnap = querySnapshot.docs[0];
+            if (docSnap.id === '_init_') {
+                console.log("Only found _init_ document in organizations. Returning null.");
+                return null;
+            }
             const data = docSnap.data();
 
             // Convert gs:// URIs to https:// URLs before returning
