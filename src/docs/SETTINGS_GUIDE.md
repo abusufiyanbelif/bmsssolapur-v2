@@ -1,3 +1,4 @@
+
 # Application Settings Guide
 
 This document provides a comprehensive guide to all the administrative settings available in the application. Use this guide to customize functionality, manage integrations, and tailor the user experience.

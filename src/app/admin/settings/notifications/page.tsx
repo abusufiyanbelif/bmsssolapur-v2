@@ -36,7 +36,7 @@ export default async function NotificationSettingsPage() {
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
-                   <NotificationSettingsForm settings={settings.notificationSettings} />
+                   <NotificationSettingsForm settings={settings} />
                 </CardContent>
             </Card>
         </div>
