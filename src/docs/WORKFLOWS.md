@@ -27,23 +27,22 @@ This workflow details the lifecycle of a help request, from creation to closure.
     *   An Administrator reviews the lead on its detail page (`/admin/leads/[id]`).
     *   The admin verifies the details, checks any uploaded documents, and decides on the next step.
     *   **If Approved**: The admin changes the `caseVerification` status to **"Verified"**. The `caseAction` status is automatically updated to **"Ready For Help"**.
-    *   **If Rejected**: The status is changed to **"Rejected"**, and the lead is removed from active queues.
+    -   **If Rejected**: The status is changed to **"Rejected"**, and the lead is removed from active queues.
 
 4.  **Publishing**:
-    *   A lead with the status **"Ready For Help"** now appears in the **"Leads Ready for Publishing"** section on the Admin Dashboard.
-    *   An admin can click "Publish" on the dashboard or edit the lead and set the `caseAction` to **"Publish"**.
-    *   This action triggers a server-side process that creates a sanitized, public-facing copy of the lead in the `publicLeads` collection, making it visible on the `/public-leads` page for donors.
+    -   A lead with the status **"Ready For Help"** now appears in the **"Leads Ready for Publishing"** section on the Admin Dashboard.
+    -   An admin can click "Publish" on the dashboard or edit the lead and set the `caseAction` to **"Publish"**.
+    -   This action makes the lead visible on the `/public-leads` page for donors.
 
 5.  **Funding & Allocation**:
-    *   Donors can view published leads and make donations towards them.
-    *   Admins can allocate general (unassigned) verified donations to a lead.
-    *   As funds are allocated, the `helpGiven` amount on the lead increases. The `caseStatus` may change to **"Partial"** if it's partially funded.
-    *   This continues until `helpGiven` equals or exceeds `helpRequested`.
+    -   Donors can view published leads and make donations towards them.
+    -   Admins can allocate general (unassigned) verified donations to a lead.
+    -   As funds are allocated, the `helpGiven` amount on the lead increases. The `caseAction` may change to **"Partial"** if it's partially funded.
+    -   Once `helpGiven` meets or exceeds `helpRequested`, the `caseAction` becomes **'Complete'**.
 
 6.  **Closure**:
-    *   When a lead is fully funded, its `caseStatus` is automatically updated to **"Complete"**.
-    *   After an admin has facilitated the physical transfer of funds to the beneficiary, they manually change the `caseStatus` to **"Closed"**.
-    *   A closed lead is considered successfully resolved and contributes to the organization's impact metrics.
+    -   When a lead is fully funded and the aid has been physically delivered to the beneficiary, an admin manually sets the `caseAction` to **"Closed"**.
+    -   A closed lead is considered successfully resolved and contributes to the organization's impact metrics.
 
 ---
 

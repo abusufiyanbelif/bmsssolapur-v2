@@ -47,7 +47,7 @@ export function BeneficiaryDashboardContent({ cases, quotes, settings }: { cases
             if (caseItem.caseStatus === 'Closed') {
                 myCasesClosed++;
             }
-            if (caseItem.caseStatus === 'Pending' || caseItem.caseStatus === 'Partial' || caseItem.caseStatus === 'Open') {
+            if (caseItem.caseAction === 'Pending' || caseItem.caseAction === 'Partial' || caseItem.caseAction === 'Open' || caseItem.caseAction === 'Ready For Help' || caseItem.caseAction === 'Publish') {
                 activeCases++;
             }
         });
@@ -255,7 +255,24 @@ export function BeneficiaryDashboardContent({ cases, quotes, settings }: { cases
     )
 }
 
-function InspirationalQuotes({ quotes, loading }: { quotes: Quote[], loading: boolean }) {
+function InspirationalQuotes({ quotes }: { quotes: Quote[] }) {
+    const [loading, setLoading] = useState(quotes.length === 0);
+    const [_quotes, setQuotes] = useState<Quote[]>(quotes);
+
+    useEffect(() => {
+        if(quotes.length > 0) return;
+
+        const fetchQuotes = async () => {
+             setLoading(true);
+             const { getQuotes } = await import('@/app/home/actions');
+             const fetchedQuotes = await getQuotes(3);
+             setQuotes(fetchedQuotes);
+             setLoading(false);
+        }
+        fetchQuotes();
+    }, [quotes]);
+
+
     if (loading) {
         return (
              <Card>
@@ -272,7 +289,7 @@ function InspirationalQuotes({ quotes, loading }: { quotes: Quote[], loading: bo
         )
     }
 
-    if (quotes.length === 0) {
+    if (_quotes.length === 0) {
         return null;
     }
 
@@ -286,7 +303,7 @@ function InspirationalQuotes({ quotes, loading }: { quotes: Quote[], loading: bo
             </CardHeader>
             <CardContent>
                 <div className="space-y-6">
-                    {quotes.map((quote, index) => (
+                    {_quotes.map((quote, index) => (
                         <blockquote key={index} className="border-l-2 pl-4 italic text-sm text-muted-foreground">
                             <p>&quot;{quote.text}&quot;</p>
                             <cite className="block text-right not-italic text-xs mt-1">— {quote.source}</cite>

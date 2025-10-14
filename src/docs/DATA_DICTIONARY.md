@@ -64,8 +64,8 @@ This dashboard is personalized for the logged-in **Beneficiary**.
 | :--- | :--- | :--- | :--- |
 | **My Total Aid Received**| The total amount of money you have received across all your help requests. | `leads` | `SUM(lead.helpGiven)` where `lead.beneficiaryId` matches your user ID. |
 | **My Total Requested**| The total amount you have requested across all your help requests. | `leads` | `SUM(lead.helpRequested)` where `lead.beneficiaryId` matches your user ID. |
-| **My Active Cases** | The number of your help requests that are still open or partially funded. | `leads` | `COUNT(leads)` where `beneficiaryId` matches your ID and `caseStatus` is 'Pending', 'Partial', 'Open'. |
-| **My Closed Cases** | The number of your help requests that have been successfully completed. | `leads` | `COUNT(leads)` where `beneficiaryId` matches your ID and `caseStatus` is 'Closed'. |
+| **My Active Cases** | The number of your help requests that are still open or partially funded. | `leads` | `COUNT(leads)` where `beneficiaryId` matches your ID and `caseAction` is in ['Pending', 'Partial', 'Open', 'Ready For Help', 'Publish']. |
+| **My Closed Cases** | The number of your help requests that have been successfully completed. | `leads` | `COUNT(leads)` where `beneficiaryId` matches your ID and `caseAction` is 'Closed'. |
 
 ---
 
