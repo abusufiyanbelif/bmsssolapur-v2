@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -35,6 +36,7 @@ const twilioSmsSchema = z.object({
   "sms.twilio.accountSid": z.string().optional(),
   "sms.twilio.authToken": z.string().optional(),
   "sms.twilio.verifySid": z.string().optional(),
+  "sms.twilio.fromNumber": z.string().optional(),
 });
 const twilioWhatsappSchema = z.object({
   "whatsapp.twilio.enabled": z.boolean().default(false),
@@ -206,6 +208,7 @@ export function NotificationSettingsForm({ settings }: NotificationSettingsFormP
                 "sms.twilio.accountSid": notificationSettings.sms?.twilio?.accountSid ?? '',
                 "sms.twilio.authToken": notificationSettings.sms?.twilio?.authToken ?? '',
                 "sms.twilio.verifySid": notificationSettings.sms?.twilio?.verifySid ?? '',
+                "sms.twilio.fromNumber": notificationSettings.sms?.twilio?.fromNumber ?? '',
                 "whatsapp.twilio.enabled": notificationSettings.whatsapp?.twilio?.enabled ?? false,
                 "whatsapp.twilio.fromNumber": notificationSettings.whatsapp?.twilio?.fromNumber ?? '',
             }}

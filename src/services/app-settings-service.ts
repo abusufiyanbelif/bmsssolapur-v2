@@ -154,6 +154,9 @@ const defaultSettings: Omit<AppSettings, 'id' | 'updatedAt'> = {
         schoolYearOptions: ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X'],
         collegeYearOptions: ['First Year', 'Second Year', 'Third Year', 'Final Year'],
     },
+    userConfiguration: {
+        isAadhaarMandatory: false,
+    },
     dashboard: {
         mainMetrics: { visibleTo: defaultAdminRoles },
         fundsInHand: { visibleTo: ['Super Admin', 'Finance Admin'] },
@@ -177,9 +180,6 @@ const defaultSettings: Omit<AppSettings, 'id' | 'updatedAt'> = {
     },
     analyticsDashboard: {
         financialPerformance: { visibleTo: ['Super Admin'] },
-    },
-    userConfiguration: {
-        isAadhaarMandatory: false,
     }
 };
 
