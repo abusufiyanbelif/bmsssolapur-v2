@@ -1,3 +1,4 @@
+
 /**
  * @fileOverview Initializes the Firebase Admin SDK.
  * This file is carefully constructed to have NO internal project dependencies
@@ -136,8 +137,8 @@ const runPostInitTasks = async () => {
                 lastName: "User",
                 fatherName: "System",
                 email: "admin@example.com",
-                phone: "7887646583", 
-                password: "password", 
+                phone: "9579209587", 
+                password: "admin", 
                 roles: ["Super Admin"], 
                 privileges: ["all"],
                 isActive: true, 
