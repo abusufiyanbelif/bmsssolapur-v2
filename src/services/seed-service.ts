@@ -447,6 +447,3 @@ const organizationToSeed = {
       }
     }
 };
-
-
-    

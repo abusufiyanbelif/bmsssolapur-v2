@@ -1,4 +1,3 @@
-
 /**
  * @fileOverview Service for managing inspirational quotes in Firestore.
  */
@@ -63,13 +62,7 @@ export const seedInitialQuotes = async (): Promise<string> => {
  * @returns An array of all quote objects.
  */
 export const getAllQuotes = async (): Promise<Quote[]> => {
-    let adminDb;
-    try {
-        adminDb = await getAdminDb();
-    } catch (e) {
-        console.warn(`[Graceful Failure] Could not initialize Admin DB in getAllQuotes: ${(e as Error).message}. Returning empty array.`);
-        return [];
-    }
+    const adminDb = await getAdminDb();
     
     try {
         const quotesQuery = adminDb.collection(QUOTES_COLLECTION);
@@ -88,9 +81,8 @@ export const getAllQuotes = async (): Promise<Quote[]> => {
         });
         return quotes;
     } catch (error) {
-        // This is the critical fix. Instead of throwing, we catch the error, log it, and return an empty array.
         if (error instanceof Error) {
-            console.warn(`[Graceful Failure] Could not fetch quotes: ${error.message}. This is expected on a fresh database or with incorrect IAM permissions. Returning empty array.`);
+            console.warn(`[Graceful Failure] Could not fetch quotes: ${error.message}. Returning empty array.`);
         } else {
             console.warn(`[Graceful Failure] An unknown error occurred while fetching quotes. Returning empty array.`);
         }

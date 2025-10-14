@@ -157,45 +157,35 @@ const convertGsToHttps = (gsUri?: string): string | undefined => {
 
 // For now, we will assume one organization for this project.
 export const getCurrentOrganization = async (): Promise<Organization | null> => {
-    let adminDb;
-    try {
-        adminDb = await getAdminDb();
-    } catch (initError) {
-        console.warn(`[Graceful Failure] Could not initialize Admin DB in getCurrentOrganization: ${(initError as Error).message}. This may happen if credentials are not set up.`);
-        return defaultOrganization; // Return default structure if DB fails to init
-    }
+    const adminDb = await getAdminDb();
     
     try {
         const orgQuery = adminDb.collection(ORGANIZATIONS_COLLECTION).limit(1);
         const querySnapshot = await orgQuery.get();
-        if (!querySnapshot.empty) {
-            // CRITICAL FIX: Explicitly check for and ignore the _init_ document
-            const docSnap = querySnapshot.docs[0];
-            if (docSnap.id === '_init_') {
-                console.log("Only found _init_ document in organizations. Returning default placeholder.");
-                return defaultOrganization;
-            }
-            const data = docSnap.data();
+        
+        if (querySnapshot.empty || (querySnapshot.docs.length === 1 && querySnapshot.docs[0].id === '_init_')) {
+            console.log("No organization document found, returning null.");
+            return null;
+        }
 
-            // Convert gs:// URIs to https:// URLs before returning
-            const organizationData = {
-                id: docSnap.id, 
-                ...data,
-                logoUrl: convertGsToHttps(data.logoUrl),
-                qrCodeUrl: convertGsToHttps(data.qrCodeUrl),
-                createdAt: (data.createdAt as Timestamp)?.toDate(),
-                updatedAt: (data.updatedAt as Timestamp)?.toDate(),
-            } as Organization;
-            
-            return organizationData;
-        }
-        return defaultOrganization; // Return default if collection is empty
+        const docSnap = querySnapshot.docs[0];
+        const data = docSnap.data();
+
+        // Convert gs:// URIs to https:// URLs before returning
+        const organizationData = {
+            id: docSnap.id, 
+            ...data,
+            logoUrl: convertGsToHttps(data.logoUrl),
+            qrCodeUrl: convertGsToHttps(data.qrCodeUrl),
+            createdAt: (data.createdAt as Timestamp)?.toDate(),
+            updatedAt: (data.updatedAt as Timestamp)?.toDate(),
+        } as Organization;
+        
+        return organizationData;
     } catch (error) {
-        if (error instanceof Error && (error.message.includes('Could not load the default credentials') || error.message.includes('Could not refresh access token') || error.message.includes('permission-denied') || error.message.includes('UNAUTHENTICATED'))) {
-            console.warn(`Firestore permission error in getCurrentOrganization. Returning default placeholder.`);
-            return defaultOrganization; 
-        }
         console.error('Error getting current organization: ' + (error instanceof Error ? error.message : 'Unknown error'));
-        return defaultOrganization;
+        // In case of error (e.g., permissions), we should not return a default.
+        // The caller must handle the null case.
+        return null;
     }
 }
