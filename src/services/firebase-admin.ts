@@ -1,5 +1,4 @@
 
-
 /**
  * @fileOverview Initializes the Firebase Admin SDK.
  * This file is carefully constructed to have NO internal project dependencies
@@ -132,15 +131,15 @@ const runPostInitTasks = async () => {
             ensureCollectionsExist(),
             // Auto-create the main 'admin' user
             ensureSystemUserExists(adminDbInstance, {
-                name: "Abusufiyan Belif",
-                userId: "admin", // The document ID will be 'admin'
-                firstName: "Abusufiyan",
-                lastName: "Belif",
+                name: "admin",
+                userId: "admin",
+                firstName: "System",
+                lastName: "Admin",
                 fatherName: "System",
-                email: "abusufiyan.belif@gmail.com",
-                phone: "7887646583", 
+                email: "admin@example.com",
+                phone: "9579209587",
                 password: "admin", 
-                roles: ["Super Admin", "Donor"], 
+                roles: ["Super Admin"], 
                 privileges: ["all"],
                 isActive: true, 
                 gender: 'Male', 

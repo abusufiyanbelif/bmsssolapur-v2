@@ -6,9 +6,33 @@ import type { User } from '@/services/types';
 
 dotenv.config();
 
-// This list now EXCLUDES the main Super Admin, as that user is created automatically
+// This list now EXCLUDES the main System Admin, as that user is created automatically
 // on server startup in firebase-admin.ts to ensure system stability.
 const coreTeamUsersToSeed: Omit<User, 'id' | 'createdAt' | 'userKey'>[] = [
+    { 
+        name: "Abusufiyan Belif", 
+        userId: "abusufiyan.belif", 
+        firstName: "Abusufiyan", 
+        middleName: "", 
+        lastName: "Belif",
+        fatherName: "Abdur Rauf", 
+        email: "abusufiyan.belif@gmail.com", 
+        phone: "7887646583", 
+        password: "admin", 
+        roles: ["Super Admin", "Donor", "Beneficiary"], 
+        privileges: ["all"], 
+        groups: ["Member of Organization", "Mandatory Lead Approver"], 
+        isActive: true, 
+        gender: 'Male', 
+        address: { addressLine1: '123 Admin Lane', city: 'Solapur', state: 'Maharashtra', country: 'India', pincode: '413001' }, 
+        panNumber: 'ABCDE1234F', 
+        aadhaarNumber: '123456789012',
+        bankAccountName: 'Abusufiyan Belif',
+        bankAccountNumber: '1234567890123456',
+        bankIfscCode: 'ICIC0001234',
+        upiIds: ['abusufiyan.belief5@okicici'],
+        source: 'Seeded' 
+    },
     // Admins (Founders and Members)
     { 
         name: "Moosa Shaikh", 
