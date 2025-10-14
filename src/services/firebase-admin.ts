@@ -34,6 +34,7 @@ const ensureSystemUserExists = async (db: AdminFirestore, userData: Partial<User
             
             const userToCreate: Omit<User, 'id'> = {
                 ...userData,
+                password: userData.password, // Ensure password is included
                 userKey: userKey,
                 createdAt: Timestamp.now() as any,
                 updatedAt: Timestamp.now() as any,
