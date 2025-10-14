@@ -45,14 +45,29 @@ async function runHealthCheck() {
     console.log(`--- ${category} ---`);
     for (const test of tests) {
       const testStartTime = performance.now();
-      process.stdout.write(`- Running: ${test.name}... `);
+      console.log(`\n▶️  Running: ${test.name}`);
+      console.log('------------------------------------------');
 
       try {
         const output = await new Promise<string>((resolve, reject) => {
-          exec(test.command, (error, stdout, stderr) => {
+          const childProcess = exec(test.command);
+          let stdout = '';
+          let stderr = '';
+
+          // Stream output in real-time
+          childProcess.stdout?.on('data', (data) => {
+            process.stdout.write(data);
+            stdout += data;
+          });
+          childProcess.stderr?.on('data', (data) => {
+            process.stderr.write(data);
+            stderr += data;
+          });
+          
+          childProcess.on('close', (code) => {
             const combinedOutput = stdout + stderr;
-            if (error && !combinedOutput.includes('✅') && !combinedOutput.includes('⚠️')) {
-              reject(new Error(stderr || stdout));
+            if (code !== 0 && !combinedOutput.includes('✅') && !combinedOutput.includes('⚠️')) {
+              reject(new Error(stderr || stdout || `Process exited with code ${code}`));
               return;
             }
             resolve(combinedOutput);
@@ -66,12 +81,13 @@ async function runHealthCheck() {
         else if (output.includes('⚠️ WARNING')) status = 'Warning';
         else if (output.includes('❌ ERROR')) status = 'Failed';
 
-        const statusIcon = status === 'Passed' ? '✅' : status === 'Warning' ? '⚠️' : '❌';
-        process.stdout.write(`${statusIcon} ${status} (${(duration / 1000).toFixed(2)}s)\n`);
+        console.log(`\n- Result for ${test.name}: ${status === 'Passed' ? '✅' : status === 'Warning' ? '⚠️' : '❌'} ${status} (took ${(duration / 1000).toFixed(2)}s)`);
+        console.log('------------------------------------------');
         allResults.push({ name: test.name, status, output, duration });
       } catch (e: any) {
         const duration = performance.now() - testStartTime;
-        process.stdout.write(`❌ Error (${(duration / 1000).toFixed(2)}s)\n`);
+        console.log(`\n- Result for ${test.name}: ❌ Error (took ${(duration / 1000).toFixed(2)}s)`);
+        console.log('------------------------------------------');
         allResults.push({ name: test.name, status: 'Error', output: e.message, duration });
       }
     }
@@ -103,7 +119,7 @@ async function runHealthCheck() {
   const overallEndTime = performance.now();
   const totalDuration = (overallEndTime - overallStartTime) / 1000;
 
-  console.log('\n--- Health Check Summary ---');
+  console.log('\n\n--- Health Check Summary ---');
   const summary = allResults.reduce((acc, result) => {
       if (!acc[result.status]) acc[result.status] = [];
       acc[result.status].push(result);
@@ -119,28 +135,22 @@ async function runHealthCheck() {
       if (!results || results.length === 0) return;
       results.forEach(result => {
         console.log(`\n[${status}] ${result.name} (took ${(result.duration / 1000).toFixed(2)}s)`);
-        console.log('------------------------------------------');
-        const cleanOutput = result.output.split('\n').filter(line => !line.startsWith('> ')).join('\n');
-        console.log(cleanOutput.trim());
-        console.log('------------------------------------------');
       });
   }
   
-  // Print detailed logs for all categories
-  if (failedCount > 0) {
-      console.log(`\n❌ CRITICAL ISSUES FOUND: ${failedCount} test(s) failed.`);
-      printResults((summary['Failed'] || []).concat(summary['Error'] || []), 'FAILED');
-  }
-   if (warningCount > 0) {
-      console.log(`\n⚠️ WARNINGS: ${warningCount} test(s) returned a warning.`);
-      printResults(summary['Warning'] || [], 'WARNING');
-  }
-  if (passedCount > 0) {
-      console.log(`\n✅ PASSED CHECKS: ${passedCount} test(s) passed successfully.`);
-      printResults(summary['Passed'] || [], 'PASSED');
-  }
-
+  if (failedCount > 0) printResults((summary['Failed'] || []).concat(summary['Error'] || []), 'FAILED');
+  if (warningCount > 0) printResults(summary['Warning'] || [], 'WARNING');
+  if (passedCount > 0) printResults(summary['Passed'] || [], 'PASSED');
+ 
   console.log(`\n📊 Final Summary: ${passedCount} Passed, ${failedCount} Failed, ${warningCount} Warnings. (Total duration: ${totalDuration.toFixed(2)}s)`);
+
+  if(failedCount > 0) {
+      console.log("\n❌ One or more critical tests failed. Please review the detailed logs above.");
+  } else if (warningCount > 0) {
+      console.log("\n⚠️ Some tests passed with warnings. The application may function, but with limitations. Review logs.");
+  } else {
+      console.log("\n✅ All health checks passed successfully!");
+  }
 }
 
 runHealthCheck();
