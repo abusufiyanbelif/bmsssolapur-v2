@@ -66,37 +66,35 @@ export const updatePublicOrganization = async (org: Organization): Promise<void>
  * @returns An array of sanitized public lead objects.
  */
 export const getPublicLeads = async (): Promise<Lead[]> => {
-    try {
-        const adminDb = await getAdminDb();
-        const q = adminDb.collection(PUBLIC_LEADS_COLLECTION).orderBy("dateCreated", "desc");
-        const snapshot = await q.get();
+    const adminDb = await getAdminDb();
+    const enrichLeads = async (snapshot: FirebaseFirestore.QuerySnapshot): Promise<Lead[]> => {
         const leads = snapshot.docs.map(doc => doc.data() as Lead);
-        
-        // Enrich with beneficiary info
-        const enrichedLeads = await Promise.all(leads.map(async (lead) => {
+        return await Promise.all(leads.map(async (lead) => {
             const beneficiary = await getUser(lead.beneficiaryId);
             return { ...lead, beneficiary };
         }));
+    };
 
-        return enrichedLeads;
+    try {
+        const q = adminDb.collection(PUBLIC_LEADS_COLLECTION).orderBy("dateCreated", "desc");
+        const snapshot = await q.get();
+        return await enrichLeads(snapshot);
     } catch (e) {
-        if (e instanceof Error && (e.message.includes('Could not refresh access token') || e.message.includes('permission-denied') || e.message.includes('UNAUTHENTICATED'))) {
-            console.warn(`Permission Denied: The server environment lacks permissions to read public leads. Refer to TROUBLESHOOTING.md. Error: ${e.message}`);
-            return []; // Gracefully fail
-        }
-        if (e instanceof Error && (e.message.includes('index') || e.message.includes('Could not find a valid index'))) {
-            console.error("Firestore index missing for 'publicLeads' on 'dateCreated' (desc). Please create it. Falling back to unsorted data.");
-             try {
-                const adminDb = await getAdminDb();
+        if (e instanceof Error && (e.message.includes('index') || e.message.includes('Could not find a valid index') || e.message.includes('NOT_FOUND'))) {
+            console.warn(`Firestore index missing for 'publicLeads'. Please create a descending index on 'dateCreated'. Falling back to an unsorted query.`);
+            try {
                 const fallbackSnapshot = await adminDb.collection(PUBLIC_LEADS_COLLECTION).get();
-                const fallbackLeads = fallbackSnapshot.docs.map(doc => doc.data() as Lead);
-                return await Promise.all(fallbackLeads.map(async (lead) => ({ ...lead, beneficiary: await getUser(lead.beneficiaryId) })));
-             } catch (fallbackError) {
-                 console.error("Fallback query failed for getPublicLeads", fallbackError);
-                 return [];
-             }
+                const leads = await enrichLeads(fallbackSnapshot);
+                // Manually sort in memory
+                return leads.sort((a, b) => (b.dateCreated as any) - (a.dateCreated as any));
+            } catch (fallbackError) {
+                console.error("Fallback query failed for getPublicLeads", fallbackError);
+                return [];
+            }
+        } else if (e instanceof Error && (e.message.includes('Could not refresh access token') || e.message.includes('permission-denied') || e.message.includes('UNAUTHENTICATED'))) {
+            console.warn(`Permission Denied: The server environment lacks permissions to read public leads. Refer to TROUBLESHOOTING.md. Error: ${e.message}`);
         } else {
-             console.error("Error fetching public leads:", e);
+            console.error("Error fetching public leads:", e);
         }
         return [];
     }
