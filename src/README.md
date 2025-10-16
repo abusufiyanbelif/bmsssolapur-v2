@@ -32,7 +32,7 @@ These scripts allow you to populate your Firestore database with initial data. I
 
 | Command | Description |
 | :--- | :--- |
-| `npm run seed:ensure-collections` | Creates all necessary database collections if they are missing. Safe to run anytime. |
+| `npm run seed:ensure-collections` | **(Recommended First Step)** Creates all necessary database collections if they are missing. Safe to run anytime. |
 | `npm run seed:initial` | Seeds the main organization profile and a collection of inspirational quotes. **The `admin` and `anonymous_donor` system users are created automatically on server start.** |
 | `npm run seed:core-team` | Creates the user accounts for the organization's founders and core administrators. |
 | `npm run seed:app-settings`| Seeds the default configurations for lead purposes, user fields, and dashboard visibility. **Run this before creating leads.** |
@@ -67,5 +67,3 @@ These scripts help you test your connections to external services and verify you
 - **[Lead Dictionary](./docs/LEAD_DICTIONARY.md)**: An explanation of the Lead data model and workflow.
 - **[Application Pages](./docs/APP_PAGES.md)**: A sitemap of all pages by user role.
 - **[UI Style Guide](./docs/UI_STYLE_GUIDE.md)**: A reference for the application's design system.
-
-    
