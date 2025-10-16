@@ -149,10 +149,8 @@ export const getAllCampaigns = async (): Promise<Campaign[]> => {
     });
     return campaigns;
   } catch (error) {
-    console.error("Error getting all campaigns: ", error);
-    // Gracefully handle missing index error without crashing
     if (error instanceof Error && error.message.includes('index')) {
-        console.error("Firestore index missing. Please create a descending index on 'startDate' for the 'campaigns' collection. Retrying without ordering.");
+        console.error("Firestore index missing for 'campaigns' on 'startDate' (desc). Retrying without ordering.");
         // Retry without ordering if index is missing
         try {
             const campaignsQuery = query(collection(db, CAMPAIGNS_COLLECTION));
@@ -166,12 +164,14 @@ export const getAllCampaigns = async (): Promise<Campaign[]> => {
                     updatedAt: (data.updatedAt as Timestamp)?.toDate(),
                 } as Campaign);
             });
-            return campaigns;
+            // Sort in memory as a fallback
+            return campaigns.sort((a,b) => b.startDate.getTime() - a.startDate.getTime());
         } catch (retryError) {
              console.error("Retry failed for getAllCampaigns:", retryError);
              return [];
         }
     }
+    console.error("Error getting all campaigns: ", error);
     return []; // Return empty array on other errors
   }
 };
@@ -215,4 +215,5 @@ export const deleteCampaign = async (id: string): Promise<void> => {
 };
 
   
+
 
