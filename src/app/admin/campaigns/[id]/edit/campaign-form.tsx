@@ -227,11 +227,21 @@ export function CampaignForm({ campaign, completedCampaigns, unassignedLeads, be
                         Update the details for the &quot;{campaign.name}&quot; campaign.
                     </CardDescription>
                 </div>
-                 {!isEditing && (
+                 {!isEditing ? (
                     <Button onClick={() => setIsEditing(true)}>
                         <Edit className="mr-2 h-4 w-4" />
                         Edit
                     </Button>
+                ) : (
+                    <div className="flex gap-2">
+                        <Button type="button" variant="outline" onClick={handleCancel}>
+                             <X className="mr-2 h-4 w-4" /> Cancel
+                        </Button>
+                        <Button onClick={handleSubmit(onSubmit)} disabled={isSubmitting || !isDirty}>
+                            {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+                            Save Changes
+                        </Button>
+                    </div>
                 )}
             </div>
         </CardHeader>
@@ -249,7 +259,7 @@ export function CampaignForm({ campaign, completedCampaigns, unassignedLeads, be
                     </div>
             </div>
             <Form {...form}>
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-8 max-w-2xl">
+            <form className="space-y-8 max-w-2xl">
                 <fieldset disabled={!isEditing} className="space-y-8">
                     <FormField
                     control={form.control}
@@ -666,19 +676,6 @@ export function CampaignForm({ campaign, completedCampaigns, unassignedLeads, be
                         )}
                     />
                 </fieldset>
-                
-                {isEditing && (
-                     <div className="flex gap-4">
-                        <Button type="submit" disabled={isSubmitting || !isDirty}>
-                            {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-                            Save Changes
-                        </Button>
-                         <Button type="button" variant="outline" onClick={handleCancel} disabled={isSubmitting}>
-                            <X className="mr-2 h-4 w-4" />
-                            Cancel
-                        </Button>
-                    </div>
-                )}
             </form>
             </Form>
         </CardContent>

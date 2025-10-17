@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -176,7 +177,7 @@ export function EditLeadForm({ lead, campaigns, users }: EditLeadFormProps) {
     },
   });
 
-  const { formState: { isDirty }, reset, watch, setValue, control } = form;
+  const { formState: { isDirty }, reset, watch, setValue, control, handleSubmit } = form;
   const selectedPurpose = watch("purpose");
   const selectedCategory = watch("category");
   const selectedDegree = watch("degree");
@@ -261,7 +262,7 @@ export function EditLeadForm({ lead, campaigns, users }: EditLeadFormProps) {
                         <Button type="button" variant="outline" onClick={handleCancel}>
                              <X className="mr-2 h-4 w-4" /> Cancel
                         </Button>
-                        <Button onClick={form.handleSubmit(onSubmit)} disabled={isSubmitting || !isDirty}>
+                        <Button onClick={handleSubmit(onSubmit)} disabled={isSubmitting || !isDirty}>
                             {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
                             Save Changes
                         </Button>

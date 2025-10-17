@@ -1,3 +1,4 @@
+
 // src/app/admin/donations/add/add-donation-form.tsx
 "use client";
 
@@ -26,7 +27,7 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect, Suspense, useRef, useCallback } from "react";
-import { Loader2, Info, CalendarIcon, ChevronsUpDown, Check, X, ScanEye, TextSelect, XCircle, AlertTriangle, Bot, Text, ZoomIn, ZoomOut, FileIcon, UserPlus, UserSearch, ScanSearch, UserRoundPlus, Trash2, RotateCw, RefreshCw as RefreshIcon, BookOpen, Sparkles, CreditCard, Fingerprint, MapPin, User as UserIcon } from "lucide-react";
+import { Loader2, Info, CalendarIcon, ChevronsUpDown, Check, X, ScanEye, TextSelect, XCircle, AlertTriangle, Bot, Text, ZoomIn, ZoomOut, FileIcon, UserPlus, UserSearch, ScanSearch, UserRoundPlus, Trash2, RotateCw, RefreshCw as RefreshIcon, BookOpen, Sparkles, CreditCard, Fingerprint, MapPin, User as UserIcon, Save, Edit } from "lucide-react";
 import type { User, Donation, DonationType, DonationPurpose, PaymentMethod, Lead, Campaign, ExtractDonationDetailsOutput, ExtractBeneficiaryDetailsOutput, AppSettings } from "@/services/types";
 import { getUser, checkAvailability } from "@/services/user-service";
 import { useSearchParams, useRouter } from "next/navigation";
@@ -202,7 +203,11 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation, set
   const { toast } = useToast();
   const searchParams = useSearchParams();
   const router = useRouter();
+  
+  const isEditing = !!existingDonation;
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isEditingForm, setIsEditingForm] = useState(isEditing ? false : true);
+  
   const [isScanning, setIsScanning] = useState(false);
   const [isExtracting, setIsExtracting] = useState(false);
   const [rawText, setRawText] = useState<string | null>(null);
@@ -214,7 +219,7 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation, set
   const [autoFilledFields, setAutoFilledFields] = useState<Set<string>>(new Set());
   
   const [file, setFile] = useState<File | null>(null);
-  const [filePreview, setFilePreview] = useState<string | null>(null);
+  const [filePreview, setFilePreview] = useState<string | null>(existingDonation?.paymentScreenshotUrls?.[0] || null);
   const [zoom, setZoom] = useState(1);
   const [rotation, setRotation] = useState(0);
 
@@ -224,7 +229,6 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation, set
 
   const [extractedDetails, setExtractedDetails] = useState<ExtractDonationDetailsOutput | null>(null);
 
-  const isEditing = !!existingDonation;
   
   const form = useForm<AddDonationFormValues>({
     resolver: zodResolver(formSchema),
@@ -263,7 +267,7 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation, set
     } : initialFormValues,
   });
   
-  const { watch, setValue, reset, getValues, control, handleSubmit: originalHandleSubmit, trigger } = form;
+  const { watch, setValue, reset, getValues, control, handleSubmit: originalHandleSubmit, trigger, formState: { isDirty } } = form;
   const includeTip = watch("includeTip");
   const totalTransactionAmount = watch("totalTransactionAmount");
   const tipAmount = watch("tipAmount");
@@ -373,9 +377,6 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation, set
         formData.append('paymentScreenshot', proofFile);
     }
 
-    formData.append('adminUserId', adminUserId);
-
-
     const result = isEditing 
         ? await handleUpdateDonation(existingDonation.id!, formData, adminUserId)
         : await handleAddDonation(formData);
@@ -389,6 +390,8 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation, set
               title: "Donation Updated",
               description: "Successfully updated donation record.",
           });
+          reset(values);
+          setIsEditingForm(false);
       } else if (result.donationId) {
           router.push(`/admin/donations/add/success?id=${result.donationId}`);
       }
@@ -431,13 +434,19 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation, set
     }
   }
   
-  const clearForm = () => {
-    reset(initialFormValues);
-    clearFile();
-    setSelectedDonor(null);
-    setAutoFilledFields(new Set());
-    setShowPhoneUpdate(false);
-    setShowUpiUpdate(false);
+  const handleCancel = () => {
+    if(isEditing) {
+        reset();
+        setFilePreview(existingDonation?.paymentScreenshotUrls?.[0] || null);
+        setIsEditingForm(false);
+    } else {
+        reset(initialFormValues);
+        clearFile();
+        setSelectedDonor(null);
+        setAutoFilledFields(new Set());
+        setShowPhoneUpdate(false);
+        setShowUpiUpdate(false);
+    }
   }
 
  const handleScanText = async () => {
@@ -577,6 +586,14 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation, set
 
   return (
     <>
+      <div className="flex justify-end mb-6">
+            {!isEditingForm && (
+                <Button onClick={() => setIsEditingForm(true)}>
+                    <Edit className="mr-2 h-4 w-4" />
+                    Edit Donation
+                </Button>
+            )}
+        </div>
       <Accordion type="single" collapsible className="w-full mb-8">
             <AccordionItem value="scan-payment-proof">
                 <AccordionTrigger>
@@ -595,7 +612,7 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation, set
                         {filePreview && (
                             <div className="relative group p-2 border rounded-lg">
                                 <div className="relative w-full h-80 bg-gray-100 dark:bg-gray-800 rounded-md overflow-auto flex items-center justify-center">
-                                     {file?.type.startsWith('image/') ? (
+                                     {file?.type.startsWith('image/') || filePreview.startsWith('blob:') || filePreview.includes('image') ? (
                                         <div onWheel={handleWheel} className="relative w-full h-full cursor-zoom-in">
                                             <Image 
                                             src={filePreview} 
@@ -608,7 +625,8 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation, set
                                     ) : (
                                         <div className="flex flex-col items-center gap-2 text-muted-foreground p-4">
                                             <FileIcon className="h-16 w-16" />
-                                            <span className="text-sm font-semibold">{file?.name}</span>
+                                            <span className="text-sm font-semibold">{file?.name || 'Document File'}</span>
+                                            <a href={filePreview} target="_blank" rel="noopener noreferrer" className={cn(buttonVariants({variant: 'link'}), 'text-primary')}>View Document</a>
                                         </div>
                                     )}
                                 </div>
@@ -646,7 +664,8 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation, set
         </Accordion>
 
       <Form {...form}>
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
+          <form className="space-y-8">
+           <fieldset disabled={!isEditingForm} className="space-y-8">
                {!isEditing && (
                  <div className="space-y-4">
                     <h3 className="text-lg font-semibold border-b pb-2 text-primary">Donor Details</h3>
@@ -662,7 +681,7 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation, set
                             </FormItem>
                         </RadioGroup>
                         <Button type="button" variant="secondary" className="h-20 flex-col gap-2" onClick={handleAnonymousDonation}>
-                            <AnonymousUserIcon className="h-6 w-6"/>
+                            <UserIcon className="h-6 w-6"/>
                             <span>Anonymous</span>
                         </Button>
                     </div>
@@ -943,19 +962,33 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation, set
                   )}
                 />
                </div>
-
-               <div className="flex gap-4">
-                  <Button type="submit" disabled={isSubmitting || isFormInvalid}>
-                      {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                      {isEditing ? 'Save Changes' : 'Add Donation'}
-                  </Button>
-                   <Button type="button" variant="outline" onClick={clearForm} disabled={isSubmitting}>
-                        <XCircle className="mr-2 h-4 w-4" />
-                        Clear Form
+               </fieldset>
+               {isEditingForm && (
+                 <div className="flex gap-4 pt-6 border-t">
+                    <Button type="button" onClick={handleSubmit(onSubmit)} disabled={isSubmitting || isFormInvalid}>
+                        {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                        {isEditing ? 'Save Changes' : 'Add Donation'}
                     </Button>
-               </div>
+                    <Button type="button" variant="outline" onClick={handleCancel} disabled={isSubmitting}>
+                        <XCircle className="mr-2 h-4 w-4" />
+                        {isEditing ? 'Cancel' : 'Clear Form'}
+                    </Button>
+                </div>
+               )}
           </form>
         </Form>
+        <AlertDialog open={!!extractedDetails} onOpenChange={() => setExtractedDetails(null)}>
+            <AlertDialogContent>
+                <AlertDialogHeader>
+                    <AlertDialogTitle className="flex items-center gap-2"><Bot className="h-6 w-6 text-primary" /> Confirm Auto-fill Details</AlertDialogTitle>
+                    <AlertDialogDescription>The AI has extracted the following details from the document. Please review them before applying to the form.</AlertDialogDescription>
+                </AlertDialogHeader>
+                 <AlertDialogFooter>
+                    <Button variant="outline" onClick={() => handleFetchUserData(true)} disabled={isRefreshingDetails}>{isRefreshingDetails ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <RefreshIcon className="mr-2 h-4 w-4" />} Refresh</Button>
+                    <div className='flex gap-2'><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={applyExtractedDetails}>Apply & Fill Form</AlertDialogAction></div>
+                </AlertDialogFooter>
+            </AlertDialogContent>
+        </AlertDialog>
     </>
   );
 }
