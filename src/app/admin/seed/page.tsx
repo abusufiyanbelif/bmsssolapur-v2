@@ -180,7 +180,7 @@ export default function SeedPage() {
                                 </Button>
                                 <Button onClick={() => handleSeed('organization')} disabled={statuses.organization === 'loading'}>
                                     {statuses.organization === 'loading' && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}
-                                    Seed Profile
+                                    Seed Organization Profile
                                 </Button>
                              </div>
                         </div>
