@@ -231,7 +231,7 @@ export const createUser = async (userData: Partial<Omit<User, 'id' | 'createdAt'
         fatherName: userData.fatherName,
         email: userData.email,
         phone: standardizedPhone,
-        password: userData.password,
+        password: userData.password, // Ensure password is included
         isActive: userData.isActive !== undefined ? userData.isActive : true,
         address: userData.address || {},
         gender: userData.gender || 'Other',
