@@ -135,7 +135,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 getCurrentOrganization()
             ]);
 
-            setOrganization(orgData ? JSON.parse(JSON.stringify(orgData)) : null);
+            setOrganization(orgData);
 
             if (!permissionResult.success && permissionResult.error) {
                 setPermissionError(permissionResult.error);
@@ -191,9 +191,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 if (shouldShowRoleSwitcher && fetchedUser.roles.length > 1) {
                     setIsRoleSwitcherOpen(true);
                     localStorage.removeItem('showRoleSwitcher'); 
+                } else if (activeRole === 'Donor') {
+                    // Stay on /home for Donor
                 } else {
                     switch (activeRole) {
-                        case 'Donor': router.push('/home'); break;
                         case 'Beneficiary': router.push('/home'); break;
                         case 'Referral': router.push('/home'); break;
                         case 'Admin': case 'Super Admin': case 'Finance Admin':

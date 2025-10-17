@@ -1,5 +1,4 @@
 
-
 /**
  * @fileOverview A service to seed the database with initial data.
  */
@@ -7,9 +6,10 @@
 import { getFirestore, Timestamp, FieldValue } from 'firebase-admin/firestore';
 import type { User, UserRole, Lead, Verifier, LeadDonationAllocation, Donation, Campaign, FundTransfer, LeadAction, AppSettings, OrganizationFooter } from '@/services/types';
 import { seedInitialQuotes } from '@/services/quotes-service';
-import { getAdminDb, getAdminAuth, ensureCollectionsExist } from './firebase-admin';
+import { getAdminDb, getAdminAuth, ensureCollectionsExist } from '@/services/firebase-admin';
 import { updatePublicCampaign, enrichCampaignWithPublicStats } from './public-data-service';
 import { format } from 'date-fns';
+import { revalidatePath } from 'next/cache';
 
 // Re-export type for backward compatibility and the service function
 export type { User, UserRole };
@@ -114,6 +114,25 @@ export const seedUsers = async (users: Omit<User, 'id' | 'createdAt' | 'userKey'
     return results;
 };
 
+const seedOrganization = async (): Promise<string> => {
+    const db = await getAdminDb();
+    const orgDocRef = db.collection('organizations').doc('main_org');
+    
+    // Always overwrite with the seed data to ensure consistency.
+    await orgDocRef.set({ ...organizationToSeed, updatedAt: FieldValue.serverTimestamp() }, { merge: true });
+    
+    // Revalidate paths after seeding
+    revalidatePath("/", "layout");
+    revalidatePath("/organization");
+    revalidatePath("/admin/organization");
+    revalidatePath("/admin/organization/layout");
+    revalidatePath("/admin/organization/letterhead");
+
+
+    return "Organization profile seeded/updated successfully.";
+};
+
+
 /**
  * Deletes all documents in a collection in batches.
  * @param collectionPath The path of the collection to delete.
@@ -161,11 +180,12 @@ const deleteCollection = async (collectionPath: string): Promise<string> => {
 
 
 // --- EXPORTED SEEDING FUNCTIONS ---
+export { ensureCollectionsExist } from '@/services/firebase-admin';
 
 export const seedInitialUsersAndQuotes = async (): Promise<SeedResult> => {
     const quotesStatus = await seedInitialQuotes();
     return {
-        message: 'Initial Seeding Complete',
+        message: 'Quotes Seeding Complete',
         details: [quotesStatus, "The 'admin' and 'anonymous_donor' users are automatically created on startup and were not affected."]
     };
 };
@@ -179,19 +199,10 @@ export const seedCoreTeam = async (): Promise<SeedResult> => {
 };
 
 export const seedOrganizationProfile = async (): Promise<SeedResult> => {
-    const db = await getAdminDb();
-    const orgDocRef = db.collection('organizations').doc('main_org');
-    
-    // Always overwrite with the seed data to ensure consistency.
-    await orgDocRef.set({ ...organizationToSeed, updatedAt: FieldValue.serverTimestamp() }, { merge: false });
-    
+    const orgStatus = await seedOrganization();
     return { 
-        message: "Organization Profile Seeded Successfully",
-        details: [
-            "Wrote profile to 'organizations' collection (document ID: main_org).",
-            "Seeded data includes: Public Profile, Contact Details, Bank/UPI Info, and default Header/Footer content.",
-            "The public pages at /organization and the site-wide footer will now reflect this data after a page refresh."
-        ]
+        message: 'Organization Profile Seeding Complete', 
+        details: [orgStatus] 
     };
 };
 
@@ -473,4 +484,3 @@ const organizationToSeed: Omit<Organization, 'id' | 'createdAt' | 'updatedAt'> =
 };
 
     
-

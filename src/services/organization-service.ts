@@ -6,6 +6,7 @@
 import { getFirestore as getAdminFirestore, Timestamp, FieldValue } from 'firebase-admin/firestore';
 import type { Organization, OrganizationFooter } from './types';
 import { getAdminDb } from './firebase-admin';
+import { unstable_noStore as noStore } from 'next/cache';
 
 
 // Re-export types for backward compatibility
@@ -17,9 +18,9 @@ const PUBLIC_DATA_COLLECTION = 'publicData';
 const defaultFooter: OrganizationFooter = {
     organizationInfo: { titleLine1: 'Baitul Mal (System Default)', titleLine2: 'Samajik Sanstha (System Default)', titleLine3: '(Solapur) (System Default)', description: 'Default description text. Please seed or create an organization profile to update this.', registrationInfo: 'Reg. No. (System Default)', taxInfo: 'PAN: (System Default)' },
     contactUs: { title: 'Contact Us (System Default)', address: 'Default Address, Solapur', email: 'contact@example.com' },
-    keyContacts: { title: 'Key Contacts (System Default)', contacts: [{name: 'Default Contact', phone: '0000000000'}] },
+    keyContacts: { title: 'Key Contacts', contacts: [{name: 'Default Contact', phone: '0000000000'}] },
     connectWithUs: { title: 'Connect With Us (System Default)', socialLinks: [] },
-    ourCommitment: { title: 'Our Commitment (System Default)', text: 'Default commitment text.', linkText: 'Learn More', linkUrl: '#' },
+    ourCommitment: { title: 'Our Commitment (System Default)', text: 'Default commitment text. Please update this in the layout settings.', linkText: 'Learn More', linkUrl: '#' },
     copyright: { text: `© ${new Date().getFullYear()} Organization Name. All Rights Reserved. (System Default)` }
 };
 
@@ -70,9 +71,6 @@ export const createOrganization = async (orgData: Omit<Organization, 'id' | 'cre
     };
     await orgRef.set(newOrganization);
 
-    // Sync with public collection
-    // await updatePublicOrganization(newOrganization); // This must be called from a server context
-
     return newOrganization;
   } catch (error) {
     console.error('Error creating organization: ', error);
@@ -87,9 +85,9 @@ export const getOrganization = async (id: string): Promise<Organization | null> 
     const adminDb = await getAdminDb();
     const orgDoc = await adminDb.collection(ORGANIZATIONS_COLLECTION).doc(id).get();
     if (orgDoc.exists) {
-      const data = orgDoc.data();
+      const data = docSnap.data();
       return { 
-        id: orgDoc.id, 
+        id: docSnap.id, 
         ...data,
         createdAt: (data!.createdAt as Timestamp)?.toDate(),
         updatedAt: (data!.updatedAt as Timestamp)?.toDate(),
@@ -111,13 +109,6 @@ export const updateOrganization = async (id: string, updates: Partial<Omit<Organ
         ...updates,
         updatedAt: new Date(),
     });
-
-    // After updating, get the full document and sync it to the public collection
-    const updatedOrg = await getOrganization(id);
-    if (updatedOrg) {
-        // The calling server action is responsible for this.
-        // await updatePublicOrganization(updatedOrg);
-    }
   } catch (error) {
     console.error("Error updating organization: ", error);
     throw new Error('Failed to update organization.');
@@ -159,6 +150,7 @@ const convertGsToHttps = (gsUri?: string): string | undefined => {
 
 // For now, we will assume one organization for this project.
 export const getCurrentOrganization = async (): Promise<Organization | null> => {
+    noStore(); // Opt out of caching for this specific function.
     const adminDb = await getAdminDb();
     
     try {
@@ -187,8 +179,6 @@ export const getCurrentOrganization = async (): Promise<Organization | null> => 
         return organizationData;
     } catch (error) {
         console.error('Error getting current organization: ' + (error instanceof Error ? error.message : 'Unknown error'));
-        // In case of error (e.g., permissions), we should not return a default.
-        // The caller must handle the null case.
         return null;
     }
 }
