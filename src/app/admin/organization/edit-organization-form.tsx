@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -144,17 +143,27 @@ export function EditOrganizationForm({ organization, isCreating: initialIsCreati
                         Update your organization's public information, contact details, and payment settings. These details will be visible on the public-facing pages.
                     </CardDescription>
                 </div>
-                 {!isEditing && !initialIsCreating && (
+                 {!isEditing ? (
                     <Button onClick={() => setIsEditing(true)}>
                         <Edit className="mr-2 h-4 w-4" />
-                        Edit
+                        Edit Profile
                     </Button>
+                ) : (
+                    <div className="flex gap-2">
+                        <Button variant="outline" onClick={handleCancel}>
+                            <X className="mr-2 h-4 w-4" /> Cancel
+                        </Button>
+                         <Button type="submit" onClick={form.handleSubmit(onSubmit)} disabled={isSubmitting || !isDirty}>
+                            {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+                            {initialIsCreating ? 'Create Profile' : 'Save Changes'}
+                        </Button>
+                    </div>
                 )}
             </div>
         </CardHeader>
         <CardContent>
             <Form {...form}>
-            <form className="space-y-8" onSubmit={form.handleSubmit(onSubmit)}>
+            <form className="space-y-8">
                 <fieldset disabled={!isEditing} className="space-y-8">
                     <h3 className="text-lg font-semibold border-b pb-2">Public Profile</h3>
                     <div className="grid md:grid-cols-3 gap-8">
@@ -318,7 +327,7 @@ export function EditOrganizationForm({ organization, isCreating: initialIsCreati
                             name="bankAccountNumber"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>Account Number</FormLabel>
+                                    <FormLabel>Bank Account Number</FormLabel>
                                     <FormControl>
                                         <Input {...field} />
                                     </FormControl>
@@ -399,22 +408,11 @@ export function EditOrganizationForm({ organization, isCreating: initialIsCreati
                         </div>
                     </div>
                 </fieldset>
-                 {isEditing && (
-                    <div className="flex gap-2 pt-6 border-t">
-                        <Button type="submit" disabled={isSubmitting || !isDirty}>
-                            {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-                            {initialIsCreating ? 'Create Profile' : 'Save Changes'}
-                        </Button>
-                        {!initialIsCreating && (
-                            <Button type="button" variant="outline" onClick={handleCancel}>
-                                <X className="mr-2 h-4 w-4" /> Cancel
-                            </Button>
-                        )}
-                    </div>
-                )}
             </form>
             </Form>
         </CardContent>
     </Card>
   );
 }
+
+    
