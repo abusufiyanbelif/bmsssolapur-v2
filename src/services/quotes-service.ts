@@ -1,4 +1,5 @@
 
+
 /**
  * @fileOverview Service for managing inspirational quotes in Firestore.
  */

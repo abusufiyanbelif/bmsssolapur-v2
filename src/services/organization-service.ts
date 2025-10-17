@@ -1,3 +1,4 @@
+
 /**
  * @fileOverview Service for managing organization data in Firestore.
  */
@@ -14,7 +15,7 @@ const ORGANIZATIONS_COLLECTION = 'organizations';
 const PUBLIC_DATA_COLLECTION = 'publicData';
 
 const defaultFooter: OrganizationFooter = {
-    organizationInfo: { titleLine1: 'Baitul Mal (System Default)', titleLine2: 'Samajik Sanstha (System Default)', titleLine3: '(Solapur) (System Default)', description: 'Default description text.', registrationInfo: 'Reg. No. (System Default)', taxInfo: 'PAN: (System Default)' },
+    organizationInfo: { titleLine1: 'Baitul Mal (System Default)', titleLine2: 'Samajik Sanstha (System Default)', titleLine3: '(Solapur) (System Default)', description: 'Default description text. Please seed or create an organization profile to update this.', registrationInfo: 'Reg. No. (System Default)', taxInfo: 'PAN: (System Default)' },
     contactUs: { title: 'Contact Us (System Default)', address: 'Default Address, Solapur', email: 'contact@example.com' },
     keyContacts: { title: 'Key Contacts (System Default)', contacts: [{name: 'Default Contact', phone: '0000000000'}] },
     connectWithUs: { title: 'Connect With Us (System Default)', socialLinks: [] },
@@ -60,7 +61,7 @@ export const createOrganization = async (orgData: Omit<Organization, 'id' | 'cre
         throw new Error("An organization with the same name or registration number already exists.");
     }
 
-    const orgRef = adminDb.collection(ORGANIZATIONS_COLLECTION).doc();
+    const orgRef = adminDb.collection(ORGANIZATIONS_COLLECTION).doc('main_org'); // Use a singleton document
     const newOrganization: Organization = {
       ...orgData,
       id: orgRef.id,
@@ -81,6 +82,7 @@ export const createOrganization = async (orgData: Omit<Organization, 'id' | 'cre
 
 // Function to get an organization by ID
 export const getOrganization = async (id: string): Promise<Organization | null> => {
+  if (!id) return null;
   try {
     const adminDb = await getAdminDb();
     const orgDoc = await adminDb.collection(ORGANIZATIONS_COLLECTION).doc(id).get();
@@ -163,12 +165,13 @@ export const getCurrentOrganization = async (): Promise<Organization | null> => 
         const orgQuery = adminDb.collection(ORGANIZATIONS_COLLECTION).limit(1);
         const querySnapshot = await orgQuery.get();
         
-        if (querySnapshot.empty || (querySnapshot.docs.length === 1 && querySnapshot.docs[0].id === '_init_')) {
+        const docSnap = querySnapshot.docs.find(doc => doc.id !== '_init_');
+
+        if (!docSnap) {
             console.log("No organization document found, returning null.");
             return null;
         }
-
-        const docSnap = querySnapshot.docs[0];
+        
         const data = docSnap.data();
 
         // Convert gs:// URIs to https:// URLs before returning

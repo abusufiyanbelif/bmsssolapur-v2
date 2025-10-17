@@ -50,9 +50,8 @@ export default async function OrganizationSettingsPage() {
     }
 
     // Determine if we are creating a new org.
-    // This is true if the fetched organization's name is the default placeholder,
-    // which happens when the database is empty.
-    const isCreating = !organization || organization.name === "Default Organization Name";
+    // This is true if the fetched organization is null.
+    const isCreating = !organization;
 
 
     return (

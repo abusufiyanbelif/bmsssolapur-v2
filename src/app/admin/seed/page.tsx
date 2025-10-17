@@ -62,7 +62,7 @@ export default function SeedPage() {
             if(result.success && result.data){
                 setResults(prev => ({ ...prev, [task]: result.data }));
                 setStatuses(prev => ({ ...prev, [task]: 'success' }));
-                if (task === 'organization') router.refresh(); // Refresh on org change
+                if (task === 'organization' || task === 'appSettings') router.refresh();
             } else {
                  setResults(prev => ({ ...prev, [task]: { message: 'Seeding Failed', details: [result.error || 'An unknown error occurred.'] } }));
                  setStatuses(prev => ({ ...prev, [task]: 'error' }));

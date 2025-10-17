@@ -8,7 +8,8 @@ dotenv.config();
 async function run() {
   console.log('Seeding Initial Data (Organization Profile & Quotes)...');
   try {
-    // Now this script seeds both org and quotes, as it should have.
+    // This script now only seeds the organization profile and quotes.
+    // The critical system users are now handled automatically on server startup.
     const orgResult = await seedOrganizationProfile();
     const quotesResult = await seedInitialUsersAndQuotes();
     

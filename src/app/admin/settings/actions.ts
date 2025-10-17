@@ -1,6 +1,8 @@
 
 
 "use server";
+import 'server-only';
+import { unstable_noStore as noStore } from 'next/cache';
 
 import { updateAppSettings as updateSettingsService, AppSettings, getAppSettings as getSettingsService } from "@/services/app-settings-service";
 import { revalidatePath } from "next/cache";
@@ -61,9 +63,11 @@ export async function handleUpdateAppSettings(
 }
 
 export async function getCurrentOrganization() {
+    noStore(); // Opt out of caching for this specific function
     return getOrgService();
 }
 
 export async function getAppSettings() {
+    noStore(); // Opt out of caching for this specific function
     return getSettingsService();
 }
