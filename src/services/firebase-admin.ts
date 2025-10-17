@@ -32,7 +32,7 @@ const ensureSystemUserExists = async (db: AdminFirestore, userData: Partial<User
             const userCountSnapshot = await db.collection('users').count().get();
             const userKey = `SYSTEM${(userCountSnapshot.data().count + 1).toString().padStart(2, '0')}`;
             
-            // Explicitly include password in the object to be created.
+            // This is the definitive fix: Ensure the password is part of the object being created.
             const userToCreate: Omit<User, 'id'> = {
                 ...userData,
                 password: userData.password, // DEFINITIVE FIX: Ensure password is in the final object
@@ -140,7 +140,7 @@ const runPostInitTasks = async () => {
                 fatherName: "System",
                 email: "admin@example.com",
                 phone: "9579209587",
-                password: "admin", 
+                password: "admin", // Ensure password is provided here
                 roles: ["Super Admin"], 
                 privileges: ["all"],
                 isActive: true, 
