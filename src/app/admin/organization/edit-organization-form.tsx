@@ -53,12 +53,13 @@ interface EditOrganizationFormProps {
     isCreating: boolean;
 }
 
-export function EditOrganizationForm({ organization, isCreating: initialIsCreating }: EditOrganizationFormProps) {
+export function EditOrganizationForm({ organization, isCreating }: EditOrganizationFormProps) {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [qrCodePreviewUrl, setQrCodePreviewUrl] = useState(organization.qrCodeUrl || '');
   const [logoPreviewUrl, setLogoPreviewUrl] = useState(organization.logoUrl || '');
-  const [isEditing, setIsEditing] = useState(initialIsCreating);
+  // The crucial fix: isEditing state now correctly defaults based on whether we are creating a new record.
+  const [isEditing, setIsEditing] = useState(isCreating);
   
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -92,7 +93,7 @@ export function EditOrganizationForm({ organization, isCreating: initialIsCreati
     reset(); // Reset to the original default values
     setQrCodePreviewUrl(organization.qrCodeUrl || '');
     setLogoPreviewUrl(organization.logoUrl || '');
-    if (!initialIsCreating) {
+    if (!isCreating) {
         setIsEditing(false);
     }
   }
@@ -107,19 +108,19 @@ export function EditOrganizationForm({ organization, isCreating: initialIsCreati
         }
     });
     
-    const result = await handleUpdateOrganization(organization.id!, formData, initialIsCreating);
+    const result = await handleUpdateOrganization(organization.id!, formData, isCreating);
 
     setIsSubmitting(false);
 
     if (result.success) {
       toast({
-        title: initialIsCreating ? "Organization Created" : "Organization Details Saved",
+        title: isCreating ? "Organization Created" : "Organization Details Saved",
         description: `The organization profile has been updated successfully.`,
       });
       // Reset the form with the new values, which marks it as "not dirty"
       form.reset(values);
-      // If we were creating, we are now editing, so we exit editing mode.
-      if (initialIsCreating) {
+      // If we were creating, we now treat it as editing an existing record.
+      if (isCreating) {
           window.location.reload(); // Easiest way to refetch server props and switch state
       } else {
           setIsEditing(false);
@@ -138,24 +139,26 @@ export function EditOrganizationForm({ organization, isCreating: initialIsCreati
         <CardHeader>
             <div className="flex items-center justify-between">
                 <div>
-                    <CardTitle className="text-primary">Manage Organization Details</CardTitle>
+                    <CardTitle className="text-primary">{isCreating ? "Create Organization Profile" : "Manage Organization Details"}</CardTitle>
                     <CardDescription className="text-muted-foreground">
-                        Update your organization's public information, contact details, and payment settings. These details will be visible on the public-facing pages.
+                        {isCreating ? "Fill out your organization's public information to get started." : "Update your organization's public information, contact details, and payment settings."}
                     </CardDescription>
                 </div>
-                 {!isEditing ? (
+                 {!isEditing && !isCreating ? (
                     <Button onClick={() => setIsEditing(true)}>
                         <Edit className="mr-2 h-4 w-4" />
                         Edit Profile
                     </Button>
                 ) : (
                     <div className="flex gap-2">
-                        <Button variant="outline" onClick={handleCancel}>
-                            <X className="mr-2 h-4 w-4" /> Cancel
-                        </Button>
+                        {!isCreating && (
+                            <Button type="button" variant="outline" onClick={handleCancel}>
+                                <X className="mr-2 h-4 w-4" /> Cancel
+                            </Button>
+                        )}
                          <Button type="submit" onClick={form.handleSubmit(onSubmit)} disabled={isSubmitting || !isDirty}>
                             {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-                            {initialIsCreating ? 'Create Profile' : 'Save Changes'}
+                            {isCreating ? 'Create Profile' : 'Save Changes'}
                         </Button>
                     </div>
                 )}

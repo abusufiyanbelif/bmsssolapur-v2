@@ -1,3 +1,4 @@
+
 // src/app/admin/donations/[id]/edit/page.tsx
 
 import { getDonation } from "@/services/donation-service";
@@ -45,22 +46,14 @@ export default async function EditDonationPage({ params }: { params: { id: strin
             
             <div className="grid gap-6 lg:grid-cols-3">
                 <div className="lg:col-span-2 space-y-6">
-                    <Card>
-                        <CardHeader>
-                            <CardTitle className="text-primary">Edit Donation</CardTitle>
-                            <CardDescription className="text-muted-foreground">Update the details for this donation record.</CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                             <AddDonationForm 
-                                users={JSON.parse(JSON.stringify(allUsers))} 
-                                leads={JSON.parse(JSON.stringify(linkableLeads))} 
-                                campaigns={JSON.parse(JSON.stringify(linkableCampaigns))} 
-                                existingDonation={JSON.parse(JSON.stringify(donation))}
-                                currentUser={JSON.parse(JSON.stringify(currentUser))}
-                                settings={JSON.parse(JSON.stringify(settings))}
-                            />
-                        </CardContent>
-                    </Card>
+                    <AddDonationForm 
+                        users={JSON.parse(JSON.stringify(allUsers))} 
+                        leads={JSON.parse(JSON.stringify(linkableLeads))} 
+                        campaigns={JSON.parse(JSON.stringify(linkableCampaigns))} 
+                        existingDonation={JSON.parse(JSON.stringify(donation))}
+                        currentUser={JSON.parse(JSON.stringify(currentUser))}
+                        settings={JSON.parse(JSON.stringify(settings))}
+                    />
                     <LinkedLeadsCard donation={JSON.parse(JSON.stringify(donation))} leads={JSON.parse(JSON.stringify(allLeads))} />
                 </div>
                  <div className="lg:col-span-1">
