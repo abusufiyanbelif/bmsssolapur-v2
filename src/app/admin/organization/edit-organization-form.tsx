@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -93,7 +92,9 @@ export function EditOrganizationForm({ organization, isCreating: initialIsCreati
     reset(); // Reset to the original default values
     setQrCodePreviewUrl(organization.qrCodeUrl || '');
     setLogoPreviewUrl(organization.logoUrl || '');
-    setIsEditing(false);
+    if (!initialIsCreating) {
+        setIsEditing(false);
+    }
   }
 
   async function onSubmit(values: FormValues) {
@@ -117,7 +118,12 @@ export function EditOrganizationForm({ organization, isCreating: initialIsCreati
       });
       // Reset the form with the new values, which marks it as "not dirty"
       form.reset(values);
-      setIsEditing(initialIsCreating); // Stay in editing mode if we just created it
+      // If we were creating, we are now editing, so we exit editing mode.
+      if (initialIsCreating) {
+          window.location.reload(); // Easiest way to refetch server props and switch state
+      } else {
+          setIsEditing(false);
+      }
     } else {
       toast({
         variant: "destructive",
@@ -137,25 +143,17 @@ export function EditOrganizationForm({ organization, isCreating: initialIsCreati
                         Update your organization's public information, contact details, and payment settings. These details will be visible on the public-facing pages.
                     </CardDescription>
                 </div>
-                 {!isEditing ? (
+                 {!isEditing && !initialIsCreating && (
                     <Button onClick={() => setIsEditing(true)}>
                         <Edit className="mr-2 h-4 w-4" />
                         Edit
                     </Button>
-                ) : (
-                    <div className="flex gap-2">
-                        {!initialIsCreating && <Button type="button" variant="outline" onClick={handleCancel}><X className="mr-2 h-4 w-4" /> Cancel</Button>}
-                         <Button onClick={form.handleSubmit(onSubmit)} disabled={isSubmitting || !isDirty}>
-                            {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-                            {initialIsCreating ? "Create Profile" : "Save Changes"}
-                        </Button>
-                    </div>
                 )}
             </div>
         </CardHeader>
         <CardContent>
             <Form {...form}>
-            <form className="space-y-8">
+            <form className="space-y-8" onSubmit={form.handleSubmit(onSubmit)}>
                 <fieldset disabled={!isEditing} className="space-y-8">
                     <h3 className="text-lg font-semibold border-b pb-2">Public Profile</h3>
                     <div className="grid md:grid-cols-3 gap-8">
@@ -400,6 +398,19 @@ export function EditOrganizationForm({ organization, isCreating: initialIsCreati
                         </div>
                     </div>
                 </fieldset>
+                 {isEditing && (
+                    <div className="flex gap-2 pt-6 border-t">
+                        <Button type="submit" disabled={isSubmitting || !isDirty}>
+                            {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+                            {initialIsCreating ? 'Create Profile' : 'Save Changes'}
+                        </Button>
+                        {!initialIsCreating && (
+                            <Button type="button" variant="outline" onClick={handleCancel}>
+                                <X className="mr-2 h-4 w-4" /> Cancel
+                            </Button>
+                        )}
+                    </div>
+                )}
             </form>
             </Form>
         </CardContent>
