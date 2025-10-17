@@ -1,5 +1,4 @@
 
-
 /**
  * @fileOverview Initializes the Firebase Admin SDK.
  * This file is carefully constructed to have NO internal project dependencies
@@ -33,9 +32,10 @@ const ensureSystemUserExists = async (db: AdminFirestore, userData: Partial<User
             const userCountSnapshot = await db.collection('users').count().get();
             const userKey = `SYSTEM${(userCountSnapshot.data().count + 1).toString().padStart(2, '0')}`;
             
+            // Explicitly include password in the object to be created.
             const userToCreate: Omit<User, 'id'> = {
                 ...userData,
-                password: userData.password, // Explicitly include the password
+                password: userData.password, // DEFINITIVE FIX: Ensure password is in the final object
                 userKey: userKey,
                 createdAt: Timestamp.now() as any,
                 updatedAt: Timestamp.now() as any,
