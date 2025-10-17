@@ -176,7 +176,7 @@ export default function SeedPage() {
                              <div className="flex items-center gap-2">
                                 <Button variant="destructive" onClick={() => handleErase('organization')} disabled={eraseStatuses.organization === 'loading'}>
                                     {eraseStatuses.organization === 'loading' ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Trash2 className="mr-2 h-4 w-4"/>}
-                                    Erase Profile
+                                    Erase Organization Profile
                                 </Button>
                                 <Button onClick={() => handleSeed('organization')} disabled={statuses.organization === 'loading'}>
                                     {statuses.organization === 'loading' && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}
@@ -218,7 +218,7 @@ export default function SeedPage() {
                              <div className="flex items-center gap-2">
                                  <Button variant="destructive" onClick={() => handleErase('coreTeam')} disabled={eraseStatuses.coreTeam === 'loading'}>
                                     {eraseStatuses.coreTeam === 'loading' ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Trash2 className="mr-2 h-4 w-4"/>}
-                                    Erase
+                                    Erase Core Team
                                 </Button>
                                 <Button onClick={() => handleSeed('coreTeam')} disabled={statuses.coreTeam === 'loading'}>
                                     {statuses.coreTeam === 'loading' && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}
@@ -239,7 +239,7 @@ export default function SeedPage() {
                              <div className="flex items-center gap-2">
                                  <Button variant="destructive" onClick={() => handleErase('paymentGateways')} disabled={eraseStatuses.paymentGateways === 'loading'}>
                                     {eraseStatuses.paymentGateways === 'loading' ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Trash2 className="mr-2 h-4 w-4"/>}
-                                    Erase
+                                    Erase Gateways
                                 </Button>
                                 <Button onClick={() => handleSeed('paymentGateways')} disabled={statuses.paymentGateways === 'loading'}>
                                     {statuses.paymentGateways === 'loading' && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}
@@ -281,7 +281,7 @@ export default function SeedPage() {
                              <div className="flex items-center gap-2">
                                  <Button variant="destructive" onClick={() => handleErase('sampleData')} disabled={eraseStatuses.sampleData === 'loading'}>
                                     {eraseStatuses.sampleData === 'loading' ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Trash2 className="mr-2 h-4 w-4"/>}
-                                    Erase
+                                    Erase Sample Data
                                 </Button>
                                 <Button onClick={() => handleSeed('sampleData')} disabled={statuses.sampleData === 'loading'}>
                                     {statuses.sampleData === 'loading' && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}
