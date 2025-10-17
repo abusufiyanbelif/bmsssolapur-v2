@@ -58,8 +58,7 @@ export function EditOrganizationForm({ organization, isCreating }: EditOrganizat
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [qrCodePreviewUrl, setQrCodePreviewUrl] = useState(organization.qrCodeUrl || '');
   const [logoPreviewUrl, setLogoPreviewUrl] = useState(organization.logoUrl || '');
-  // The crucial fix: isEditing state now correctly defaults based on whether we are creating a new record.
-  const [isEditing, setIsEditing] = useState(isCreating);
+  const [isEditing, setIsEditing] = useState(false);
   
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -144,19 +143,17 @@ export function EditOrganizationForm({ organization, isCreating }: EditOrganizat
                         {isCreating ? "Fill out your organization's public information to get started." : "Update your organization's public information, contact details, and payment settings."}
                     </CardDescription>
                 </div>
-                 {!isEditing && !isCreating ? (
-                    <Button onClick={() => setIsEditing(true)}>
+                 {!isEditing ? (
+                    <Button type="button" onClick={() => setIsEditing(true)}>
                         <Edit className="mr-2 h-4 w-4" />
-                        Edit Profile
+                        {isCreating ? 'Create Profile' : 'Edit Profile'}
                     </Button>
                 ) : (
                     <div className="flex gap-2">
-                        {!isCreating && (
-                            <Button type="button" variant="outline" onClick={handleCancel}>
-                                <X className="mr-2 h-4 w-4" /> Cancel
-                            </Button>
-                        )}
-                         <Button type="submit" onClick={form.handleSubmit(onSubmit)} disabled={isSubmitting || !isDirty}>
+                        <Button type="button" variant="outline" onClick={handleCancel}>
+                            <X className="mr-2 h-4 w-4" /> Cancel
+                        </Button>
+                        <Button type="submit" onClick={form.handleSubmit(onSubmit)} disabled={isSubmitting || !isDirty}>
                             {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
                             {isCreating ? 'Create Profile' : 'Save Changes'}
                         </Button>
@@ -417,5 +414,3 @@ export function EditOrganizationForm({ organization, isCreating }: EditOrganizat
     </Card>
   );
 }
-
-    
