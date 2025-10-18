@@ -352,7 +352,7 @@ Thank you for your time and consideration. We look forward to establishing a ban
                     </CardHeader>
                     <CardContent className="bg-gray-200 p-8 flex justify-center">
                         <div className="transform scale-90 origin-top">
-                            {!logoDataUri ? (
+                            {logoDataUri === undefined ? (
                                 <div className="w-[210mm] min-h-[297mm] bg-white flex items-center justify-center shadow-lg">
                                     <div className="text-center p-8">
                                         <AlertCircle className="h-12 w-12 text-destructive mx-auto" />

@@ -54,7 +54,7 @@ export async function getQuotes(count: number = 3): Promise<Quote[]> {
         return JSON.parse(JSON.stringify(quotes));
     } catch (error) {
         // This will now receive a proper error object with a message.
-        console.error("Server action getQuotes failed:", error instanceof Error ? error.message : error);
+        console.warn("Server action getQuotes failed:", error instanceof Error ? error.message : error);
         // On failure, return an empty array. Do not return hardcoded data.
         return [];
     }
