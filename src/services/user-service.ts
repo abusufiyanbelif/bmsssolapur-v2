@@ -1,5 +1,4 @@
 
-
 /**
  * @fileOverview User service for interacting with Firestore.
  * This service should only be called from server-side components or server actions.
@@ -523,11 +522,11 @@ export const getAllUsers = async (): Promise<User[]> => {
         });
         return users;
     } catch (error) {
-        if (error instanceof Error && (error.message.includes('Could not load the default credentials') || error.message.includes('Could not refresh access token') || error.message.includes('permission-denied') || error.message.includes('UNAUTHENTICATED'))) {
+        if (error instanceof Error && (error.message.includes('permission-denied') || error.message.includes('UNAUTHENTICATED'))) {
             console.warn(`Permission Denied: The server environment lacks permissions to read users. Refer to TROUBLESHOOTING.md.`, { message: error.message });
             return []; // Gracefully fail
         }
-        if (error instanceof Error && (error.message.includes('index') || error.message.includes('Could not find a valid index'))) {
+        if (error instanceof Error && (error.message.includes('index') || error.message.includes('Could not find a valid index') || error.message.includes('NOT_FOUND'))) {
              console.warn("Firestore index missing for 'users' on 'createdAt' (desc). Please create it. Falling back to an unsorted query.");
              // Fallback to unsorted query if index is missing
              try {
