@@ -19,7 +19,7 @@ export async function checkDatabaseConnection(): Promise<{success: boolean, erro
     try {
         const adminDb = await getAdminDb();
         // Attempt to access a non-existent document. This is a lightweight operation.
-        const nonExistentDocRef = adminDb.collection("permission-check").doc("heartbeat");
+        const nonExistentDocRef = adminDb.collection("permission-check-script").doc("heartbeat");
         await nonExistentDocRef.get();
         return { success: true };
     } catch (e) {

@@ -9,37 +9,12 @@ import { extractRawTextFlow } from '@/ai/flows/extract-raw-text-flow';
 
 
 /**
- * Performs a lightweight, low-cost read operation against Firestore using the Admin SDK
- * to check if the current environment has the necessary permissions.
- * This function is designed to be called from a server-side context.
- * @returns {Promise<{success: boolean, error?: string}>}
- */
-export async function performPermissionCheck(): Promise<{success: boolean, error?: string}> {
-    try {
-        const adminDb = await getAdminDb();
-        // Attempt to access a non-existent document. This is a lightweight operation.
-        const nonExistentDocRef = adminDb.collection("permission-check").doc("heartbeat");
-        await nonExistentDocRef.get();
-        return { success: true };
-    } catch (e) {
-        if (e instanceof Error) {
-            // Specifically check for the default credentials error message.
-            if (e.message.includes("Could not load the default credentials") || e.message.includes("Could not refresh access token") || e.message.includes("UNAUTHENTICATED")) {
-                 return { success: false, error: 'permission-denied' };
-            }
-             // Return the specific error message for other cases.
-            return { success: false, error: e.message };
-        }
-        console.error("An unexpected error occurred during permission check:", e);
-        return { success: false, error: "An unexpected error occurred during the initial permission check." };
-    }
-};
-
-/**
- * A server action to securely fetch the current user's data.
- * This function is safe to be called from client components.
+ * Fetches the current user's data from the database.
+ * This server action is safe to call from client components. It includes
+ * error handling for database connection issues.
  * @param userId The ID of the user to fetch.
  * @returns The user object or null if not found.
+ * @throws An error if there's a critical database connectivity issue.
  */
 export async function getCurrentUser(userId: string | null): Promise<User | null> {
     if (!userId) return null;
@@ -49,7 +24,11 @@ export async function getCurrentUser(userId: string | null): Promise<User | null
         return user ? JSON.parse(JSON.stringify(user)) : null;
     } catch (error) {
         console.error("Error in getCurrentUser server action:", error);
-        return null;
+        // Re-throw the error so the client-side can catch it and display a proper message
+        if (error instanceof Error) {
+            throw error;
+        }
+        throw new Error("An unknown error occurred while fetching user data.");
     }
 }
 

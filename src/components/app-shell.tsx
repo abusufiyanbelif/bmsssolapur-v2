@@ -26,7 +26,8 @@ import { Logo } from "./logo";
 import { getAppSettings, getCurrentOrganization } from "@/app/admin/settings/actions";
 import { Alert, AlertDescription, AlertTitle } from "./ui/alert";
 import { Card, CardHeader, CardContent, CardTitle, CardDescription } from "@/components/ui/card";
-import { performPermissionCheck, getCurrentUser, getAdminNotificationData } from "@/app/actions";
+import { checkDatabaseConnection } from "@/app/services/actions";
+import { getCurrentUser, getAdminNotificationData } from "@/app/actions";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "./ui/skeleton";
 
@@ -53,12 +54,12 @@ export const AdminEditButton = ({ editPath }: { editPath: string }) => {
 }
 
 const defaultFooter: OrganizationFooter = {
-    organizationInfo: { titleLine1: 'Baitul Mal', titleLine2: 'Samajik Sanstha', titleLine3: '(Solapur)', description: '', registrationInfo: '', taxInfo: '' },
-    contactUs: { title: 'Contact Us', address: 'Solapur, Maharashtra', email: '' },
-    keyContacts: { title: 'Key Contacts', contacts: [] },
+    organizationInfo: { titleLine1: 'Baitul Mal (System Default)', titleLine2: 'Samajik Sanstha (System Default)', titleLine3: '(Solapur)', description: 'Default description text. Please seed or create an organization profile to update this.', registrationInfo: 'Reg. No. (System Default)', taxInfo: 'PAN: (System Default)' },
+    contactUs: { title: 'Contact Us', address: 'Default Address, Solapur', email: 'contact@example.com' },
+    keyContacts: { title: 'Key Contacts', contacts: [{name: 'Default Contact', phone: '0000000000'}] },
     connectWithUs: { title: 'Connect With Us', socialLinks: [] },
-    ourCommitment: { title: 'Our Commitment', text: '', linkText: '', linkUrl: '' },
-    copyright: { text: '' }
+    ourCommitment: { title: 'Our Commitment', text: 'Default commitment text. Please update this in the layout settings.', linkText: 'Learn More', linkUrl: '#' },
+    copyright: { text: `© ${new Date().getFullYear()} Organization Name. All Rights Reserved. (System Default)` }
 };
 
 
@@ -163,17 +164,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         const initializeSession = async () => {
             setSessionState('loading');
             
-            // Perform permission check and fetch organization data in parallel
-            const [permissionResult] = await Promise.all([
-                performPermissionCheck(),
-                fetchOrganizationData(), // Fetch org data on initial load
-            ]);
-
-            if (!permissionResult.success && permissionResult.error) {
-                setPermissionError(permissionResult.error);
-                setSessionState('error');
-                return;
-            }
+            // The database initialization now handles its own checks.
+            // We only need to fetch org data.
+            await fetchOrganizationData();
 
             const storedUserId = localStorage.getItem('userId');
             const isGuestPath = allowedGuestPaths.some(p => pathname === p || (p !== '/' && pathname.startsWith(p)));
@@ -187,7 +180,20 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 return;
             } 
             
-            let fetchedUser = await getCurrentUser(storedUserId);
+            let fetchedUser: UserType | null = null;
+            try {
+                fetchedUser = await getCurrentUser(storedUserId);
+            } catch (e) {
+                 const err = e as Error;
+                 if (err.message.includes('permission-denied') || err.message.includes('UNAUTHENTICATED')) {
+                    setPermissionError('permission-denied');
+                 } else {
+                    setPermissionError(err.message);
+                 }
+                 setSessionState('error');
+                 return;
+            }
+
 
             if (!fetchedUser) {
                 // If user ID is in storage but user not found in DB, it's a stale session.
