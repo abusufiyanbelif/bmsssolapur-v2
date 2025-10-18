@@ -34,6 +34,7 @@ export async function handleLogin(formData: FormData): Promise<LoginState> {
             user = await getUserByPhone(identifier);
         } else {
             // Assume it's a custom user ID (like 'admin')
+            // This now correctly fetches by the document ID.
             user = await getUser(identifier.toLowerCase());
         }
 
