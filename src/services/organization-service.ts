@@ -161,7 +161,7 @@ export const getCurrentOrganization = async (): Promise<Organization | null> => 
         
         const docSnap = querySnapshot.docs.find(doc => doc.id !== '_init_');
 
-        if (!docSnap) {
+        if (!docSnap || !docSnap.exists) {
             console.log("No organization document found, returning null.");
             return null;
         }

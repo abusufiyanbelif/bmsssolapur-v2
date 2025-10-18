@@ -54,7 +54,7 @@ export const AdminEditButton = ({ editPath }: { editPath: string }) => {
 }
 
 const defaultFooter: OrganizationFooter = {
-    organizationInfo: { titleLine1: 'Baitul Mal (System Default)', titleLine2: 'Samajik Sanstha (System Default)', titleLine3: '(Solapur)', description: 'Default description text. Please seed or create an organization profile to update this.', registrationInfo: 'Reg. No. (System Default)', taxInfo: 'PAN: (System Default)' },
+    organizationInfo: { titleLine1: 'Baitul Mal (System Default)', titleLine2: 'Samajik Sanstha (System Default)', titleLine3: '(Solapur) (System Default)', description: 'Default description text. Please seed or create an organization profile to update this.', registrationInfo: 'Reg. No. (System Default)', taxInfo: 'PAN: (System Default)' },
     contactUs: { title: 'Contact Us', address: 'Default Address, Solapur', email: 'contact@example.com' },
     keyContacts: { title: 'Key Contacts', contacts: [{name: 'Default Contact', phone: '0000000000'}] },
     connectWithUs: { title: 'Connect With Us', socialLinks: [] },

@@ -10,10 +10,10 @@ import { Skeleton } from './ui/skeleton';
 
 const defaultFooter: OrganizationFooter = {
     organizationInfo: { titleLine1: 'Baitul Mal (System Default)', titleLine2: 'Samajik Sanstha (System Default)', titleLine3: '(Solapur) (System Default)', description: 'Default description text. Please seed or create an organization profile to update this.', registrationInfo: 'Reg. No. (System Default)', taxInfo: 'PAN: (System Default)' },
-    contactUs: { title: 'Contact Us', address: 'Default Address, Solapur', email: 'contact@example.com' },
+    contactUs: { title: 'Contact Us (System Default)', address: 'Default Address, Solapur', email: 'contact@example.com' },
     keyContacts: { title: 'Key Contacts', contacts: [{name: 'Default Contact', phone: '0000000000'}] },
-    connectWithUs: { title: 'Connect With Us', socialLinks: [] },
-    ourCommitment: { title: 'Our Commitment', text: 'Default commitment text. Please update this in the layout settings.', linkText: 'Learn More', linkUrl: '#' },
+    connectWithUs: { title: 'Connect With Us (System Default)', socialLinks: [] },
+    ourCommitment: { title: 'Our Commitment (System Default)', text: 'Default commitment text. Please update this in the layout settings.', linkText: 'Learn More', linkUrl: '#' },
     copyright: { text: `© ${new Date().getFullYear()} Organization Name. All Rights Reserved. (System Default)` }
 };
 

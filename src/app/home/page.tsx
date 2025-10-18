@@ -3,7 +3,7 @@
 import { Suspense } from "react";
 import { Loader2 } from "lucide-react";
 import { HomeClient } from "./home-client";
-import { getAppSettings } from "@/app/admin/settings/actions";
+import { getAppSettings, getCurrentOrganization } from "@/app/admin/settings/actions";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
 import { getAllDonations } from "@/services/donation-service";

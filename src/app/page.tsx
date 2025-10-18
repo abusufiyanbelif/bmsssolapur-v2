@@ -5,7 +5,7 @@ import { PublicHomePage } from "./home/public-home-page";
 import { Loader2 } from "lucide-react";
 import { getOpenGeneralLeads, getPublicCampaigns, getPublicDashboardData, getQuotes } from "@/app/home/actions";
 import type { Quote } from "@/services/types";
-import { getCurrentOrganization } from "@/services/organization-service";
+import { getCurrentOrganization } from "@/app/admin/settings/actions";
 
 // This is now a true Server Component that fetches all data for the public page.
 async function PublicHomePageLoader() {

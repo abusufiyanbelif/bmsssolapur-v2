@@ -13,7 +13,7 @@ const defaultFooter: OrganizationFooter = {
     contactUs: { title: '', address: '', email: '' },
     keyContacts: { title: '', contacts: [] },
     connectWithUs: { title: '', socialLinks: [] },
-    ourCommitment: { title: '', text: '', linkText: '', linkUrl: '' },
+    ourCommitment: { title: '', text: '', linkText: '', linkUrl: '#' },
     copyright: { text: '' }
 };
 
