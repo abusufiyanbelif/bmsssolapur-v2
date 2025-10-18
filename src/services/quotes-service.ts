@@ -64,9 +64,8 @@ export const seedInitialQuotes = async (): Promise<string> => {
  * @returns An array of all quote objects.
  */
 export const getAllQuotes = async (): Promise<Quote[]> => {
-    const adminDb = await getAdminDb();
-    
     try {
+        const adminDb = await getAdminDb();
         const quotesQuery = adminDb.collection(QUOTES_COLLECTION);
         const querySnapshot = await quotesQuery.get();
         if (querySnapshot.empty) {
@@ -88,7 +87,8 @@ export const getAllQuotes = async (): Promise<Quote[]> => {
         } else {
             console.warn(`[Graceful Failure] An unknown error occurred while fetching quotes. Returning empty array.`);
         }
-        return []; // Always return a valid array to prevent downstream crashes.
+        // This is a critical change: always return a valid array to prevent downstream crashes.
+        return []; 
     }
 }
 

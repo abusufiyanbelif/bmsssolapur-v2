@@ -55,7 +55,7 @@ export async function getQuotes(count: number = 3): Promise<Quote[]> {
     } catch (error) {
         // This will now receive a proper error object with a message.
         console.error("Server action getQuotes failed:", error instanceof Error ? error.message : error);
-        // Fallback to an empty array on error to prevent crashing the UI.
+        // On failure, return an empty array. Do not return hardcoded data.
         return [];
     }
 }

@@ -56,7 +56,7 @@ export const getAllActivityLogs = async (): Promise<ActivityLog[]> => {
         return activities;
     } catch (error) {
         if (error instanceof Error && (error.message.includes('index') || error.message.includes('Could not find a valid index'))) {
-             console.error("Firestore index missing. Please create a descending index on 'timestamp' for the 'activityLog' collection.");
+             console.warn("Firestore index missing. Please create a descending index on 'timestamp' for the 'activityLog' collection. Falling back to unsorted query.");
              // Fallback to fetching without order and sorting in memory
              try {
                 const fallbackQuery = adminDb.collection(ACTIVITY_LOG_COLLECTION);
