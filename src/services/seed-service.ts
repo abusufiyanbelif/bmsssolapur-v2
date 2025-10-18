@@ -1,12 +1,11 @@
-
 /**
  * @fileOverview A service to seed the database with initial data.
  */
 
 import { getFirestore, Timestamp, FieldValue } from 'firebase-admin/firestore';
-import type { User, UserRole, Lead, Verifier, LeadDonationAllocation, Donation, Campaign, FundTransfer, LeadAction, AppSettings, OrganizationFooter, Organization } from '@/services/types';
+import type { User, UserRole, Lead, Verifier, LeadDonationAllocation, Donation, Campaign, FundTransfer, LeadAction, AppSettings, OrganizationFooter, Organization } from './types';
 import { seedInitialQuotes } from '@/services/quotes-service';
-import { getAdminDb, getAdminAuth, ensureCollectionsExist } from '@/services/firebase-admin';
+import { getAdminDb, getAdminAuth, ensureCollectionsExist as ensureCollectionsExistService } from '@/services/firebase-admin';
 import { updatePublicCampaign, enrichCampaignWithPublicStats } from './public-data-service';
 import { format } from 'date-fns';
 import { revalidatePath } from 'next/cache';
@@ -53,8 +52,8 @@ const coreTeamUsersToSeed: Omit<User, 'id' | 'createdAt' | 'userKey'>[] = [
         email: "moosa.shaikh@example.com", 
         phone: "8421708907", 
         password: "8421708907", 
-        roles: ["Super Admin", "Admin", "Donor"], 
-        privileges: ["all"], 
+        roles: ["Admin", "Donor"], 
+        privileges: ["canManageLeads"], 
         groups: ["Founder", "Lead Approver"], 
         isActive: true, 
         gender: 'Male', 
@@ -177,7 +176,7 @@ const deleteCollection = async (collectionPath: string): Promise<string> => {
 
 
 // --- EXPORTED SEEDING FUNCTIONS ---
-export { ensureCollectionsExist };
+export const ensureCollectionsExist = ensureCollectionsExistService;
 
 export const seedInitialUsersAndQuotes = async (): Promise<SeedResult> => {
     const quotesStatus = await seedInitialQuotes();
@@ -480,4 +479,3 @@ const organizationToSeed: Omit<Organization, 'id' | 'createdAt' | 'updatedAt'> =
     }
 };
 
-    
