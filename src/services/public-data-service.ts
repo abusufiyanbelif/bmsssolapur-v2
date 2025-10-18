@@ -185,7 +185,7 @@ export const getPublicCampaigns = async (): Promise<(Campaign & { raisedAmount: 
         return mapData(snapshot);
     } catch (e) {
         if (e instanceof Error && (e.message.includes('index') || e.message.includes('Could not find a valid index') || e.message.includes('NOT_FOUND'))) {
-            console.error("Firestore index missing for 'publicCampaigns' on 'startDate' (desc). Please create it. Falling back to an unsorted query.");
+            console.warn("Firestore index missing for 'publicCampaigns' on 'startDate' (desc). Please create it. Falling back to an unsorted query.");
             try {
                 const fallbackSnapshot = await adminDb.collection(PUBLIC_CAMPAIGNS_COLLECTION).get();
                 const campaigns = mapData(fallbackSnapshot);
