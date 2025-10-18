@@ -1,5 +1,4 @@
 
-
 /**
  * @fileOverview Service for managing global application settings in Firestore.
  * This service should only be called from server-side components or server actions.
@@ -244,15 +243,14 @@ export const getAppSettings = async (): Promise<AppSettings> => {
     return { id: settingsDoc.id || MAIN_SETTINGS_DOC_ID, ...data } as AppSettings;
 
   } catch (error) {
-    if (error instanceof Error && (error.message.includes('Could not load the default credentials') || error.message.includes('Could not refresh access token') || error.message.includes('permission-denied'))) {
-        const permissionError = new Error("Permission Denied: The server's service account does not have permission to access Firestore. Please grant the 'Cloud Datastore User' role in IAM. Refer to TROUBLESHOOTING.md for details.");
-        console.warn(permissionError.message);
-        // Instead of throwing, return default settings to prevent a hard crash
-        // This allows the UI to render a helpful error message.
-        return { id: MAIN_SETTINGS_DOC_ID, ...defaultSettings, updatedAt: new Date() } as AppSettings;
-    }
-    console.error('Error getting app settings: ', error);
-    throw new Error('Failed to retrieve app settings.');
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
+    console.warn(`[Graceful Fallback] Could not retrieve app settings: ${errorMessage}. Falling back to default settings.`);
+    // Return default settings to prevent application crash
+    return {
+        id: MAIN_SETTINGS_DOC_ID,
+        ...defaultSettings,
+        updatedAt: new Date(),
+    } as AppSettings;
   }
 };
 
