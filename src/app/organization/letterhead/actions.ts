@@ -10,9 +10,14 @@
 export async function getImageAsBase64(url?: string): Promise<string | undefined> {
   if (!url) return undefined;
   try {
+    // Validate URL format before fetching
+    new URL(url);
+
     const response = await fetch(url, { cache: 'no-store' }); // Disable cache for this fetch
     if (!response.ok) {
-      throw new Error(`Failed to fetch image: ${response.status} ${response.statusText}`);
+      // Log the server-side error but don't throw to the client
+      console.error(`Failed to fetch image from URL: ${url}. Status: ${response.status} ${response.statusText}`);
+      return undefined;
     }
     const blob = await response.blob();
     const buffer = Buffer.from(await blob.arrayBuffer());

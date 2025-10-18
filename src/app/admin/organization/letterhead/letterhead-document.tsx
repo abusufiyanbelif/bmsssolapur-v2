@@ -1,10 +1,11 @@
+
 // src/app/admin/organization/letterhead/letterhead-document.tsx
 
 "use client";
 
 import { useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Download, Loader2, FileText, Settings, Type, Milestone, CalendarIcon, Users } from "lucide-react";
+import { Download, Loader2, FileText, Settings, Type, Milestone, CalendarIcon, Users, AlertCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import type { Organization, LetterheadInclusionOptions, LetterContentOptions } from "@/services/types";
 import { Letterhead } from "@/components/letterhead";
@@ -18,6 +19,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 
 
 interface LetterheadDocumentProps {
@@ -247,15 +249,24 @@ Thank you for your time and consideration. We look forward to establishing a ban
             <h2 className="text-3xl font-bold tracking-tight font-headline text-primary">Organization Letterhead</h2>
             <div className="flex gap-2">
                 <Button onClick={() => generatePdf(true)} disabled={isTemplateGenerating || !logoDataUri}>
-                    {isTemplateGenerating || !logoDataUri ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <FileText className="mr-2 h-4 w-4" />}
+                    {isTemplateGenerating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <FileText className="mr-2 h-4 w-4" />}
                     Download Template
                 </Button>
                 <Button onClick={() => generatePdf(false)} disabled={isGenerating || !logoDataUri}>
-                    {isGenerating || !logoDataUri ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Download className="mr-2 h-4 w-4" />}
+                    {isGenerating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Download className="mr-2 h-4 w-4" />}
                     Download as PDF
                 </Button>
             </div>
         </div>
+        {!logoDataUri && (
+            <Alert variant="destructive">
+                <AlertCircle className="h-4 w-4" />
+                <AlertTitle>Logo Not Loaded</AlertTitle>
+                <AlertDescription>
+                    The organization logo could not be loaded. This is often because the URL in the organization&apos;s profile is incorrect, inaccessible, or blocked by CORS policy. Please verify the logo URL in the <a href="/admin/organization" className="font-semibold underline">Organization Profile</a> settings.
+                </AlertDescription>
+            </Alert>
+        )}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <Card className="lg:col-span-1">
                  <CardHeader>
@@ -344,7 +355,11 @@ Thank you for your time and consideration. We look forward to establishing a ban
                         <div className="transform scale-90 origin-top">
                             {!logoDataUri ? (
                                 <div className="w-[210mm] min-h-[297mm] bg-white flex items-center justify-center shadow-lg">
-                                    <Loader2 className="h-10 w-10 animate-spin text-primary" />
+                                    <div className="text-center p-8">
+                                        <AlertCircle className="h-12 w-12 text-destructive mx-auto" />
+                                        <h3 className="mt-4 text-lg font-semibold text-destructive">Logo Failed to Load</h3>
+                                        <p className="mt-2 text-sm text-muted-foreground">The letterhead cannot be rendered. Please check the logo URL in your organization's profile.</p>
+                                    </div>
                                 </div>
                             ) : (
                                 <>

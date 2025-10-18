@@ -11,16 +11,13 @@ import { updatePublicCampaign, enrichCampaignWithPublicStats } from './public-da
 import { format } from 'date-fns';
 import { revalidatePath } from 'next/cache';
 
-// Re-export type for backward compatibility and the service function
+// Re-export type for backward compatibility
 export type { User, UserRole };
-export { ensureCollectionsExist };
-
 
 const USERS_COLLECTION = 'users';
 
-// This list now excludes the default 'admin' user to avoid conflicts, as that user is created on server startup.
 const coreTeamUsersToSeed: Omit<User, 'id' | 'createdAt' | 'userKey'>[] = [
-    { 
+     { 
         name: "Abusufiyan Belif", 
         userId: "abusufiyan.belif", 
         firstName: "Abusufiyan", 
@@ -180,7 +177,7 @@ const deleteCollection = async (collectionPath: string): Promise<string> => {
 
 
 // --- EXPORTED SEEDING FUNCTIONS ---
-export { ensureCollectionsExist } from '@/services/firebase-admin';
+export { ensureCollectionsExist };
 
 export const seedInitialUsersAndQuotes = async (): Promise<SeedResult> => {
     const quotesStatus = await seedInitialQuotes();
