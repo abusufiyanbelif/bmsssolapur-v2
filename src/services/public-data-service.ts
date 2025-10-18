@@ -55,9 +55,9 @@ export const updatePublicLead = async (lead: Lead): Promise<void> => {
  * @param org - The full organization object.
  */
 export const updatePublicOrganization = async (org: Organization): Promise<void> => {
-  const adminDb = await getAdminDb();
-  const publicOrgRef = adminDb.collection(PUBLIC_DATA_COLLECTION).doc('organization');
-  await publicOrgRef.set(org);
+    const adminDb = await getAdminDb();
+    const publicOrgRef = adminDb.collection(PUBLIC_DATA_COLLECTION).doc('organization');
+    await publicOrgRef.set(org);
 };
 
 
@@ -165,11 +165,9 @@ export const updatePublicCampaign = async (
  * @returns An array of public campaign objects.
  */
 export const getPublicCampaigns = async (): Promise<(Campaign & { raisedAmount: number, fundingProgress: number })[]> => {
-    try {
-        const adminDb = await getAdminDb();
-        const q = adminDb.collection(PUBLIC_CAMPAIGNS_COLLECTION).orderBy("startDate", "desc");
-        const snapshot = await q.get();
-        const campaigns = snapshot.docs.map(doc => {
+    const adminDb = await getAdminDb();
+    const mapData = (snapshot: FirebaseFirestore.QuerySnapshot) => {
+        return snapshot.docs.map(doc => {
             const data = doc.data();
             return {
                 ...data,
@@ -179,30 +177,26 @@ export const getPublicCampaigns = async (): Promise<(Campaign & { raisedAmount: 
                 updatedAt: data.updatedAt ? (data.updatedAt as Timestamp).toDate() : undefined,
             } as (Campaign & { raisedAmount: number, fundingProgress: number });
         });
-        return campaigns;
+    };
+
+    try {
+        const q = adminDb.collection(PUBLIC_CAMPAIGNS_COLLECTION).orderBy("startDate", "desc");
+        const snapshot = await q.get();
+        return mapData(snapshot);
     } catch (e) {
-        if (e instanceof Error && (e.message.includes('Could not refresh access token') || e.message.includes('permission-denied') || e.message.includes('UNAUTHENTICATED'))) {
-            console.warn(`Permission Denied: The server environment lacks permissions to read public campaigns. Refer to TROUBLESHOOTING.md. Error: ${e.message}`);
-            return []; // Gracefully fail
-        }
-        if (e instanceof Error && (e.message.includes('index') || e.message.includes('Could not find a valid index'))) {
-            console.error("Firestore index missing for 'publicCampaigns' on 'startDate' (desc). Please create it. Falling back to unsorted data.");
-             try {
-                const adminDb = await getAdminDb();
+        if (e instanceof Error && (e.message.includes('index') || e.message.includes('Could not find a valid index') || e.message.includes('NOT_FOUND'))) {
+            console.error("Firestore index missing for 'publicCampaigns' on 'startDate' (desc). Please create it. Falling back to an unsorted query.");
+            try {
                 const fallbackSnapshot = await adminDb.collection(PUBLIC_CAMPAIGNS_COLLECTION).get();
-                 const campaigns = fallbackSnapshot.docs.map(doc => {
-                    const data = doc.data();
-                    return {
-                        ...data,
-                        startDate: (data.startDate as Timestamp)?.toDate(),
-                        endDate: (data.endDate as Timestamp)?.toDate(),
-                    } as (Campaign & { raisedAmount: number, fundingProgress: number });
-                });
+                const campaigns = mapData(fallbackSnapshot);
+                // Sort in memory as a fallback
                 return campaigns.sort((a,b) => b.startDate.getTime() - a.startDate.getTime());
-             } catch (fallbackError) {
-                 console.error("Fallback query failed for getPublicCampaigns", fallbackError);
-                 return [];
-             }
+            } catch (fallbackError) {
+                console.error("Fallback query failed for getPublicCampaigns", fallbackError);
+                return [];
+            }
+        } else if (e instanceof Error && (e.message.includes('Could not refresh access token') || e.message.includes('permission-denied') || e.message.includes('UNAUTHENTICATED'))) {
+            console.warn(`Permission Denied: The server environment lacks permissions to read public campaigns. Refer to TROUBLESHOOTING.md. Error: ${e.message}`);
         } else {
             console.error("Error fetching public campaigns:", e);
         }
