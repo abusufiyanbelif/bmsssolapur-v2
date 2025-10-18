@@ -1,4 +1,3 @@
-
 // src/app/admin/seed/page.tsx
 'use client';
 
@@ -11,16 +10,15 @@ import { Loader2 } from "lucide-react";
 import { handleSeedAction, handleEraseAction } from "./actions";
 import { useRouter } from "next/navigation";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { useToast } from "@/hooks/use-toast";
 
-type SeedStatus = 'idle' | 'loading' | 'success' | 'error';
+
+type SeedStatus = 'idle' | 'loading';
 type SeedTask = 'initial' | 'coreTeam' | 'organization' | 'paymentGateways' | 'sampleData' | 'appSettings' | 'syncFirebaseAuth' | 'ensureCollections';
-type SeedResult = {
-    message: string;
-    details?: string[];
-};
 
 export default function SeedPage() {
     const router = useRouter();
+    const { toast } = useToast();
     const [statuses, setStatuses] = useState<Record<SeedTask, SeedStatus>>({
         initial: 'idle',
         coreTeam: 'idle',
@@ -41,81 +39,79 @@ export default function SeedPage() {
         syncFirebaseAuth: 'idle',
         ensureCollections: 'idle',
     });
-    const [results, setResults] = useState<Record<SeedTask, SeedResult | null>>({
-        initial: null,
-        coreTeam: null,
-        organization: null,
-        appSettings: null,
-        paymentGateways: null,
-        sampleData: null,
-        syncFirebaseAuth: null,
-        ensureCollections: null,
-    });
 
     const handleSeed = async (task: SeedTask) => {
         setStatuses(prev => ({ ...prev, [task]: 'loading' }));
-        setEraseStatuses(prev => ({ ...prev, [task]: 'idle' })); // Reset erase status
-        setResults(prev => ({ ...prev, [task]: null }));
+        setEraseStatuses(prev => ({ ...prev, [task]: 'idle' })); 
 
         try {
             const result = await handleSeedAction(task);
             if(result.success && result.data){
-                setResults(prev => ({ ...prev, [task]: result.data }));
-                setStatuses(prev => ({ ...prev, [task]: 'success' }));
-                if (task === 'organization' || task === 'appSettings') router.refresh();
+                toast({
+                    variant: 'success',
+                    title: `Seed Success: ${result.data.message}`,
+                    description: (
+                        <ul className="mt-2 text-xs list-disc pl-4">
+                            {result.data.details?.map((d, i) => <li key={i}>{d}</li>)}
+                        </ul>
+                    )
+                });
+                router.refresh();
             } else {
-                 setResults(prev => ({ ...prev, [task]: { message: 'Seeding Failed', details: [result.error || 'An unknown error occurred.'] } }));
-                 setStatuses(prev => ({ ...prev, [task]: 'error' }));
+                 toast({
+                    variant: 'destructive',
+                    title: "Seeding Failed",
+                    description: result.error || 'An unknown error occurred.',
+                });
             }
         } catch (e) {
             const error = e instanceof Error ? e.message : "An unexpected error occurred.";
-            setResults(prev => ({ ...prev, [task]: { message: 'Seeding Failed', details: [error] } }));
-            setStatuses(prev => ({ ...prev, [task]: 'error' }));
+             toast({
+                variant: 'destructive',
+                title: "Seeding Operation Failed",
+                description: error,
+            });
+        } finally {
+            setStatuses(prev => ({...prev, [task]: 'idle' }));
         }
     };
     
     const handleErase = async (task: SeedTask) => {
         setEraseStatuses(prev => ({ ...prev, [task]: 'loading' }));
-        setStatuses(prev => ({ ...prev, [task]: 'idle' })); // Reset seed status
-        setResults(prev => ({ ...prev, [task]: null }));
+        setStatuses(prev => ({ ...prev, [task]: 'idle' }));
 
         try {
             const result = await handleEraseAction(task);
             if (result.success && result.data) {
-                setResults(prev => ({ ...prev, [task]: result.data }));
-                setEraseStatuses(prev => ({ ...prev, [task]: 'success' }));
-                if (task === 'organization' || task === 'appSettings') router.refresh();
+                toast({
+                    variant: 'success',
+                    title: `Erase Success: ${result.data.message}`,
+                     description: (
+                        <ul className="mt-2 text-xs list-disc pl-4">
+                            {result.data.details?.map((d, i) => <li key={i}>{d}</li>)}
+                        </ul>
+                    )
+                });
+                router.refresh();
             } else {
-                setResults(prev => ({ ...prev, [task]: { message: 'Erase Failed', details: [result.error || 'An unknown error occurred.'] } }));
-                setEraseStatuses(prev => ({ ...prev, [task]: 'error' }));
+                toast({
+                    variant: 'destructive',
+                    title: "Erase Failed",
+                    description: result.error || 'An unknown error occurred.',
+                });
             }
         } catch (e) {
             const error = e instanceof Error ? e.message : "An unexpected error occurred.";
-            setResults(prev => ({ ...prev, [task]: { message: 'Erase Failed', details: [error] } }));
-            setEraseStatuses(prev => ({ ...prev, [task]: 'error' }));
+             toast({
+                variant: 'destructive',
+                title: "Erase Operation Failed",
+                description: error,
+            });
+        } finally {
+            setEraseStatuses(prev => ({ ...prev, [task]: 'idle' }));
         }
     };
     
-    const ResultAlert = ({ seedStatus, eraseStatus, result }: { seedStatus: SeedStatus, eraseStatus: SeedStatus, result: SeedResult | null }) => {
-        const status = seedStatus !== 'idle' ? seedStatus : eraseStatus;
-        if (status === 'idle' || status === 'loading') return null;
-        
-        const isSuccess = status === 'success';
-
-        return (
-            <Alert variant={isSuccess ? 'success' : 'destructive'}>
-                {isSuccess ? <CheckCircle className="h-4 w-4" /> : <AlertCircle className="h-4 w-4" />}
-                <AlertTitle>{result?.message}</AlertTitle>
-                {result?.details && result.details.length > 0 && (
-                    <AlertDescription>
-                        <ul className="list-disc pl-5 mt-2 text-xs">
-                            {result.details.map((detail, i) => <li key={i}>{detail}</li>)}
-                        </ul>
-                    </AlertDescription>
-                )}
-            </Alert>
-        )
-    };
 
     return (
         <div className="flex-1 space-y-6">
@@ -142,7 +138,6 @@ export default function SeedPage() {
                                 </Button>
                              </div>
                         </div>
-                        <ResultAlert seedStatus={statuses.ensureCollections} eraseStatus={eraseStatuses.ensureCollections} result={results.ensureCollections} />
                     </div>
 
                     {/* Initial Seed */}
@@ -163,7 +158,6 @@ export default function SeedPage() {
                                 </Button>
                              </div>
                         </div>
-                        <ResultAlert seedStatus={statuses.initial} eraseStatus={eraseStatuses.initial} result={results.initial} />
                     </div>
 
                     {/* Organization Profile */}
@@ -184,7 +178,6 @@ export default function SeedPage() {
                                 </Button>
                              </div>
                         </div>
-                        <ResultAlert seedStatus={statuses.organization} eraseStatus={eraseStatuses.organization} result={results.organization} />
                     </div>
                     
                     {/* App Settings */}
@@ -205,7 +198,6 @@ export default function SeedPage() {
                                 </Button>
                             </div>
                         </div>
-                        <ResultAlert seedStatus={statuses.appSettings} eraseStatus={eraseStatuses.appSettings} result={results.appSettings} />
                     </div>
 
                      {/* Core Team */}
@@ -226,7 +218,6 @@ export default function SeedPage() {
                                 </Button>
                             </div>
                         </div>
-                        <ResultAlert seedStatus={statuses.coreTeam} eraseStatus={eraseStatuses.coreTeam} result={results.coreTeam} />
                     </div>
                     
                     {/* Payment Gateways */}
@@ -247,7 +238,6 @@ export default function SeedPage() {
                                 </Button>
                             </div>
                         </div>
-                        <ResultAlert seedStatus={statuses.paymentGateways} eraseStatus={eraseStatuses.paymentGateways} result={results.paymentGateways} />
                     </div>
                     
                     {/* Sync Users to Firebase Auth */}
@@ -268,7 +258,6 @@ export default function SeedPage() {
                                 </Button>
                             </div>
                         </div>
-                        <ResultAlert seedStatus={statuses.syncFirebaseAuth} eraseStatus={eraseStatuses.syncFirebaseAuth} result={results.syncFirebaseAuth} />
                     </div>
 
                     {/* Sample Data */}
@@ -324,8 +313,6 @@ export default function SeedPage() {
                                 </AccordionContent>
                             </AccordionItem>
                         </Accordion>
-                        
-                        <ResultAlert seedStatus={statuses.sampleData} eraseStatus={eraseStatuses.sampleData} result={results.sampleData} />
                     </div>
                 </CardContent>
              </Card>

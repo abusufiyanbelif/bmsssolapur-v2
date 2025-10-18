@@ -31,6 +31,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useRouter } from "next/navigation";
 
 
 const socialPlatformSchema = z.enum(["Facebook", "Instagram", "Twitter"]);
@@ -87,6 +88,7 @@ interface LayoutSettingsFormProps {
 
 export function LayoutSettingsForm({ organization }: LayoutSettingsFormProps) {
   const { toast } = useToast();
+  const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   
@@ -149,6 +151,7 @@ export function LayoutSettingsForm({ organization }: LayoutSettingsFormProps) {
       toast({ title: "Settings Saved", description: "The footer layout has been updated." });
       setIsEditing(false);
       reset(values);
+      router.refresh();
     } else {
       toast({ variant: "destructive", title: "Error", description: result.error });
     }
@@ -160,13 +163,13 @@ export function LayoutSettingsForm({ organization }: LayoutSettingsFormProps) {
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
              <div className="flex justify-end mb-6">
                 {!isEditing ? (
-                    <Button onClick={() => setIsEditing(true)}>
+                    <Button type="button" onClick={() => setIsEditing(true)}>
                         <Edit className="mr-2 h-4 w-4" />
                         Edit Layout
                     </Button>
                 ) : (
                     <div className="flex gap-2">
-                        <Button variant="outline" onClick={handleCancel}>
+                        <Button type="button" variant="outline" onClick={handleCancel}>
                             <X className="mr-2 h-4 w-4" /> Cancel
                         </Button>
                         <Button type="submit" disabled={isSubmitting || !isDirty}>
