@@ -522,13 +522,8 @@ export const getAllUsers = async (): Promise<User[]> => {
         });
         return users;
     } catch (error) {
-        if (error instanceof Error && (error.message.includes('permission-denied') || error.message.includes('UNAUTHENTICATED'))) {
-            console.warn(`Permission Denied: The server environment lacks permissions to read users. Refer to TROUBLESHOOTING.md.`, { message: error.message });
-            return []; // Gracefully fail
-        }
         if (error instanceof Error && (error.message.includes('index') || error.message.includes('Could not find a valid index') || error.message.includes('NOT_FOUND'))) {
              console.warn("Firestore index missing for 'users' on 'createdAt' (desc). Please create it. Falling back to an unsorted query.");
-             // Fallback to unsorted query if index is missing
              try {
                 const adminDb = await getAdminDb();
                 const fallbackSnapshot = await adminDb.collection(USERS_COLLECTION).get();
@@ -538,7 +533,8 @@ export const getAllUsers = async (): Promise<User[]> => {
                 });
                 return users;
              } catch (fallbackError) {
-                 console.error("Fallback query failed for getAllUsers:", fallbackError);
+                 const err = fallbackError instanceof Error ? fallbackError : new Error('Unknown fallback error');
+                 console.error("Fallback query failed for getAllUsers:", err.message);
                  return [];
              }
         } else {
@@ -622,5 +618,3 @@ export async function checkAvailability(field: string, value: string): Promise<A
         return { isAvailable: false }; // Fail closed to prevent duplicates
     }
 }
-
-    
