@@ -1,4 +1,5 @@
 
+
 /**
  * @fileOverview Service for managing public-facing, sanitized data in Firestore.
  */
@@ -165,10 +166,8 @@ export const updatePublicCampaign = async (
  * @returns An array of public campaign objects.
  */
 export const getPublicCampaigns = async (): Promise<(Campaign & { raisedAmount: number, fundingProgress: number })[]> => {
-    try {
-        const adminDb = await getAdminDb();
-        const q = adminDb.collection(PUBLIC_CAMPAIGNS_COLLECTION).orderBy("startDate", "desc");
-        const snapshot = await q.get();
+    const adminDb = await getAdminDb();
+    const mapData = (snapshot: FirebaseFirestore.QuerySnapshot) => {
         return snapshot.docs.map(doc => {
             const data = doc.data();
             return {
@@ -179,12 +178,17 @@ export const getPublicCampaigns = async (): Promise<(Campaign & { raisedAmount: 
                 updatedAt: data.updatedAt ? (data.updatedAt as Timestamp).toDate() : undefined,
             } as (Campaign & { raisedAmount: number, fundingProgress: number });
         });
+    }
+
+    try {
+        const q = adminDb.collection(PUBLIC_CAMPAIGNS_COLLECTION).orderBy("startDate", "desc");
+        const snapshot = await q.get();
+        return mapData(snapshot);
     } catch (e) {
-        // Universal catch block for any error during the query (missing index, collection, permissions, etc.)
         if (e instanceof Error) {
-            console.warn(`[Graceful Fallback] Could not fetch public campaigns. Error: "${e.message}". This might be due to a missing index or an empty collection. Returning an empty array.`);
+             console.warn(`[Graceful Fallback] Could not fetch public campaigns. Error: "${e.message}". This might be due to a missing index or an empty collection. Returning an empty array.`);
         } else {
-            console.warn("[Graceful Fallback] An unknown error occurred while fetching public campaigns. Returning an empty array.");
+             console.warn("[Graceful Fallback] An unknown error occurred while fetching public campaigns. Returning an empty array.");
         }
         return []; // Always return an empty array on any failure.
     }
