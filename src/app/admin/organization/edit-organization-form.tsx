@@ -58,7 +58,7 @@ export function EditOrganizationForm({ organization, isCreating }: EditOrganizat
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [qrCodePreviewUrl, setQrCodePreviewUrl] = useState(organization.qrCodeUrl || '');
   const [logoPreviewUrl, setLogoPreviewUrl] = useState(organization.logoUrl || '');
-  const [isEditing, setIsEditing] = useState(isCreating);
+  const [isEditing, setIsEditing] = useState(false); // Default to false
   const [adminUserId, setAdminUserId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -97,9 +97,7 @@ export function EditOrganizationForm({ organization, isCreating }: EditOrganizat
     reset(); // Reset to the original default values
     setQrCodePreviewUrl(organization.qrCodeUrl || '');
     setLogoPreviewUrl(organization.logoUrl || '');
-    if (!isCreating) {
-        setIsEditing(false);
-    }
+    setIsEditing(false);
   }
 
   async function onSubmit(values: FormValues) {
@@ -118,8 +116,6 @@ export function EditOrganizationForm({ organization, isCreating }: EditOrganizat
     });
     
     const result = await handleUpdateOrganization(organization.id!, formData, isCreating);
-
-    setIsSubmitting(false);
 
     if (result.success) {
       toast({
@@ -141,6 +137,7 @@ export function EditOrganizationForm({ organization, isCreating }: EditOrganizat
         description: result.error || "An unknown error occurred.",
       });
     }
+    setIsSubmitting(false);
   }
 
   return (
@@ -156,7 +153,7 @@ export function EditOrganizationForm({ organization, isCreating }: EditOrganizat
                  {!isEditing ? (
                     <Button type="button" onClick={() => setIsEditing(true)}>
                         <Edit className="mr-2 h-4 w-4" />
-                        Edit Profile
+                        {isCreating ? "Create Profile" : "Edit Profile"}
                     </Button>
                 ) : (
                     <div className="flex gap-2">
