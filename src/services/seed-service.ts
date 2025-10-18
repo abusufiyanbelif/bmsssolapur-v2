@@ -4,7 +4,7 @@
  */
 
 import { getFirestore, Timestamp, FieldValue } from 'firebase-admin/firestore';
-import type { User, UserRole, Lead, Verifier, LeadDonationAllocation, Donation, Campaign, FundTransfer, LeadAction, AppSettings, OrganizationFooter } from '@/services/types';
+import type { User, UserRole, Lead, Verifier, LeadDonationAllocation, Donation, Campaign, FundTransfer, LeadAction, AppSettings, OrganizationFooter, Organization } from '@/services/types';
 import { seedInitialQuotes } from '@/services/quotes-service';
 import { getAdminDb, getAdminAuth, ensureCollectionsExist } from '@/services/firebase-admin';
 import { updatePublicCampaign, enrichCampaignWithPublicStats } from './public-data-service';

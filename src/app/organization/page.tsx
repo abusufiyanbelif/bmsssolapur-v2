@@ -1,5 +1,6 @@
+
 // src/app/organization/page.tsx
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Building, Mail, Phone, Globe, Hash, ShieldCheck, CreditCard, Award, Users, Banknote, MapPin, AlertCircle, Edit } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import Image from "next/image";
@@ -8,7 +9,7 @@ import type { User, Organization } from "@/services/types";
 import { OrganizationQrCodeDialog } from "@/components/organization-qr-code-dialog";
 import { getAllUsers } from "@/services/user-service";
 import { getCurrentOrganization } from "@/app/admin/settings/actions";
-import { AppShell, AdminEditButton } from "@/components/app-shell";
+import { AdminEditButton } from "@/components/app-shell";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 
@@ -78,7 +79,7 @@ export default async function OrganizationPage() {
                     <AlertCircle className="h-4 w-4" />
                     <AlertTitle>Organization Details Not Available</AlertTitle>
                     <AlertDescription>
-                        The organization&apos;s profile has not been set up yet. An administrator needs to create it in the admin panel.
+                        The organization's profile has not been set up yet. An administrator needs to create it in the admin panel.
                     </AlertDescription>
                 </Alert>
             </div>

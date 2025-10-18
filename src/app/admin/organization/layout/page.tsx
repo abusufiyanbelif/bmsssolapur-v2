@@ -1,18 +1,19 @@
 
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { getCurrentOrganization } from "@/app/admin/settings/actions";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle, Palette } from "lucide-react";
-import { LayoutSettingsForm } from "./layout-settings-form";
+import { LayoutSettingsForm } from "@/app/admin/organization/layout/layout-settings-form";
 import type { Organization, OrganizationFooter } from "@/services/types";
 
 const defaultFooter: OrganizationFooter = {
-    organizationInfo: { titleLine1: '', titleLine2: '', titleLine3: '', description: '', registrationInfo: '', taxInfo: '' },
-    contactUs: { title: '', address: '', email: '' },
-    keyContacts: { title: '', contacts: [] },
-    connectWithUs: { title: '', socialLinks: [] },
-    ourCommitment: { title: '', text: '', linkText: '', linkUrl: '' },
-    copyright: { text: '' }
+    organizationInfo: { titleLine1: 'Baitul Mal (System Default)', titleLine2: 'Samajik Sanstha (System Default)', titleLine3: '(Solapur)', description: 'Default description text. Please seed or create an organization profile to update this.', registrationInfo: 'Reg. No. (System Default)', taxInfo: 'PAN: (System Default)' },
+    contactUs: { title: 'Contact Us', address: 'Default Address, Solapur', email: 'contact@example.com' },
+    keyContacts: { title: 'Key Contacts', contacts: [{name: 'Default Contact', phone: '0000000000'}] },
+    connectWithUs: { title: 'Connect With Us', socialLinks: [] },
+    ourCommitment: { title: 'Our Commitment', text: 'Default commitment text. Please update this in the layout settings.', linkText: 'Learn More', linkUrl: '#' },
+    copyright: { text: `© ${new Date().getFullYear()} Organization Name. All Rights Reserved. (System Default)` }
 };
 
 const defaultOrganization: Organization = {

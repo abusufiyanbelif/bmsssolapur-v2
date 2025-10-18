@@ -58,7 +58,7 @@ export function EditOrganizationForm({ organization, isCreating }: EditOrganizat
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [qrCodePreviewUrl, setQrCodePreviewUrl] = useState(organization.qrCodeUrl || '');
   const [logoPreviewUrl, setLogoPreviewUrl] = useState(organization.logoUrl || '');
-  const [isEditing, setIsEditing] = useState(false);
+  const [isEditing, setIsEditing] = useState(isCreating);
   
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -146,7 +146,7 @@ export function EditOrganizationForm({ organization, isCreating }: EditOrganizat
                  {!isEditing ? (
                     <Button type="button" onClick={() => setIsEditing(true)}>
                         <Edit className="mr-2 h-4 w-4" />
-                        {isCreating ? 'Create Profile' : 'Edit Profile'}
+                        Edit Profile
                     </Button>
                 ) : (
                     <div className="flex gap-2">
@@ -165,7 +165,7 @@ export function EditOrganizationForm({ organization, isCreating }: EditOrganizat
             <Form {...form}>
             <form className="space-y-8">
                 <fieldset disabled={!isEditing} className="space-y-8">
-                    <h3 className="text-lg font-semibold border-b pb-2">Public Profile</h3>
+                    <h3 className="text-lg font-semibold border-b pb-2 text-primary">Public Profile</h3>
                     <div className="grid md:grid-cols-3 gap-8">
                         <div className="md:col-span-2 space-y-8">
                             <FormField
@@ -217,6 +217,19 @@ export function EditOrganizationForm({ organization, isCreating }: EditOrganizat
                                     </FormItem>
                                 )}
                             />
+                             <FormField
+                                control={form.control}
+                                name="city"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>City</FormLabel>
+                                        <FormControl>
+                                            <Input {...field} />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
                             <FormField
                                 control={form.control}
                                 name="registrationNumber"
@@ -260,11 +273,11 @@ export function EditOrganizationForm({ organization, isCreating }: EditOrganizat
                         </div>
                     </div>
                     
-                    <h3 className="text-lg font-semibold border-b pb-2">Homepage Settings</h3>
+                    <h3 className="text-lg font-semibold border-b pb-2 text-primary">Homepage Settings</h3>
                     <FormField control={form.control} name="hero.title" render={({ field }) => (<FormItem><FormLabel>Hero Title</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
                     <FormField control={form.control} name="hero.description" render={({ field }) => (<FormItem><FormLabel>Hero Description</FormLabel><FormControl><Textarea {...field} /></FormControl><FormMessage /></FormItem>)} />
 
-                    <h3 className="text-lg font-semibold border-b pb-2">Contact & Payment Details</h3>
+                    <h3 className="text-lg font-semibold border-b pb-2 text-primary">Contact & Payment Details</h3>
                     <div className="grid md:grid-cols-2 gap-8">
                         <FormField
                             control={form.control}
