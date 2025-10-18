@@ -1,48 +1,45 @@
-
 /**
  * @fileOverview Initializes the Firebase Admin SDK.
  * This file is carefully constructed to have NO internal project dependencies
  * to prevent circular import issues.
  */
 
-import * as admin from 'firebase-admin';
+import admin from 'firebase-admin';
 import { getFirestore as getAdminFirestore, Firestore as AdminFirestore, Timestamp } from 'firebase-admin/firestore';
 import type { User } from './types'; // We can safely import types
 
 let adminDbInstance: AdminFirestore | null = null;
 let adminAuthInstance: admin.auth.Auth | null = null;
 
-let isFirstInit = true;
+// A promise that resolves when initialization is complete. This prevents race conditions.
+let initializationPromise: Promise<void> | null = null;
 
 /**
  * Ensures a system user exists in the database.
- * This is a critical function for production readiness, ensuring the app
- * always has critical system accounts without relying on manual seeding.
  * @param db The Firestore admin instance.
  * @param userData The user data to check for and create if absent.
  */
 const ensureSystemUserExists = async (db: AdminFirestore, userData: Partial<User>) => {
     try {
-        const usersRef = db.collection('users');
-        const q = usersRef.where('userId', '==', userData.userId).limit(1);
-        const snapshot = await q.get();
+        // Use the intended document ID directly for system users
+        const userRef = db.collection('users').doc(userData.userId!);
+        const userDoc = await userRef.get();
 
-        if (snapshot.empty) {
+        if (!userDoc.exists) {
             console.log(`Default system user "${userData.userId}" not found. Creating it now...`);
             
-            // Generate the user key.
-            const userCountSnapshot = await usersRef.count().get();
+            const userCountSnapshot = await db.collection('users').count().get();
             const userKey = `SYSTEM${(userCountSnapshot.data().count + 1).toString().padStart(2, '0')}`;
             
             const userToCreate: Omit<User, 'id'> = {
                 ...userData,
+                password: userData.password, 
                 userKey: userKey,
                 createdAt: Timestamp.now() as any,
                 updatedAt: Timestamp.now() as any,
             } as Omit<User, 'id'>;
 
-            // Use the userId as the document ID for predictability
-            await usersRef.doc(userData.userId!).set(userToCreate);
+            await userRef.set(userToCreate);
             console.log(`Default system user "${userData.userId}" created successfully.`);
         }
     } catch (e) {
@@ -50,13 +47,14 @@ const ensureSystemUserExists = async (db: AdminFirestore, userData: Partial<User
     }
 };
 
+
 /**
  * Checks if essential Firestore collections exist, and creates them with a placeholder
  * document if they don't. This prevents errors on fresh deployments.
  * @returns An object with a list of created collections and any errors.
  */
-export const ensureCollectionsExist = async (): Promise<{ success: boolean; created: string[]; errors: string[] }> => {
-    const db = getAdminDb();
+export const ensureCollectionsExist = async (): Promise<{ success: boolean; message: string; details: string[]; errors: string[] }> => {
+    const db = await getAdminDb();
     const coreCollections = [
         'users', 'leads', 'donations', 'campaigns', 'activityLog',
         'settings', 'organizations', 'publicLeads', 'publicCampaigns',
@@ -67,6 +65,7 @@ export const ensureCollectionsExist = async (): Promise<{ success: boolean; crea
     
     const created: string[] = [];
     const errors: string[] = [];
+    const details: string[] = [];
 
     for (const collectionName of coreCollections) {
         try {
@@ -74,12 +73,13 @@ export const ensureCollectionsExist = async (): Promise<{ success: boolean; crea
             const snapshot = await collectionRef.limit(1).get();
             if (snapshot.empty) {
                 console.log(`Collection "${collectionName}" not found. Creating it...`);
-                // Add a placeholder document to create the collection.
                 await collectionRef.doc('_init_').set({
                     initializedAt: Timestamp.now(),
                     description: `This document was automatically created to initialize the ${collectionName} collection.`
                 });
                 created.push(collectionName);
+            } else {
+                details.push(`Collection '${collectionName}' already exists.`);
             }
         } catch (e) {
             const errorMsg = `CRITICAL ERROR: Failed to ensure collection "${collectionName}" exists.`;
@@ -88,85 +88,105 @@ export const ensureCollectionsExist = async (): Promise<{ success: boolean; crea
         }
     }
     
-    return { success: errors.length === 0, created, errors };
+    return { 
+        success: errors.length === 0, 
+        message: errors.length > 0 ? "Some collections could not be verified." : created.length > 0 ? "Successfully created missing collections." : "All essential collections already exist.",
+        details: created, 
+        errors 
+    };
 };
 
+const runPostInitTasks = async () => {
+    if (!adminDbInstance) return;
+    try {
+        await Promise.all([
+            ensureCollectionsExist(),
+             ensureSystemUserExists(adminDbInstance, {
+                name: "admin",
+                userId: "admin",
+                firstName: "System",
+                lastName: "Admin",
+                fatherName: "System",
+                email: "admin@example.com",
+                phone: "9999999999",
+                password: "password",
+                roles: ["Super Admin"], 
+                privileges: ["all"],
+                isActive: true, 
+                gender: 'Male', 
+                source: 'Seeded',
+            }),
+            ensureSystemUserExists(adminDbInstance, {
+                name: "Anonymous Donor",
+                userId: "anonymous_donor",
+                firstName: "Anonymous",
+                lastName: "Donor",
+                email: "anonymous@system.local",
+                phone: "0000000000",
+                password: "N/A",
+                roles: [],
+                isActive: false,
+                gender: 'Other',
+                source: 'Seeded',
+            })
+        ]);
+    } catch(e) {
+        console.error("A post-initialization task failed:", e);
+    }
+}
 
 const initializeFirebaseAdmin = async () => {
+  if (admin.apps.length > 0 && adminDbInstance) {
+      return;
+  }
+  
   if (admin.apps.length === 0) {
     try {
       console.log("Initializing Firebase Admin SDK...");
+      // Explicitly providing the project ID to ensure correct initialization in all environments.
       admin.initializeApp({
         projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || 'baitul-mal-connect',
       });
       console.log('Firebase Admin SDK initialized successfully.');
+
+      adminDbInstance = getAdminFirestore();
+      adminAuthInstance = admin.auth();
+      
+      // CRITICAL: Await the post-init tasks to ensure collections/users are created before any other code runs.
+      await runPostInitTasks();
+
     } catch (e) {
       console.error("Firebase Admin SDK initialization error:", e);
       throw new Error("Failed to initialize Firebase Admin SDK. Check server logs and credentials.");
     }
+  } else if (admin.apps.length > 0 && !adminDbInstance) {
+      adminDbInstance = getAdminFirestore();
+      adminAuthInstance = admin.auth();
   }
+};
 
+const getInitializationPromise = () => {
+    if (!initializationPromise) {
+        initializationPromise = initializeFirebaseAdmin();
+    }
+    return initializationPromise;
+};
+
+export const getAdminDb = async (): Promise<AdminFirestore> => {
+  await getInitializationPromise();
   if (!adminDbInstance) {
-    adminDbInstance = getAdminFirestore();
+    throw new Error("getAdminDb called before async initialization completed. This is an application error.");
   }
+  return adminDbInstance;
+};
+
+export const getAdminAuth = async (): Promise<admin.auth.Auth> => {
+  await getInitializationPromise();
   if (!adminAuthInstance) {
-    adminAuthInstance = admin.auth();
+     throw new Error("getAdminAuth called before async initialization completed. This is an application error.");
   }
-
-  // On the very first initialization of the server, check for critical system users and collections.
-  if (isFirstInit && adminDbInstance) {
-    isFirstInit = false; // Ensure this only runs once per server start
-    
-    // Auto-create essential collections
-    await ensureCollectionsExist();
-    
-    // Auto-create the main 'admin' user
-    await ensureSystemUserExists(adminDbInstance, {
-        name: "admin",
-        userId: "admin",
-        firstName: "Admin",
-        lastName: "User",
-        fatherName: "System",
-        email: "admin@example.com",
-        phone: "9999999999",
-        password: "password",
-        roles: ["Super Admin"],
-        privileges: ["all"],
-        isActive: true,
-        gender: 'Male',
-        source: 'Seeded',
-    });
-
-    // Auto-create the 'anonymous_donor' user
-    await ensureSystemUserExists(adminDbInstance, {
-        name: "Anonymous Donor",
-        userId: "anonymous_donor",
-        firstName: "Anonymous",
-        lastName: "Donor",
-        email: "anonymous@system.local",
-        phone: "0000000000",
-        password: "N/A",
-        roles: [],
-        isActive: false,
-        gender: 'Other',
-        source: 'Seeded',
-    });
-  }
+  return adminAuthInstance;
 };
 
-// Use getters to ensure initialization happens on first use.
-export const getAdminDb = (): AdminFirestore => {
-  if (!adminDbInstance) {
-    // Note: We can't await here, but initializeApp is synchronous if not awaited.
-    // The async checks for system users and collections will run in the background on first call.
-    initializeFirebaseAdmin();
-  }
-  return adminDbInstance!;
-};
-
-export const getAdminAuth = (): admin.auth.Auth => {
-  if (!adminAuthInstance) {
-    initializeFirebaseAdmin();
-  }
-  return adminAuthInstance!;
-};
+// Immediately start the initialization process when the server starts.
+getInitializationPromise();

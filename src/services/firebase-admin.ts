@@ -1,5 +1,3 @@
-
-
 /**
  * @fileOverview Initializes the Firebase Admin SDK.
  * This file is carefully constructed to have NO internal project dependencies
@@ -145,7 +143,10 @@ const initializeFirebaseAdmin = async () => {
   if (admin.apps.length === 0) {
     try {
       console.log("Initializing Firebase Admin SDK...");
-      admin.initializeApp();
+      // Explicitly providing the project ID to ensure correct initialization in all environments.
+      admin.initializeApp({
+        projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || 'baitul-mal-connect',
+      });
       console.log('Firebase Admin SDK initialized successfully.');
 
       adminDbInstance = getAdminFirestore();
