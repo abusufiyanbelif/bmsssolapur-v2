@@ -49,6 +49,7 @@ export default async function OrganizationPage() {
         }
 
     } catch(e) {
+        // Catch the error but allow the page to render with a warning.
         error = e instanceof Error ? e.message : "An unknown error occurred while fetching organization details.";
         console.error(e);
     }

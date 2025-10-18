@@ -15,29 +15,6 @@ export type { Organization, OrganizationFooter };
 const ORGANIZATIONS_COLLECTION = 'organizations';
 const PUBLIC_DATA_COLLECTION = 'publicData';
 
-const defaultFooter: OrganizationFooter = {
-    organizationInfo: { titleLine1: 'Baitul Mal (System Default)', titleLine2: 'Samajik Sanstha (System Default)', titleLine3: '(Solapur) (System Default)', description: 'Default description text. Please seed or create an organization profile to update this.', registrationInfo: 'Reg. No. (System Default)', taxInfo: 'PAN: (System Default)' },
-    contactUs: { title: 'Contact Us (System Default)', address: 'Default Address, Solapur', email: 'contact@example.com' },
-    keyContacts: { title: 'Key Contacts', contacts: [{name: 'Default Contact', phone: '0000000000'}] },
-    connectWithUs: { title: 'Connect With Us (System Default)', socialLinks: [] },
-    ourCommitment: { title: 'Our Commitment (System Default)', text: 'Default commitment text. Please update this in the layout settings.', linkText: 'Learn More', linkUrl: '#' },
-    copyright: { text: `© ${new Date().getFullYear()} Organization Name. All Rights Reserved. (System Default)` }
-};
-
-const defaultOrganization: Organization = {
-    id: "main_org",
-    name: "Default Organization Name",
-    address: "Default Address",
-    city: "Solapur",
-    registrationNumber: "Default Reg No",
-    contactEmail: "contact@example.com",
-    contactPhone: "0000000000",
-    createdAt: new Date(),
-    updatedAt: new Date(),
-    footer: defaultFooter,
-};
-
-
 // Function to check for duplicate organizations
 const checkDuplicates = async (name: string, registrationNumber: string): Promise<boolean> => {
     const adminDb = await getAdminDb();
@@ -82,7 +59,6 @@ export const createOrganization = async (orgData: Omit<Organization, 'id' | 'cre
 export const getOrganization = async (id: string): Promise<Organization | null> => {
   if (!id) return null;
   try {
-    noStore(); // Opt out of caching for this specific function
     const adminDb = await getAdminDb();
     const orgDoc = await adminDb.collection(ORGANIZATIONS_COLLECTION).doc(id).get();
     if (orgDoc.exists) {
@@ -97,6 +73,10 @@ export const getOrganization = async (id: string): Promise<Organization | null> 
     return null;
   } catch (error) {
     console.error(`Error getting organization with ID ${id}:`, error);
+    if (error instanceof Error) {
+        // Return null instead of throwing to prevent page crashes
+        return null;
+    }
     return null;
   }
 };
@@ -149,13 +129,15 @@ const convertGsToHttps = (gsUri?: string): string | undefined => {
     return `https://firebasestorage.googleapis.com/v0/b/${bucket}/o/${encodeURIComponent(objectPath)}?alt=media`;
 };
 
-
-// For now, we will assume one organization for this project.
+// This function is now DEPRECATED as it has been moved to a server action.
+// It is kept here to avoid breaking any potential remaining direct imports temporarily,
+// but all usage should be migrated to `src/app/admin/settings/actions.ts`.
+// @deprecated
 export const getCurrentOrganization = async (): Promise<Organization | null> => {
     noStore(); // Opt out of caching for this specific function.
-    const adminDb = await getAdminDb();
     
     try {
+        const adminDb = await getAdminDb();
         const orgQuery = adminDb.collection(ORGANIZATIONS_COLLECTION).limit(1);
         const querySnapshot = await orgQuery.get();
         
@@ -180,7 +162,9 @@ export const getCurrentOrganization = async (): Promise<Organization | null> => 
         
         return organizationData;
     } catch (error) {
-        console.warn('Warning: Could not get current organization. ' + (error instanceof Error ? error.message : 'Unknown error'));
+        // Return null instead of throwing an error to prevent page crashes.
+        const err = error instanceof Error ? error : new Error('Unknown error in getCurrentOrganization');
+        console.warn('Warning: Could not get current organization. ' + err.message);
         return null;
     }
 }

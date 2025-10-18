@@ -1,4 +1,3 @@
-
 /**
  * @fileOverview Service for managing public-facing, sanitized data in Firestore.
  */
@@ -66,7 +65,6 @@ export const updatePublicOrganization = async (org: Organization): Promise<void>
  * @returns An array of sanitized public lead objects.
  */
 export const getPublicLeads = async (): Promise<Lead[]> => {
-    const adminDb = await getAdminDb();
     const enrichLeads = async (snapshot: FirebaseFirestore.QuerySnapshot): Promise<Lead[]> => {
         const leads = snapshot.docs.map(doc => doc.data() as Lead);
         return await Promise.all(leads.map(async (lead) => {
@@ -76,6 +74,7 @@ export const getPublicLeads = async (): Promise<Lead[]> => {
     };
 
     try {
+        const adminDb = await getAdminDb();
         const q = adminDb.collection(PUBLIC_LEADS_COLLECTION).orderBy("dateCreated", "desc");
         const snapshot = await q.get();
         return await enrichLeads(snapshot);
@@ -83,6 +82,7 @@ export const getPublicLeads = async (): Promise<Lead[]> => {
         if (e instanceof Error && (e.message.includes('index') || e.message.includes('Could not find a valid index') || e.message.includes('NOT_FOUND'))) {
              console.warn(`[Graceful Fallback] Firestore index for 'publicLeads' is likely missing, or the collection doesn't exist yet. Falling back to an unsorted query.`);
             try {
+                const adminDb = await getAdminDb();
                 const fallbackSnapshot = await adminDb.collection(PUBLIC_LEADS_COLLECTION).get();
                 const leads = await enrichLeads(fallbackSnapshot);
                 // Manually sort in memory
@@ -95,7 +95,8 @@ export const getPublicLeads = async (): Promise<Lead[]> => {
         } else if (e instanceof Error && (e.message.includes('Could not refresh access token') || e.message.includes('permission-denied') || e.message.includes('UNAUTHENTICATED'))) {
             console.warn(`Permission Denied: The server environment lacks permissions to read public leads. Refer to TROUBLESHOOTING.md. Error: ${e.message}`);
         } else {
-            console.warn("Error fetching public leads:", e);
+             const err = e instanceof Error ? e : new Error('Unknown error in getPublicLeads');
+             console.warn("Error fetching public leads:", err.message);
         }
         return [];
     }
@@ -166,7 +167,6 @@ export const updatePublicCampaign = async (
  * @returns An array of public campaign objects.
  */
 export const getPublicCampaigns = async (): Promise<(Campaign & { raisedAmount: number, fundingProgress: number })[]> => {
-    const adminDb = await getAdminDb();
     const mapData = (snapshot: FirebaseFirestore.QuerySnapshot) => {
         return snapshot.docs.map(doc => {
             const data = doc.data();
@@ -178,26 +178,39 @@ export const getPublicCampaigns = async (): Promise<(Campaign & { raisedAmount: 
                 updatedAt: data.updatedAt ? (data.updatedAt as Timestamp).toDate() : undefined,
             } as (Campaign & { raisedAmount: number, fundingProgress: number });
         });
-    }
+    };
 
     try {
+        const adminDb = await getAdminDb();
         const q = adminDb.collection(PUBLIC_CAMPAIGNS_COLLECTION).orderBy("startDate", "desc");
         const snapshot = await q.get();
         return mapData(snapshot);
     } catch (e) {
-        if (e instanceof Error) {
-            console.warn(`[Graceful Fallback] Firestore query for 'publicCampaigns' failed. This might be a missing index or the collection might not exist yet. Error: ${e.message}.`);
+        if (e instanceof Error && (e.message.includes('index') || e.message.includes('Could not find a valid index') || e.message.includes('NOT_FOUND'))) {
+             console.warn(`[Graceful Fallback] Firestore index for 'publicCampaigns' is likely missing, or the collection doesn't exist yet. Falling back to an unsorted query.`);
+            try {
+                const adminDb = await getAdminDb();
+                const fallbackSnapshot = await adminDb.collection(PUBLIC_CAMPAIGNS_COLLECTION).get();
+                const campaigns = mapData(fallbackSnapshot);
+                // Sort in memory as a fallback
+                return campaigns.sort((a,b) => b.startDate.getTime() - a.startDate.getTime());
+            } catch (fallbackError) {
+                 const err = fallbackError instanceof Error ? fallbackError : new Error('Unknown fallback error in getPublicCampaigns');
+                 console.warn("Fallback query failed for getPublicCampaigns:", err.message);
+                 return [];
+            }
+        } else if (e instanceof Error && (e.message.includes('Could not refresh access token') || e.message.includes('permission-denied') || e.message.includes('UNAUTHENTICATED'))) {
+            console.warn(`Permission Denied: The server environment lacks permissions to read public campaigns. Refer to TROUBLESHOOTING.md. Error: ${e.message}`);
         } else {
-             console.warn(`[Graceful Fallback] An unknown error occurred while fetching public campaigns.`);
+             const err = e instanceof Error ? e : new Error('Unknown error in getPublicCampaigns');
+             console.warn("Error fetching public campaigns:", err.message);
         }
-        // Instead of a fallback query, which might also fail if the collection doesn't exist,
-        // we now reliably return an empty array.
         return [];
     }
 };
 
 /**
- * Enriches a campaign with its public-facing statistics by calculating funds raised from linked leads.
+ * Enriches a campaign with its public-facing statistics by calculating funds raised from linked donations.
  * @param campaign The campaign object to enrich.
  * @returns The enriched campaign object.
  */

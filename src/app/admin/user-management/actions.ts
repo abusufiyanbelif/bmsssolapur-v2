@@ -63,5 +63,3 @@ export async function handleToggleUserStatus(userId: string, isActive: boolean) 
         return { success: false, error: `Failed to update user status: ${error}` };
     }
 }
-
-    

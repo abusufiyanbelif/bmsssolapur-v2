@@ -24,7 +24,8 @@ async function DashboardData() {
       // Isolate the potentially failing call
       quotes = await getQuotes(3);
     } catch (error) {
-      console.error("Critical Error: getQuotes() failed in /admin/page.tsx. Using fallback.", error);
+      const err = error instanceof Error ? error : new Error('Unknown error fetching quotes');
+      console.warn("Critical Error: getQuotes() failed in /admin/page.tsx. Using fallback.", err.message);
       // Provide a hardcoded fallback to prevent the page from crashing.
       quotes = [
         { id: 'fb1', number: 1, text: "The believer's shade on the Day of Resurrection will be their charity.", source: "Tirmidhi", category: "Hadith", categoryTypeNumber: 2 },

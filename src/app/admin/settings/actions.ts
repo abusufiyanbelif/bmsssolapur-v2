@@ -4,8 +4,8 @@ import 'server-only';
 import { unstable_noStore as noStore } from 'next/cache';
 
 import { updateAppSettings as updateSettingsService, AppSettings, getAppSettings as getSettingsService } from "@/services/app-settings-service";
+import { getOrganization } from "@/services/organization-service";
 import { revalidatePath } from "next/cache";
-import { getCurrentOrganization as getOrgService } from "@/services/organization-service";
 
 interface FormState {
     success: boolean;
@@ -63,7 +63,9 @@ export async function handleUpdateAppSettings(
 
 export async function getCurrentOrganization() {
     noStore(); // Opt out of caching for this specific function
-    return getOrgService();
+    // For now, there is only one organization, so we fetch it by its static ID.
+    const org = await getOrganization('main_org');
+    return org;
 }
 
 export async function getAppSettings() {

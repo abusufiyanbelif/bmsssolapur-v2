@@ -1,5 +1,4 @@
 
-
 import { getCurrentOrganization } from "@/services/organization-service";
 import { EditOrganizationForm } from "./edit-organization-form";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -34,7 +33,9 @@ export default async function OrganizationSettingsPage() {
     try {
         organization = await getCurrentOrganization();
     } catch (e) {
+        // Catch the error but allow the page to render with a warning.
         error = e instanceof Error ? e.message : "An unknown error occurred.";
+        console.error(e);
     }
 
     if (error) {

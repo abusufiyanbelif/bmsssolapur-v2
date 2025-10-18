@@ -1,4 +1,3 @@
-
 /**
  * @fileOverview Service for managing inspirational quotes in Firestore.
  */
@@ -89,44 +88,4 @@ export const getAllQuotes = async (): Promise<Quote[]> => {
         // This is a critical change: always return a valid array to prevent downstream crashes.
         return []; 
     }
-}
-
-/**
- * Deletes all documents in a collection in batches.
- * @param collectionPath The path of the collection to delete.
- * @returns The number of documents deleted.
- */
-async function deleteCollection(collectionPath: string): Promise<number> {
-    const adminDb = await getAdminDb();
-    const collectionRef = adminDb.collection(collectionPath);
-    let totalDeleted = 0;
-    
-    // eslint-disable-next-line no-constant-condition
-    while (true) {
-        const snapshot = await collectionRef.limit(500).get();
-
-        // When there are no documents left, we are done
-        if (snapshot.empty) {
-            break;
-        }
-
-        // Delete documents in a batch
-        const batch = collectionRef.firestore.batch();
-        snapshot.docs.forEach(doc => {
-            batch.delete(doc.ref);
-        });
-
-        await batch.commit();
-        totalDeleted += snapshot.size;
-    }
-    return totalDeleted;
-}
-
-/**
- * Deletes all quotes from the database recursively in batches.
- * @returns The total number of quotes deleted.
- */
-export const eraseAllQuotes = async (): Promise<number> => {
-    const totalDeleted = await deleteCollection(QUOTES_COLLECTION);
-    return totalDeleted;
 }

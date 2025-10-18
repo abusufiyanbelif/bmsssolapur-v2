@@ -1,5 +1,4 @@
 
-
 'use server';
 /**
  * @fileOverview Service for logging user activities.
@@ -57,7 +56,6 @@ export const getAllActivityLogs = async (): Promise<ActivityLog[]> => {
     } catch (error) {
         if (error instanceof Error && (error.message.includes('index') || error.message.includes('Could not find a valid index'))) {
              console.warn("Firestore index missing. Please create a descending index on 'timestamp' for the 'activityLog' collection. Falling back to unsorted query.");
-             // Fallback to fetching without order and sorting in memory
              try {
                 const adminDb = await getAdminDb();
                 const fallbackQuery = adminDb.collection(ACTIVITY_LOG_COLLECTION);
@@ -69,7 +67,8 @@ export const getAllActivityLogs = async (): Promise<ActivityLog[]> => {
                 });
                 return fallbackActivities.sort((a, b) => (b.timestamp as Date).getTime() - (a.timestamp as Date).getTime());
              } catch (fallbackError) {
-                 console.error("Fallback query failed for getAllActivityLogs", fallbackError);
+                 const err = fallbackError instanceof Error ? fallbackError : new Error('Unknown fallback error in getAllActivityLogs');
+                 console.error("Fallback query failed for getAllActivityLogs:", err.message);
                  return [];
              }
         }

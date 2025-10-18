@@ -4,9 +4,12 @@
  */
 
 import { getFirestore, Timestamp, FieldValue } from 'firebase-admin/firestore';
-import type { User, UserRole, Lead, Verifier, LeadDonationAllocation, Donation, Campaign, FundTransfer, LeadAction, AppSettings, OrganizationFooter } from '@/services/types';
+import type { User, UserRole, Lead, Verifier, LeadDonationAllocation, Donation, Campaign, FundTransfer, LeadAction, AppSettings, OrganizationFooter, Organization } from '@/services/types';
 import { seedInitialQuotes } from '@/services/quotes-service';
-import { getAdminDb, getAdminAuth } from '@/services/firebase-admin';
+import { getAdminDb, getAdminAuth, ensureCollectionsExist as ensureCollectionsExistService } from '@/services/firebase-admin';
+import { updatePublicCampaign, enrichCampaignWithPublicStats } from './public-data-service';
+import { format } from 'date-fns';
+import { revalidatePath } from 'next/cache';
 
 // Re-export type for backward compatibility
 export type { User, UserRole };
@@ -72,6 +75,7 @@ export type SeedItemResult = { name: string; status: 'Created' | 'Updated' | 'Sk
 export type SeedResult = {
     message: string;
     details?: string[];
+    errors?: string[];
 };
 
 export const seedUsers = async (users: Omit<User, 'id' | 'createdAt' | 'userKey'>[]): Promise<string[]> => {
@@ -114,6 +118,14 @@ const seedOrganization = async (): Promise<string> => {
     // Always overwrite with the seed data to ensure consistency.
     await orgDocRef.set({ ...organizationToSeed, updatedAt: FieldValue.serverTimestamp() }, { merge: false });
     
+    // Revalidate paths after seeding
+    revalidatePath("/", "layout");
+    revalidatePath("/organization");
+    revalidatePath("/admin/organization");
+    revalidatePath("/admin/organization/layout");
+    revalidatePath("/admin/organization/letterhead");
+
+
     return "Organization profile seeded/updated successfully.";
 };
 
@@ -168,11 +180,10 @@ const deleteCollection = async (collectionPath: string): Promise<string> => {
 export { ensureCollectionsExist } from '@/services/firebase-admin';
 
 export const seedInitialUsersAndQuotes = async (): Promise<SeedResult> => {
-    const orgStatus = await seedOrganization();
     const quotesStatus = await seedInitialQuotes();
     return {
-        message: 'Initial Seeding Complete',
-        details: [orgStatus, quotesStatus, "The 'admin' and 'anonymous_donor' users are automatically created on startup."]
+        message: 'Quotes Seeding Complete',
+        details: [quotesStatus, "The 'admin' and 'anonymous_donor' users are automatically created on startup and were not affected."]
     };
 };
 
@@ -186,7 +197,10 @@ export const seedCoreTeam = async (): Promise<SeedResult> => {
 
 export const seedOrganizationProfile = async (): Promise<SeedResult> => {
     const orgStatus = await seedOrganization();
-    return { message: 'Organization Profile Seeding Complete', details: [orgStatus] };
+    return { 
+        message: 'Organization Profile Seeding Complete', 
+        details: [orgStatus] 
+    };
 };
 
 export const seedAppSettings = async (): Promise<SeedResult> => {
@@ -276,6 +290,7 @@ export const eraseCoreTeam = async (): Promise<SeedResult> => {
         return { message: "No core team members defined in the seed file." };
     }
 
+    // Firestore has a limit of 10 items for 'in' queries. Process in chunks.
     const chunks = [];
     for (let i = 0; i < coreTeamPhones.length; i += 10) {
         chunks.push(coreTeamPhones.slice(i, i + 10));
@@ -290,7 +305,7 @@ export const eraseCoreTeam = async (): Promise<SeedResult> => {
                 try {
                     await auth.deleteUser(userDoc.id);
                 } catch (e: any) {
-                    if (e.code !== 'auth/user-not-found') throw e;
+                    if (e.code !== 'auth/user-not-found') throw e; // Re-throw if it's not a "not found" error
                 }
                 await userDoc.ref.delete();
                 deletedCount++;
@@ -407,8 +422,7 @@ export const syncUsersToFirebaseAuth = async (): Promise<SeedResult> => {
 
 // --- DATA TO BE SEEDED ---
 
-const organizationToSeed = {
-    id: "main_org",
+const organizationToSeed: Omit<Organization, 'id' | 'createdAt' | 'updatedAt'> = {
     name: "Baitul Mal Samajik Sanstha (Solapur)",
     logoUrl: "https://firebasestorage.googleapis.com/v0/b/baitul-mal-connect.appspot.com/o/app-assets%2Flogo-new.png?alt=media&token=e5079a49-2723-4d22-b91c-297c357662c2",
     address: "123 Muslim Peth",
@@ -416,7 +430,7 @@ const organizationToSeed = {
     registrationNumber: "MAHA/123/2024/SOLAPUR",
     panNumber: "ABCDE1234F",
     contactEmail: "contact@baitulmalsolapur.org",
-    contactPhone: "+91 9372145889",
+    contactPhone: "7887646583",
     website: "https://www.baitulmalsolapur.org",
     bankAccountName: "BAITULMAL SAMAJIK SANSTHA",
     bankAccountNumber: "012345678901",
@@ -466,4 +480,3 @@ const organizationToSeed = {
       }
     }
 };
-

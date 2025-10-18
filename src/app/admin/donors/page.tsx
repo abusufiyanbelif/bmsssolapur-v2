@@ -10,7 +10,7 @@ async function DonorsPageDataLoader() {
     const allUsers = await getAllUsersAction();
     const initialDonors = allUsers.filter(u => u.roles.includes('Donor'));
     
-    // The data is now properly serialized by the server action.
+    // The data is properly serialized before passing to the client component.
     return <DonorsPageClient initialDonors={initialDonors} />;
   } catch (e) {
     const error = e instanceof Error ? e.message : "An unknown error occurred.";

@@ -1,12 +1,17 @@
-import { ensureCollectionsExist } from '@/services/seed-service';
+import { getAdminDb } from '@/services/firebase-admin';
 import dotenv from 'dotenv';
+import { ensureCollectionsExist as ensureCollections } from '@/services/firebase-admin';
 
 dotenv.config();
 
 async function run() {
   console.log('Ensuring all essential Firestore collections exist...');
   try {
-    const result = await ensureCollectionsExist();
+    // Await the DB instance first
+    const db = await getAdminDb();
+    // Pass the initialized instance to the function
+    const result = await ensureCollections(db);
+    
     if(result.success) {
       console.log(`\n✅ SUCCESS: ${result.message}`);
       if (result.details && result.details.length > 0) {

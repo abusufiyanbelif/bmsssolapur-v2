@@ -1,4 +1,3 @@
-
 /**
  * @fileOverview User service for interacting with Firestore.
  * This service should only be called from server-side components or server actions.
@@ -555,7 +554,8 @@ export const getAllUsers = async (): Promise<User[]> => {
                  return [];
              }
         } else {
-             console.error("Error getting all users: ", error);
+             const err = error instanceof Error ? error : new Error('Unknown error in getAllUsers');
+             console.error("Error getting all users: ", err.message);
         }
         return [];
     }

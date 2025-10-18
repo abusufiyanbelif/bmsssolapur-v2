@@ -26,7 +26,7 @@ export async function handleLogin(formData: FormData): Promise<LoginState> {
     try {
         let user: User | null = null;
         
-        // Determine the type of identifier and perform the correct query
+        // Correctly handle the special 'admin' case by fetching by document ID
         if (identifier.toLowerCase() === 'admin') {
             user = await getUser('admin');
         } else if (identifier.includes('@')) {
@@ -42,7 +42,6 @@ export async function handleLogin(formData: FormData): Promise<LoginState> {
             return { success: false, error: "User not found. Please check your credentials." };
         }
         
-        // Password validation logic
         if (user.password !== password) {
              return { success: false, error: "Incorrect password. Please try again." };
         }
@@ -60,7 +59,6 @@ export async function handleLogin(formData: FormData): Promise<LoginState> {
             details: { method: 'password' },
         });
 
-        // The client will handle the redirect.
         return { success: true, userId: user.id };
 
     } catch (e) {
@@ -90,8 +88,6 @@ export async function handleSendOtp(phoneNumber: string): Promise<OtpState> {
         const settings = await getAppSettings();
         const otpProvider = settings?.notificationSettings?.sms.provider || 'twilio';
 
-        // Simplified: Always use Twilio flow from the backend for now.
-        // Firebase client-side logic can be re-added if necessary, but this is more robust.
         const fullPhoneNumber = `+91${phoneNumber}`;
         const result = await sendOtp({ phoneNumber: fullPhoneNumber });
 
@@ -138,7 +134,6 @@ export async function handleVerifyOtp(formData: FormData): Promise<LoginState> {
             details: { method: 'otp' },
         });
 
-        // Return userId for the client to handle session and redirection.
         return { success: true, userId: user.id! };
 
     } catch (e) {

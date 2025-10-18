@@ -24,7 +24,12 @@ export async function getImageAsBase64(url?: string): Promise<string | undefined
     const base64 = buffer.toString('base64');
     return `data:${blob.type};base64,${base64}`;
   } catch (error) {
-    console.error("Error converting image to Base64:", error);
+    // Catch errors like invalid URL format or network issues
+    if (error instanceof TypeError) { // Often indicates an invalid URL
+      console.error(`Invalid URL provided for image: ${url}`);
+    } else {
+      console.error("Error converting image to Base64:", error);
+    }
     // Instead of throwing, return undefined so the client can handle it.
     return undefined;
   }

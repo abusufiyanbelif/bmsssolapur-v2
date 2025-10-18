@@ -10,6 +10,7 @@ This document provides solutions to common issues encountered during development
 - `16 UNAUTHENTICATED: Request had invalid authentication credentials.`
 - `Could not reach Cloud Firestore backend.`
 - `7 PERMISSION_DENIED: Missing or insufficient permissions.`
+- `5 NOT_FOUND: No such document.` (This can be a misleading symptom of a permissions or startup race condition issue).
 - `Seeding Failed - UNKNOWN: Getting metadata from plugin failed with error: Could not refresh access token`
 - `Credential implementation provided to initializeApp() via the "credential" property has insufficient permission...`
 
