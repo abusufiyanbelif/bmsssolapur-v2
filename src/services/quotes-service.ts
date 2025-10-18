@@ -1,5 +1,4 @@
 
-
 /**
  * @fileOverview Service for managing inspirational quotes in Firestore.
  */
@@ -93,7 +92,7 @@ export const getAllQuotes = async (): Promise<Quote[]> => {
 }
 
 /**
- * Deletes all documents in a collection.
+ * Deletes all documents in a collection in batches.
  * @param collectionPath The path of the collection to delete.
  * @returns The number of documents deleted.
  */

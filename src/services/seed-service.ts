@@ -1,3 +1,4 @@
+
 /**
  * @fileOverview A service to seed the database with initial data.
  */
@@ -52,8 +53,8 @@ const coreTeamUsersToSeed: Omit<User, 'id' | 'createdAt' | 'userKey'>[] = [
         email: "moosa.shaikh@example.com", 
         phone: "8421708907", 
         password: "8421708907", 
-        roles: ["Admin", "Donor"], 
-        privileges: ["canManageLeads"], 
+        roles: ["Super Admin", "Admin", "Donor"], 
+        privileges: ["all"], 
         groups: ["Founder", "Lead Approver"], 
         isActive: true, 
         gender: 'Male', 
@@ -275,7 +276,8 @@ export const seedSampleData = async (): Promise<SeedResult> => {
 
 export const eraseInitialUsersAndQuotes = async (): Promise<SeedResult> => {
      const quotesResult = await deleteCollection('inspirationalQuotes');
-     return { message: 'Quotes Collection Erased', details: [quotesResult] };
+     const orgResult = await deleteCollection('organizations');
+     return { message: 'Initial Data Erased', details: [quotesResult, orgResult] };
 };
 
 export const eraseCoreTeam = async (): Promise<SeedResult> => {
