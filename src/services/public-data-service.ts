@@ -185,13 +185,15 @@ export const getPublicCampaigns = async (): Promise<(Campaign & { raisedAmount: 
         return mapData(snapshot);
     } catch (e) {
         if (e instanceof Error && (e.message.includes('index') || e.message.includes('Could not find a valid index') || e.message.includes('NOT_FOUND'))) {
-            console.warn("Firestore index missing for 'publicCampaigns' on 'startDate' (desc). Please create it. Falling back to an unsorted query.");
+            // This condition now correctly catches missing collections as well as missing indexes.
+            console.warn(`[Graceful Fallback] Firestore index for 'publicCampaigns' on 'startDate' (desc) is likely missing, or the collection doesn't exist yet. Falling back to an unsorted query.`);
             try {
                 const fallbackSnapshot = await adminDb.collection(PUBLIC_CAMPAIGNS_COLLECTION).get();
                 const campaigns = mapData(fallbackSnapshot);
                 // Sort in memory as a fallback
                 return campaigns.sort((a,b) => b.startDate.getTime() - a.startDate.getTime());
             } catch (fallbackError) {
+                // If the fallback also fails (e.g., permission denied on the collection itself), return empty.
                 console.error("Fallback query failed for getPublicCampaigns", fallbackError);
                 return [];
             }
