@@ -10,6 +10,10 @@ buildConfig:
 
 # Settings that determine how your backend is run.
 runConfig:
+  # The timeout for server-side requests. Default is 60 seconds.
+  # Increased to 120s to allow for longer-running AI tasks.
+  timeoutSeconds: 120
+  
   # To use secrets, you must grant the Secret Manager Secret Accessor role
   # to your backend's service account.
   # https://firebase.google.com/docs/app-hosting/configure#secrets
@@ -43,3 +47,4 @@ runConfig:
     - secret: RAZORPAY_TEST_KEY_SECRET
     - secret: RAZORPAY_LIVE_KEY_ID
     - secret: RAZORPAY_LIVE_KEY_SECRET
+
