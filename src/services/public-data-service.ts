@@ -184,25 +184,13 @@ export const getPublicCampaigns = async (): Promise<(Campaign & { raisedAmount: 
         const snapshot = await q.get();
         return mapData(snapshot);
     } catch (e) {
-        if (e instanceof Error && (e.message.includes('index') || e.message.includes('Could not find a valid index') || e.message.includes('NOT_FOUND'))) {
-            // This condition now correctly catches missing collections as well as missing indexes.
-            console.warn(`[Graceful Fallback] Firestore index for 'publicCampaigns' is likely missing, or the collection doesn't exist yet. Falling back to an unsorted query.`);
-            try {
-                const fallbackSnapshot = await adminDb.collection(PUBLIC_CAMPAIGNS_COLLECTION).get();
-                const campaigns = mapData(fallbackSnapshot);
-                // Sort in memory as a fallback
-                return campaigns.sort((a,b) => b.startDate.getTime() - a.startDate.getTime());
-            } catch (fallbackError) {
-                // If the fallback also fails (e.g., permission denied on the collection itself), return empty.
-                console.error("Fallback query failed for getPublicCampaigns", fallbackError);
-                return [];
-            }
-        } else if (e instanceof Error && (e.message.includes('Could not refresh access token') || e.message.includes('permission-denied') || e.message.includes('UNAUTHENTICATED'))) {
-            console.warn(`Permission Denied: The server environment lacks permissions to read public campaigns. Refer to TROUBLESHOOTING.md. Error: ${e.message}`);
+        // Universal catch block for any error during the query (missing index, collection, permissions, etc.)
+        if (e instanceof Error) {
+            console.warn(`[Graceful Fallback] Could not fetch public campaigns. Error: "${e.message}". This might be due to a missing index or an empty collection. Returning an empty array.`);
         } else {
-            console.error("Error fetching public campaigns:", e);
+            console.warn("[Graceful Fallback] An unknown error occurred while fetching public campaigns. Returning an empty array.");
         }
-        return [];
+        return []; // Always return an empty array on any failure.
     }
 };
 
