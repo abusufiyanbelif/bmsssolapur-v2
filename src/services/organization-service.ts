@@ -1,4 +1,5 @@
 
+
 /**
  * @fileOverview Service for managing organization data in Firestore.
  */
@@ -82,6 +83,7 @@ export const createOrganization = async (orgData: Omit<Organization, 'id' | 'cre
 export const getOrganization = async (id: string): Promise<Organization | null> => {
   if (!id) return null;
   try {
+    noStore(); // Opt out of caching for this specific function
     const adminDb = await getAdminDb();
     const orgDoc = await adminDb.collection(ORGANIZATIONS_COLLECTION).doc(id).get();
     if (orgDoc.exists) {

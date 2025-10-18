@@ -1,6 +1,6 @@
 // src/app/organization/page.tsx
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Building, Mail, Phone, Globe, Hash, ShieldCheck, CreditCard, Award, Users, Banknote, MapPin, AlertCircle } from "lucide-react";
+import { Building, Mail, Phone, Globe, Hash, ShieldCheck, CreditCard, Award, Users, Banknote, MapPin, AlertCircle, Edit } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import Image from "next/image";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -8,6 +8,9 @@ import type { User, Organization } from "@/services/types";
 import { OrganizationQrCodeDialog } from "@/components/organization-qr-code-dialog";
 import { getAllUsers } from "@/services/user-service";
 import { getCurrentOrganization } from "@/app/admin/settings/actions";
+import { AppShell, AdminEditButton } from "@/components/app-shell";
+import { Button } from "@/components/ui/button";
+import Link from "next/link";
 
 const groupMapping: Record<string, string> = {
     'Founder': 'founder',
@@ -67,11 +70,15 @@ export default async function OrganizationPage() {
     if (!organization) {
         return (
              <div className="flex-1 space-y-4">
+                <div className="flex justify-between items-center">
+                    <h2 className="text-3xl font-bold tracking-tight font-headline text-primary">About Our Organization</h2>
+                     <AdminEditButton editPath="/admin/organization" />
+                </div>
                 <Alert>
                     <AlertCircle className="h-4 w-4" />
                     <AlertTitle>Organization Details Not Available</AlertTitle>
                     <AlertDescription>
-                        The organization&apos;s profile has not been set up yet, or there was a problem retrieving it. Please check back later.
+                        The organization&apos;s profile has not been set up yet. An administrator needs to create it in the admin panel.
                     </AlertDescription>
                 </Alert>
             </div>
@@ -114,7 +121,10 @@ export default async function OrganizationPage() {
     
     return (
         <div className="flex-1 space-y-6">
-            <h2 className="text-3xl font-bold tracking-tight font-headline text-primary">About Our Organization</h2>
+            <div className="flex justify-between items-center">
+                <h2 className="text-3xl font-bold tracking-tight font-headline text-primary">About Our Organization</h2>
+                <AdminEditButton editPath="/admin/organization" />
+            </div>
             <Card>
                 <CardHeader>
                     <CardTitle className="text-primary">Verifiable Details</CardTitle>

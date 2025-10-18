@@ -1,4 +1,4 @@
-
+ 
 # Firebase Studio
 
 This is a NextJS starter in Firebase Studio.
@@ -26,22 +26,6 @@ The source code for this project is managed at the following GitHub repository:
 
 The `package.json` file includes a variety of scripts to help you manage, test, and seed your application.
 
-### Database Seeding
-
-These scripts allow you to populate your Firestore database with initial data. It's recommended to run them in order.
-
-| Command | Description |
-| :--- | :--- |
-| `npm run seed:ensure-collections` | **(Recommended First Step)** Creates all necessary database collections if they are missing. Safe to run anytime. |
-| `npm run seed:initial` | Seeds the main organization profile and a collection of inspirational quotes. **The `admin` and `anonymous_donor` system users are created automatically on server start.** |
-| `npm run seed:core-team` | Creates the user accounts for the organization's founders and core administrators. |
-| `npm run seed:app-settings`| Seeds the default configurations for lead purposes, user fields, and dashboard visibility. **Run this before creating leads.** |
-| `npm run seed:payment-gateways` | Seeds placeholder credentials for the Razorpay payment gateway to enable online donations in test mode. |
-| `npm run seed:sample-data` | **(Optional)** Populates the database with a wide range of sample campaigns, beneficiaries, leads, and donations for demonstration purposes. |
-| `npm run seed:sync-auth` | Syncs existing Firestore users to Firebase Authentication, enabling them for OTP/phone login. This can be run at any time. |
-
----
-
 ### Service & IAM Verification
 
 These scripts help you test your connections to external services and verify your project's IAM permissions.
@@ -50,11 +34,28 @@ These scripts help you test your connections to external services and verify you
 | :--- | :--- |
 | `npm run health-check` | **(Recommended)** Runs all the tests below to provide a full system health check. |
 | `npm run test:db` | Verifies the application's ability to connect to and authenticate with Firestore. |
+| `npm run test:admin-login` | Verifies that the default 'admin' user can be successfully authenticated. |
 | `npm run test:gemini` | Verifies the connection to Google AI and checks if the `GEMINI_API_KEY` is valid. |
 | `npm run test:twilio` | Tests the connection to Twilio using your configured credentials for sending SMS. |
 | `npm run test:nodemailer` | Tests the connection to your SMTP server for sending emails. |
 | `npm run verify:iam` | Checks if your deployed App Hosting service account has all the necessary IAM roles. |
 | `npm run fix:iam` | Automatically attempts to grant any missing IAM roles to your App Hosting service account. |
+
+---
+
+### Database Seeding
+
+These scripts allow you to populate your Firestore database with initial data. It's recommended to run them in order.
+
+| Command | Description |
+| :--- | :--- |
+| `npm run seed:ensure-collections` | Creates all necessary database collections if they are missing. Safe to run anytime. |
+| `npm run seed:initial` | Seeds the main organization profile and a collection of inspirational quotes. |
+| `npm run seed:core-team` | Creates the user accounts for the organization's founders and core administrators. |
+| `npm run seed:app-settings`| Seeds the default configurations for lead purposes, user fields, and dashboard visibility. **Run this before creating leads.** |
+| `npm run seed:payment-gateways` | Seeds placeholder credentials for the Razorpay payment gateway to enable online donations in test mode. |
+| `npm run seed:sample-data` | **(Optional)** Populates the database with a wide range of sample campaigns, beneficiaries, leads, and donations for demonstration purposes. |
+| `npm run seed:sync-auth` | Syncs existing Firestore users to Firebase Authentication, enabling them for OTP/phone login. This can be run at any time. |
 
 ---
 

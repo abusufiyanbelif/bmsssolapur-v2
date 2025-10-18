@@ -3,7 +3,7 @@
 
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
-import { LogIn, LogOut, Menu, Users as UsersIcon, User, Home, Loader2, Bell, AlertTriangle, FileCheck, HandHeart, Megaphone, ArrowRightLeft, Shield, FileText } from "lucide-react";
+import { LogIn, LogOut, Menu, Users as UsersIcon, User, Home, Loader2, Bell, AlertTriangle, FileCheck, HandHeart, Megaphone, ArrowRightLeft, Shield, FileText, Edit } from "lucide-react";
 import { RoleSwitcherDialog } from "./role-switcher-dialog";
 import { useState, useEffect, useCallback } from "react";
 import { Footer } from "./footer";
@@ -29,6 +29,28 @@ import { Card, CardHeader, CardContent, CardTitle, CardDescription } from "@/com
 import { performPermissionCheck, getCurrentUser, getAdminNotificationData } from "@/app/actions";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "./ui/skeleton";
+
+export const AdminEditButton = ({ editPath }: { editPath: string }) => {
+    const [isAdmin, setIsAdmin] = useState(false);
+    
+    useEffect(() => {
+        const role = localStorage.getItem('activeRole');
+        if (role && (role === 'Admin' || role === 'Super Admin')) {
+            setIsAdmin(true);
+        }
+    }, []);
+
+    if (!isAdmin) return null;
+
+    return (
+        <Button asChild>
+            <Link href={editPath}>
+                <Edit className="mr-2 h-4 w-4" />
+                Edit Page Content
+            </Link>
+        </Button>
+    )
+}
 
 const defaultFooter: OrganizationFooter = {
     organizationInfo: { titleLine1: 'Baitul Mal', titleLine2: 'Samajik Sanstha', titleLine3: '(Solapur)', description: '', registrationInfo: '', taxInfo: '' },
@@ -126,16 +148,26 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         createdAt: new Date() as any,
     };
     
+    // Function to fetch organization data, memoized with useCallback
+    const fetchOrganizationData = useCallback(async () => {
+        try {
+            const orgData = await getCurrentOrganization();
+            setOrganization(orgData);
+        } catch (e) {
+            console.error("Failed to fetch organization data in AppShell", e);
+        }
+    }, []);
+
     // This is the core session initialization and redirection logic.
     useEffect(() => {
         const initializeSession = async () => {
             setSessionState('loading');
-            const [permissionResult, orgData] = await Promise.all([
+            
+            // Perform permission check and fetch organization data in parallel
+            const [permissionResult] = await Promise.all([
                 performPermissionCheck(),
-                getCurrentOrganization()
+                fetchOrganizationData(), // Fetch org data on initial load
             ]);
-
-            setOrganization(orgData);
 
             if (!permissionResult.success && permissionResult.error) {
                 setPermissionError(permissionResult.error);
@@ -191,16 +223,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 if (shouldShowRoleSwitcher && fetchedUser.roles.length > 1) {
                     setIsRoleSwitcherOpen(true);
                     localStorage.removeItem('showRoleSwitcher'); 
-                } else if (activeRole === 'Donor') {
-                    // Stay on /home for Donor
-                } else {
-                    switch (activeRole) {
-                        case 'Beneficiary': router.push('/home'); break;
-                        case 'Referral': router.push('/home'); break;
-                        case 'Admin': case 'Super Admin': case 'Finance Admin':
-                            router.push('/admin'); break;
-                        default: router.push('/'); break;
-                    }
                 }
             }
             
@@ -209,7 +231,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
         initializeSession();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [pathname]);
+    }, [pathname, fetchOrganizationData]); // Add fetchOrganizationData to dependency array
 
     useEffect(() => {
         if (sessionUser?.isLoggedIn && sessionUser.roles.some(r => ['Admin', 'Super Admin', 'Finance Admin'].includes(r))) {
