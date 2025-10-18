@@ -5,7 +5,7 @@ import { useState, useEffect, useMemo } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { ArrowRight, HandHeart, FileText, Loader2, Quote as QuoteIcon, Target, ChevronLeft, ChevronRight, FilePlus2, DollarSign, Wheat, Gift, Building, Shield, Banknote, PackageOpen, History, Megaphone, Users as UsersIcon, TrendingUp, CheckCircle, Hourglass, Eye, HandCoins } from "lucide-react";
+import { ArrowRight, HandHeart, FileText, Loader2, Quote as QuoteIcon, Target, ChevronLeft, ChevronRight, FilePlus2, DollarSign, Wheat, Gift, Building, Shield, Banknote, PackageOpen, History, Megaphone, Users as UsersIcon, TrendingUp, CheckCircle, Hourglass, Eye, HandCoins, FileCheck } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
 import type { User, Lead, Quote, LeadStatus, Campaign, Donation, AppSettings } from "@/services/types";
@@ -15,6 +15,9 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { MainMetricsCard } from "@/app/admin/dashboard-cards";
+import { getAllLeads } from "@/services/lead-service";
+import { useRouter } from "next/navigation";
+import { getQuotes } from "@/app/home/actions";
 
 const statusColors: Record<LeadStatus, string> = {
     "Open": "bg-blue-500/20 text-blue-700 border-blue-500/30",
@@ -44,7 +47,7 @@ export function BeneficiaryDashboardContent({ cases, quotes, settings }: { cases
         cases.forEach(caseItem => {
             totalRequested += caseItem.helpRequested;
             totalAidReceived += caseItem.helpGiven;
-            if (caseItem.caseStatus === 'Closed') {
+            if (caseItem.caseAction === 'Closed') {
                 myCasesClosed++;
             }
             if (caseItem.caseAction === 'Pending' || caseItem.caseAction === 'Partial' || caseItem.caseAction === 'Open' || caseItem.caseAction === 'Ready For Help' || caseItem.caseAction === 'Publish') {
@@ -264,7 +267,6 @@ function InspirationalQuotes({ quotes }: { quotes: Quote[] }) {
 
         const fetchQuotes = async () => {
              setLoading(true);
-             const { getQuotes } = await import('@/app/home/actions');
              const fetchedQuotes = await getQuotes(3);
              setQuotes(fetchedQuotes);
              setLoading(false);

@@ -30,8 +30,7 @@ This workflow details the lifecycle of a help request, from creation to closure.
     -   **If Rejected**: The status is changed to **"Rejected"**, and the lead is removed from active queues.
 
 4.  **Publishing**:
-    -   A lead with the status **"Ready For Help"** now appears in the **"Leads Ready for Publishing"** section on the Admin Dashboard.
-    -   An admin can click "Publish" on the dashboard or edit the lead and set the `caseAction` to **"Publish"**.
+    -   An admin can set the `caseAction` of any lead to **'Publish'** at any time to make it publicly visible.
     -   This action makes the lead visible on the `/public-leads` page for donors.
 
 5.  **Funding & Allocation**:

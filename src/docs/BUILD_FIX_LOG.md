@@ -4,7 +4,39 @@ This document tracks errors found during the build process and the steps taken t
 
 ---
 
-## Build Pass 8 (Latest)
+## Build Pass 9 (Latest)
+
+### Errors Found:
+
+1.  **`ensureCollectionsExist` is not a function**:
+    -   **Description**: The seed page crashed when trying to run the "Ensure Collections" task because the function, which was recently moved, was not properly exported from `seed-service.ts`.
+    -   **Resolution**: Added the `export` keyword to the `ensureCollectionsExist` function, making it accessible to other modules.
+
+2.  **Incomplete "Erase" Functionality on Seed Page**:
+    -   **Description**: The "Erase" functions were only deleting a single document or batch of documents instead of the entire collection. Additionally, the "Erase Core Team" function failed to identify the correct users to delete.
+    -   **Resolution**:
+        -   Rewrote the `deleteCollection` utility in `seed-service.ts` to use a continuous `while` loop, ensuring it fetches and deletes all documents in a collection until it is completely empty.
+        -   Fixed the query logic in `eraseCoreTeam` to correctly identify core team members for deletion from both Firestore and Firebase Auth.
+        -   Fully implemented all previously missing erase functions (`eraseAppSettings`, `erasePaymentGateways`, etc.).
+
+3.  **`insufficient permission` on Erase Auth Users**:
+    -   **Description**: Erasing all authentication users failed because the app's service account was missing the IAM role required to manage Firebase Authentication.
+    -   **Resolution**: Updated the `scripts/verify-iam.js` script to include `roles/firebase.admin`. This allows an admin to run `npm run fix:iam` to automatically grant the necessary permission, resolving the issue. Updated `TROUBLESHOOTING.md` accordingly.
+
+4.  **Quotes Not Being Erased**:
+    -   **Description**: After erasing the `inspirationalQuotes` collection, the quotes still appeared on the dashboard because the `getQuotes` server action had a hardcoded fallback.
+    -   **Resolution**: Removed the hardcoded fallback from `getQuotes` in `src/app/home/actions.ts`. The function now correctly returns an empty array if the database collection is empty, ensuring the UI accurately reflects the database state.
+
+5.  **App Crash on Missing Firestore Indexes**:
+    -   **Description**: The application would crash if a query required a Firestore index that had not been created yet (e.g., ordering leads by date).
+    -   **Resolution**:
+        -   Refactored all data-fetching services (`lead-service`, `donation-service`, `user-service`) to be resilient to missing indexes.
+        -   Each function now uses a `try...catch` block. It first attempts the query *with* sorting. If it fails due to a missing index, the `catch` block retries the query *without* sorting and then sorts the data in memory.
+        -   This prevents the app from crashing and ensures data is always displayed, while also logging a clear, developer-friendly error message indicating which index needs to be created.
+
+---
+
+## Build Pass 8
 
 ### Errors Found:
 1.  **ReferenceError: `allUsers` is not defined on Homepage**:
