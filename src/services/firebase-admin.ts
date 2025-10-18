@@ -32,10 +32,9 @@ const ensureSystemUserExists = async (db: AdminFirestore, userData: Partial<User
             const userCountSnapshot = await db.collection('users').count().get();
             const userKey = `SYSTEM${(userCountSnapshot.data().count + 1).toString().padStart(2, '0')}`;
             
-            // This is the definitive fix: Ensure the password is part of the object being created.
             const userToCreate: Omit<User, 'id'> = {
                 ...userData,
-                password: userData.password, // DEFINITIVE FIX: Ensure password is in the final object
+                password: userData.password, 
                 userKey: userKey,
                 createdAt: Timestamp.now() as any,
                 updatedAt: Timestamp.now() as any,
@@ -75,7 +74,6 @@ export const ensureCollectionsExist = async (): Promise<{ success: boolean; mess
             const snapshot = await collectionRef.limit(1).get();
             if (snapshot.empty) {
                 console.log(`Collection "${collectionName}" not found. Creating it...`);
-                // Add a placeholder document to create the collection.
                 await collectionRef.doc('_init_').set({
                     initializedAt: Timestamp.now(),
                     description: `This document was automatically created to initialize the ${collectionName} collection.`
@@ -99,39 +97,11 @@ export const ensureCollectionsExist = async (): Promise<{ success: boolean; mess
     };
 };
 
-
-const initializeFirebaseAdmin = async () => {
-  if (admin.apps.length > 0 && adminDbInstance) {
-      return;
-  }
-  
-  if (admin.apps.length === 0) {
-    try {
-      console.log("Initializing Firebase Admin SDK...");
-      admin.initializeApp();
-      console.log('Firebase Admin SDK initialized successfully.');
-
-      adminDbInstance = getAdminFirestore();
-      adminAuthInstance = admin.auth();
-      
-      await runPostInitTasks();
-    } catch (e) {
-      console.error("Firebase Admin SDK initialization error:", e);
-      throw new Error("Failed to initialize Firebase Admin SDK. Check server logs and credentials.");
-    }
-  } else if (admin.apps.length > 0 && !adminDbInstance) {
-      adminDbInstance = getAdminFirestore();
-      adminAuthInstance = admin.auth();
-  }
-};
-
 const runPostInitTasks = async () => {
     if (!adminDbInstance) return;
     try {
         await Promise.all([
-            // Auto-create essential collections
             ensureCollectionsExist(),
-            // Auto-create the main 'admin' user
              ensureSystemUserExists(adminDbInstance, {
                 name: "admin",
                 userId: "admin",
@@ -147,10 +117,9 @@ const runPostInitTasks = async () => {
                 gender: 'Male', 
                 source: 'Seeded',
             }),
-            // Auto-create the 'anonymous_donor' user
             ensureSystemUserExists(adminDbInstance, {
                 name: "Anonymous Donor",
-                userId: "anonymous_donor", // The document ID will be 'anonymous_donor'
+                userId: "anonymous_donor",
                 firstName: "Anonymous",
                 lastName: "Donor",
                 email: "anonymous@system.local",
@@ -166,6 +135,33 @@ const runPostInitTasks = async () => {
         console.error("A post-initialization task failed:", e);
     }
 }
+
+const initializeFirebaseAdmin = async () => {
+  if (admin.apps.length > 0 && adminDbInstance) {
+      return;
+  }
+  
+  if (admin.apps.length === 0) {
+    try {
+      console.log("Initializing Firebase Admin SDK...");
+      admin.initializeApp();
+      console.log('Firebase Admin SDK initialized successfully.');
+
+      adminDbInstance = getAdminFirestore();
+      adminAuthInstance = admin.auth();
+      
+      // CRITICAL: Await the post-init tasks to ensure collections/users are created before any other code runs.
+      await runPostInitTasks();
+
+    } catch (e) {
+      console.error("Firebase Admin SDK initialization error:", e);
+      throw new Error("Failed to initialize Firebase Admin SDK. Check server logs and credentials.");
+    }
+  } else if (admin.apps.length > 0 && !adminDbInstance) {
+      adminDbInstance = getAdminFirestore();
+      adminAuthInstance = admin.auth();
+  }
+};
 
 const getInitializationPromise = () => {
     if (!initializationPromise) {
@@ -190,5 +186,5 @@ export const getAdminAuth = async (): Promise<admin.auth.Auth> => {
   return adminAuthInstance;
 };
 
-// Initiate initialization on server start
+// Immediately start the initialization process when the server starts.
 getInitializationPromise();
