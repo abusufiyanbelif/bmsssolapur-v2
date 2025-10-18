@@ -72,11 +72,9 @@ export const getOrganization = async (id: string): Promise<Organization | null> 
     }
     return null;
   } catch (error) {
-    console.error(`Error getting organization with ID ${id}:`, error);
-    if (error instanceof Error) {
-        // Return null instead of throwing to prevent page crashes
-        return null;
-    }
+    // This is the critical change. Instead of throwing, we log and return null.
+    // This handles both "document not found" and initial "permission denied" race conditions gracefully.
+    console.warn(`Warning: Could not get organization with ID ${id}. Reason:`, error instanceof Error ? error.message : "Unknown error");
     return null;
   }
 };
