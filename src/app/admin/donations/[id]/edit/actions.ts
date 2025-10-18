@@ -1,5 +1,4 @@
 
-
 "use server";
 
 import {
@@ -136,6 +135,7 @@ export async function handleUpdateDonation(
       leadId: formData.get("leadId") === 'none' ? undefined : formData.get("leadId") as string | undefined,
       campaignId: campaignId === 'none' ? undefined : campaignId,
       campaignName: campaignName,
+      updatedBy: { id: adminUser.id!, name: adminUser.name },
     };
 
     const changes = getChangedFields(originalDonation, updates);

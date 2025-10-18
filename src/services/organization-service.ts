@@ -1,5 +1,4 @@
 
-
 /**
  * @fileOverview Service for managing organization data in Firestore.
  */
@@ -64,15 +63,15 @@ export const createOrganization = async (orgData: Omit<Organization, 'id' | 'cre
     }
 
     const orgRef = adminDb.collection(ORGANIZATIONS_COLLECTION).doc('main_org'); // Use a singleton document
-    const newOrganization: Organization = {
+    const newOrganization: Omit<Organization, 'id'> = {
       ...orgData,
-      id: orgRef.id,
       createdAt: new Date(),
       updatedAt: new Date(),
+      updatedBy: { id: 'SYSTEM', name: 'System Seed' }
     };
     await orgRef.set(newOrganization);
 
-    return newOrganization;
+    return { id: orgRef.id, ...newOrganization } as Organization;
   } catch (error) {
     console.error('Error creating organization: ', error);
     throw error;
@@ -87,9 +86,9 @@ export const getOrganization = async (id: string): Promise<Organization | null> 
     const adminDb = await getAdminDb();
     const orgDoc = await adminDb.collection(ORGANIZATIONS_COLLECTION).doc(id).get();
     if (orgDoc.exists) {
-      const data = docSnap.data();
+      const data = orgDoc.data();
       return { 
-        id: docSnap.id, 
+        id: orgDoc.id, 
         ...data,
         createdAt: (data!.createdAt as Timestamp)?.toDate(),
         updatedAt: (data!.updatedAt as Timestamp)?.toDate(),
@@ -109,7 +108,7 @@ export const updateOrganization = async (id: string, updates: Partial<Omit<Organ
     const orgRef = adminDb.collection(ORGANIZATIONS_COLLECTION).doc(id);
     await orgRef.update({
         ...updates,
-        updatedAt: new Date(),
+        updatedAt: FieldValue.serverTimestamp(),
     });
   } catch (error) {
     console.error("Error updating organization: ", error);
@@ -117,13 +116,14 @@ export const updateOrganization = async (id: string, updates: Partial<Omit<Organ
   }
 };
 
-export const updateOrganizationFooter = async (id: string, footerData: OrganizationFooter) => {
+export const updateOrganizationFooter = async (id: string, footerData: OrganizationFooter, updatedBy: {id: string, name: string}) => {
     try {
         const adminDb = await getAdminDb();
         const orgRef = adminDb.collection(ORGANIZATIONS_COLLECTION).doc(id);
         await orgRef.update({
             footer: footerData,
-            updatedAt: new Date(),
+            updatedAt: FieldValue.serverTimestamp(),
+            updatedBy: updatedBy,
         });
     } catch (error) {
         console.error("Error updating organization footer: ", error);

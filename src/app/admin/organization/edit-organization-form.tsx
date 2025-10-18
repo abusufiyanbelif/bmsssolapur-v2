@@ -17,7 +17,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { handleUpdateOrganization } from "./actions";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Loader2, Save, Edit, X } from "lucide-react";
 import { Organization } from "@/services/organization-service";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
@@ -59,6 +59,11 @@ export function EditOrganizationForm({ organization, isCreating }: EditOrganizat
   const [qrCodePreviewUrl, setQrCodePreviewUrl] = useState(organization.qrCodeUrl || '');
   const [logoPreviewUrl, setLogoPreviewUrl] = useState(organization.logoUrl || '');
   const [isEditing, setIsEditing] = useState(isCreating);
+  const [adminUserId, setAdminUserId] = useState<string | null>(null);
+
+  useEffect(() => {
+    setAdminUserId(localStorage.getItem('userId'));
+  }, []);
   
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -98,9 +103,14 @@ export function EditOrganizationForm({ organization, isCreating }: EditOrganizat
   }
 
   async function onSubmit(values: FormValues) {
+    if (!adminUserId) {
+        toast({ variant: "destructive", title: "Error", description: "Could not identify administrator." });
+        return;
+    }
     setIsSubmitting(true);
     
     const formData = new FormData();
+    formData.append("adminUserId", adminUserId);
     Object.entries(values).forEach(([key, value]) => {
         if (value) {
             formData.append(key, value);

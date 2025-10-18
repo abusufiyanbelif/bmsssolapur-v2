@@ -2,6 +2,7 @@
 "use server";
 
 import { updateOrganizationFooter } from "@/services/organization-service";
+import { getUser } from "@/services/user-service";
 import { revalidatePath } from "next/cache";
 import type { OrganizationFooter } from "@/services/types";
 
@@ -15,7 +16,17 @@ export async function handleUpdateFooterSettings(
   formData: FormData
 ): Promise<FormState> {
   
+  const adminUserId = formData.get("adminUserId") as string;
+  if (!adminUserId) {
+    return { success: false, error: "Admin user ID is missing." };
+  }
+  
   try {
+    const adminUser = await getUser(adminUserId);
+    if (!adminUser) {
+        return { success: false, error: "Admin user not found." };
+    }
+
     const keyContacts = JSON.parse(formData.get("keyContacts") as string || '[]');
     const socialLinks = JSON.parse(formData.get("socialLinks") as string || '[]');
 
@@ -52,10 +63,10 @@ export async function handleUpdateFooterSettings(
       }
     };
     
-    await updateOrganizationFooter(orgId, updates);
+    await updateOrganizationFooter(orgId, updates, { id: adminUser.id!, name: adminUser.name });
     
     revalidatePath("/admin/organization/layout");
-    revalidatePath("/"); // Revalidate home page to reflect footer changes
+    revalidatePath("/", "layout"); // Revalidate all pages using the layout
 
     return { success: true };
   } catch (e) {

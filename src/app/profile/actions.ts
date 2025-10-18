@@ -1,7 +1,7 @@
 
 "use server";
 
-import { updateUser, User } from "@/services/user-service";
+import { updateUser, User, getUser } from "@/services/user-service";
 import { revalidatePath } from "next/cache";
 
 interface FormState {
@@ -34,8 +34,16 @@ export async function handleUpdateProfile(
       return { success: false, error: "User is not authenticated." };
     }
     
+    const user = await getUser(userId);
+    if (!user) {
+        return { success: false, error: "User profile not found." };
+    }
+
     // We only allow updating a subset of fields from the profile page
-    const updates: Partial<User> = { ...data };
+    const updates: Partial<User> = { 
+        ...data,
+        updatedBy: { id: user.id!, name: user.name }
+    };
     
     if (data.firstName || data.middleName || data.lastName) {
        updates.name = `${data.firstName || ''} ${data.middleName || ''} ${data.lastName || ''}`.replace(/\s+/g, ' ').trim();
@@ -49,6 +57,7 @@ export async function handleUpdateProfile(
     await updateUser(userId, updates);
     
     revalidatePath("/profile/settings");
+    revalidatePath("/admin/user-management"); // In case the user is also shown there
 
     return { success: true };
 

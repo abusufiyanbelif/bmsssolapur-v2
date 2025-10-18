@@ -17,7 +17,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { handleUpdateFooterSettings } from "./actions";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Loader2, Save, Edit, X, PlusCircle, Trash2 } from "lucide-react";
 import type { Organization } from "@/services/types";
 import { Textarea } from "@/components/ui/textarea";
@@ -30,6 +30,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useRouter } from "next/navigation";
 
 
 const socialPlatformSchema = z.enum(["Facebook", "Instagram", "Twitter"]);
@@ -86,8 +87,14 @@ interface LayoutSettingsFormProps {
 
 export function LayoutSettingsForm({ organization }: LayoutSettingsFormProps) {
   const { toast } = useToast();
+  const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
+  const [adminUserId, setAdminUserId] = useState<string | null>(null);
+
+  useEffect(() => {
+    setAdminUserId(localStorage.getItem('userId'));
+  }, []);
   
   const defaultFooter = organization.footer || {
       organizationInfo: { titleLine1: '', titleLine2: '', titleLine3: '', description: '', registrationInfo: '', taxInfo: '' },
@@ -122,7 +129,7 @@ export function LayoutSettingsForm({ organization }: LayoutSettingsFormProps) {
     },
   });
 
-  const { formState: { isDirty }, reset, control } = form;
+  const { formState: { isDirty }, reset, control, handleSubmit } = form;
   const { fields: keyContactFields, append: appendKeyContact, remove: removeKeyContact } = useFieldArray({ control, name: "keyContacts" });
   const { fields: socialLinkFields, append: appendSocialLink, remove: removeSocialLink } = useFieldArray({ control, name: "socialLinks" });
 
@@ -132,8 +139,13 @@ export function LayoutSettingsForm({ organization }: LayoutSettingsFormProps) {
   };
   
   async function onSubmit(values: FormValues) {
+    if (!adminUserId) {
+        toast({ variant: "destructive", title: "Error", description: "Could not identify administrator." });
+        return;
+    }
     setIsSubmitting(true);
     const formData = new FormData();
+    formData.append("adminUserId", adminUserId);
     Object.entries(values).forEach(([key, value]) => {
         if (key === 'keyContacts' || key === 'socialLinks') {
             formData.append(key, JSON.stringify(value));
@@ -148,6 +160,7 @@ export function LayoutSettingsForm({ organization }: LayoutSettingsFormProps) {
       toast({ title: "Settings Saved", description: "The footer layout has been updated." });
       setIsEditing(false);
       reset(values);
+      router.refresh();
     } else {
       toast({ variant: "destructive", title: "Error", description: result.error });
     }
@@ -156,16 +169,16 @@ export function LayoutSettingsForm({ organization }: LayoutSettingsFormProps) {
 
   return (
     <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
              <div className="flex justify-end mb-6">
                 {!isEditing ? (
-                    <Button onClick={() => setIsEditing(true)}>
+                    <Button type="button" onClick={() => setIsEditing(true)}>
                         <Edit className="mr-2 h-4 w-4" />
                         Edit Layout
                     </Button>
                 ) : (
                     <div className="flex gap-2">
-                        <Button variant="outline" onClick={handleCancel}>
+                        <Button type="button" variant="outline" onClick={handleCancel}>
                             <X className="mr-2 h-4 w-4" /> Cancel
                         </Button>
                         <Button type="submit" disabled={isSubmitting || !isDirty}>

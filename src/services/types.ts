@@ -1,5 +1,4 @@
 
-
 /**
  * @fileOverview Centralized type definitions for the application's data models.
  */
@@ -90,6 +89,7 @@ export interface User {
   otherDocument2Url?: string;
   createdAt: Date;
   updatedAt?: Date;
+  updatedBy?: { id: string; name: string };
   source?: 'Seeded' | 'Manual Entry';
 }
 
@@ -159,6 +159,8 @@ export interface Donation {
   notes?: string;
   rawText?: string;
   source?: 'Seeded' | 'Manual Entry';
+  updatedAt?: Date;
+  updatedBy?: { id: string; name: string; };
 }
 
 // Lead-related types
@@ -276,6 +278,7 @@ export interface Lead {
     semester?: string;
     createdAt: Date;
     updatedAt?: Date;
+    updatedBy?: { id: string; name: string };
 }
 
 export type CampaignStatus = 'Upcoming' | 'Active' | 'Completed' | 'Cancelled';
@@ -295,6 +298,7 @@ export interface Campaign {
     isHistoricalRecord?: boolean;
     createdAt: Date;
     updatedAt: Date;
+    updatedBy?: { id: string; name: string };
     source?: 'Seeded' | 'Manual Entry';
     // New fields for fixed amount distribution
     fixedAmountPerBeneficiary?: number;
@@ -358,6 +362,7 @@ export interface Organization {
     };
     createdAt: Date;
     updatedAt: Date;
+    updatedBy?: { id: string; name: string };
 }
 
 export interface Quote {

@@ -1,10 +1,10 @@
 
-
 "use server";
 
 import { updateOrganization, Organization, createOrganization } from "@/services/organization-service";
 import { revalidatePath } from "next/cache";
 import { uploadFile } from "@/services/storage-service";
+import { getUser } from "@/services/user-service";
 
 
 interface FormState {
@@ -19,7 +19,17 @@ export async function handleUpdateOrganization(
   isCreating: boolean,
 ): Promise<FormState> {
   
+  const adminUserId = formData.get("adminUserId") as string;
+  if (!adminUserId) {
+    return { success: false, error: "Admin user ID is missing." };
+  }
+
   try {
+    const adminUser = await getUser(adminUserId);
+    if (!adminUser) {
+        return { success: false, error: "Admin user not found." };
+    }
+
     const qrCodeFile = formData.get("qrCodeFile") as File | null;
     let qrCodeUrl = formData.get('qrCodeUrl') as string;
     
@@ -54,7 +64,8 @@ export async function handleUpdateOrganization(
         hero: {
             title: formData.get('hero.title') as string,
             description: formData.get('hero.description') as string,
-        }
+        },
+        updatedBy: { id: adminUser.id!, name: adminUser.name },
     };
     
     if(isCreating) {
@@ -64,11 +75,8 @@ export async function handleUpdateOrganization(
     }
     
     revalidatePath("/admin/organization");
-    revalidatePath("/organization");
-    revalidatePath("/campaigns");
-    // Revalidate pages that use the header, footer, or hero text
+    // Revalidate all pages using the layout to update header/footer
     revalidatePath("/", "layout");
-    revalidatePath("/home", "layout");
 
 
     return { success: true };
@@ -81,4 +89,3 @@ export async function handleUpdateOrganization(
     };
   }
 }
-

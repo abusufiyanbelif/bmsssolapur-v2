@@ -25,6 +25,9 @@ export async function handleUpdateCampaign(campaignId: string, formData: FormDat
 
   try {
     const adminUser = adminUserId ? await getUser(adminUserId) : null;
+    if (!adminUser) {
+        return { success: false, error: 'Admin user not found for logging.' };
+    }
 
     let imageUrl: string | undefined = formData.get('existingImageUrl') as string | undefined;
 
@@ -62,6 +65,7 @@ export async function handleUpdateCampaign(campaignId: string, formData: FormDat
         leads: linkedLeadIds,
         collectedAmount: parseFloat(formData.get('collectedAmount') as string) || 0,
         isHistoricalRecord: status === 'Completed', // Set based on status
+        updatedBy: { id: adminUser.id!, name: adminUser.name },
     };
 
     await updateCampaign(campaignId, campaignUpdateData);
