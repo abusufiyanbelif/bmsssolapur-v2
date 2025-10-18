@@ -40,8 +40,8 @@ export const logActivity = async (logData: Omit<ActivityLog, 'id' | 'timestamp'>
  * @returns An array of all activity log objects.
  */
 export const getAllActivityLogs = async (): Promise<ActivityLog[]> => {
-    const adminDb = await getAdminDb();
     try {
+        const adminDb = await getAdminDb();
         const q = adminDb.collection(ACTIVITY_LOG_COLLECTION).orderBy("timestamp", "desc");
         const querySnapshot = await q.get();
         const activities: ActivityLog[] = [];
@@ -59,6 +59,7 @@ export const getAllActivityLogs = async (): Promise<ActivityLog[]> => {
              console.warn("Firestore index missing. Please create a descending index on 'timestamp' for the 'activityLog' collection. Falling back to unsorted query.");
              // Fallback to fetching without order and sorting in memory
              try {
+                const adminDb = await getAdminDb();
                 const fallbackQuery = adminDb.collection(ACTIVITY_LOG_COLLECTION);
                 const fallbackSnapshot = await fallbackQuery.get();
                 const fallbackActivities: ActivityLog[] = [];
@@ -84,8 +85,8 @@ export const getAllActivityLogs = async (): Promise<ActivityLog[]> => {
  * @returns An array of activity log objects.
  */
 export const getUserActivity = async (userId: string): Promise<ActivityLog[]> => {
-    const adminDb = await getAdminDb();
     try {
+        const adminDb = await getAdminDb();
         // Query only by userId to avoid needing a composite index.
         const q = adminDb.collection(ACTIVITY_LOG_COLLECTION)
             .where("userId", "==", userId);
@@ -120,8 +121,8 @@ export const getUserActivity = async (userId: string): Promise<ActivityLog[]> =>
  * @returns An array of activity log objects.
  */
 export const getTargetUserActivity = async (targetUserId: string): Promise<ActivityLog[]> => {
-    const adminDb = await getAdminDb();
     try {
+        const adminDb = await getAdminDb();
         const q = adminDb.collection(ACTIVITY_LOG_COLLECTION)
             .where("details.targetUserId", "==", targetUserId);
 
@@ -153,8 +154,8 @@ export const getTargetUserActivity = async (targetUserId: string): Promise<Activ
  * @returns An array of activity log objects.
  */
 export const getDonationActivity = async (donationId: string): Promise<ActivityLog[]> => {
-    const adminDb = await getAdminDb();
     try {
+        const adminDb = await getAdminDb();
         const q = adminDb.collection(ACTIVITY_LOG_COLLECTION)
             .where("details.donationId", "==", donationId);
             
@@ -185,8 +186,8 @@ export const getDonationActivity = async (donationId: string): Promise<ActivityL
  * @returns An array of activity log objects.
  */
 export const getCampaignActivity = async (campaignId: string): Promise<ActivityLog[]> => {
-    const adminDb = await getAdminDb();
     try {
+        const adminDb = await getAdminDb();
         const q = adminDb.collection(ACTIVITY_LOG_COLLECTION)
             .where("details.linkedCampaignId", "==", campaignId);
             

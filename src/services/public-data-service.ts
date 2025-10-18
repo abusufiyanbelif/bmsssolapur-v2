@@ -81,7 +81,7 @@ export const getPublicLeads = async (): Promise<Lead[]> => {
         return await enrichLeads(snapshot);
     } catch (e) {
         if (e instanceof Error && (e.message.includes('index') || e.message.includes('Could not find a valid index') || e.message.includes('NOT_FOUND'))) {
-            console.warn(`[Graceful Fallback] Firestore index for 'publicLeads' is likely missing or the collection doesn't exist. Falling back to an unsorted query.`);
+             console.warn(`[Graceful Fallback] Firestore index for 'publicLeads' is likely missing, or the collection doesn't exist yet. Falling back to an unsorted query.`);
             try {
                 const fallbackSnapshot = await adminDb.collection(PUBLIC_LEADS_COLLECTION).get();
                 const leads = await enrichLeads(fallbackSnapshot);
@@ -165,8 +165,10 @@ export const updatePublicCampaign = async (
  * @returns An array of public campaign objects.
  */
 export const getPublicCampaigns = async (): Promise<(Campaign & { raisedAmount: number, fundingProgress: number })[]> => {
-    const adminDb = await getAdminDb();
-    const mapData = (snapshot: FirebaseFirestore.QuerySnapshot) => {
+    try {
+        const adminDb = await getAdminDb();
+        const q = adminDb.collection(PUBLIC_CAMPAIGNS_COLLECTION).orderBy("startDate", "desc");
+        const snapshot = await q.get();
         return snapshot.docs.map(doc => {
             const data = doc.data();
             return {
@@ -177,12 +179,6 @@ export const getPublicCampaigns = async (): Promise<(Campaign & { raisedAmount: 
                 updatedAt: data.updatedAt ? (data.updatedAt as Timestamp).toDate() : undefined,
             } as (Campaign & { raisedAmount: number, fundingProgress: number });
         });
-    };
-
-    try {
-        const q = adminDb.collection(PUBLIC_CAMPAIGNS_COLLECTION).orderBy("startDate", "desc");
-        const snapshot = await q.get();
-        return mapData(snapshot);
     } catch (e) {
         // Universal catch block for any error during the query (missing index, collection, permissions, etc.)
         if (e instanceof Error) {

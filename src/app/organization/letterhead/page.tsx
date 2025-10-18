@@ -2,7 +2,7 @@
 
 import { getCurrentOrganization } from "@/app/admin/settings/actions";
 import { notFound } from "next/navigation";
-import { LetterheadDocument } from "@/app/admin/organization/letterhead/letterhead-document";
+import { LetterheadDocument } from "./letterhead-document";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
 import { getImageAsBase64 } from "./actions";
