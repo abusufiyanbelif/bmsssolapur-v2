@@ -1,6 +1,5 @@
 
-
-"use server";
+'use server';
 
 import type { Campaign } from "@/services/types";
 import { isConfigValid } from "@/services/firebase";

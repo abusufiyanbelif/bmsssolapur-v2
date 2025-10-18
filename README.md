@@ -20,7 +20,7 @@ This command creates a local credential file that the Firebase Admin SDK (used f
 ## Repository
 
 The source code for this project is managed at the following GitHub repository:
-[https://github.com/abusufiyanbelif/bmsssolapur-v2](https://github.com/abusufiyanbelif/bmsssolapur-v2)
+[https://github.com/abusufiyanbelif/bmsssolapur-v1](https://github.com/abusufiyanbelif/bmsssolapur-v1)
 
 ## Available Scripts
 

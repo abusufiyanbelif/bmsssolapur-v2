@@ -180,7 +180,7 @@ export const getCurrentOrganization = async (): Promise<Organization | null> => 
         
         return organizationData;
     } catch (error) {
-        console.error('Error getting current organization: ' + (error instanceof Error ? error.message : 'Unknown error'));
+        console.warn('Warning: Could not get current organization. ' + (error instanceof Error ? error.message : 'Unknown error'));
         return null;
     }
 }

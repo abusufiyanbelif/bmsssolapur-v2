@@ -89,13 +89,13 @@ export const getPublicLeads = async (): Promise<Lead[]> => {
                 return leads.sort((a, b) => (b.dateCreated as any) - (a.dateCreated as any));
             } catch (fallbackError) {
                  const err = fallbackError instanceof Error ? fallbackError : new Error('Unknown fallback error in getPublicLeads');
-                 console.error("Fallback query failed for getPublicLeads:", err);
+                 console.warn("Fallback query failed for getPublicLeads:", err.message);
                  return [];
             }
         } else if (e instanceof Error && (e.message.includes('Could not refresh access token') || e.message.includes('permission-denied') || e.message.includes('UNAUTHENTICATED'))) {
             console.warn(`Permission Denied: The server environment lacks permissions to read public leads. Refer to TROUBLESHOOTING.md. Error: ${e.message}`);
         } else {
-            console.error("Error fetching public leads:", e);
+            console.warn("Error fetching public leads:", e);
         }
         return [];
     }
@@ -186,20 +186,12 @@ export const getPublicCampaigns = async (): Promise<(Campaign & { raisedAmount: 
         return mapData(snapshot);
     } catch (e) {
         if (e instanceof Error) {
-             console.warn(`[Graceful Fallback] Firestore index for 'publicCampaigns' on 'startDate' (desc) is likely missing, or the collection doesn't exist yet. Falling back to an unsorted query.`);
-            try {
-                const fallbackSnapshot = await adminDb.collection(PUBLIC_CAMPAIGNS_COLLECTION).get();
-                const campaigns = mapData(fallbackSnapshot);
-                // Sort in memory as a fallback
-                return campaigns.sort((a,b) => b.startDate.getTime() - a.startDate.getTime());
-            } catch (fallbackError) {
-                 const err = fallbackError instanceof Error ? fallbackError : new Error('Unknown fallback error in getPublicCampaigns');
-                 console.error("Fallback query failed for getPublicCampaigns:", err.message);
-                 return [];
-            }
+            console.warn(`[Graceful Fallback] Firestore query for 'publicCampaigns' failed. This might be a missing index or the collection might not exist yet. Error: ${e.message}.`);
         } else {
-             console.warn("[Graceful Fallback] An unknown error occurred while fetching public campaigns. Returning an empty array.");
+             console.warn(`[Graceful Fallback] An unknown error occurred while fetching public campaigns.`);
         }
+        // Instead of a fallback query, which might also fail if the collection doesn't exist,
+        // we now reliably return an empty array.
         return [];
     }
 };

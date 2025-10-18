@@ -1,5 +1,4 @@
 
-
 /**
  * @fileOverview User service for interacting with Firestore.
  * This service should only be called from server-side components or server actions.
@@ -534,7 +533,7 @@ export const getAllUsers = async (): Promise<User[]> => {
                 });
                 return users;
              } catch (fallbackError) {
-                 const err = fallbackError instanceof Error ? fallbackError : new Error('Unknown fallback error');
+                 const err = fallbackError instanceof Error ? fallbackError : new Error('Unknown fallback error in getAllUsers');
                  console.error("Fallback query failed for getAllUsers:", err.message);
                  return [];
              }
