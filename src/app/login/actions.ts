@@ -3,7 +3,7 @@
 
 import { collection, query, where, getDocs, Timestamp, doc, writeBatch } from 'firebase/firestore';
 import { db } from '@/services/firebase';
-import { User, getUserByPhone, getUserByEmail, getUser, updateUser, createUser } from '@/services/user-service';
+import { User, getUserByPhone, getUserByEmail, getUser, updateUser, createUser, getUserByUserId } from '@/services/user-service';
 import { sendOtp } from '@/ai/flows/send-otp-flow';
 import { verifyOtp } from '@/ai/flows/verify-otp-flow';
 import { logActivity } from '@/services/activity-log-service';
@@ -27,14 +27,15 @@ export async function handleLogin(formData: FormData): Promise<LoginState> {
         let user: User | null = null;
         
         // Determine the type of identifier and perform the correct query
-        if (identifier.includes('@')) {
+        if (identifier.toLowerCase() === 'admin') {
+            user = await getUser('admin');
+        } else if (identifier.includes('@')) {
             user = await getUserByEmail(identifier);
         } else if (/^\d{10}$/.test(identifier)) {
             user = await getUserByPhone(identifier);
         } else {
-            // Assume it's a custom user ID (like 'admin')
-            // This now correctly fetches by the document ID.
-            user = await getUser(identifier.toLowerCase());
+            // Assume it's a custom user ID
+            user = await getUserByUserId(identifier);
         }
 
         if (!user) {

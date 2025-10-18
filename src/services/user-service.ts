@@ -121,6 +121,23 @@ export const getUserByUpiId = async (upiId: string): Promise<User | null> => {
   }
 }
 
+// Function to get a user by custom userId field
+export const getUserByUserId = async (userId: string): Promise<User | null> => {
+    if (!userId) return null;
+    try {
+        const adminDb = await getAdminDb();
+        const q = adminDb.collection(USERS_COLLECTION).where("userId", "==", userId).limit(1);
+        const querySnapshot = await q.get();
+        if (!querySnapshot.empty) {
+            return convertToUser(querySnapshot.docs[0]);
+        }
+        return null;
+    } catch (error) {
+        console.error('Error getting user by custom userId: ', error);
+        return null;
+    }
+};
+
 // The rest of the file remains largely the same, but the core issue was in the functions above.
 // For completeness, here is the rest of the file with minor consistency adjustments.
 
@@ -195,7 +212,7 @@ export const createUser = async (userData: Partial<Omit<User, 'id' | 'createdAt'
 
 
     // Check for duplicates using the corrected functions
-    if (userData.userId && (await getUser(userData.userId))) {
+    if (userData.userId && (await getUserByUserId(userData.userId))) {
       throw new Error(`User ID "${userData.userId}" is already taken.`);
     }
     if (userData.email && (await getUserByEmail(userData.email))) {
@@ -531,10 +548,10 @@ export const getAllUsers = async (): Promise<User[]> => {
                 fallbackSnapshot.forEach((doc) => {
                     users.push(convertToUser(doc) as User);
                 });
-                return users;
+                return users.sort((a,b) => (b.createdAt as any) - (a.createdAt as any));
              } catch (fallbackError) {
                  const err = fallbackError instanceof Error ? fallbackError : new Error('Unknown fallback error in getAllUsers');
-                 console.warn("Fallback query failed for getAllUsers:", err.message);
+                 console.error("Fallback query failed for getAllUsers:", err.message);
                  return [];
              }
         } else {
@@ -574,8 +591,7 @@ export async function checkAvailability(field: string, value: string): Promise<A
         let existingUser: User | null = null;
         switch (field) {
             case 'userId':
-                // Check document ID first for special users like 'admin'
-                existingUser = await getUser(value);
+                existingUser = await getUserByUserId(value);
                 break;
             case 'email':
                 existingUser = await getUserByEmail(value);
@@ -604,7 +620,7 @@ export async function checkAvailability(field: string, value: string): Promise<A
             if (field === 'userId') {
                 for (let i = 1; i <= 3; i++) {
                     const suggestionId = `${value}${i}`;
-                    const isSuggestionTaken = await getUser(suggestionId);
+                    const isSuggestionTaken = await getUserByUserId(suggestionId);
                     if (!isSuggestionTaken) {
                         suggestions.push(suggestionId);
                     }
