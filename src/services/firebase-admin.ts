@@ -139,8 +139,8 @@ const runPostInitTasks = async () => {
                 lastName: "Admin",
                 fatherName: "System",
                 email: "admin@example.com",
-                phone: "9579209587",
-                password: "admin", // Ensure password is provided here
+                phone: "9999999999",
+                password: "password",
                 roles: ["Super Admin"], 
                 privileges: ["all"],
                 isActive: true, 

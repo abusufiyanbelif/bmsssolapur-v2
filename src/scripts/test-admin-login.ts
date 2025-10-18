@@ -1,5 +1,4 @@
 
-
 import { handleLogin } from '@/app/login/actions';
 import dotenv from 'dotenv';
 import { getUser } from '@/services/user-service';
@@ -60,10 +59,10 @@ async function testAdminLogin() {
     console.log(`  - ✅ OK: Found "admin" user in Firestore. (Name: ${adminUser.name}, Active: ${adminUser.isActive})`);
 
     // Step 3: Simulate login with default credentials.
-    console.log('\n- Step 3: Simulating login with default credentials ("admin" / "admin")...');
+    console.log('\n- Step 3: Simulating login with default credentials ("admin" / "password")...');
     const formData = new MockFormData();
     formData.append('identifier', 'admin');
-    formData.append('password', 'admin');
+    formData.append('password', 'password');
 
     const result = await handleLogin(formData);
     
@@ -78,7 +77,7 @@ async function testAdminLogin() {
 
       if(result.error?.includes("Incorrect password")) {
         console.log('\n[DIAGNOSIS] The login attempt was rejected due to an incorrect password.');
-        console.log('This means the password for the "admin" user has been changed from the default ("admin"). If this was intentional, the test is behaving correctly. If not, you may need to reset the data.');
+        console.log('This means the password for the "admin" user has been changed from the default ("password"). If this was intentional, the test is behaving correctly. If not, you may need to reset the data.');
       } else {
         console.log('\n[DIAGNOSIS] An unexpected error occurred in the login logic. Please review the error details.');
       }
