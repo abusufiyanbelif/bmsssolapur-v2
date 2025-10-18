@@ -34,6 +34,7 @@ These scripts help you test your connections to external services and verify you
 | :--- | :--- |
 | `npm run health-check` | **(Recommended)** Runs all the tests below to provide a full system health check. |
 | `npm run test:db` | Verifies the application's ability to connect to and authenticate with Firestore. |
+| `npm run test:admin-login` | Verifies that the default 'admin' user can be successfully authenticated. |
 | `npm run test:gemini` | Verifies the connection to Google AI and checks if the `GEMINI_API_KEY` is valid. |
 | `npm run test:twilio` | Tests the connection to Twilio using your configured credentials for sending SMS. |
 | `npm run test:nodemailer` | Tests the connection to your SMTP server for sending emails. |
