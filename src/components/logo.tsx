@@ -22,7 +22,7 @@ const isValidHttpUrl = (string?: string | null): boolean => {
     }
 };
 
-const DEFAULT_LOGO = "https://firebasestorage.googleapis.com/v0/b/baitul-mal-connect.appspot.com/o/app-assets%2Flogo-new.png?alt=media&token=e5079a49-2723-4d22-b91c-297c357662c2";
+const DEFAULT_LOGO = "https://firebasestorage.googleapis.com/v0/b/baitul-mal-connect.appspot.com/o/test_brand.jpeg?alt=media&token=9d2fea30-88e1-4fd5-9429-a7f19f38d1a5";
 
 export function Logo({ className, logoUrl: propLogoUrl }: LogoProps) {
   const [logoUrl, setLogoUrl] = useState(() => 

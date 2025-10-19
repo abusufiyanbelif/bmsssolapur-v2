@@ -8,7 +8,7 @@ import { AlertCircle } from "lucide-react";
 const defaultOrganization = {
     id: "main_org", // A default, predictable ID for creation
     name: "",
-    logoUrl: "https://firebasestorage.googleapis.com/v0/b/baitul-mal-connect.appspot.com/o/app-assets%2Flogo-new.png?alt=media&token=e5079a49-2723-4d22-b91c-297c357662c2",
+    logoUrl: "https://firebasestorage.googleapis.com/v0/b/baitul-mal-connect.appspot.com/o/test_brand.jpeg?alt=media&token=9d2fea30-88e1-4fd5-9429-a7f19f38d1a5",
     address: "",
     city: "Solapur",
     registrationNumber: "",
