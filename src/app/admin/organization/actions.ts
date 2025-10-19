@@ -1,7 +1,7 @@
 
 "use server";
 
-import { updateOrganization, Organization, createOrganization } from "@/services/organization-service";
+import { updateOrganization, Organization, createOrganization, getOrganization } from "@/services/organization-service";
 import { revalidatePath } from "next/cache";
 import { uploadFile } from "@/services/storage-service";
 import { getUser } from "@/services/user-service";
@@ -75,9 +75,10 @@ export async function handleUpdateOrganization(
         finalOrgData = await createOrganization(orgData as Omit<Organization, 'id' | 'createdAt' | 'updatedAt'>);
     } else {
         await updateOrganization(orgId, orgData);
-        const updatedOrg = await getUser(orgId);
+        // CORRECTED: Use getOrganization instead of getUser
+        const updatedOrg = await getOrganization(orgId);
         if(!updatedOrg) throw new Error("Could not retrieve updated organization data.");
-        finalOrgData = updatedOrg as unknown as Organization; // This is a safe cast if your types are right
+        finalOrgData = updatedOrg;
     }
     
     // After updating the private data, sync it to the public document
