@@ -58,7 +58,7 @@ export function EditOrganizationForm({ organization, isCreating }: EditOrganizat
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [qrCodePreviewUrl, setQrCodePreviewUrl] = useState(organization.qrCodeUrl || '');
   const [logoPreviewUrl, setLogoPreviewUrl] = useState(organization.logoUrl || '');
-  const [isEditing, setIsEditing] = useState(false); // Default to false
+  const [isEditing, setIsEditing] = useState(isCreating); // Start in edit mode if creating
   const [adminUserId, setAdminUserId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -97,7 +97,9 @@ export function EditOrganizationForm({ organization, isCreating }: EditOrganizat
     reset(); // Reset to the original default values
     setQrCodePreviewUrl(organization.qrCodeUrl || '');
     setLogoPreviewUrl(organization.logoUrl || '');
-    setIsEditing(false);
+    if(!isCreating) {
+        setIsEditing(false);
+    }
   }
 
   async function onSubmit(values: FormValues) {
@@ -153,7 +155,7 @@ export function EditOrganizationForm({ organization, isCreating }: EditOrganizat
                  {!isEditing ? (
                     <Button type="button" onClick={() => setIsEditing(true)}>
                         <Edit className="mr-2 h-4 w-4" />
-                        {isCreating ? "Create Profile" : "Edit Profile"}
+                        Edit Profile
                     </Button>
                 ) : (
                     <div className="flex gap-2">
@@ -267,14 +269,10 @@ export function EditOrganizationForm({ organization, isCreating }: EditOrganizat
                         <div className="md:col-span-1 space-y-4">
                             <Label>Logo Preview</Label>
                             <div className="relative flex flex-col items-center justify-center gap-4 p-4 border rounded-lg bg-muted/50 h-full">
-                                {(logoPreviewUrl || logoUrlValue) ? (
+                                {(logoPreviewUrl || logoUrlValue) && (
                                     <div className="relative w-48 h-48">
                                         <Image src={logoPreviewUrl || logoUrlValue} alt="Logo Preview" fill className="object-contain rounded-md" data-ai-hint="logo" />
                                     </div>
-                                ): (
-                                    <p className="text-sm text-muted-foreground text-center p-8">
-                                    Upload a logo image to see a preview.
-                                    </p>
                                 )}
                             </div>
                         </div>

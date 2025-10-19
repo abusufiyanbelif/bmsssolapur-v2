@@ -1,5 +1,4 @@
 
-
 import { getCurrentOrganization } from "@/services/organization-service";
 import { EditOrganizationForm } from "./edit-organization-form";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -63,7 +62,7 @@ export default async function OrganizationSettingsPage() {
                     <AlertCircle className="h-4 w-4" />
                     <AlertTitle>No Organization Profile Found</AlertTitle>
                     <AlertDescription>
-                        Please fill out the form below to create your organization&apos;s public profile.
+                        Please fill out the form below to create your organization's public profile.
                     </AlertDescription>
                 </Alert>
             )}

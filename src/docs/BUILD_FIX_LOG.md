@@ -1,11 +1,22 @@
-
 # Build Fix Log
 
 This document tracks errors found during the build process and the steps taken to resolve them.
 
 ---
 
-## Build Pass 14 (Latest)
+## Build Pass 15 (Latest)
+
+### Errors Found:
+
+1.  **`Error: Invalid src prop (gs://...)` (Final Resolution)**: The `next/image` component was still crashing the application in multiple places due to an invalid `gs://` URI being used for the organization logo. The root cause was that several default/fallback data objects, including the primary `organizationToSeed` object in `src/services/seed-service.ts`, still contained the incorrect URL format.
+    -   **Resolution**:
+        1.  Conducted a full-system audit to find every instance of the invalid `gs://` URL.
+        2.  Updated the default data in `src/services/seed-service.ts`, `src/services/organization-service.ts`, and all page-level fallbacks (`/admin/organization/page.tsx`, `/organization/page.tsx`, etc.) to use the correct, public `https://firebasestorage.googleapis.com/...` URL for `test_brand.jpeg`.
+        3.  Reinforced the `Logo` component (`src/components/logo.tsx`) with a more robust `onError` handler and an internal check to always prefer a valid, hardcoded placeholder over an invalid URL, making it resilient to future data inconsistencies. This comprehensive fix ensures that an invalid URL can no longer be seeded into the database or used by the application, permanently resolving this class of error.
+
+---
+
+## Build Pass 14
 
 ### Errors Found:
 
