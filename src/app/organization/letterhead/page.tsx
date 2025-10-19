@@ -45,5 +45,3 @@ export default async function LetterheadPage() {
         <LetterheadDocument organization={JSON.parse(JSON.stringify(organization))} logoDataUri={logoDataUri} />
     )
 }
-
-    

@@ -34,5 +34,3 @@ export async function getImageAsBase64(url?: string): Promise<string | undefined
     return undefined;
   }
 }
-
-    

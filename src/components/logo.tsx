@@ -22,7 +22,7 @@ const isValidHttpUrl = (string?: string | null): boolean => {
     }
 };
 
-const DEFAULT_LOGO = "https://picsum.photos/seed/logo/128/128";
+const DEFAULT_LOGO = "https://firebasestorage.googleapis.com/v0/b/baitul-mal-connect.appspot.com/o/app-assets%2Flogo-new.png?alt=media&token=e5079a49-2723-4d22-b91c-297c357662c2";
 
 export function Logo({ className, logoUrl: propLogoUrl }: LogoProps) {
   const [logoUrl, setLogoUrl] = useState(() => 
