@@ -60,16 +60,18 @@ export const getOrganization = async (id: string): Promise<Organization | null> 
   try {
     const adminDb = await getAdminDb();
     const orgDoc = await adminDb.collection(ORGANIZATIONS_COLLECTION).doc(id).get();
-    if (orgDoc.exists) {
-      const data = orgDoc.data();
-      return { 
+    if (!orgDoc.exists) {
+        // Explicitly log and return null if the document doesn't exist.
+        console.warn(`No organization document found with ID: ${id}. This is normal on first startup.`);
+        return null;
+    }
+    const data = orgDoc.data();
+    return { 
         id: orgDoc.id, 
         ...data,
         createdAt: (data!.createdAt as Timestamp)?.toDate(),
         updatedAt: (data!.updatedAt as Timestamp)?.toDate(),
-       } as Organization;
-    }
-    return null;
+        } as Organization;
   } catch (error) {
     // This is the critical change. Instead of throwing, we log and return null.
     // This handles both "document not found" and initial "permission denied" race conditions gracefully.

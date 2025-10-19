@@ -53,7 +53,8 @@ const ensureSystemUserExists = async (db: AdminFirestore, userData: Partial<User
  * document if they don't. This prevents errors on fresh deployments.
  * @returns An object with a list of created collections and any errors.
  */
-export const ensureCollectionsExist = async (db: AdminFirestore): Promise<{ success: boolean; message: string; details: string[]; errors: string[] }> => {
+export const ensureCollectionsExist = async (): Promise<{ success: boolean; message: string; details: string[]; errors: string[] }> => {
+    const db = await getAdminDb();
     const coreCollections = [
         'users', 'leads', 'donations', 'campaigns', 'activityLog',
         'settings', 'organizations', 'publicLeads', 'publicCampaigns',
@@ -95,11 +96,12 @@ export const ensureCollectionsExist = async (db: AdminFirestore): Promise<{ succ
     };
 };
 
-const runPostInitTasks = async (db: AdminFirestore) => {
+const runPostInitTasks = async () => {
+    if (!adminDbInstance) return;
     try {
         await Promise.all([
-            ensureCollectionsExist(db),
-             ensureSystemUserExists(db, {
+            ensureCollectionsExist(),
+             ensureSystemUserExists(adminDbInstance, {
                 name: "admin",
                 userId: "admin",
                 firstName: "System",
@@ -114,7 +116,7 @@ const runPostInitTasks = async (db: AdminFirestore) => {
                 gender: 'Male', 
                 source: 'Seeded',
             }),
-            ensureSystemUserExists(db, {
+            ensureSystemUserExists(adminDbInstance, {
                 name: "Anonymous Donor",
                 userId: "anonymous_donor",
                 firstName: "Anonymous",
@@ -151,7 +153,7 @@ const initializeFirebaseAdmin = async () => {
       adminAuthInstance = admin.auth();
       
       // CRITICAL: Await the post-init tasks to ensure collections/users are created before any other code runs.
-      await runPostInitTasks(adminDbInstance);
+      await runPostInitTasks();
 
     } catch (e) {
       console.error("Firebase Admin SDK initialization error:", e);

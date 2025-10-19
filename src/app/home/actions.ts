@@ -49,12 +49,6 @@ export async function updateUser(userId: string, updates: Partial<User>) {
 export async function getQuotes(count: number = 3): Promise<Quote[]> {
     try {
         const quotes = await getInspirationalQuotes(count);
-        if (quotes.length === 0) {
-            // If the DB call succeeds but returns no quotes, provide a fallback.
-            return [
-                 { id: 'fb1', number: 1, text: "The believer's shade on the Day of Resurrection will be their charity.", source: "Tirmidhi", category: "Hadith", categoryTypeNumber: 2 },
-            ];
-        }
         // The result from a server action to a client component must be serializable.
         return JSON.parse(JSON.stringify(quotes));
     } catch (error) {

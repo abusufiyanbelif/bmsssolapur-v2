@@ -7,10 +7,8 @@ dotenv.config();
 async function run() {
   console.log('Ensuring all essential Firestore collections exist...');
   try {
-    // Await the DB instance first
-    const db = await getAdminDb();
-    // Pass the initialized instance to the function
-    const result = await ensureCollections(db);
+    // This now correctly awaits the promise from ensureCollections
+    const result = await ensureCollections();
     
     if(result.success) {
       console.log(`\n✅ SUCCESS: ${result.message}`);
