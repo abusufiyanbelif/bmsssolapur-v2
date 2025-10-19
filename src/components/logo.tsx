@@ -11,23 +11,40 @@ interface LogoProps {
     logoUrl?: string | null;
 }
 
+const isValidHttpUrl = (string?: string | null): boolean => {
+    if (!string) return false;
+    try {
+        const url = new URL(string);
+        return url.protocol === 'http:' || url.protocol === 'https протоколу:';
+    } catch (_) {
+        return false;
+    }
+};
+
+const DEFAULT_LOGO = "https://picsum.photos/seed/logo/128/128";
+
 export function Logo({ className, logoUrl: propLogoUrl }: LogoProps) {
-  const [logoUrl, setLogoUrl] = useState(propLogoUrl || "https://picsum.photos/seed/logo/128/128");
+  const [logoUrl, setLogoUrl] = useState(() => 
+    isValidHttpUrl(propLogoUrl) ? propLogoUrl! : DEFAULT_LOGO
+  );
 
   useEffect(() => {
-    // If a URL is passed as a prop, use it directly.
-    if (propLogoUrl) {
-      setLogoUrl(propLogoUrl);
-      return;
-    }
-    // Otherwise, fetch it (for pages that don't get it from AppShell).
-    const fetchLogo = async () => {
-        const org = await getCurrentOrganization();
-        if (org?.logoUrl) {
-            setLogoUrl(org.logoUrl);
+    const effectiveUrl = isValidHttpUrl(propLogoUrl) ? propLogoUrl : null;
+    
+    if (effectiveUrl) {
+      setLogoUrl(effectiveUrl);
+    } else {
+      // If no valid prop URL, try fetching from the organization data as a fallback.
+      getCurrentOrganization().then(org => {
+        if (isValidHttpUrl(org?.logoUrl)) {
+          setLogoUrl(org!.logoUrl!);
+        } else {
+          setLogoUrl(DEFAULT_LOGO); // Fallback if fetched URL is also invalid
         }
-    };
-    fetchLogo();
+      }).catch(() => {
+        setLogoUrl(DEFAULT_LOGO); // Fallback on fetch error
+      });
+    }
   }, [propLogoUrl]);
 
   return (
@@ -40,7 +57,10 @@ export function Logo({ className, logoUrl: propLogoUrl }: LogoProps) {
         priority
         className="object-contain"
         data-ai-hint="logo"
-        onError={() => setLogoUrl("https://picsum.photos/seed/logo/128/128")}
+        onError={() => {
+          // Final safety net if the src (even if valid format) fails to load
+          setLogoUrl(DEFAULT_LOGO);
+        }}
       />
     </div>
   );
