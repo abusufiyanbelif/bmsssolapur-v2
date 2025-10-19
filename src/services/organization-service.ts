@@ -1,4 +1,3 @@
-
 /**
  * @fileOverview Service for managing organization data in Firestore.
  */
@@ -109,42 +108,21 @@ export const updateOrganizationFooter = async (id: string, footerData: Organizat
     }
 };
 
-// This function is now DEPRECATED as it has been moved to a server action.
-// It is kept here to avoid breaking any potential remaining direct imports temporarily,
-// but all usage should be migrated to `src/app/admin/settings/actions.ts`.
-// @deprecated
+/**
+ * Fetches the main organization profile from the database.
+ * This is now the definitive server-side function for this action.
+ * @returns {Promise<Organization | null>} The organization object or null if not found or on error.
+ */
 export const getCurrentOrganization = async (): Promise<Organization | null> => {
     noStore(); // Opt out of caching for this specific function.
-    
     try {
-        const adminDb = await getAdminDb();
-        const orgQuery = adminDb.collection(ORGANIZATIONS_COLLECTION).limit(1);
-        const querySnapshot = await orgQuery.get();
-        
-        const docSnap = querySnapshot.docs.find(doc => doc.id !== '_init_');
-
-        if (!docSnap || !docSnap.exists) {
-            console.log("No organization document found, returning null.");
-            return null;
-        }
-        
-        const data = docSnap.data();
-
-        // Convert gs:// URIs to https:// URLs before returning
-        const organizationData = {
-            id: docSnap.id, 
-            ...data,
-            createdAt: (data.createdAt as Timestamp)?.toDate(),
-            updatedAt: (data.updatedAt as Timestamp)?.toDate(),
-        } as Organization;
-        
-        return organizationData;
+        // We always fetch the 'main_org' document.
+        const org = await getOrganization('main_org');
+        return org;
     } catch (error) {
-        // Return null instead of throwing an error to prevent page crashes.
-        const err = error instanceof Error ? error : new Error('Unknown error in getCurrentOrganization');
-        console.warn('Warning: Could not get current organization. ' + err.message);
-        return null;
+         const err = error instanceof Error ? error : new Error('Unknown error in getCurrentOrganization');
+         console.warn(`[Graceful Failure] Could not get current organization.`, err.message);
+         // Return null to prevent page crashes.
+         return null;
     }
 }
-
-    

@@ -1,4 +1,3 @@
-
 /**
  * @fileOverview Service for managing global application settings in Firestore.
  * This service should only be called from server-side components or server actions.
@@ -211,7 +210,8 @@ const mergeDeep = (target: any, source: any) => {
 /**
  * Retrieves the global application settings.
  * If no settings document exists, it creates one with default values.
- * @returns The application settings object.
+ * This function is now resilient to startup errors.
+ * @returns The application settings object, or a default object on failure.
  */
 export const getAppSettings = async (): Promise<AppSettings> => {
   try {
