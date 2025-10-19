@@ -33,7 +33,6 @@ export function Footer({ organization }: FooterProps) {
           {/* Column 1: Organization Info */}
           <div className="space-y-4 lg:col-span-2">
              <div className="flex items-center gap-3">
-                <Logo className="h-24 w-24" logoUrl={organization?.logoUrl} />
                 <div className="font-headline text-foreground">
                     <h3 className="text-xl font-bold text-primary">{footerData.organizationInfo.titleLine1}</h3>
                     <h3 className="text-xl font-bold text-accent">{footerData.organizationInfo.titleLine2}</h3>

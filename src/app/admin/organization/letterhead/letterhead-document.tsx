@@ -1,3 +1,4 @@
+
 // src/app/admin/organization/letterhead/letterhead-document.tsx
 
 "use client";
@@ -69,11 +70,7 @@ Thank you for your time and consideration. We look forward to establishing a ban
   const templateContentRef = useRef<HTMLDivElement>(null);
 
   const generatePdf = async (isTemplate: boolean = false) => {
-    if (!logoDataUri) {
-        toast({ variant: 'destructive', title: "Error", description: "Letterhead logo is not ready. The logo URL might be invalid or inaccessible." });
-        return;
-    }
-    
+    // We no longer block if the logo isn't ready. It will just be excluded.
     const setLoading = isTemplate ? setIsTemplateGenerating : setIsGenerating;
     setLoading(true);
 
@@ -91,21 +88,27 @@ Thank you for your time and consideration. We look forward to establishing a ban
       const logoWidth = 150;
 
       // --- Watermark ---
-      const watermarkProps = pdf.getImageProperties(logoDataUri);
-      const watermarkWidth = 400;
-      const watermarkHeight = (watermarkProps.height * watermarkWidth) / watermarkProps.width;
-      const watermarkX = (A4_WIDTH_PT - watermarkWidth) / 2;
-      const watermarkY = (A4_HEIGHT_PT - watermarkHeight) / 2;
-      
-      pdf.setGState(new (pdf as any).GState({ opacity: 0.08 }));
-      pdf.addImage(logoDataUri, 'PNG', watermarkX, watermarkY, watermarkWidth, watermarkHeight);
-      pdf.setGState(new (pdf as any).GState({ opacity: 1 }));
+      if (logoDataUri) {
+          const watermarkProps = pdf.getImageProperties(logoDataUri);
+          const watermarkWidth = 400;
+          const watermarkHeight = (watermarkProps.height * watermarkWidth) / watermarkProps.width;
+          const watermarkX = (A4_WIDTH_PT - watermarkWidth) / 2;
+          const watermarkY = (A4_HEIGHT_PT - watermarkHeight) / 2;
+          
+          pdf.setGState(new (pdf as any).GState({ opacity: 0.08 }));
+          pdf.addImage(logoDataUri, 'PNG', watermarkX, watermarkY, watermarkWidth, watermarkHeight);
+          pdf.setGState(new (pdf as any).GState({ opacity: 1 }));
+      }
 
       // --- Header ---
-      const logoHeight = (watermarkProps.height * logoWidth) / watermarkProps.width;
-      pdf.addImage(logoDataUri, 'PNG', margin, 40, logoWidth, logoHeight);
+      let textX = margin;
+      if (logoDataUri) {
+          const watermarkProps = pdf.getImageProperties(logoDataUri);
+          const logoHeight = (watermarkProps.height * logoWidth) / watermarkProps.width;
+          pdf.addImage(logoDataUri, 'PNG', margin, 40, logoWidth, logoHeight);
+          textX = margin + logoWidth + 20;
+      }
 
-      const textX = margin + logoWidth + 20;
       const orgInfo = organization.footer?.organizationInfo;
       
       pdf.setFont('Helvetica', 'bold');
@@ -247,25 +250,16 @@ Thank you for your time and consideration. We look forward to establishing a ban
         <div className="flex items-center justify-between">
             <h2 className="text-3xl font-bold tracking-tight font-headline text-primary">Organization Letterhead</h2>
             <div className="flex gap-2">
-                <Button onClick={() => generatePdf(true)} disabled={isTemplateGenerating || !logoDataUri}>
+                <Button onClick={() => generatePdf(true)} disabled={isTemplateGenerating}>
                     {isTemplateGenerating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <FileText className="mr-2 h-4 w-4" />}
                     Download Template
                 </Button>
-                <Button onClick={() => generatePdf(false)} disabled={isGenerating || !logoDataUri}>
+                <Button onClick={() => generatePdf(false)} disabled={isGenerating}>
                     {isGenerating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Download className="mr-2 h-4 w-4" />}
                     Download as PDF
                 </Button>
             </div>
         </div>
-        {!logoDataUri && (
-            <Alert variant="destructive">
-                <AlertCircle className="h-4 w-4" />
-                <AlertTitle>Logo Not Loaded</AlertTitle>
-                <AlertDescription>
-                    The organization logo could not be loaded. This is often because the URL in the organization&apos;s profile is incorrect, inaccessible, or blocked by CORS policy. Please verify the logo URL in the <a href="/admin/organization" className="font-semibold underline">Organization Profile</a> settings.
-                </AlertDescription>
-            </Alert>
-        )}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <Card className="lg:col-span-1">
                  <CardHeader>
@@ -352,36 +346,24 @@ Thank you for your time and consideration. We look forward to establishing a ban
                     </CardHeader>
                     <CardContent className="bg-gray-200 p-8 flex justify-center">
                         <div className="transform scale-90 origin-top">
-                            {logoDataUri === undefined ? (
-                                <div className="w-[210mm] min-h-[297mm] bg-white flex items-center justify-center shadow-lg">
-                                    <div className="text-center p-8">
-                                        <AlertCircle className="h-12 w-12 text-destructive mx-auto" />
-                                        <h3 className="mt-4 text-lg font-semibold text-destructive">Logo Failed to Load</h3>
-                                        <p className="mt-2 text-sm text-muted-foreground">The letterhead cannot be rendered. Please check the logo URL in your organization's profile.</p>
-                                    </div>
-                                </div>
-                            ) : (
-                                <>
-                                    <Letterhead 
-                                        ref={letterheadRef}
-                                        contentRef={letterheadContentRef}
-                                        organization={organization}
-                                        logoDataUri={logoDataUri}
-                                        letterContent={letterContent}
-                                        inclusions={inclusions}
-                                    />
-                                    {/* Hidden template for PDF generation */}
-                                    <div style={{ position: 'absolute', left: '-9999px', top: '-9999px' }}>
-                                        <Letterhead
-                                            ref={templateRef}
-                                            contentRef={templateContentRef}
-                                            organization={organization}
-                                            logoDataUri={logoDataUri}
-                                            isTemplate={true}
-                                        />
-                                    </div>
-                                </>
-                            )}
+                            <Letterhead 
+                                ref={letterheadRef}
+                                contentRef={letterheadContentRef}
+                                organization={organization}
+                                logoDataUri={logoDataUri}
+                                letterContent={letterContent}
+                                inclusions={inclusions}
+                            />
+                            {/* Hidden template for PDF generation */}
+                            <div style={{ position: 'absolute', left: '-9999px', top: '-9999px' }}>
+                                <Letterhead
+                                    ref={templateRef}
+                                    contentRef={templateContentRef}
+                                    organization={organization}
+                                    logoDataUri={logoDataUri}
+                                    isTemplate={true}
+                                />
+                            </div>
                         </div>
                     </CardContent>
                 </Card>
