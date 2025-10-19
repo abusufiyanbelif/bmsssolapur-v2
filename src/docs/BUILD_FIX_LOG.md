@@ -4,15 +4,27 @@ This document tracks errors found during the build process and the steps taken t
 
 ---
 
-## Build Pass 15 (Latest)
+## Build Pass 16 (Latest)
 
 ### Errors Found:
 
 1.  **`Error: Invalid src prop (gs://...)` (Final Resolution)**: The `next/image` component was still crashing the application in multiple places due to an invalid `gs://` URI being used for the organization logo. The root cause was that several default/fallback data objects, including the primary `organizationToSeed` object in `src/services/seed-service.ts`, still contained the incorrect URL format.
     -   **Resolution**:
         1.  Conducted a full-system audit to find every instance of the invalid `gs://` URL.
-        2.  Updated the default data in `src/services/seed-service.ts`, `src/services/organization-service.ts`, and all page-level fallbacks (`/admin/organization/page.tsx`, `/organization/page.tsx`, etc.) to use the correct, public `https://firebasestorage.googleapis.com/...` URL for `test_brand.jpeg`.
+        2.  Updated the default data in `src/services/seed-service.ts`, `src/services/organization-service.ts`, and all page-level fallbacks (`/admin/organization/page.tsx`, `/organization/page.tsx`, etc.) to use the correct, public `https://firebasestorage.googleapis.com/...` URL for the logo.
         3.  Reinforced the `Logo` component (`src/components/logo.tsx`) with a more robust `onError` handler and an internal check to always prefer a valid, hardcoded placeholder over an invalid URL, making it resilient to future data inconsistencies. This comprehensive fix ensures that an invalid URL can no longer be seeded into the database or used by the application, permanently resolving this class of error.
+
+---
+
+## Build Pass 15
+
+### Errors Found:
+
+1.  **`Error: ⨯ upstream image response failed for ... 404`**: The `next/image` component was throwing a fatal error during server rendering when the `logoUrl` from the database pointed to a non-existent image in Firebase Storage. This crashed the entire page load.
+    -   **Resolution**: Implemented a fallback mechanism in the `Logo` component (`src/components/logo.tsx`). An `onError` handler was added to the `Image` component. If the primary `src` fails to load, the `onError` event now sets the image source to a reliable placeholder URL, preventing the crash and ensuring the UI always renders.
+
+2.  **Invalid URL Handling**: The `getImageAsBase64` server action, used by the letterhead feature, would crash if it was passed an invalid or malformed URL.
+    -   **Resolution**: Added a `try...catch` block around the `new URL(url)` constructor. If the URL is invalid, the function now logs an error and gracefully returns `undefined` instead of crashing.
 
 ---
 
@@ -26,18 +38,6 @@ This document tracks errors found during the build process and the steps taken t
 ---
 
 ## Build Pass 13
-
-### Errors Found:
-
-1.  **`Error: ⨯ upstream image response failed for ... 404`**: The `next/image` component was throwing a fatal error during server rendering when the `logoUrl` from the database pointed to a non-existent image in Firebase Storage. This crashed the entire page load.
-    -   **Resolution**: Implemented a fallback mechanism in the `Logo` component (`src/components/logo.tsx`). An `onError` handler was added to the `Image` component. If the primary `src` fails to load, the `onError` event now sets the image source to a reliable placeholder URL, preventing the crash and ensuring the UI always renders.
-
-2.  **Invalid URL Handling**: The `getImageAsBase64` server action, used by the letterhead feature, would crash if it was passed an invalid or malformed URL.
-    -   **Resolution**: Added a `try...catch` block around the `new URL(url)` constructor. If the URL is invalid, the function now logs an error and gracefully returns `undefined` instead of crashing.
-
----
-
-## Build Pass 12
 
 ### Errors Found:
 
@@ -56,20 +56,7 @@ This document tracks errors found during the build process and the steps taken t
 
 ---
 
-## Build Pass 11
-
-### Errors Found:
-
-1.  **`5 NOT_FOUND` on Initial Page Load**: A persistent, critical race condition during application startup would cause any data-fetching operation to fail if it executed before the Firebase Admin SDK had fully authenticated. This resulted in misleading "collection not found" errors even when the data existed.
-    -   **Root Cause**: The Admin SDK initialization in `firebase-admin.ts` was not a true blocking operation. Subsequent database calls did not wait for it to complete, leading to authentication failures on cold starts.
-    -   **Resolution**: Implemented a definitive, promise-based singleton pattern for Firebase Admin initialization. The `getAdminDb()` function is now `async` and `await`s a single `initializationPromise`. This promise only resolves after all critical startup tasks (including creating collections and system users) are complete, guaranteeing that the database is fully ready before any part of the app can query it. This permanently fixes the entire class of startup race condition errors.
-
-2.  **`Invalid source map` / `TypeError [ERR_INVALID_ARG_TYPE]`**: The Next.js error overlay would crash when trying to display a database error because the error object being passed to `console.error` was `null` or malformed.
-    -   **Resolution**: Refactored all `catch` blocks in data-fetching services (`user-service.ts`, `public-data-service.ts`, etc.) to check if the caught error is a valid `Error` instance. If not, a new, clean `Error` is created, ensuring the dev overlay can always render the error message without crashing itself.
-
----
-
-## Build Pass 10
+## Build Pass 12
 
 ### Errors Found:
 

@@ -8,18 +8,18 @@ import { LayoutSettingsForm } from "@/app/admin/organization/layout/layout-setti
 import type { Organization, OrganizationFooter } from "@/services/types";
 
 const defaultFooter: OrganizationFooter = {
-    organizationInfo: { titleLine1: 'Baitul Mal (System Default)', titleLine2: 'Samajik Sanstha (System Default)', titleLine3: '(Solapur)', description: 'Default description text. Please seed or create an organization profile to update this.', registrationInfo: 'Reg. No. (System Default)', taxInfo: 'PAN: (System Default)' },
-    contactUs: { title: 'Contact Us', address: 'Default Address, Solapur', email: 'contact@example.com' },
+    organizationInfo: { titleLine1: 'Baitul Mal (System Default)', titleLine2: 'Samajik Sanstha (System Default)', titleLine3: '(Solapur) (System Default)', description: 'Default description text. Please seed or create an organization profile to update this.', registrationInfo: 'Reg. No. (System Default)', taxInfo: 'PAN: (System Default)' },
+    contactUs: { title: 'Contact Us (System Default)', address: 'Default Address, Solapur', email: 'contact@example.com' },
     keyContacts: { title: 'Key Contacts', contacts: [{name: 'Default Contact', phone: '0000000000'}] },
-    connectWithUs: { title: 'Connect With Us', socialLinks: [] },
-    ourCommitment: { title: 'Our Commitment', text: 'Default commitment text. Please update this in the layout settings.', linkText: 'Learn More', linkUrl: '#' },
+    connectWithUs: { title: 'Connect With Us (System Default)', socialLinks: [] },
+    ourCommitment: { title: 'Our Commitment (System Default)', text: 'Default commitment text. Please update this in the layout settings.', linkText: 'Learn More', linkUrl: '#' },
     copyright: { text: `© ${new Date().getFullYear()} Organization Name. All Rights Reserved. (System Default)` }
 };
 
 const defaultOrganization: Organization = {
-    id: "main_org",
+    id: "new_org_placeholder",
     name: "New Organization",
-    logoUrl: "https://firebasestorage.googleapis.com/v0/b/baitul-mal-connect.appspot.com/o/test_brand.jpeg?alt=media&token=9d2fea30-88e1-4fd5-9429-a7f19f38d1a5",
+    logoUrl: "https://firebasestorage.googleapis.com/v0/b/baitul-mal-connect.appspot.com/o/app-assets%2Flogo-new.png?alt=media&token=e5079a49-2723-4d22-b91c-297c357662c2",
     address: "",
     city: "",
     registrationNumber: "",
@@ -61,3 +61,5 @@ export default async function LayoutSettingsPage() {
         </div>
     );
 }
+
+    
