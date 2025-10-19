@@ -1,4 +1,3 @@
-
 // src/app/organization/page.tsx
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Building, Mail, Phone, Globe, Hash, ShieldCheck, CreditCard, Award, Users, Banknote, MapPin, AlertCircle, Edit } from "lucide-react";
@@ -8,7 +7,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import type { User, Organization } from "@/services/types";
 import { OrganizationQrCodeDialog } from "@/components/organization-qr-code-dialog";
 import { getAllUsers } from "@/services/user-service";
-import { getCurrentOrganization } from "@/app/admin/settings/actions";
+import { getPublicOrganization } from "@/services/public-data-service";
 import { AdminEditButton } from "@/components/app-shell";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
@@ -27,9 +26,9 @@ export default async function OrganizationPage() {
     let error = null;
 
     try {
-        // These can fail if Firebase isn't configured, so we wrap them.
+        // Fetch public-facing organization data and all users
         const [org, allUsers] = await Promise.all([
-            getCurrentOrganization(),
+            getPublicOrganization(),
             getAllUsers(),
         ]);
         organization = org;

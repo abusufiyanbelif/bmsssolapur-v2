@@ -5,6 +5,7 @@ import { updateOrganization, Organization, createOrganization } from "@/services
 import { revalidatePath } from "next/cache";
 import { uploadFile } from "@/services/storage-service";
 import { getUser } from "@/services/user-service";
+import { updatePublicOrganization } from "@/services/public-data-service";
 
 
 interface FormState {
@@ -68,15 +69,24 @@ export async function handleUpdateOrganization(
         updatedBy: { id: adminUser.id!, name: adminUser.name },
     };
     
+    let finalOrgData: Organization;
+
     if(isCreating) {
-        await createOrganization(orgData as Omit<Organization, 'id' | 'createdAt' | 'updatedAt'>);
+        finalOrgData = await createOrganization(orgData as Omit<Organization, 'id' | 'createdAt' | 'updatedAt'>);
     } else {
         await updateOrganization(orgId, orgData);
+        const updatedOrg = await getUser(orgId);
+        if(!updatedOrg) throw new Error("Could not retrieve updated organization data.");
+        finalOrgData = updatedOrg as unknown as Organization; // This is a safe cast if your types are right
     }
     
+    // After updating the private data, sync it to the public document
+    await updatePublicOrganization(finalOrgData);
+
     revalidatePath("/admin/organization");
     // Revalidate all pages using the layout to update header/footer
     revalidatePath("/", "layout");
+    revalidatePath("/organization");
 
 
     return { success: true };

@@ -56,7 +56,26 @@ export const updatePublicLead = async (lead: Lead): Promise<void> => {
 export const updatePublicOrganization = async (org: Organization): Promise<void> => {
     const adminDb = await getAdminDb();
     const publicOrgRef = adminDb.collection(PUBLIC_DATA_COLLECTION).doc('organization');
-    await publicOrgRef.set(org);
+    // Create a sanitized version for public view, excluding sensitive or internal data
+    const publicData = {
+        name: org.name,
+        logoUrl: org.logoUrl,
+        address: org.address,
+        city: org.city,
+        registrationNumber: org.registrationNumber,
+        panNumber: org.panNumber,
+        contactEmail: org.contactEmail,
+        contactPhone: org.contactPhone,
+        website: org.website,
+        bankAccountName: org.bankAccountName,
+        bankAccountNumber: org.bankAccountNumber,
+        bankIfscCode: org.bankIfscCode,
+        upiId: org.upiId,
+        qrCodeUrl: org.qrCodeUrl,
+        footer: org.footer,
+        hero: org.hero,
+    };
+    await publicOrgRef.set(publicData);
 };
 
 
