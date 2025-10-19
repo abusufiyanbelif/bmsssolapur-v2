@@ -15,7 +15,8 @@ const isValidHttpUrl = (string?: string | null): boolean => {
     if (!string) return false;
     try {
         const url = new URL(string);
-        return url.protocol === 'http:' || url.protocol === 'https протоколу:';
+        // Only allow http and https protocols, reject gs://, blob:, etc.
+        return url.protocol === 'http:' || url.protocol === 'https:';
     } catch (_) {
         return false;
     }

@@ -7,11 +7,10 @@ import { AlertCircle } from "lucide-react";
 const defaultOrganization = {
     id: "main_org", // A default, predictable ID for creation
     name: "",
-    logoUrl: "",
+    logoUrl: "https://firebasestorage.googleapis.com/v0/b/baitul-mal-connect.appspot.com/o/app-assets%2Flogo-new.png?alt=media&token=e5079a49-2723-4d22-b91c-297c357662c2",
     address: "",
     city: "Solapur",
     registrationNumber: "",
-    panNumber: "",
     contactEmail: "",
     contactPhone: "",
     website: "",
@@ -19,7 +18,7 @@ const defaultOrganization = {
     bankAccountNumber: "",
     bankIfscCode: "",
     upiId: "",
-    qrCodeUrl: "",
+    qrCodeUrl: "https://firebasestorage.googleapis.com/v0/b/baitul-mal-connect.appspot.com/o/app-assets%2Fupi-qr-code.png?alt=media&token=c1374b76-b568-450f-90de-3f191195a63c",
     footer: undefined, // Let the form handle default footer
     createdAt: new Date(),
     updatedAt: new Date(),

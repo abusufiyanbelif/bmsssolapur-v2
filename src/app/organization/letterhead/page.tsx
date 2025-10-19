@@ -20,6 +20,7 @@ const defaultFooter: OrganizationFooter = {
 const defaultOrganization: Organization = {
     id: "new_org_placeholder",
     name: "New Organization",
+    logoUrl: "https://firebasestorage.googleapis.com/v0/b/baitul-mal-connect.appspot.com/o/app-assets%2Flogo-new.png?alt=media&token=e5079a49-2723-4d22-b91c-297c357662c2",
     address: "",
     city: "",
     registrationNumber: "",
