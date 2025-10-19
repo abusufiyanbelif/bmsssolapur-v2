@@ -487,5 +487,4 @@ const organizationToSeed: Omit<Organization, 'id' | 'createdAt' | 'updatedAt'> =
     }
 };
 
-
     

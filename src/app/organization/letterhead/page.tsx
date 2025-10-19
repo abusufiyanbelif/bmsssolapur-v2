@@ -1,4 +1,5 @@
 
+
 import { getCurrentOrganization } from "@/app/admin/settings/actions";
 import { notFound } from "next/navigation";
 import { LetterheadDocument } from "./letterhead-document";
@@ -43,3 +44,5 @@ export default async function LetterheadPage() {
         <LetterheadDocument organization={JSON.parse(JSON.stringify(organization))} logoDataUri={logoDataUri} />
     )
 }
+
+    
