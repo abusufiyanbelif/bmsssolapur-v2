@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { LogIn, LogOut, Menu, Users as UsersIcon, User, Home, Loader2, Bell, AlertTriangle, FileCheck, HandHeart, Megaphone, ArrowRightLeft, Shield, FileText, Edit, Check } from "lucide-react";
 import { RoleSwitcherDialog } from "./role-switcher-dialog";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { Footer } from "./footer";
 import { logActivity } from "@/services/activity-log-service";
 import Link from "next/link";
@@ -112,60 +112,84 @@ const PermissionErrorState = ({ error }: { error: string }) => {
 };
 
 const loadingSteps = [
-  "Initializing Next.js server...",
-  "Connecting to Firebase services...",
-  "Authenticating user session...",
-  "Loading organization profile...",
-  "Fetching user data...",
-  "Rendering dashboard...",
+  "Initializing Next.js server",
+  "Connecting to Firebase services",
+  "Authenticating user session",
+  "Loading organization profile",
+  "Fetching user data",
+  "Rendering dashboard",
 ];
 
 const LoadingState = () => {
-  const [currentStep, setCurrentStep] = useState(0);
+    const [stepTimings, setStepTimings] = useState<number[]>([]);
+    const startTimeRef = useRef(performance.now());
+  
+    useEffect(() => {
+      const timers = loadingSteps.map((_, index) =>
+        setTimeout(() => {
+          setStepTimings(prev => {
+            const newTimings = [...prev];
+            newTimings[index] = performance.now() - startTimeRef.current;
+            return newTimings;
+          });
+        }, (index + 1) * 350 + index * 50)
+      );
+  
+      return () => timers.forEach(clearTimeout);
+    }, []);
+  
+    const getStepStatus = (index: number) => {
+        if (stepTimings[index] !== undefined) return 'completed';
+        if (stepTimings[index - 1] !== undefined || index === 0 && stepTimings[0] === undefined) return 'loading';
+        return 'pending';
+    };
 
-  useEffect(() => {
-    const timers = loadingSteps.map((_, index) => 
-      setTimeout(() => {
-        setCurrentStep(index + 1);
-      }, (index + 1) * 400) // Adjust timing as needed
-    );
-
-    return () => timers.forEach(clearTimeout);
-  }, []);
-
-  return (
-    <div className="flex flex-col flex-1 items-center justify-center h-screen bg-background">
-      <div className="w-full max-w-md p-8">
-        <div className="flex justify-center items-center gap-4 mb-8">
-          <Loader2 className="animate-spin rounded-full h-12 w-12 text-primary" />
-           <div>
-             <h2 className="text-2xl font-bold tracking-tight font-headline text-primary">Initializing Application</h2>
-             <p className="text-muted-foreground">Please wait a moment...</p>
-           </div>
-        </div>
-        <div className="space-y-3">
-          {loadingSteps.map((step, index) => (
-            <div key={index} className="flex items-center gap-3 text-sm">
-              {currentStep > index ? (
-                <Check className="h-5 w-5 text-green-500 flex-shrink-0" />
-              ) : currentStep === index ? (
-                <Loader2 className="h-5 w-5 animate-spin text-primary flex-shrink-0" />
-              ) : (
-                <div className="h-5 w-5 border-2 border-muted-foreground/50 rounded-full flex-shrink-0" />
-              )}
-              <span className={cn(
-                "transition-colors duration-300",
-                currentStep > index ? "text-foreground font-semibold" : "text-muted-foreground"
-              )}>
-                {step}
-              </span>
+    return (
+        <div className="flex flex-col flex-1 items-center justify-center h-screen bg-background">
+        <div className="w-full max-w-lg p-8">
+            <div className="flex justify-center items-center gap-4 mb-8">
+            <Loader2 className="animate-spin rounded-full h-12 w-12 text-primary" />
+            <div>
+                <h2 className="text-2xl font-bold tracking-tight font-headline text-primary">Initializing Application</h2>
+                <p className="text-muted-foreground">Please wait a moment...</p>
             </div>
-          ))}
+            </div>
+            <div className="space-y-3">
+            {loadingSteps.map((step, index) => {
+                const status = getStepStatus(index);
+                const duration = index > 0 
+                    ? (stepTimings[index] - stepTimings[index - 1])
+                    : stepTimings[index];
+                
+                return (
+                    <div key={index} className="flex items-center justify-between text-sm">
+                        <div className="flex items-center gap-3">
+                            {status === 'completed' ? (
+                                <Check className="h-5 w-5 text-green-500 flex-shrink-0" />
+                            ) : status === 'loading' ? (
+                                <Loader2 className="h-5 w-5 animate-spin text-primary flex-shrink-0" />
+                            ) : (
+                                <div className="h-5 w-5 border-2 border-muted-foreground/30 rounded-full flex-shrink-0" />
+                            )}
+                            <span className={cn(
+                                "transition-colors duration-300",
+                                status === 'completed' ? "text-foreground" : "text-muted-foreground"
+                            )}>
+                                {step}
+                            </span>
+                        </div>
+                        {duration !== undefined && (
+                             <span className="font-mono text-xs text-muted-foreground">{duration.toFixed(0)}ms</span>
+                        )}
+                    </div>
+                )
+            })}
+            </div>
         </div>
-      </div>
-    </div>
-  );
+        </div>
+    );
 };
+
 
 const allowedGuestPaths = ['/', '/login', '/register', '/public-leads', '/campaigns', '/organization'];
 
