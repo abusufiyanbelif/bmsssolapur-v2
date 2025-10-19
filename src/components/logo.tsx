@@ -107,5 +107,3 @@ export const PaytmLogo = ({ className }: LogoProps) => (
       </g>
     </svg>
 );
-
-    
