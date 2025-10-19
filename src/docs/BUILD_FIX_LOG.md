@@ -4,17 +4,7 @@ This document tracks errors found during the build process and the steps taken t
 
 ---
 
-## Build Pass 16 (Latest)
-
-### Errors Found:
-
-1.  **Server Hang on Startup**: The Next.js server was failing to compile the `/admin/organization` route, causing the startup process to hang indefinitely without a clear error message.
-    -   **Root Cause**: A circular dependency or missing import was causing the build process to fail. The `createOrganization` function in `src/services/organization-service.ts` was calling `getUser` without importing it.
-    -   **Resolution**: Added the missing `import { getUser } from './user-service';` statement to `organization-service.ts`, resolving the compilation failure.
-
----
-
-## Build Pass 15
+## Build Pass 15 (Latest)
 
 ### Errors Found:
 
@@ -108,3 +98,5 @@ This document tracks errors found during the build process and the steps taken t
         -   Refactored all data-fetching services (`lead-service`, `donation-service`, `user-service`) to be resilient to missing indexes.
         -   Each function now uses a `try...catch` block. It first attempts the query *with* sorting. If it fails due to a missing index, the `catch` block retries the query *without* sorting and then sorts the data in memory.
         -   This prevents the app from crashing and ensures data is always displayed, while also logging a clear, developer-friendly error message indicating which index needs to be created.
+
+    

@@ -21,23 +21,26 @@ const isValidHttpUrl = (string?: string | null): boolean => {
     }
 };
 
-const DEFAULT_LOGO = "https://firebasestorage.googleapis.com/v0/b/baitul-mal-connect.appspot.com/o/test_brand.jpeg?alt=media&token=9d2fea30-88e1-4fd5-9429-a7f19f38d1a5";
+const DEFAULT_LOGO = "https://firebasestorage.googleapis.com/v0/b/baitul-mal-connect.appspot.com/o/app-assets%2Flogo-new.png?alt=media&token=e5079a49-2723-4d22-b91c-297c357662c2";
 
 export function Logo({ className, logoUrl: propLogoUrl }: LogoProps) {
   const [logoUrl, setLogoUrl] = useState(() => 
     isValidHttpUrl(propLogoUrl) ? propLogoUrl! : DEFAULT_LOGO
   );
+  const [hasError, setHasError] = useState(false);
 
   useEffect(() => {
     const effectiveUrl = isValidHttpUrl(propLogoUrl) ? propLogoUrl : null;
     
     if (effectiveUrl) {
       setLogoUrl(effectiveUrl);
+      setHasError(false);
     } else {
       // If no valid prop URL, try fetching from the organization data as a fallback.
       getCurrentOrganization().then(org => {
         if (isValidHttpUrl(org?.logoUrl)) {
           setLogoUrl(org!.logoUrl!);
+          setHasError(false);
         } else {
           setLogoUrl(DEFAULT_LOGO); // Fallback if fetched URL is also invalid
         }
@@ -46,6 +49,13 @@ export function Logo({ className, logoUrl: propLogoUrl }: LogoProps) {
       });
     }
   }, [propLogoUrl]);
+  
+  const handleError = () => {
+    if (!hasError) { // Prevent infinite loops if the default logo also fails
+        setHasError(true);
+        setLogoUrl(DEFAULT_LOGO);
+    }
+  };
 
   return (
     <div className={cn("relative", className)}>
@@ -57,10 +67,7 @@ export function Logo({ className, logoUrl: propLogoUrl }: LogoProps) {
         priority
         className="object-contain"
         data-ai-hint="logo"
-        onError={() => {
-          // Final safety net if the src (even if valid format) fails to load
-          setLogoUrl(DEFAULT_LOGO);
-        }}
+        onError={handleError}
       />
     </div>
   );
@@ -99,3 +106,5 @@ export const PaytmLogo = ({ className }: LogoProps) => (
       </g>
     </svg>
 );
+
+    

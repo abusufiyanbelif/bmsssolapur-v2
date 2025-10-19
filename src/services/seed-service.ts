@@ -428,7 +428,7 @@ export const syncUsersToFirebaseAuth = async (): Promise<SeedResult> => {
 
 const organizationToSeed: Omit<Organization, 'id' | 'createdAt' | 'updatedAt'> = {
     name: "Baitul Mal Samajik Sanstha (Solapur)",
-    logoUrl: "https://firebasestorage.googleapis.com/v0/b/baitul-mal-connect.appspot.com/o/test_brand.jpeg?alt=media&token=9d2fea30-88e1-4fd5-9429-a7f19f38d1a5",
+    logoUrl: "https://firebasestorage.googleapis.com/v0/b/baitul-mal-connect.appspot.com/o/app-assets%2Flogo-new.png?alt=media&token=e5079a49-2723-4d22-b91c-297c357662c2",
     address: "123 Muslim Peth",
     city: "Solapur",
     registrationNumber: "MAHA/123/2024/SOLAPUR",
@@ -485,3 +485,5 @@ const organizationToSeed: Omit<Organization, 'id' | 'createdAt' | 'updatedAt'> =
       }
     }
 };
+
+    
