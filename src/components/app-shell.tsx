@@ -122,6 +122,7 @@ const loadingSteps = [
 
 const LoadingState = () => {
     const [stepTimings, setStepTimings] = useState<number[]>([]);
+    const [allStepsComplete, setAllStepsComplete] = useState(false);
     const startTimeRef = useRef(performance.now());
   
     useEffect(() => {
@@ -132,7 +133,10 @@ const LoadingState = () => {
             newTimings[index] = performance.now() - startTimeRef.current;
             return newTimings;
           });
-        }, (index + 1) * 400 + index * 50) // Increased delay slightly to account for new step
+          if (index === loadingSteps.length - 1) {
+              setAllStepsComplete(true);
+          }
+        }, (index + 1) * 400 + index * 50)
       );
   
       return () => timers.forEach(clearTimeout);
@@ -140,9 +144,11 @@ const LoadingState = () => {
   
     const getStepStatus = (index: number) => {
         if (stepTimings[index] !== undefined) return 'completed';
-        if (stepTimings[index - 1] !== undefined || index === 0 && stepTimings[0] === undefined) return 'loading';
+        if (stepTimings[index - 1] !== undefined || (index === 0 && stepTimings[0] === undefined)) return 'loading';
         return 'pending';
     };
+    
+    const totalDuration = stepTimings.length > 0 ? stepTimings[stepTimings.length - 1] : 0;
 
     return (
         <div className="flex flex-col flex-1 items-center justify-center h-screen bg-background">
@@ -185,6 +191,11 @@ const LoadingState = () => {
                 )
             })}
             </div>
+            {allStepsComplete && (
+                <div className="text-center text-sm font-semibold text-primary mt-8 border-t pt-4">
+                    Total Load Time: {(totalDuration / 1000).toFixed(2)} seconds
+                </div>
+            )}
         </div>
         </div>
     );
