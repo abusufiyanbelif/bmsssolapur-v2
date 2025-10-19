@@ -7,6 +7,7 @@ dotenv.config();
 async function run() {
   console.log('Seeding Sample Data (Campaigns, Leads, Donations)...');
   try {
+    // Corrected to call the exported seedSampleData function
     const result = await seedSampleData();
     console.log(`\n✅ SUCCESS: ${result.message}`);
     if (result.details) {

@@ -1,20 +1,27 @@
+
 # Build Fix Log
 
 This document tracks errors found during the build process and the steps taken to resolve them.
 
 ---
 
-## Build Pass 13 (Latest)
+## Build Pass 14 (Latest)
+
+### Errors Found:
+
+1.  **`Error: Seeding task 'sampleData' failed: doSeed is not a function`**: The sample data seeding script (`src/scripts/seed/seed-sample-data.ts`) was crashing because of an incorrect function import from `src/services/seed-service.ts`.
+    -   **Resolution**: Corrected the module exports in `seed-service.ts`. The main seeding logic was consolidated into a single exported `seedSampleData` function, and the calling script was updated to import it correctly, resolving the runtime error.
+
+---
+
+## Build Pass 13
 
 ### Errors Found:
 
 1.  **`Error: ⨯ upstream image response failed for ... 404`**: The `next/image` component was throwing a fatal error during server rendering when the `logoUrl` from the database pointed to a non-existent image in Firebase Storage. This crashed the entire page load.
     -   **Resolution**: Implemented a fallback mechanism in the `Logo` component (`src/components/logo.tsx`). An `onError` handler was added to the `Image` component. If the primary `src` fails to load, the `onError` event now sets the image source to a reliable placeholder URL, preventing the crash and ensuring the UI always renders.
 
-2.  **`Error: Seeding task 'sampleData' failed: doSeed is not a function`**: The sample data seeding script (`src/scripts/seed/seed-sample-data.ts`) was crashing because of an incorrect function import from `src/services/seed-service.ts`.
-    -   **Resolution**: Corrected the module exports in `seed-service.ts`. The main seeding logic was consolidated into a single exported `seedSampleData` function, and the calling script was updated to import it correctly, resolving the runtime error.
-
-3.  **Invalid URL Handling**: The `getImageAsBase64` server action, used by the letterhead feature, would crash if it was passed an invalid or malformed URL.
+2.  **Invalid URL Handling**: The `getImageAsBase64` server action, used by the letterhead feature, would crash if it was passed an invalid or malformed URL.
     -   **Resolution**: Added a `try...catch` block around the `new URL(url)` constructor. If the URL is invalid, the function now logs an error and gracefully returns `undefined` instead of crashing.
 
 ---

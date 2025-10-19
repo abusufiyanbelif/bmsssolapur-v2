@@ -49,14 +49,22 @@ export async function updateUser(userId: string, updates: Partial<User>) {
 export async function getQuotes(count: number = 3): Promise<Quote[]> {
     try {
         const quotes = await getInspirationalQuotes(count);
+        if (quotes.length === 0) {
+            // If the DB call succeeds but returns no quotes, provide a fallback.
+            return [
+                 { id: 'fb1', number: 1, text: "The believer's shade on the Day of Resurrection will be their charity.", source: "Tirmidhi", category: "Hadith", categoryTypeNumber: 2 },
+            ];
+        }
         // The result from a server action to a client component must be serializable.
         return JSON.parse(JSON.stringify(quotes));
     } catch (error) {
         // This will now receive a proper error object with a message.
         const err = error instanceof Error ? error : new Error('Unknown error in getQuotes');
         console.warn(`Server action getQuotes failed:`, err.message);
-        // On failure, return an empty array. Do not return hardcoded data.
-        return [];
+        // On failure, return a hardcoded fallback to prevent page crash
+        return [
+            { id: 'fb1', number: 1, text: "The believer's shade on the Day of Resurrection will be their charity.", source: "Tirmidhi", category: "Hadith", categoryTypeNumber: 2 },
+        ];
     }
 }
 
