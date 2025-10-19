@@ -463,7 +463,8 @@ const organizationToSeed: Omit<Organization, 'id' | 'createdAt' | 'updatedAt'> =
       keyContacts: {
         title: "Key Contacts",
         contacts: [
-          { name: "Abusufiyan Belif", phone: "7887646583" },
+          { name: "Maaz Shaikh", phone: "9372145889" },
+          { name: "AbuRehan Bedrekar", phone: "7276224160" },
           { name: "Moosa Shaikh", phone: "8421708907" }
         ]
       },
