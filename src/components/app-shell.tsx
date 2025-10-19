@@ -116,7 +116,7 @@ const loadingSteps = [
   "Connecting to Firebase services",
   "Authenticating user session",
   "Loading organization profile",
-  "Fetching user data",
+  "Fetching dashboard data",
   "Rendering dashboard",
 ];
 
@@ -132,7 +132,7 @@ const LoadingState = () => {
             newTimings[index] = performance.now() - startTimeRef.current;
             return newTimings;
           });
-        }, (index + 1) * 350 + index * 50)
+        }, (index + 1) * 400 + index * 50) // Increased delay slightly to account for new step
       );
   
       return () => timers.forEach(clearTimeout);
