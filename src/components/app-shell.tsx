@@ -365,6 +365,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         
         return (
             <Link href="/" className="flex items-center gap-3" title={orgData.name}>
+                <Logo className="h-10 w-10" logoUrl={organization?.logoUrl} />
                  <div className="flex flex-col leading-tight">
                     <span className="font-bold font-headline text-primary text-sm">{orgInfo?.titleLine1 || orgData.name}</span>
                     {orgInfo?.titleLine2 && <span className="font-bold font-headline text-accent text-sm">{orgInfo.titleLine2}</span>}
