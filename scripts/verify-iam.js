@@ -12,7 +12,7 @@ import { execSync } from "child_process";
 const REQUIRED_ROLES = [
   {
     role: "roles/firebase.admin",
-    description: "(Critical for Firebase Authentication, e.g., creating/syncing users for OTP login)",
+    description: "(Critical for Firebase Authentication, e.g., creating/syncing/deleting users).",
   },
   {
     role: "roles/datastore.user",
