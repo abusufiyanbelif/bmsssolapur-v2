@@ -3,7 +3,7 @@
 
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
-import { LogIn, LogOut, Menu, Users as UsersIcon, User, Home, Loader2, Bell, AlertTriangle, FileCheck, HandHeart, Megaphone, ArrowRightLeft, Shield, FileText, Edit } from "lucide-react";
+import { LogIn, LogOut, Menu, Users as UsersIcon, User, Home, Loader2, Bell, AlertTriangle, FileCheck, HandHeart, Megaphone, ArrowRightLeft, Shield, FileText, Edit, Check } from "lucide-react";
 import { RoleSwitcherDialog } from "./role-switcher-dialog";
 import { useState, useEffect, useCallback } from "react";
 import { Footer } from "./footer";
@@ -55,10 +55,10 @@ export const AdminEditButton = ({ editPath }: { editPath: string }) => {
 
 const defaultFooter: OrganizationFooter = {
     organizationInfo: { titleLine1: 'Baitul Mal (System Default)', titleLine2: 'Samajik Sanstha (System Default)', titleLine3: '(Solapur) (System Default)', description: 'Default description text. Please seed or create an organization profile to update this.', registrationInfo: 'Reg. No. (System Default)', taxInfo: 'PAN: (System Default)' },
-    contactUs: { title: 'Contact Us', address: 'Default Address, Solapur', email: 'contact@example.com' },
+    contactUs: { title: 'Contact Us (System Default)', address: 'Default Address, Solapur', email: 'contact@example.com' },
     keyContacts: { title: 'Key Contacts', contacts: [{name: 'Default Contact', phone: '0000000000'}] },
-    connectWithUs: { title: 'Connect With Us', socialLinks: [] },
-    ourCommitment: { title: 'Our Commitment', text: 'Default commitment text. Please update this in the layout settings.', linkText: 'Learn More', linkUrl: '#' },
+    connectWithUs: { title: 'Connect With Us (System Default)', socialLinks: [] },
+    ourCommitment: { title: 'Our Commitment (System Default)', text: 'Default commitment text. Please update this in the layout settings.', linkText: 'Learn More', linkUrl: '#' },
     copyright: { text: `© ${new Date().getFullYear()} Organization Name. All Rights Reserved. (System Default)` }
 };
 
@@ -110,12 +110,61 @@ const PermissionErrorState = ({ error }: { error: string }) => {
     );
 };
 
-const LoadingState = () => (
+const loadingSteps = [
+  "Initializing Next.js server...",
+  "Connecting to Firebase services...",
+  "Authenticating user session...",
+  "Loading organization profile...",
+  "Fetching user data...",
+  "Rendering dashboard...",
+];
+
+const LoadingState = () => {
+  const [currentStep, setCurrentStep] = useState(0);
+
+  useEffect(() => {
+    const timers = loadingSteps.map((_, index) => 
+      setTimeout(() => {
+        setCurrentStep(index + 1);
+      }, (index + 1) * 400) // Adjust timing as needed
+    );
+
+    return () => timers.forEach(clearTimeout);
+  }, []);
+
+  return (
     <div className="flex flex-col flex-1 items-center justify-center h-screen bg-background">
-        <Loader2 className="animate-spin rounded-full h-16 w-16 text-primary" />
-        <p className="mt-4 text-muted-foreground">Initializing your session...</p>
+      <div className="w-full max-w-md p-8">
+        <div className="flex justify-center items-center gap-4 mb-8">
+          <Loader2 className="animate-spin rounded-full h-12 w-12 text-primary" />
+           <div>
+             <h2 className="text-2xl font-bold tracking-tight font-headline text-primary">Initializing Application</h2>
+             <p className="text-muted-foreground">Please wait a moment...</p>
+           </div>
+        </div>
+        <div className="space-y-3">
+          {loadingSteps.map((step, index) => (
+            <div key={index} className="flex items-center gap-3 text-sm">
+              {currentStep > index ? (
+                <Check className="h-5 w-5 text-green-500 flex-shrink-0" />
+              ) : currentStep === index ? (
+                <Loader2 className="h-5 w-5 animate-spin text-primary flex-shrink-0" />
+              ) : (
+                <div className="h-5 w-5 border-2 border-muted-foreground/50 rounded-full flex-shrink-0" />
+              )}
+              <span className={cn(
+                "transition-colors duration-300",
+                currentStep > index ? "text-foreground font-semibold" : "text-muted-foreground"
+              )}>
+                {step}
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
     </div>
-);
+  );
+};
 
 const allowedGuestPaths = ['/', '/login', '/register', '/public-leads', '/campaigns', '/organization'];
 
