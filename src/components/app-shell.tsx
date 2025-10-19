@@ -30,6 +30,7 @@ import { checkDatabaseConnection } from "@/app/services/actions";
 import { getCurrentUser, getAdminNotificationData } from "@/app/actions";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "./ui/skeleton";
+import { cn } from "@/lib/utils";
 
 export const AdminEditButton = ({ editPath }: { editPath: string }) => {
     const [isAdmin, setIsAdmin] = useState(false);
