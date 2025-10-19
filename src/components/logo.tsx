@@ -67,7 +67,7 @@ export const PhonePeLogo = ({ className }: LogoProps) => (
         <path d="M51.9,19.8c0-3.1-2.4-5.5-5.5-5.5s-5.5,2.4-5.5,5.5s2.4,5.5,5.5,5.5S51.9,22.9,51.9,19.8z M46.4,14.3 c-3.1,0-5.5,2.4-5.5,5.5s2.4,5.5,5.5,5.5s5.5-2.4,5.5-5.5S49.5,14.3,46.4,14.3z" fill="#FFF"></path>
         <path d="M60.7,19.8L60.7,19.8c0-3.1-2.4-5.5-5.5-5.5h-2.1v11h2.1C58.2,25.3,60.7,22.9,60.7,19.8z M55.2,14.3h-2.1 c-3.1,0-5.5,2.4-5.5,5.5s2.4,5.5,5.5,5.5h2.1c3.1,0,5.5-2.4,5.5-5.5S58.2,14.3,55.2,14.3z" fill="#FFF"></path>
         <path d="M72.9,14.3H63v11h1.7v-4.4h6.5c2.4,0,4.2-1.9,4.2-4.4C75.4,15.6,74.3,14.3,72.9,14.3z M69.5,19.8h-4.8v-4h4.8 c1.5,0,2.6,1.2,2.6,2.7S71,19.8,69.5,19.8z" fill="#FFF"></path>
-        <rect x="0" y="0" width="100" height="40" fill="#6739B7" rx="4" ry="4" style={{'mixBlendMode': 'destination-over'}}></rect>
+        <rect x="0" y="0" width="100" height="40" fill="#6739B7" rx="4" ry="4" style={{"mixBlendMode": "destination-over"}}></rect>
     </svg>
 );
 
@@ -79,3 +79,5 @@ export const PaytmLogo = ({ className }: LogoProps) => (
       </g>
     </svg>
 );
+
+    

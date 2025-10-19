@@ -429,7 +429,7 @@ export const syncUsersToFirebaseAuth = async (): Promise<SeedResult> => {
 
 const organizationToSeed: Omit<Organization, 'id' | 'createdAt' | 'updatedAt'> = {
     name: "Baitul Mal Samajik Sanstha (Solapur)",
-    logoUrl: "gs://baitul-mal-connect.appspot.com/app-assets/logo-new.png",
+    logoUrl: "https://firebasestorage.googleapis.com/v0/b/baitul-mal-connect.appspot.com/o/app-assets%2Flogo-new.png?alt=media&token=e5079a49-2723-4d22-b91c-297c357662c2",
     address: "123 Muslim Peth",
     city: "Solapur",
     registrationNumber: "MAHA/123/2024/SOLAPUR",
@@ -441,7 +441,7 @@ const organizationToSeed: Omit<Organization, 'id' | 'createdAt' | 'updatedAt'> =
     bankAccountNumber: "012345678901",
     bankIfscCode: "ICIC0001234",
     upiId: "baitulmal.solapur@okaxis",
-    qrCodeUrl: "gs://baitul-mal-connect.appspot.com/app-assets/upi-qr-code.png",
+    qrCodeUrl: "https://firebasestorage.googleapis.com/v0/b/baitul-mal-connect.appspot.com/o/app-assets%2Fupi-qr-code.png?alt=media&token=c1374b76-b568-450f-90de-3f191195a63c",
     hero: {
         title: "Empowering Our Community, One Act of Kindness at a Time.",
         description: "Join BaitulMal Samajik Sanstha (Solapur) to make a lasting impact. Your contribution brings hope, changes lives, and empowers our community."
@@ -486,3 +486,6 @@ const organizationToSeed: Omit<Organization, 'id' | 'createdAt' | 'updatedAt'> =
       }
     }
 };
+
+
+    

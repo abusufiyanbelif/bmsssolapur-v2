@@ -109,24 +109,6 @@ export const updateOrganizationFooter = async (id: string, footerData: Organizat
     }
 };
 
-/**
- * Converts a gs:// URI to a public https:// firebasestorage URL.
- * @param gsUri The gs:// URI.
- * @returns The corresponding https:// URL or the original string if it's not a gs:// URI.
- */
-const convertGsToHttps = (gsUri?: string): string | undefined => {
-    if (!gsUri || !gsUri.startsWith('gs://')) {
-        return gsUri;
-    }
-    // Example: gs://baitul-mal-connect.appspot.com/app-assets/logo-new.png
-    const path = gsUri.substring(5); // Remove "gs://"
-    const bucket = path.substring(0, path.indexOf('/'));
-    const objectPath = path.substring(path.indexOf('/') + 1);
-    
-    // The public URL format for Firebase Storage
-    return `https://firebasestorage.googleapis.com/v0/b/${bucket}/o/${encodeURIComponent(objectPath)}?alt=media`;
-};
-
 // This function is now DEPRECATED as it has been moved to a server action.
 // It is kept here to avoid breaking any potential remaining direct imports temporarily,
 // but all usage should be migrated to `src/app/admin/settings/actions.ts`.
@@ -152,8 +134,6 @@ export const getCurrentOrganization = async (): Promise<Organization | null> => 
         const organizationData = {
             id: docSnap.id, 
             ...data,
-            logoUrl: convertGsToHttps(data.logoUrl),
-            qrCodeUrl: convertGsToHttps(data.qrCodeUrl),
             createdAt: (data.createdAt as Timestamp)?.toDate(),
             updatedAt: (data.updatedAt as Timestamp)?.toDate(),
         } as Organization;
@@ -166,3 +146,5 @@ export const getCurrentOrganization = async (): Promise<Organization | null> => 
         return null;
     }
 }
+
+    
