@@ -538,25 +538,31 @@ export const getAllUsers = async (): Promise<User[]> => {
         });
         return users;
     } catch (error) {
-        if (error instanceof Error && (error.message.includes('index') || error.message.includes('Could not find a valid index') || error.message.includes('NOT_FOUND'))) {
-             console.warn("Firestore index missing for 'users' on 'createdAt' (desc). Please create it. Falling back to an unsorted query.");
-             try {
-                const adminDb = await getAdminDb();
-                const fallbackSnapshot = await adminDb.collection(USERS_COLLECTION).get();
-                const users: User[] = [];
-                fallbackSnapshot.forEach((doc) => {
-                    users.push(convertToUser(doc) as User);
-                });
-                return users.sort((a,b) => (b.createdAt as any) - (a.createdAt as any));
-             } catch (fallbackError) {
-                 const err = fallbackError instanceof Error ? fallbackError : new Error('Unknown fallback error in getAllUsers');
-                 console.error("Fallback query failed for getAllUsers:", err.message);
-                 return [];
-             }
-        } else {
-             const err = error instanceof Error ? error : new Error('Unknown error in getAllUsers');
-             console.error("Error getting all users: ", err.message);
+        if (error instanceof Error) {
+            if (error.message.includes('Could not refresh access token') || error.message.includes('permission-denied') || error.message.includes('UNAUTHENTICATED')) {
+                const helpfulError = new Error("Could not authenticate with Google Cloud. Ensure your server environment is configured correctly (e.g., via `gcloud auth application-default login` or IAM roles). Refer to TROUBLESHOOTING.md.");
+                console.error(helpfulError.message);
+                throw helpfulError;
+            }
+            if (error.message.includes('index') || error.message.includes('Could not find a valid index') || error.message.includes('NOT_FOUND')) {
+                console.warn("Firestore index missing for 'users' on 'createdAt' (desc). Please create it. Falling back to an unsorted query.");
+                 try {
+                    const adminDb = await getAdminDb();
+                    const fallbackSnapshot = await adminDb.collection(USERS_COLLECTION).get();
+                    const users: User[] = [];
+                    fallbackSnapshot.forEach((doc) => {
+                        users.push(convertToUser(doc) as User);
+                    });
+                    return users.sort((a,b) => (b.createdAt as any) - (a.createdAt as any));
+                 } catch (fallbackError) {
+                     const err = fallbackError instanceof Error ? fallbackError : new Error('Unknown fallback error in getAllUsers');
+                     console.error("Fallback query failed for getAllUsers:", err.message);
+                     return [];
+                 }
+            }
         }
+        const err = error instanceof Error ? error : new Error('Unknown error in getAllUsers');
+        console.error("Error getting all users: ", err.message);
         return [];
     }
 }
