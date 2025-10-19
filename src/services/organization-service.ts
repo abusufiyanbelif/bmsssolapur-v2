@@ -6,6 +6,8 @@ import { getFirestore as getAdminFirestore, Timestamp, FieldValue } from 'fireba
 import type { Organization, OrganizationFooter } from './types';
 import { getAdminDb } from './firebase-admin';
 import { unstable_noStore as noStore } from 'next/cache';
+import { getUser } from './user-service';
+import { updatePublicOrganization } from './public-data-service';
 
 
 // Re-export types for backward compatibility
