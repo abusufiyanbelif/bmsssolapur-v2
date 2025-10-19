@@ -4,7 +4,22 @@ This document tracks errors found during the build process and the steps taken t
 
 ---
 
-## Build Pass 12 (Latest)
+## Build Pass 13 (Latest)
+
+### Errors Found:
+
+1.  **`Error: ⨯ upstream image response failed for ... 404`**: The `next/image` component was throwing a fatal error during server rendering when the `logoUrl` from the database pointed to a non-existent image in Firebase Storage. This crashed the entire page load.
+    -   **Resolution**: Implemented a fallback mechanism in the `Logo` component (`src/components/logo.tsx`). An `onError` handler was added to the `Image` component. If the primary `src` fails to load, the `onError` event now sets the image source to a reliable placeholder URL, preventing the crash and ensuring the UI always renders.
+
+2.  **`Error: Seeding task 'sampleData' failed: doSeed is not a function`**: The sample data seeding script (`src/scripts/seed/seed-sample-data.ts`) was crashing because of an incorrect function import from `src/services/seed-service.ts`.
+    -   **Resolution**: Corrected the module exports in `seed-service.ts`. The main seeding logic was consolidated into a single exported `seedSampleData` function, and the calling script was updated to import it correctly, resolving the runtime error.
+
+3.  **Invalid URL Handling**: The `getImageAsBase64` server action, used by the letterhead feature, would crash if it was passed an invalid or malformed URL.
+    -   **Resolution**: Added a `try...catch` block around the `new URL(url)` constructor. If the URL is invalid, the function now logs an error and gracefully returns `undefined` instead of crashing.
+
+---
+
+## Build Pass 12
 
 ### Errors Found:
 
@@ -65,40 +80,3 @@ This document tracks errors found during the build process and the steps taken t
         -   Refactored all data-fetching services (`lead-service`, `donation-service`, `user-service`) to be resilient to missing indexes.
         -   Each function now uses a `try...catch` block. It first attempts the query *with* sorting. If it fails due to a missing index, the `catch` block retries the query *without* sorting and then sorts the data in memory.
         -   This prevents the app from crashing and ensures data is always displayed, while also logging a clear, developer-friendly error message indicating which index needs to be created.
-
----
-
-## Build Pass 9
-
-### Errors Found:
-
-1.  **ReferenceError: `Users is not defined`**: The letterhead page crashed because it was trying to use an icon that had not been imported.
-    -   **Resolution**: Added the `Users` icon to the `lucide-react` import statement in `src/app/admin/organization/letterhead/letterhead-document.tsx`.
-
-2.  **`admin` User Not Found on Login**: The login logic was trying to fetch a user document with the ID `admin`, but the seeding logic was creating it with an auto-generated ID.
-    -   **Resolution**: Modified `src/services/firebase-admin.ts` to ensure the `admin` user is always created with the document ID `admin` for predictable lookups.
-
-3.  **Inconsistent Data & Crashes from Non-Serializable Props**: Many pages were fetching data directly in client components or passing unserialized data (like Firestore `Timestamp`s) as props, causing crashes or empty UI.
-    -   **Resolution**: Overhauled all major list pages (`/admin/users`, `/admin/donations`, `/admin/leads`, etc.) to use a strict Server Component for data fetching and a Client Component for UI. Ensured all props passed from server to client are explicitly serialized with `JSON.parse(JSON.stringify(data))`.
-
----
-
-## Build Pass 8
-
-### Errors Found:
-1.  **ReferenceError: `allUsers` is not defined on Homepage**:
-    -   **Description**: A runtime error on the public homepage (`/`) occurred because a variable was referenced without being correctly destructured from a data object. The code was trying to access `allUsers` directly instead of `dashboardData.users`.
-    -   **Resolution**: Corrected the data access logic in `src/app/page.tsx` to properly retrieve `users` from the `dashboardData` object.
-
-2.  **Inconsistent Link on Beneficiary Dashboard**:
-    -   **Description**: The "My Cases" link on the beneficiary dashboard was incorrectly pointing to `/beneficiary` instead of the correct path `/my-cases`.
-    -   **Resolution**: Updated the `href` in `src/app/beneficiary/beneficiary-dashboard-content.tsx` to point to the correct `/my-cases` page.
-
-3.  **Outdated Workflow Documentation**:
-    -   **Description**: `LEAD_DICTIONARY.md` and `WORKFLOWS.md` described an outdated workflow where a lead status of `Ready For Help` was a prerequisite for publishing.
-    -   **Resolution**: Updated both documents to reflect the current, more direct workflow where an admin can set the `caseAction` directly to `Publish`.
-
-4.  **Inconsistent Data Dictionary**:
-    -   **Description**: The `DATA_DICTIONARY.md` file had an incorrect calculation logic for the "My Active Cases" card on the Beneficiary Dashboard.
-    -   **Resolution**: Corrected the calculation logic in the data dictionary to align with the application's implementation.
-
