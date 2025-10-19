@@ -1,4 +1,5 @@
 
+
 import { getCurrentOrganization } from "@/services/organization-service";
 import { EditOrganizationForm } from "./edit-organization-form";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -7,7 +8,7 @@ import { AlertCircle } from "lucide-react";
 const defaultOrganization = {
     id: "main_org", // A default, predictable ID for creation
     name: "",
-    logoUrl: "https://firebasestorage.googleapis.com/v0/b/baitul-mal-connect.appspot.com/o/app-assets%2Flogo-new.png?alt=media&token=e5079a49-2723-4d22-b91c-297c357662c2",
+    logoUrl: "https://firebasestorage.googleapis.com/v0/b/baitul-mal-connect.appspot.com/o/organization%2Fassets%2Flogo%2FIMG-20250816-WA0000.jpg?alt=media&token=49c54b33-286c-481d-bd33-1a16e8db22c5",
     address: "",
     city: "Solapur",
     registrationNumber: "",
