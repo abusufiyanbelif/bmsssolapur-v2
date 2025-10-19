@@ -84,16 +84,21 @@ export const seedUsers = async (users: Omit<User, 'id' | 'createdAt' | 'userKey'
 
     for (const userData of users) {
         const usersRef = db.collection('users');
-        const q = usersRef.where('phone', '==', userData.phone).limit(1);
-        const existingUserSnapshot = await q.get();
+        
+        let existingUserSnapshot;
+        if(userData.userId) { // Prioritize checking by userId if it exists
+             existingUserSnapshot = await usersRef.where('userId', '==', userData.userId).limit(1).get();
+        } else {
+             existingUserSnapshot = await usersRef.where('phone', '==', userData.phone).limit(1).get();
+        }
 
         if (!existingUserSnapshot.empty) {
             results.push(`User ${userData.name}: Skipped (already exists)`);
         } else {
             try {
-                const userRef = db.collection('users').doc();
-                const userKeySnapshot = await usersRef.count().get();
-                const userKey = `USR${(userKeySnapshot.data().count + 1).toString().padStart(2, '0')}`;
+                const userRef = db.collection('users').doc(); // Auto-generate document ID
+                const userCountSnapshot = await usersRef.count().get();
+                const userKey = `USR${(userCountSnapshot.data().count + 1).toString().padStart(2, '0')}`;
                 
                 await userRef.set({
                     ...userData,
@@ -177,7 +182,7 @@ const deleteCollection = async (collectionPath: string): Promise<string> => {
 
 
 // --- EXPORTED SEEDING FUNCTIONS ---
-export const ensureCollectionsExist = ensureCollectionsExistService;
+export { ensureCollectionsExist } from '@/services/firebase-admin';
 
 export const seedInitialUsersAndQuotes = async (): Promise<SeedResult> => {
     const quotesStatus = await seedInitialQuotes();
@@ -245,7 +250,7 @@ export const seedLeads = async (leads: Omit<Lead, 'id' | 'createdAt' | 'updatedA
         const leadId = `${userKey}_${leadCount + 1}_${format(new Date(), 'ddMMyyyy')}`;
 
         const docRef = db.collection('leads').doc(leadId);
-        batch.set(docRef, { ...leadData, dateCreated: Timestamp.now(), createdAt: FieldValue.serverTimestamp(), updatedAt: FieldValue.serverTimestamp() }, { merge: true });
+        batch.set(docRef, { ...leadData, dateCreated: Timestamp.now(), caseReportedDate: Timestamp.now(), createdAt: FieldValue.serverTimestamp(), updatedAt: FieldValue.serverTimestamp() }, { merge: true });
         count++;
     }
 
@@ -480,3 +485,4 @@ const organizationToSeed: Omit<Organization, 'id' | 'createdAt' | 'updatedAt'> =
       }
     }
 };
+

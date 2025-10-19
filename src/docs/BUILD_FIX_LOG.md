@@ -4,7 +4,26 @@ This document tracks errors found during the build process and the steps taken t
 
 ---
 
-## Build Pass 11 (Latest)
+## Build Pass 12 (Latest)
+
+### Errors Found:
+
+1.  **`5 NOT_FOUND` on Initial Page Load (Final Resolution)**: The application would frequently crash on its very first startup with a fresh database. This was caused by a fundamental race condition where data-fetching functions (e.g., `getCurrentOrganization`, `getAllUsers`) would execute before the Firebase Admin SDK had fully initialized and created the necessary collections.
+    -   **Root Cause**: The Admin SDK initialization in `firebase-admin.ts` was not a true, blocking singleton. Different parts of the app would try to get a database instance simultaneously, with some receiving a non-authenticated instance, leading to permission-like `5 NOT_FOUND` errors.
+    -   **Resolution**:
+        1.  Implemented a definitive, promise-based singleton pattern for Firebase Admin initialization in `src/services/firebase-admin.ts`. The `getAdminDb()` function is now `async` and `await`s a single `initializationPromise`.
+        2.  This promise is designed to only resolve *after* all critical startup tasks (including creating collections via `ensureCollectionsExist` and seeding system users like `admin`) are fully complete.
+        3.  This guarantees that the database is fully ready before any part of the app can query it, permanently fixing the entire class of startup race condition errors.
+
+2.  **`Invalid source map` / `TypeError [ERR_INVALID_ARG_TYPE]`**: The Next.js error overlay would crash when trying to display a database error because the error object being passed to `console.error` was `null` or malformed.
+    -   **Resolution**: Refactored all `catch` blocks in data-fetching services (`user-service.ts`, `public-data-service.ts`, etc.) to check if the caught error is a valid `Error` instance. If not, a new, clean `Error` is created, ensuring the dev overlay can always render the error message without crashing itself.
+
+3.  **"Unexpected response from server" on Seeding**: The "Seed Sample Data" script was crashing because the data it generated was out of sync with the latest data models, specifically missing the required `caseReportedDate` for leads.
+    -   **Resolution**: Updated the `seedLeads` function in `src/services/seed-service.ts` to always include a `caseReportedDate` for all created leads, ensuring compliance with the current `Lead` type.
+
+---
+
+## Build Pass 11
 
 ### Errors Found:
 
@@ -82,3 +101,4 @@ This document tracks errors found during the build process and the steps taken t
 4.  **Inconsistent Data Dictionary**:
     -   **Description**: The `DATA_DICTIONARY.md` file had an incorrect calculation logic for the "My Active Cases" card on the Beneficiary Dashboard.
     -   **Resolution**: Corrected the calculation logic in the data dictionary to align with the application's implementation.
+
