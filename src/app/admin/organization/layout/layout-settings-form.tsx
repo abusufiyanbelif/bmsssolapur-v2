@@ -145,7 +145,6 @@ export function LayoutSettingsForm({ organization }: LayoutSettingsFormProps) {
     }
     setIsSubmitting(true);
     const formData = new FormData();
-    formData.append("adminUserId", adminUserId);
     Object.entries(values).forEach(([key, value]) => {
         if (key === 'keyContacts' || key === 'socialLinks') {
             formData.append(key, JSON.stringify(value));
@@ -154,7 +153,7 @@ export function LayoutSettingsForm({ organization }: LayoutSettingsFormProps) {
         }
     });
 
-    const result = await handleUpdateFooterSettings(organization.id!, formData);
+    const result = await handleUpdateFooterSettings(organization.id!, formData, adminUserId);
     
     if (result.success) {
       toast({ title: "Settings Saved", description: "The footer layout has been updated." });

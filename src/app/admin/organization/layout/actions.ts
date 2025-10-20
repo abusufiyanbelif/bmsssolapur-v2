@@ -13,10 +13,10 @@ interface FormState {
 
 export async function handleUpdateFooterSettings(
   orgId: string,
-  formData: FormData
+  formData: FormData,
+  adminUserId: string,
 ): Promise<FormState> {
   
-  const adminUserId = formData.get("adminUserId") as string;
   if (!adminUserId) {
     return { success: false, error: "Admin user ID is missing." };
   }
