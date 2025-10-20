@@ -116,35 +116,37 @@ const PermissionErrorState = ({ error }: { error: string }) => {
 const LoadingState = () => {
     const [steps, setSteps] = useState([
         { label: "Initializing App...", status: "loading", time: 0 },
-        { label: "Authenticating session...", status: "pending", time: 0 },
-        { label: "Fetching dashboard data...", status: "pending", time: 0 },
+        { label: "Checking Database Connection...", status: "pending", time: 0 },
+        { label: "Authenticating Session...", status: "pending", time: 0 },
+        { label: "Fetching Core Data...", status: "pending", time: 0 },
     ]);
     const { isDataLoading } = useLoading();
     const startTimeRef = useRef(Date.now());
     const [totalTime, setTotalTime] = useState(0);
     const [isComplete, setIsComplete] = useState(false);
+    const stepRef = useRef(0);
+
+    const updateStep = useCallback((index: number, status: "loading" | "done", time?: number) => {
+        setSteps(prev => prev.map((step, i) => i === index ? { ...step, status, time: time || step.time } : step));
+        stepRef.current = index;
+    }, []);
 
     useEffect(() => {
-        let currentStep = 0;
-
-        const updateStep = (index: number, status: "loading" | "done", time?: number) => {
-            setSteps(prev => prev.map((step, i) => i === index ? { ...step, status, time: time || step.time } : step));
-        };
-
         const timers: NodeJS.Timeout[] = [];
 
         // Step 1 -> 2
         timers.push(setTimeout(() => {
-            updateStep(0, "done", Date.now() - startTimeRef.current);
-            updateStep(1, "loading");
-            currentStep = 1;
-        }, 300)); // Simulate initial init time
+            if (stepRef.current === 0) {
+                updateStep(0, "done", Date.now() - startTimeRef.current);
+                updateStep(1, "loading");
+            }
+        }, 150));
 
         // This effect will run when isDataLoading changes from true to false
         const checkDataLoading = () => {
-             if (!isDataLoading && currentStep === 1) { // Session is auth'd, now data is loaded
-                updateStep(1, "done", Date.now() - startTimeRef.current);
-                updateStep(2, "done", Date.now() - startTimeRef.current);
+             if (!isDataLoading && (stepRef.current === 2 || stepRef.current === 3)) { // Session is auth'd, now data is loaded
+                updateStep(2, "done", steps[2].time || Date.now() - startTimeRef.current);
+                updateStep(3, "done", Date.now() - startTimeRef.current);
                 setTotalTime(Date.now() - startTimeRef.current);
                 setIsComplete(true);
             }
@@ -157,9 +159,25 @@ const LoadingState = () => {
         if (!isDataLoading) {
             checkDataLoading();
         }
-
+        
         return () => timers.forEach(clearTimeout);
+
+    // We only want this to react to `isDataLoading` changes
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [isDataLoading]);
+    
+    // This effect handles the transition from DB check to Auth
+     useEffect(() => {
+        checkDatabaseConnection().then(result => {
+             if (stepRef.current === 1) { // Only proceed if we're on the DB check step
+                updateStep(1, "done", Date.now() - startTimeRef.current);
+                if (result.success) {
+                    updateStep(2, "loading"); // Start auth step
+                }
+            }
+        });
+     // eslint-disable-next-line react-hooks/exhaustive-deps
+     }, [updateStep]);
     
     const Step = ({ label, status, time }: { label: string, status: string, time: number }) => (
         <div className="flex items-center gap-4">
