@@ -12,6 +12,8 @@ import { useRouter } from "next/navigation";
 import { DashboardClient } from "../admin/dashboard-client";
 import { ReferralDashboardContent } from "../referral/referral-dashboard-content";
 import { getCurrentUser } from "../actions";
+import { useLoading } from "@/contexts/loading-context";
+
 
 interface HomeClientProps {
     settings: AppSettings;
@@ -28,10 +30,10 @@ export function HomeClient({ settings, allDonations, allLeads, allUsers, allCamp
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [activeRole, setActiveRole] = useState<string | null>(null);
+    const { setIsDataLoading } = useLoading();
 
     useEffect(() => {
         const initializeSession = async () => {
-            setLoading(true);
             const storedUserId = localStorage.getItem('userId');
             const storedActiveRole = localStorage.getItem('activeRole');
             
@@ -50,20 +52,24 @@ export function HomeClient({ settings, allDonations, allLeads, allUsers, allCamp
 
                 setUser(fetchedUser);
                 setActiveRole(storedActiveRole);
+                setIsDataLoading(false); // Signal that all data is ready
 
             } catch (e) {
                  const errorMessage = e instanceof Error ? e.message : "An unknown error occurred.";
                 setError(`Failed to load dashboard: ${errorMessage}`);
+                setIsDataLoading(false);
             } finally {
                 setLoading(false);
             }
         };
 
         initializeSession();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [router]);
 
 
     if (loading) {
+        // This will only show briefly, as the main loading is handled by AppShell
         return <div className="flex items-center justify-center p-8"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
     }
 

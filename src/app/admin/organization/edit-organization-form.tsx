@@ -269,7 +269,11 @@ export function EditOrganizationForm({ organization, isCreating }: EditOrganizat
                         <div className="md:col-span-1 space-y-4">
                             <Label>Logo Preview</Label>
                             <div className="relative flex flex-col items-center justify-center gap-4 p-4 border rounded-lg bg-muted/50 h-full">
-                                {/* The Image component causing the issue is removed for now */}
+                                {(logoPreviewUrl || logoUrlValue) && (
+                                    <div className="relative w-48 h-48">
+                                        <Image src={logoPreviewUrl || logoUrlValue} alt="Logo Preview" fill className="object-contain rounded-md" data-ai-hint="logo" />
+                                    </div>
+                                )}
                             </div>
                         </div>
                     </div>

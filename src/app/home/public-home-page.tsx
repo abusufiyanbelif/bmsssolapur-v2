@@ -12,23 +12,10 @@ import { useEffect, useState, useMemo, Suspense } from "react";
 import { useRouter } from 'next/navigation';
 import { RecentCampaignsCard } from "@/app/admin/dashboard-cards";
 import { PublicMainMetricsCard } from "./public-dashboard-cards";
+import { useLoading } from "@/contexts/loading-context";
 
-function InspirationalQuotes({ quotes, loading }: { quotes: Quote[], loading: boolean }) {
-    if (loading) {
-        return (
-             <Card>
-                <CardHeader>
-                    <CardTitle className="flex items-center gap-2 text-primary">
-                        <QuoteIcon />
-                        Wisdom & Reflection
-                    </CardTitle>
-                </CardHeader>
-                <CardContent>
-                    <div className="flex justify-center items-center p-8"><Loader2 className="animate-spin h-6 w-6 text-primary" /></div>
-                </CardContent>
-            </Card>
-        )
-    }
+
+function InspirationalQuotes({ quotes }: { quotes: Quote[] }) {
 
     if (quotes.length === 0) {
         return null;
@@ -64,11 +51,16 @@ interface PublicHomePageProps {
     allUsers: User[];
     organization: Organization | null;
     quotes: Quote[];
-    loading: boolean;
 }
 
-export function PublicHomePage({ publicLeads, publicCampaigns, allLeads, allDonations, allUsers, organization, quotes, loading }: PublicHomePageProps) {
+export function PublicHomePage({ publicLeads, publicCampaigns, allLeads, allDonations, allUsers, organization, quotes }: PublicHomePageProps) {
   const router = useRouter();
+  const { setIsDataLoading } = useLoading();
+  
+  useEffect(() => {
+    setIsDataLoading(false);
+  }, [setIsDataLoading]);
+
   
   const handleDonateClick = (leadId?: string) => {
     const userId = localStorage.getItem('userId');
@@ -79,15 +71,6 @@ export function PublicHomePage({ publicLeads, publicCampaigns, allLeads, allDona
         sessionStorage.setItem('redirectAfterLogin', path);
         router.push('/login');
     }
-  }
-
-  if (loading) {
-      return (
-          <div className="flex flex-col flex-1 items-center justify-center h-full">
-              <Loader2 className="animate-spin rounded-full h-16 w-16 text-primary" />
-              <p className="mt-4 text-muted-foreground">Loading Dashboard...</p>
-          </div>
-      );
   }
 
   const heroTitle = organization?.hero?.title || "Empowering Our Community, One Act of Kindness at a Time.";
@@ -113,7 +96,7 @@ export function PublicHomePage({ publicLeads, publicCampaigns, allLeads, allDona
       
       <PublicMainMetricsCard allDonations={allDonations} allLeads={allLeads} />
 
-      <InspirationalQuotes quotes={quotes} loading={loading} />
+      <InspirationalQuotes quotes={quotes} />
 
       <Card>
           <CardHeader>

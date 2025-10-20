@@ -3,9 +3,9 @@
 
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
-import { LogIn, LogOut, Menu, Users as UsersIcon, User, Home, Loader2, Bell, AlertTriangle, FileCheck, HandHeart, Megaphone, ArrowRightLeft, Shield, FileText, Edit, Check } from "lucide-react";
+import { LogIn, LogOut, Menu, Users as UsersIcon, User, Home, Loader2, Bell, AlertTriangle, FileCheck, HandHeart, Megaphone, ArrowRightLeft, Shield, FileText, Edit, Check, CheckCircle, Database } from "lucide-react";
 import { RoleSwitcherDialog } from "./role-switcher-dialog";
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { Footer } from "./footer";
 import { logActivity } from "@/services/activity-log-service";
 import Link from "next/link";
@@ -31,6 +31,8 @@ import { getCurrentUser, getAdminNotificationData } from "@/app/actions";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "./ui/skeleton";
 import { cn } from "@/lib/utils";
+import { useLoading } from "@/contexts/loading-context";
+
 
 export const AdminEditButton = ({ editPath }: { editPath: string }) => {
     const [isAdmin, setIsAdmin] = useState(false);
@@ -111,92 +113,80 @@ const PermissionErrorState = ({ error }: { error: string }) => {
     );
 };
 
-const loadingSteps = [
-  "Initializing Next.js server",
-  "Connecting to Firebase services",
-  "Authenticating user session",
-  "Loading organization profile",
-  "Fetching dashboard data",
-  "Rendering dashboard",
-];
-
 const LoadingState = () => {
-    const [stepTimings, setStepTimings] = useState<number[]>([]);
-    const [allStepsComplete, setAllStepsComplete] = useState(false);
-    const startTimeRef = useRef(performance.now());
-  
-    useEffect(() => {
-      const timers = loadingSteps.map((_, index) =>
-        setTimeout(() => {
-          setStepTimings(prev => {
-            const newTimings = [...prev];
-            newTimings[index] = performance.now() - startTimeRef.current;
-            return newTimings;
-          });
-          if (index === loadingSteps.length - 1) {
-              setAllStepsComplete(true);
-          }
-        }, (index + 1) * 400 + index * 50)
-      );
-  
-      return () => timers.forEach(clearTimeout);
-    }, []);
-  
-    const getStepStatus = (index: number) => {
-        if (stepTimings[index] !== undefined) return 'completed';
-        if (stepTimings[index - 1] !== undefined || (index === 0 && stepTimings[0] === undefined)) return 'loading';
-        return 'pending';
-    };
-    
-    const totalDuration = stepTimings.length > 0 ? stepTimings[stepTimings.length - 1] : 0;
+    const [steps, setSteps] = useState([
+        { label: "Initializing App...", status: "loading", time: 0 },
+        { label: "Authenticating session...", status: "pending", time: 0 },
+        { label: "Fetching dashboard data...", status: "pending", time: 0 },
+    ]);
+    const { isDataLoading } = useLoading();
+    const startTimeRef = useRef(Date.now());
+    const [totalTime, setTotalTime] = useState(0);
+    const [isComplete, setIsComplete] = useState(false);
 
+    useEffect(() => {
+        let currentStep = 0;
+
+        const updateStep = (index: number, status: "loading" | "done", time?: number) => {
+            setSteps(prev => prev.map((step, i) => i === index ? { ...step, status, time: time || step.time } : step));
+        };
+
+        const timers: NodeJS.Timeout[] = [];
+
+        // Step 1 -> 2
+        timers.push(setTimeout(() => {
+            updateStep(0, "done", Date.now() - startTimeRef.current);
+            updateStep(1, "loading");
+            currentStep = 1;
+        }, 300)); // Simulate initial init time
+
+        // This effect will run when isDataLoading changes from true to false
+        const checkDataLoading = () => {
+             if (!isDataLoading && currentStep === 1) { // Session is auth'd, now data is loaded
+                updateStep(1, "done", Date.now() - startTimeRef.current);
+                updateStep(2, "done", Date.now() - startTimeRef.current);
+                setTotalTime(Date.now() - startTimeRef.current);
+                setIsComplete(true);
+            }
+        };
+
+        // We run this once to capture the state if data loads extremely fast
+        checkDataLoading();
+        
+        // This is now the primary trigger for completing the load screen
+        if (!isDataLoading) {
+            checkDataLoading();
+        }
+
+        return () => timers.forEach(clearTimeout);
+    }, [isDataLoading]);
+    
+    const Step = ({ label, status, time }: { label: string, status: string, time: number }) => (
+        <div className="flex items-center gap-4">
+            {status === "loading" && <Loader2 className="h-5 w-5 animate-spin text-primary" />}
+            {status === "done" && <CheckCircle className="h-5 w-5 text-green-500" />}
+            {status === "pending" && <div className="h-5 w-5" />}
+            <span className={cn("text-lg", status === "done" && "line-through text-muted-foreground")}>{label}</span>
+            {status === "done" && <span className="text-sm text-muted-foreground">({time}ms)</span>}
+        </div>
+    );
+    
     return (
         <div className="flex flex-col flex-1 items-center justify-center h-screen bg-background">
-        <div className="w-full max-w-lg p-8">
-            <div className="flex justify-center items-center gap-4 mb-8">
-            <Loader2 className="animate-spin rounded-full h-12 w-12 text-primary" />
-            <div>
-                <h2 className="text-2xl font-bold tracking-tight font-headline text-primary">Initializing Application</h2>
-                <p className="text-muted-foreground">Please wait a moment...</p>
-            </div>
-            </div>
-            <div className="space-y-3">
-            {loadingSteps.map((step, index) => {
-                const status = getStepStatus(index);
-                const duration = index > 0 
-                    ? (stepTimings[index] - stepTimings[index - 1])
-                    : stepTimings[index];
-                
-                return (
-                    <div key={index} className="flex items-center justify-between text-sm">
-                        <div className="flex items-center gap-3">
-                            {status === 'completed' ? (
-                                <Check className="h-5 w-5 text-green-500 flex-shrink-0" />
-                            ) : status === 'loading' ? (
-                                <Loader2 className="h-5 w-5 animate-spin text-primary flex-shrink-0" />
-                            ) : (
-                                <div className="h-5 w-5 border-2 border-muted-foreground/30 rounded-full flex-shrink-0" />
-                            )}
-                            <span className={cn(
-                                "transition-colors duration-300",
-                                status === 'completed' ? "text-foreground" : "text-muted-foreground"
-                            )}>
-                                {step}
-                            </span>
+            <Card className="w-full max-w-lg text-center shadow-lg">
+                 <CardHeader>
+                    <CardTitle className="text-2xl font-bold tracking-tight font-headline text-primary">Initializing Application</CardTitle>
+                    <CardDescription>Please wait while we prepare your dashboard.</CardDescription>
+                </CardHeader>
+                <CardContent className="flex flex-col items-start gap-3 p-6 text-left">
+                    {steps.map(step => <Step key={step.label} {...step} />)}
+                     {isComplete && (
+                        <div className="pt-4 border-t w-full mt-4 text-center">
+                            <p className="text-lg font-bold text-primary">Total Load Time: {totalTime}ms</p>
                         </div>
-                        {duration !== undefined && (
-                             <span className="font-mono text-xs text-muted-foreground">{duration.toFixed(0)}ms</span>
-                        )}
-                    </div>
-                )
-            })}
-            </div>
-            {allStepsComplete && (
-                <div className="text-center text-sm font-semibold text-primary mt-8 border-t pt-4">
-                    Total Load Time: {(totalDuration / 1000).toFixed(2)} seconds
-                </div>
-            )}
-        </div>
+                    )}
+                </CardContent>
+            </Card>
         </div>
     );
 };
@@ -247,10 +237,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     // This is the core session initialization and redirection logic.
     useEffect(() => {
         const initializeSession = async () => {
-            setSessionState('loading');
             
-            // The database initialization now handles its own checks.
-            // We only need to fetch org data.
             await fetchOrganizationData();
 
             const storedUserId = localStorage.getItem('userId');

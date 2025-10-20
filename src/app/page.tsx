@@ -1,3 +1,4 @@
+
 // src/app/page.tsx
 import { Suspense } from "react";
 import { PublicHomePage } from "./home/public-home-page";
@@ -44,7 +45,6 @@ async function PublicHomePageLoader() {
       allUsers={dashboardData.users}
       organization={JSON.parse(JSON.stringify(organization))}
       quotes={JSON.parse(JSON.stringify(quotes))}
-      loading={false} // Data is now loaded on the server
     />
   );
 }
