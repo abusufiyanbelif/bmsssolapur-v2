@@ -7,15 +7,33 @@ import { getFirestore as getAdminFirestore, Timestamp, FieldValue } from 'fireba
 import type { Organization, OrganizationFooter } from './types';
 import { getAdminDb } from './firebase-admin';
 import { unstable_noStore as noStore } from 'next/cache';
-import { getUser } from './user-service';
-import { updatePublicOrganization } from './public-data-service';
-
 
 // Re-export types for backward compatibility
 export type { Organization, OrganizationFooter };
 
 const ORGANIZATIONS_COLLECTION = 'organizations';
-const PUBLIC_DATA_COLLECTION = 'publicData';
+
+// Single source of truth for default organization data
+export const defaultOrganization: Organization = {
+    id: "main_org",
+    name: "Baitul Mal Samajik Sanstha",
+    logoUrl: "https://firebasestorage.googleapis.com/v0/b/baitul-mal-connect.appspot.com/o/app-assets%2Flogo-new.png?alt=media&token=e5079a49-2723-4d22-b91c-297c357662c2",
+    address: "Solapur, Maharashtra",
+    city: "Solapur",
+    registrationNumber: "Not Available",
+    contactEmail: "contact@example.com",
+    contactPhone: "0000000000",
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    footer: {
+      organizationInfo: { titleLine1: 'Baitul Mal', titleLine2: 'Samajik Sanstha', titleLine3: '(Solapur)', description: 'A registered charitable organization dedicated to providing financial assistance for education, healthcare, and relief to the underprivileged, adhering to Islamic principles of charity.', registrationInfo: 'Reg. No. Not Available', taxInfo: 'PAN: Not Available' },
+      contactUs: { title: 'Contact Us', address: 'Solapur, Maharashtra, India', email: 'contact@example.com' },
+      keyContacts: { title: 'Key Contacts', contacts: [{name: 'Admin', phone: '0000000000'}] },
+      connectWithUs: { title: 'Connect With Us', socialLinks: [] },
+      ourCommitment: { title: 'Our Commitment', text: 'We are committed to transparency and accountability in all our operations.', linkText: 'Learn More', linkUrl: '/organization' },
+      copyright: { text: `© ${new Date().getFullYear()} Baitul Mal Samajik Sanstha. All Rights Reserved.` }
+    }
+};
 
 // Function to check for duplicate organizations
 const checkDuplicates = async (name: string, registrationNumber: string): Promise<boolean> => {
@@ -64,7 +82,6 @@ export const getOrganization = async (id: string): Promise<Organization | null> 
     const adminDb = await getAdminDb();
     const orgDoc = await adminDb.collection(ORGANIZATIONS_COLLECTION).doc(id).get();
     if (!orgDoc.exists) {
-        // Explicitly log and return null if the document doesn't exist.
         console.warn(`No organization document found with ID: ${id}. This is normal on first startup.`);
         return null;
     }
@@ -76,8 +93,6 @@ export const getOrganization = async (id: string): Promise<Organization | null> 
         updatedAt: (data!.updatedAt as Timestamp)?.toDate(),
         } as Organization;
   } catch (error) {
-    // This is the critical change. Instead of throwing, we log and return null.
-    // This handles both "document not found" and initial "permission denied" race conditions gracefully.
     console.warn(`Warning: Could not get organization with ID ${id}. Reason:`, error instanceof Error ? error.message : "Unknown error");
     return null;
   }
@@ -118,16 +133,16 @@ export const updateOrganizationFooter = async (id: string, footerData: Organizat
  * This is now the definitive server-side function for this action.
  * @returns {Promise<Organization | null>} The organization object or null if not found or on error.
  */
-export const getCurrentOrganization = async (): Promise<Organization | null> => {
+export const getCurrentOrganization = async (): Promise<Organization> => {
     noStore(); // Opt out of caching for this specific function.
     try {
-        // We always fetch the 'main_org' document.
         const org = await getOrganization('main_org');
-        return org;
+        // If org doesn't exist, return the reliable default object.
+        return org || defaultOrganization;
     } catch (error) {
          const err = error instanceof Error ? error : new Error('Unknown error in getCurrentOrganization');
-         console.warn(`[Graceful Failure] Could not get current organization.`, err.message);
-         // Return null to prevent page crashes.
-         return null;
+         console.warn(`[Graceful Fallback] Could not get current organization.`, err.message);
+         // Return default to prevent page crashes.
+         return defaultOrganization;
     }
 }

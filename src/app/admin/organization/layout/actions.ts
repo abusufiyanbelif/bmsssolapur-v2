@@ -26,7 +26,8 @@ export async function handleUpdateFooterSettings(
     if (!adminUser) {
         return { success: false, error: "Admin user not found." };
     }
-
+    
+    // Correctly parse the JSON strings for arrays of objects
     const keyContacts = JSON.parse(formData.get("keyContacts") as string || '[]');
     const socialLinks = JSON.parse(formData.get("socialLinks") as string || '[]');
 
@@ -65,8 +66,8 @@ export async function handleUpdateFooterSettings(
     
     await updateOrganizationFooter(orgId, updates, { id: adminUser.id!, name: adminUser.name });
     
-    revalidatePath("/admin/organization/layout", "layout");
-    revalidatePath("/", "layout"); // Revalidate all pages using the layout
+    // Use 'layout' to revalidate the layout and all pages that use it.
+    revalidatePath("/", "layout");
 
     return { success: true };
   } catch (e) {

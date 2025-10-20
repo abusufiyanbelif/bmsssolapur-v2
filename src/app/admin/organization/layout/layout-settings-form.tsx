@@ -19,7 +19,7 @@ import { useToast } from "@/hooks/use-toast";
 import { handleUpdateFooterSettings } from "./actions";
 import { useState, useEffect } from "react";
 import { Loader2, Save, Edit, X, PlusCircle, Trash2 } from "lucide-react";
-import type { Organization, OrganizationFooter } from "@/services/types";
+import type { Organization } from "@/services/types";
 import { Textarea } from "@/components/ui/textarea";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import {
@@ -34,57 +34,46 @@ import { useRouter } from "next/navigation";
 
 const socialPlatformSchema = z.enum(["Facebook", "Instagram", "Twitter"]);
 
-const orgInfoSchema = z.object({
-  titleLine1: z.string().min(1, "This field is required."),
-  titleLine2: z.string().min(1, "This field is required."),
-  titleLine3: z.string().min(1, "This field is required."),
-  description: z.string().min(10, "Description is required."),
-  registrationInfo: z.string().min(1, "Registration info is required."),
-  taxInfo: z.string().min(1, "Tax info is required."),
+// Update schemas to match the expected nested structure of the form
+const formSchema = z.object({
+  organizationInfo: z.object({
+    titleLine1: z.string().min(1, "This field is required."),
+    titleLine2: z.string().min(1, "This field is required."),
+    titleLine3: z.string().min(1, "This field is required."),
+    description: z.string().min(10, "Description is required."),
+    registrationInfo: z.string().min(1, "Registration info is required."),
+    taxInfo: z.string().min(1, "Tax info is required."),
+  }),
+  contactUs: z.object({
+    title: z.string().min(1, "This field is required."),
+    address: z.string().min(1, "Address is required."),
+    email: z.string().email(),
+  }),
+  keyContacts: z.object({
+    title: z.string().min(1, "This field is required."),
+    contacts: z.array(z.object({
+        name: z.string().min(1, "Name is required."),
+        phone: z.string().min(10, "Phone number must be at least 10 digits."),
+    })),
+  }),
+  connectWithUs: z.object({
+    title: z.string().min(1, "This field is required."),
+    socialLinks: z.array(z.object({
+        platform: socialPlatformSchema,
+        url: z.string().url("Must be a valid URL."),
+    })),
+  }),
+  ourCommitment: z.object({
+    title: z.string().min(1, "This field is required."),
+    text: z.string().min(1, "This field is required."),
+    linkText: z.string().min(1, "This field is required."),
+    linkUrl: z.string().min(1, "This field is required."),
+  }),
+  copyright: z.object({
+    text: z.string().min(1, "This field is required."),
+  }),
 });
-
-const contactUsSchema = z.object({
-  title: z.string().min(1, "This field is required."),
-  address: z.string().min(1, "Address is required."),
-  email: z.string().email(),
-});
-
-const keyContactsSchema = z.object({
-  title: z.string().min(1, "This field is required."),
-  contacts: z.array(z.object({
-      name: z.string().min(1, "Name is required."),
-      phone: z.string().min(10, "Phone number must be at least 10 digits."),
-  })),
-});
-
-const connectWithUsSchema = z.object({
-  title: z.string().min(1, "This field is required."),
-  socialLinks: z.array(z.object({
-      platform: socialPlatformSchema,
-      url: z.string().url("Must be a valid URL."),
-  })),
-});
-
-const commitmentSchema = z.object({
-  title: z.string().min(1, "This field is required."),
-  text: z.string().min(1, "This field is required."),
-  linkText: z.string().min(1, "This field is required."),
-  linkUrl: z.string().min(1, "This field is required."),
-});
-
-const copyrightSchema = z.object({
-  text: z.string().min(1, "This field is required."),
-});
-
-const fullFormSchema = z.object({
-  organizationInfo: orgInfoSchema,
-  contactUs: contactUsSchema,
-  keyContacts: keyContactsSchema,
-  connectWithUs: connectWithUsSchema,
-  ourCommitment: commitmentSchema,
-  copyright: copyrightSchema,
-});
-type FormValues = z.infer<typeof fullFormSchema>;
+type FormValues = z.infer<typeof formSchema>;
 
 
 interface LayoutSettingsFormProps {
@@ -112,7 +101,7 @@ export function LayoutSettingsForm({ organization }: LayoutSettingsFormProps) {
   };
 
   const form = useForm<FormValues>({
-    resolver: zodResolver(fullFormSchema),
+    resolver: zodResolver(formSchema),
     defaultValues: {
       organizationInfo: defaultFooter.organizationInfo,
       contactUs: defaultFooter.contactUs,
@@ -139,34 +128,22 @@ export function LayoutSettingsForm({ organization }: LayoutSettingsFormProps) {
     }
     setIsSubmitting(true);
     
+    // Create FormData and append values correctly.
     const formData = new FormData();
     formData.append("adminUserId", adminUserId);
     
-    // Correctly serialize nested objects as JSON strings
-    formData.append("orgInfo.titleLine1", values.organizationInfo.titleLine1);
-    formData.append("orgInfo.titleLine2", values.organizationInfo.titleLine2);
-    formData.append("orgInfo.titleLine3", values.organizationInfo.titleLine3);
-    formData.append("orgInfo.description", values.organizationInfo.description);
-    formData.append("orgInfo.registrationInfo", values.organizationInfo.registrationInfo);
-    formData.append("orgInfo.taxInfo", values.organizationInfo.taxInfo);
-    
-    formData.append("contactUs.title", values.contactUs.title);
-    formData.append("contactUs.address", values.contactUs.address);
-    formData.append("contactUs.email", values.contactUs.email);
+    // Handle nested objects by iterating through them
+    Object.entries(values.organizationInfo).forEach(([key, value]) => formData.append(`orgInfo.${key}`, value));
+    Object.entries(values.contactUs).forEach(([key, value]) => formData.append(`contactUs.${key}`, value));
+    Object.entries(values.ourCommitment).forEach(([key, value]) => formData.append(`ourCommitment.${key}`, value));
+    Object.entries(values.copyright).forEach(([key, value]) => formData.append(`copyright.${key}`, value));
 
+    // Handle arrays of objects by stringifying them
     formData.append("keyContacts.title", values.keyContacts.title);
     formData.append("keyContacts", JSON.stringify(values.keyContacts.contacts));
-
     formData.append("connectWithUs.title", values.connectWithUs.title);
     formData.append("socialLinks", JSON.stringify(values.connectWithUs.socialLinks));
-    
-    formData.append("ourCommitment.title", values.ourCommitment.title);
-    formData.append("ourCommitment.text", values.ourCommitment.text);
-    formData.append("ourCommitment.linkText", values.ourCommitment.linkText);
-    formData.append("ourCommitment.linkUrl", values.ourCommitment.linkUrl);
 
-    formData.append("copyright.text", values.copyright.text);
-    
     const result = await handleUpdateFooterSettings(organization.id!, formData);
     
     if (result.success) {

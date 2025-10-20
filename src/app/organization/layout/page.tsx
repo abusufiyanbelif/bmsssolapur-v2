@@ -1,43 +1,31 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { getCurrentOrganization } from "@/app/admin/settings/actions";
+import { getCurrentOrganization } from "@/services/organization-service";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle, Palette } from "lucide-react";
 import { LayoutSettingsForm } from "@/app/admin/organization/layout/layout-settings-form";
-import type { Organization, OrganizationFooter } from "@/services/types";
-
-const defaultFooter: OrganizationFooter = {
-    organizationInfo: { titleLine1: 'Baitul Mal', titleLine2: 'Samajik Sanstha', titleLine3: '(Solapur)', description: 'A registered charitable organization dedicated to providing financial assistance for education, healthcare, and relief to the underprivileged, adhering to Islamic principles of charity.', registrationInfo: 'Reg. No. Not Available', taxInfo: 'PAN: Not Available' },
-    contactUs: { title: 'Contact Us', address: 'Solapur, Maharashtra, India', email: 'contact@example.com' },
-    keyContacts: { title: 'Key Contacts', contacts: [{name: 'Admin', phone: '0000000000'}] },
-    connectWithUs: { title: 'Connect With Us', socialLinks: [] },
-    ourCommitment: { title: 'Our Commitment', text: 'We are committed to transparency and accountability in all our operations.', linkText: 'Learn More', linkUrl: '/organization' },
-    copyright: { text: `© ${new Date().getFullYear()} Baitul Mal Samajik Sanstha. All Rights Reserved.` }
-};
-
-const defaultOrganization: Organization = {
-    id: "new_org_placeholder",
-    name: "New Organization",
-    address: "",
-    city: "",
-    registrationNumber: "",
-    contactEmail: "",
-    contactPhone: "",
-    createdAt: new Date(),
-    updatedAt: new Date(),
-    footer: defaultFooter,
-};
+import type { Organization } from "@/services/types";
 
 export default async function LayoutSettingsPage() {
-    let organization;
-    try {
-        organization = await getCurrentOrganization();
-    } catch(e) {
-        console.error("Could not fetch organization for layout page:", e);
-    }
+    // This now directly uses the more robust service.
+    const organization = await getCurrentOrganization();
     
-    // If no org exists, provide a default structure so the form can render for creation
-    const orgData = organization || defaultOrganization;
+    // If no org exists, the service now provides a reliable default.
+    // The check for `!organization` might still be useful for showing a "first time setup" message.
+    if (!organization) {
+        return (
+            <div className="flex-1 space-y-4">
+                <h2 className="text-3xl font-bold tracking-tight font-headline text-primary">Layout Configuration</h2>
+                <Alert variant="destructive">
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertTitle>Error Loading Profile</AlertTitle>
+                    <AlertDescription>
+                        Could not load the organization profile from the database. Please ensure it has been created and the server has the correct permissions.
+                    </AlertDescription>
+                </Alert>
+            </div>
+        )
+    }
      
     return (
         <div className="flex-1 space-y-4">
@@ -53,7 +41,7 @@ export default async function LayoutSettingsPage() {
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <LayoutSettingsForm organization={JSON.parse(JSON.stringify(orgData))} />
+                    <LayoutSettingsForm organization={JSON.parse(JSON.stringify(organization))} />
                 </CardContent>
             </Card>
         </div>

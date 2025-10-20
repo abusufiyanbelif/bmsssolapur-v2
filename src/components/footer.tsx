@@ -1,27 +1,19 @@
 
-'use client';
+"use client";
 
 import Link from 'next/link';
 import { Facebook, Instagram, Twitter, Mail, Phone, MapPin } from 'lucide-react';
 import { Logo } from './logo';
 import type { Organization, OrganizationFooter } from '@/services/types';
-
-const defaultFooter: OrganizationFooter = {
-    organizationInfo: { titleLine1: 'Baitul Mal', titleLine2: 'Samajik Sanstha', titleLine3: '(Solapur)', description: 'A registered charitable organization dedicated to providing financial assistance for education, healthcare, and relief to the underprivileged, adhering to Islamic principles of charity.', registrationInfo: 'Reg. No. Not Available', taxInfo: 'PAN: Not Available' },
-    contactUs: { title: 'Contact Us', address: 'Solapur, Maharashtra, India', email: 'contact@example.com' },
-    keyContacts: { title: 'Key Contacts', contacts: [{name: 'Admin', phone: '0000000000'}] },
-    connectWithUs: { title: 'Connect With Us', socialLinks: [] },
-    ourCommitment: { title: 'Our Commitment', text: 'We are committed to transparency and accountability in all our operations.', linkText: 'Learn More', linkUrl: '/organization' },
-    copyright: { text: `© ${new Date().getFullYear()} Baitul Mal Samajik Sanstha. All Rights Reserved.` }
-};
-
+import { defaultOrganization } from '@/services/organization-service';
 
 interface FooterProps {
   organization: Organization | null;
 }
 
 export function Footer({ organization }: FooterProps) {
-  const footerData = organization?.footer || defaultFooter;
+  // Use the passed organization data, or fall back to the single source of truth for default data.
+  const footerData = organization?.footer || defaultOrganization.footer!;
 
   return (
     <footer className="border-t bg-card text-card-foreground">
@@ -66,7 +58,7 @@ export function Footer({ organization }: FooterProps) {
             </div>
              <div className="space-y-3 pt-4">
                 <h5 className="font-semibold text-primary text-sm">{footerData.keyContacts.title}</h5>
-                 {footerData.keyContacts.contacts.map((contact: {name: string, phone: string}, i: number) => (
+                 {(footerData.keyContacts.contacts || []).map((contact: {name: string, phone: string}, i: number) => (
                     <div key={i} className="flex items-center gap-3">
                         <Phone className="h-4 w-4 text-primary" />
                         <div className="text-sm">
@@ -79,7 +71,7 @@ export function Footer({ organization }: FooterProps) {
              <div className="space-y-2 text-sm pt-4">
                 <h5 className="font-semibold text-primary text-sm">{footerData.connectWithUs.title}</h5>
                 <ul className="flex items-center gap-4">
-                     {footerData.connectWithUs.socialLinks.map((social: {platform: string, url: string}, i: number) => (
+                     {(footerData.connectWithUs.socialLinks || []).map((social: {platform: string, url: string}, i: number) => (
                         <li key={i}>
                             <a href={social.url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-muted-foreground hover:text-primary">
                                 {social.platform === 'Facebook' && <Facebook />}
