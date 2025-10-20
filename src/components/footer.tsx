@@ -5,8 +5,6 @@ import Link from 'next/link';
 import { Facebook, Instagram, Twitter, Mail, Phone, MapPin } from 'lucide-react';
 import { Logo } from './logo';
 import type { Organization, OrganizationFooter } from '@/services/types';
-import { Skeleton } from './ui/skeleton';
-
 
 const defaultFooter: OrganizationFooter = {
     organizationInfo: { titleLine1: 'Baitul Mal', titleLine2: 'Samajik Sanstha', titleLine3: '(Solapur)', description: 'A registered charitable organization dedicated to providing financial assistance for education, healthcare, and relief to the underprivileged, adhering to Islamic principles of charity.', registrationInfo: 'Reg. No. Not Available', taxInfo: 'PAN: Not Available' },

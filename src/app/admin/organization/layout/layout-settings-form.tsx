@@ -19,10 +19,9 @@ import { useToast } from "@/hooks/use-toast";
 import { handleUpdateFooterSettings } from "./actions";
 import { useState, useEffect } from "react";
 import { Loader2, Save, Edit, X, PlusCircle, Trash2 } from "lucide-react";
-import type { Organization } from "@/services/types";
+import type { Organization, OrganizationFooter } from "@/services/types";
 import { Textarea } from "@/components/ui/textarea";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { Separator } from "@/components/ui/separator";
 import {
   Select,
   SelectContent,
@@ -139,24 +138,35 @@ export function LayoutSettingsForm({ organization }: LayoutSettingsFormProps) {
         return;
     }
     setIsSubmitting(true);
+    
     const formData = new FormData();
     formData.append("adminUserId", adminUserId);
     
-    // Correctly serialize nested objects
-    Object.entries(values).forEach(([section, data]) => {
-      if (section === 'keyContacts' || section === 'socialLinks') {
-         // These are handled below
-      } else if (typeof data === 'object' && data !== null) {
-          Object.entries(data).forEach(([key, value]) => {
-              if (key === 'contacts' || key === 'socialLinks') {
-                  formData.append(key, JSON.stringify(value));
-              } else {
-                  formData.append(`${section}.${key}`, String(value));
-              }
-          });
-      }
-    });
+    // Correctly serialize nested objects as JSON strings
+    formData.append("orgInfo.titleLine1", values.organizationInfo.titleLine1);
+    formData.append("orgInfo.titleLine2", values.organizationInfo.titleLine2);
+    formData.append("orgInfo.titleLine3", values.organizationInfo.titleLine3);
+    formData.append("orgInfo.description", values.organizationInfo.description);
+    formData.append("orgInfo.registrationInfo", values.organizationInfo.registrationInfo);
+    formData.append("orgInfo.taxInfo", values.organizationInfo.taxInfo);
+    
+    formData.append("contactUs.title", values.contactUs.title);
+    formData.append("contactUs.address", values.contactUs.address);
+    formData.append("contactUs.email", values.contactUs.email);
 
+    formData.append("keyContacts.title", values.keyContacts.title);
+    formData.append("keyContacts", JSON.stringify(values.keyContacts.contacts));
+
+    formData.append("connectWithUs.title", values.connectWithUs.title);
+    formData.append("socialLinks", JSON.stringify(values.connectWithUs.socialLinks));
+    
+    formData.append("ourCommitment.title", values.ourCommitment.title);
+    formData.append("ourCommitment.text", values.ourCommitment.text);
+    formData.append("ourCommitment.linkText", values.ourCommitment.linkText);
+    formData.append("ourCommitment.linkUrl", values.ourCommitment.linkUrl);
+
+    formData.append("copyright.text", values.copyright.text);
+    
     const result = await handleUpdateFooterSettings(organization.id!, formData);
     
     if (result.success) {

@@ -13,7 +13,7 @@ interface FormState {
 
 export async function handleUpdateFooterSettings(
   orgId: string,
-  formData: FormData
+  formData: FormData,
 ): Promise<FormState> {
   
   const adminUserId = formData.get("adminUserId") as string;
@@ -65,7 +65,7 @@ export async function handleUpdateFooterSettings(
     
     await updateOrganizationFooter(orgId, updates, { id: adminUser.id!, name: adminUser.name });
     
-    revalidatePath("/admin/organization/layout");
+    revalidatePath("/admin/organization/layout", "layout");
     revalidatePath("/", "layout"); // Revalidate all pages using the layout
 
     return { success: true };
