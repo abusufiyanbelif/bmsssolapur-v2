@@ -13,7 +13,7 @@ interface FormState {
 
 export async function handleUpdateFooterSettings(
   orgId: string,
-  formData: FormData,
+  formData: FormData
 ): Promise<FormState> {
   
   const adminUserId = formData.get("adminUserId") as string;

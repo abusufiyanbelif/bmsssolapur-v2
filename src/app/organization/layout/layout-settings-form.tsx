@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -18,7 +17,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { handleUpdateFooterSettings } from "./actions";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Loader2, Save, Edit, X, PlusCircle, Trash2 } from "lucide-react";
 import type { Organization } from "@/services/types";
 import { Textarea } from "@/components/ui/textarea";
@@ -91,6 +90,11 @@ export function LayoutSettingsForm({ organization }: LayoutSettingsFormProps) {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
+  const [adminUserId, setAdminUserId] = useState<string | null>(null);
+
+  useEffect(() => {
+    setAdminUserId(localStorage.getItem('userId'));
+  }, []);
   
   const defaultFooter = organization.footer || {
       organizationInfo: { titleLine1: '', titleLine2: '', titleLine3: '', description: '', registrationInfo: '', taxInfo: '' },
@@ -135,8 +139,13 @@ export function LayoutSettingsForm({ organization }: LayoutSettingsFormProps) {
   };
   
   async function onSubmit(values: FormValues) {
+    if (!adminUserId) {
+        toast({ variant: "destructive", title: "Error", description: "Could not identify administrator." });
+        return;
+    }
     setIsSubmitting(true);
     const formData = new FormData();
+    formData.append("adminUserId", adminUserId);
     Object.entries(values).forEach(([key, value]) => {
         if (key === 'keyContacts' || key === 'socialLinks') {
             formData.append(key, JSON.stringify(value));

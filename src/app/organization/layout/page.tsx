@@ -8,12 +8,12 @@ import { LayoutSettingsForm } from "@/app/admin/organization/layout/layout-setti
 import type { Organization, OrganizationFooter } from "@/services/types";
 
 const defaultFooter: OrganizationFooter = {
-    organizationInfo: { titleLine1: 'Baitul Mal (System Default)', titleLine2: 'Samajik Sanstha (System Default)', titleLine3: '(Solapur)', description: 'Default description text. Please seed or create an organization profile to update this.', registrationInfo: 'Reg. No. (System Default)', taxInfo: 'PAN: (System Default)' },
-    contactUs: { title: 'Contact Us (System Default)', address: 'Default Address, Solapur', email: 'contact@example.com' },
-    keyContacts: { title: 'Key Contacts', contacts: [{name: 'Default Contact', phone: '0000000000'}] },
-    connectWithUs: { title: 'Connect With Us (System Default)', socialLinks: [] },
-    ourCommitment: { title: 'Our Commitment (System Default)', text: 'Default commitment text. Please update this in the layout settings.', linkText: 'Learn More', linkUrl: '#' },
-    copyright: { text: `© ${new Date().getFullYear()} Organization Name. All Rights Reserved. (System Default)` }
+    organizationInfo: { titleLine1: 'Baitul Mal', titleLine2: 'Samajik Sanstha', titleLine3: '(Solapur)', description: 'A registered charitable organization dedicated to providing financial assistance for education, healthcare, and relief to the underprivileged.', registrationInfo: 'Reg. No. Not Available', taxInfo: 'PAN: Not Available' },
+    contactUs: { title: 'Contact Us', address: 'Solapur, Maharashtra, India', email: 'contact@example.com' },
+    keyContacts: { title: 'Key Contacts', contacts: [{name: 'Admin', phone: '0000000000'}] },
+    connectWithUs: { title: 'Connect With Us', socialLinks: [] },
+    ourCommitment: { title: 'Our Commitment', text: 'We are committed to transparency and accountability in all our operations.', linkText: 'Learn More', linkUrl: '/organization' },
+    copyright: { text: `© ${new Date().getFullYear()} Baitul Mal Samajik Sanstha. All Rights Reserved.` }
 };
 
 const defaultOrganization: Organization = {
