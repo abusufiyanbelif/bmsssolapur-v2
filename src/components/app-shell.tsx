@@ -32,6 +32,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "./ui/skeleton";
 import { cn } from "@/lib/utils";
 import { useLoading } from "@/contexts/loading-context";
+import { Progress } from "./ui/progress";
 
 
 export const AdminEditButton = ({ editPath }: { editPath: string }) => {
@@ -57,12 +58,12 @@ export const AdminEditButton = ({ editPath }: { editPath: string }) => {
 }
 
 const defaultFooter: OrganizationFooter = {
-    organizationInfo: { titleLine1: 'Baitul Mal (System Default)', titleLine2: 'Samajik Sanstha (System Default)', titleLine3: '(Solapur) (System Default)', description: 'Default description text. Please seed or create an organization profile to update this.', registrationInfo: 'Reg. No. (System Default)', taxInfo: 'PAN: (System Default)' },
-    contactUs: { title: 'Contact Us (System Default)', address: 'Default Address, Solapur', email: 'contact@example.com' },
-    keyContacts: { title: 'Key Contacts', contacts: [{name: 'Default Contact', phone: '0000000000'}] },
-    connectWithUs: { title: 'Connect With Us (System Default)', socialLinks: [] },
-    ourCommitment: { title: 'Our Commitment (System Default)', text: 'Default commitment text. Please update this in the layout settings.', linkText: 'Learn More', linkUrl: '#' },
-    copyright: { text: `© ${new Date().getFullYear()} Organization Name. All Rights Reserved. (System Default)` }
+    organizationInfo: { titleLine1: 'Baitul Mal', titleLine2: 'Samajik Sanstha', titleLine3: '(Solapur)', description: 'A registered charitable organization dedicated to providing financial assistance for education, healthcare, and relief to the underprivileged, adhering to Islamic principles of charity.', registrationInfo: 'Reg. No. Not Available', taxInfo: 'PAN: Not Available' },
+    contactUs: { title: 'Contact Us', address: 'Solapur, Maharashtra, India', email: 'contact@example.com' },
+    keyContacts: { title: 'Key Contacts', contacts: [{name: 'Admin', phone: '0000000000'}] },
+    connectWithUs: { title: 'Connect With Us', socialLinks: [] },
+    ourCommitment: { title: 'Our Commitment', text: 'We are committed to transparency and accountability in all our operations.', linkText: 'Learn More', linkUrl: '/organization' },
+    copyright: { text: `© ${new Date().getFullYear()} Baitul Mal Samajik Sanstha. All Rights Reserved.` }
 };
 
 
@@ -141,38 +142,30 @@ const LoadingState = () => {
                 updateStep(1, "loading");
             }
         }, 150));
-
-        // This effect will run when isDataLoading changes from true to false
+        
         const checkDataLoading = () => {
-             if (!isDataLoading && (stepRef.current === 2 || stepRef.current === 3)) { // Session is auth'd, now data is loaded
-                updateStep(2, "done", steps[2].time || Date.now() - startTimeRef.current);
+             if (!isDataLoading && (stepRef.current === 2 || stepRef.current === 3)) {
+                if (steps[2].status !== "done") updateStep(2, "done", steps[2].time || Date.now() - startTimeRef.current);
                 updateStep(3, "done", Date.now() - startTimeRef.current);
                 setTotalTime(Date.now() - startTimeRef.current);
                 setIsComplete(true);
             }
         };
-
-        // We run this once to capture the state if data loads extremely fast
-        checkDataLoading();
         
-        // This is now the primary trigger for completing the load screen
+        checkDataLoading();
         if (!isDataLoading) {
             checkDataLoading();
         }
         
         return () => timers.forEach(clearTimeout);
-
-    // We only want this to react to `isDataLoading` changes
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [isDataLoading]);
+    }, [isDataLoading, updateStep, steps]);
     
-    // This effect handles the transition from DB check to Auth
      useEffect(() => {
         checkDatabaseConnection().then(result => {
-             if (stepRef.current === 1) { // Only proceed if we're on the DB check step
+             if (stepRef.current === 1) {
                 updateStep(1, "done", Date.now() - startTimeRef.current);
                 if (result.success) {
-                    updateStep(2, "loading"); // Start auth step
+                    updateStep(2, "loading");
                 }
             }
         });
@@ -189,6 +182,8 @@ const LoadingState = () => {
         </div>
     );
     
+    const progressPercentage = (steps.filter(s => s.status === 'done').length / steps.length) * 100;
+    
     return (
         <div className="flex flex-col flex-1 items-center justify-center h-screen bg-background">
             <Card className="w-full max-w-lg text-center shadow-lg">
@@ -197,6 +192,7 @@ const LoadingState = () => {
                     <CardDescription>Please wait while we prepare your dashboard.</CardDescription>
                 </CardHeader>
                 <CardContent className="flex flex-col items-start gap-3 p-6 text-left">
+                    <Progress value={progressPercentage} className="mb-4" />
                     {steps.map(step => <Step key={step.label} {...step} />)}
                      {isComplete && (
                         <div className="pt-4 border-t w-full mt-4 text-center">
