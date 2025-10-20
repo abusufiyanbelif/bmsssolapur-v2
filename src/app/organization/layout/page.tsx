@@ -1,5 +1,4 @@
 
-
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { getCurrentOrganization } from "@/app/admin/settings/actions";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -8,7 +7,7 @@ import { LayoutSettingsForm } from "@/app/admin/organization/layout/layout-setti
 import type { Organization, OrganizationFooter } from "@/services/types";
 
 const defaultFooter: OrganizationFooter = {
-    organizationInfo: { titleLine1: 'Baitul Mal', titleLine2: 'Samajik Sanstha', titleLine3: '(Solapur)', description: 'A registered charitable organization dedicated to providing financial assistance for education, healthcare, and relief to the underprivileged.', registrationInfo: 'Reg. No. Not Available', taxInfo: 'PAN: Not Available' },
+    organizationInfo: { titleLine1: 'Baitul Mal', titleLine2: 'Samajik Sanstha', titleLine3: '(Solapur)', description: 'A registered charitable organization dedicated to providing financial assistance for education, healthcare, and relief to the underprivileged, adhering to Islamic principles of charity.', registrationInfo: 'Reg. No. Not Available', taxInfo: 'PAN: Not Available' },
     contactUs: { title: 'Contact Us', address: 'Solapur, Maharashtra, India', email: 'contact@example.com' },
     keyContacts: { title: 'Key Contacts', contacts: [{name: 'Admin', phone: '0000000000'}] },
     connectWithUs: { title: 'Connect With Us', socialLinks: [] },
@@ -19,7 +18,6 @@ const defaultFooter: OrganizationFooter = {
 const defaultOrganization: Organization = {
     id: "new_org_placeholder",
     name: "New Organization",
-    logoUrl: "https://firebasestorage.googleapis.com/v0/b/baitul-mal-connect.appspot.com/o/organization%2Fassets%2Flogo%2FIMG-20250816-WA0000.jpg?alt=media&token=49c54b33-286c-481d-bd33-1a16e8db22c5",
     address: "",
     city: "",
     registrationNumber: "",
@@ -61,5 +59,3 @@ export default async function LayoutSettingsPage() {
         </div>
     );
 }
-
-    

@@ -65,7 +65,7 @@ export async function handleUpdateFooterSettings(
     
     await updateOrganizationFooter(orgId, updates, { id: adminUser.id!, name: adminUser.name });
     
-    revalidatePath("/admin/organization/layout");
+    revalidatePath("/admin/organization/layout", "layout");
     revalidatePath("/", "layout"); // Revalidate all pages using the layout
 
     return { success: true };
@@ -78,5 +78,3 @@ export async function handleUpdateFooterSettings(
     };
   }
 }
-
-    
