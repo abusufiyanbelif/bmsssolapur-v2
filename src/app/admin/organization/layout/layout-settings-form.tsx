@@ -145,7 +145,7 @@ export function LayoutSettingsForm({ organization }: LayoutSettingsFormProps) {
     }
     setIsSubmitting(true);
     const formData = new FormData();
-    formData.append("adminUserId", adminUserId);
+    formData.append("adminUserId", adminUserId); // Correctly append admin user ID here
     Object.entries(values).forEach(([key, value]) => {
         if (key === 'keyContacts' || key === 'socialLinks') {
             formData.append(key, JSON.stringify(value));
@@ -265,3 +265,5 @@ export function LayoutSettingsForm({ organization }: LayoutSettingsFormProps) {
     </Form>
   )
 }
+
+    
