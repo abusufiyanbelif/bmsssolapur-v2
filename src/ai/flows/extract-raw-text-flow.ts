@@ -11,7 +11,8 @@ import { googleAI } from '@genkit-ai/googleai';
 import {
     ExtractRawTextInputSchema,
     ExtractRawTextOutput,
-    ExtractRawTextOutputSchema
+    ExtractRawTextOutputSchema,
+    ExtractRawTextInput
 } from '@/ai/schemas';
 import { getSafeGeminiModel } from '@/services/gemini-service';
 
@@ -19,7 +20,8 @@ export async function extractRawText(input: ExtractRawTextInput): Promise<Extrac
   return extractRawTextFlow(input);
 }
 
-const extractRawTextFlow = ai.defineFlow(
+
+export const extractRawTextFlow = ai.defineFlow(
   {
     name: 'extractRawTextFlow',
     inputSchema: ExtractRawTextInputSchema,
