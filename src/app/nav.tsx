@@ -72,7 +72,6 @@ const allNavItems: NavItem[] = [
             { href: "/admin/organization", label: "Organization Profile", icon: Info, allowedRoles: ["Admin", "Super Admin", "Finance Admin"] },
             { href: "/admin/board-management", label: "Board Members", icon: Users, allowedRoles: ["Admin", "Super Admin", "Finance Admin"] },
             { href: "/admin/organization/letterhead", label: "Letterhead", icon: Newspaper, allowedRoles: ["Admin", "Super Admin", "Finance Admin"] },
-            { href: "/admin/organization/layout", label: "Layout & Footer", icon: Layout, allowedRoles: ["Super Admin"] },
         ]
     },
     
