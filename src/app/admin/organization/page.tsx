@@ -5,27 +5,6 @@ import { EditOrganizationForm } from "./edit-organization-form";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
 
-const defaultOrganization = {
-    id: "main_org", // A default, predictable ID for creation
-    name: "New Organization",
-    logoUrl: "https://firebasestorage.googleapis.com/v0/b/baitul-mal-connect.appspot.com/o/organization%2Fassets%2Flogo%2FIMG-20250816-WA0000.jpg?alt=media&token=49c54b33-286c-481d-bd33-1a16e8db22c5",
-    address: "",
-    city: "Solapur",
-    registrationNumber: "",
-    contactEmail: "",
-    contactPhone: "",
-    website: "",
-    bankAccountName: "",
-    bankAccountNumber: "",
-    bankIfscCode: "",
-    upiId: "",
-    qrCodeUrl: "https://firebasestorage.googleapis.com/v0/b/baitul-mal-connect.appspot.com/o/app-assets%2Fupi-qr-code.png?alt=media&token=c1374b76-b568-450f-90de-3f191195a63c",
-    footer: undefined, // Let the form handle default footer
-    createdAt: new Date(),
-    updatedAt: new Date(),
-};
-
-
 export default async function OrganizationSettingsPage() {
     let organization;
     let error = null;
@@ -53,11 +32,13 @@ export default async function OrganizationSettingsPage() {
     // Determine if we are creating a new org.
     // This is true if the fetched organization is null.
     const isCreating = !organization;
-
+    
+    // The service now provides a reliable default, so we pass it if org is null
+    const orgData = organization;
 
     return (
         <div className="flex-1 space-y-4">
-            <h2 className="text-3xl font-bold tracking-tight font-headline text-primary">Organization Profile</h2>
+            <h2 className="text-3xl font-bold tracking-tight font-headline text-primary">Organization Profile & Layout</h2>
             {isCreating && (
                  <Alert>
                     <AlertCircle className="h-4 w-4" />
@@ -67,9 +48,8 @@ export default async function OrganizationSettingsPage() {
                     </AlertDescription>
                 </Alert>
             )}
-            <EditOrganizationForm organization={organization || defaultOrganization} isCreating={isCreating} />
+            <EditOrganizationForm organization={JSON.parse(JSON.stringify(orgData))} isCreating={isCreating} />
         </div>
     );
 }
 
-    

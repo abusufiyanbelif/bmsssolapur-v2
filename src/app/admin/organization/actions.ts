@@ -46,6 +46,10 @@ export async function handleUpdateOrganization(
         const uploadPath = `organization/assets/qr-codes/`;
         qrCodeUrl = await uploadFile(qrCodeFile, uploadPath);
     }
+    
+    // Correctly parse the JSON strings for arrays of objects
+    const keyContacts = JSON.parse(formData.get("footer.keyContacts") as string || '[]');
+    const socialLinks = JSON.parse(formData.get("footer.socialLinks") as string || '[]');
 
     const orgData: Partial<Organization> = {
         name: formData.get('name') as string,
@@ -66,6 +70,38 @@ export async function handleUpdateOrganization(
             title: formData.get('hero.title') as string,
             description: formData.get('hero.description') as string,
         },
+        footer: {
+            organizationInfo: {
+                titleLine1: formData.get("footer.organizationInfo.titleLine1") as string,
+                titleLine2: formData.get("footer.organizationInfo.titleLine2") as string,
+                titleLine3: formData.get("footer.organizationInfo.titleLine3") as string,
+                description: formData.get("footer.organizationInfo.description") as string,
+                registrationInfo: formData.get("footer.organizationInfo.registrationInfo") as string,
+                taxInfo: formData.get("footer.organizationInfo.taxInfo") as string,
+            },
+            contactUs: {
+                title: formData.get("footer.contactUs.title") as string,
+                address: formData.get("footer.contactUs.address") as string,
+                email: formData.get("footer.contactUs.email") as string,
+            },
+            keyContacts: {
+                title: formData.get("footer.keyContacts.title") as string,
+                contacts: keyContacts,
+            },
+            connectWithUs: {
+                title: formData.get("footer.connectWithUs.title") as string,
+                socialLinks: socialLinks,
+            },
+            ourCommitment: {
+                title: formData.get("footer.ourCommitment.title") as string,
+                text: formData.get("footer.ourCommitment.text") as string,
+                linkText: formData.get("footer.ourCommitment.linkText") as string,
+                linkUrl: formData.get("footer.ourCommitment.linkUrl") as string,
+            },
+            copyright: {
+                text: formData.get("footer.copyright.text") as string,
+            }
+        },
         updatedBy: { id: adminUser.id!, name: adminUser.name },
     };
     
@@ -75,7 +111,6 @@ export async function handleUpdateOrganization(
         finalOrgData = await createOrganization(orgData as Omit<Organization, 'id' | 'createdAt' | 'updatedAt'>);
     } else {
         await updateOrganization(orgId, orgData);
-        // CORRECTED: Use getOrganization instead of getUser
         const updatedOrg = await getOrganization(orgId);
         if(!updatedOrg) throw new Error("Could not retrieve updated organization data.");
         finalOrgData = updatedOrg;
@@ -84,11 +119,7 @@ export async function handleUpdateOrganization(
     // After updating the private data, sync it to the public document
     await updatePublicOrganization(finalOrgData);
 
-    revalidatePath("/admin/organization");
-    // Revalidate all pages using the layout to update header/footer
     revalidatePath("/", "layout");
-    revalidatePath("/organization");
-
 
     return { success: true };
   } catch (e) {
