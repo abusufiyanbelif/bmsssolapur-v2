@@ -21,7 +21,7 @@ import { Badge } from "@/components/ui/badge";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
-import { getInspirationalQuotes } from "@/ai/flows/get-inspirational-quotes-flow";
+import { getQuotesAction } from '@/app/admin/donors/actions';
 import type { Quote } from "@/services/types";
 import Image from "next/image";
 
@@ -126,7 +126,7 @@ function CampaignsPageContent({ initialCampaigns, initialLeads, error: initialEr
         let message = `*Support Our Campaign: ${campaign.name}*\n\nWe are raising ₹${campaign.goal.toLocaleString()} to ${campaign.description.toLowerCase()}\n\n*Progress:*-\nRaised: ₹${campaign.raisedAmount.toLocaleString()}\n- Beneficiaries Helped: ${campaign.beneficiaryCount}\n\nPlease contribute and share this message. Every bit helps!\n\nView details here:\n${campaignUrl}`;
         
         try {
-            const quotes = await getInspirationalQuotes(1);
+            const quotes = await getQuotesAction(1);
             if (quotes.length > 0) {
                 const quoteText = `_"${quotes[0].text}"_\n- ${quotes[0].source}\n\n`;
                 message = quoteText + message;
@@ -207,7 +207,7 @@ function CampaignsPageContent({ initialCampaigns, initialLeads, error: initialEr
                         </Link>
                     </Button>
                 </div>
-            );
+            )
         }
         
         return (

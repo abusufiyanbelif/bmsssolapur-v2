@@ -592,7 +592,7 @@ interface AvailabilityResult {
     existingUserName?: string;
 }
 
-export async function checkAvailability(field: string, value: string): Promise<AvailabilityResult> {
+export const checkAvailability = async (field: string, value: string): Promise<AvailabilityResult> => {
     if (!value) return { isAvailable: true };
 
     try {

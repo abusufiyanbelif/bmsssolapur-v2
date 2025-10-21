@@ -54,7 +54,8 @@ export const CORE_COLLECTIONS = [
 ];
 
 /**
- * Checks if a single Firestore collection exists, and creates it if it doesn't.
+ * Checks if a single Firestore collection exists, and creates it with a placeholder
+ * document if it doesn't. This prevents errors on fresh deployments.
  * @param collectionName The name of the collection to check.
  * @returns An object indicating if the collection was created.
  */

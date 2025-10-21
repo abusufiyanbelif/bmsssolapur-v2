@@ -3,9 +3,9 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { CheckCircle, AlertCircle, Database, UserCheck, Quote, Users, HandCoins, RefreshCcw, Building, FileText, Trash2, CreditCard, Settings, Fingerprint, UserX as AnonymousUserIcon, ListChecks } from "lucide-react";
+import { CheckCircle, AlertCircle, Database, UserCheck, Quote, Users, HandCoins, RefreshCcw, Building, FileText, Trash2, CreditCard, Settings, Fingerprint, UserX as AnonymousUserIcon, ListChecks, PlusCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Loader2 } from "lucide-react";
 import { handleSeedAction, handleEraseAction, getCoreCollectionsList, handleEnsureSingleCollection } from "./actions";
 import { useRouter } from "next/navigation";
@@ -14,8 +14,6 @@ import { useToast } from "@/hooks/use-toast";
 
 type SeedTask = 'initial' | 'coreTeam' | 'organization' | 'appSettings' | 'paymentGateways' | 'sampleData' | 'syncFirebaseAuth';
 type TaskType = 'seed' | 'erase';
-type TaskStatus = 'idle' | 'loading' | 'success' | 'error';
-type ProgressItem = { label: string; status: 'pending' | 'running' | 'done' | 'error', message?: string };
 
 export default function SeedPage() {
     const router = useRouter();
@@ -23,20 +21,36 @@ export default function SeedPage() {
     
     // Unified state for all tasks
     const [activeTask, setActiveTask] = useState<{ type: TaskType, name: SeedTask } | null>(null);
-    const [progress, setProgress] = useState<ProgressItem[]>([]);
+    const [taskProgress, setTaskProgress] = useState<{ label: string; status: 'pending' | 'running' | 'done' | 'error', message?: string }[]>([]);
     
     // State for the initial collection check
     const [isCheckingCollections, setIsCheckingCollections] = useState(false);
     const [collectionCheckProgress, setCollectionCheckProgress] = useState<{name: string, status: 'pending' | 'checking' | 'created' | 'exists' | 'error', error?:string}[]>([]);
 
     const isTaskActive = activeTask !== null || isCheckingCollections;
+    
+    // Prevent navigation while a task is running
+    useEffect(() => {
+        if (!isTaskActive) return;
+
+        const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+            e.preventDefault();
+            e.returnValue = 'A seed or erase operation is in progress. Are you sure you want to leave?';
+            return e.returnValue;
+        };
+
+        window.addEventListener('beforeunload', handleBeforeUnload);
+        return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+    }, [isTaskActive]);
+
 
     const runTask = async (type: TaskType, name: SeedTask, progressSteps: string[]) => {
         setActiveTask({ type, name });
-        setProgress(progressSteps.map(label => ({ label, status: 'pending' })));
+        setTaskProgress(progressSteps.map(label => ({ label, status: 'pending' })));
 
         try {
             const action = type === 'seed' ? handleSeedAction : handleEraseAction;
+            setTaskProgress(prev => prev.map((p, i) => i === 0 ? { ...p, status: 'running' } : p));
             const result = await action(name);
             
             if(result.success && result.data){
@@ -49,14 +63,14 @@ export default function SeedPage() {
                         </ul>
                     )
                 });
-                 setProgress(prev => prev.map(p => ({...p, status: 'done'})));
+                 setTaskProgress(prev => prev.map(p => ({...p, status: 'done'})));
             } else {
                  toast({
                     variant: 'destructive',
                     title: `${type === 'seed' ? 'Seed' : 'Erase'} Failed`,
                     description: result.error || 'An unknown error occurred.',
                 });
-                setProgress(prev => prev.map(p => ({...p, status: 'error', message: result.error })));
+                setTaskProgress(prev => prev.map(p => ({...p, status: 'error', message: result.error })));
             }
         } catch (e) {
             const error = e instanceof Error ? e.message : "An unexpected error occurred.";
@@ -65,7 +79,7 @@ export default function SeedPage() {
                 title: `${type === 'seed' ? 'Seed' : 'Erase'} Operation Failed`,
                 description: error,
             });
-            setProgress(prev => prev.map(p => ({...p, status: 'error', message: error })));
+            setTaskProgress(prev => prev.map(p => ({...p, status: 'error', message: error })));
         } finally {
             setActiveTask(null);
         }
@@ -110,7 +124,7 @@ export default function SeedPage() {
         });
     };
     
-    const ProgressDisplay = ({ steps }: { steps: ProgressItem[] }) => {
+    const ProgressDisplay = ({ steps }: { steps: { label: string; status: 'pending' | 'running' | 'done' | 'error', message?: string }[] }) => {
         if (steps.length === 0) return null;
         return (
              <div className="pt-4 border-t">
@@ -192,7 +206,7 @@ export default function SeedPage() {
                                 </Button>
                              </div>
                         </div>
-                         {activeTask?.name === 'initial' && <ProgressDisplay steps={progress} />}
+                         {activeTask?.name === 'initial' && <ProgressDisplay steps={taskProgress} />}
                     </div>
 
                     {/* Organization Profile */}
@@ -213,7 +227,7 @@ export default function SeedPage() {
                                 </Button>
                              </div>
                         </div>
-                         {activeTask?.name === 'organization' && <ProgressDisplay steps={progress} />}
+                         {activeTask?.name === 'organization' && <ProgressDisplay steps={taskProgress} />}
                     </div>
                     
                     {/* App Settings */}
@@ -234,7 +248,7 @@ export default function SeedPage() {
                                 </Button>
                             </div>
                         </div>
-                        {activeTask?.name === 'appSettings' && <ProgressDisplay steps={progress} />}
+                        {activeTask?.name === 'appSettings' && <ProgressDisplay steps={taskProgress} />}
                     </div>
 
                      {/* Core Team */}
@@ -255,7 +269,7 @@ export default function SeedPage() {
                                 </Button>
                             </div>
                         </div>
-                         {activeTask?.name === 'coreTeam' && <ProgressDisplay steps={progress} />}
+                         {activeTask?.name === 'coreTeam' && <ProgressDisplay steps={taskProgress} />}
                     </div>
                     
                     {/* Payment Gateways */}
@@ -276,7 +290,7 @@ export default function SeedPage() {
                                 </Button>
                             </div>
                         </div>
-                         {activeTask?.name === 'paymentGateways' && <ProgressDisplay steps={progress} />}
+                         {activeTask?.name === 'paymentGateways' && <ProgressDisplay steps={taskProgress} />}
                     </div>
                     
                     {/* Sync Users to Firebase Auth */}
@@ -297,7 +311,7 @@ export default function SeedPage() {
                                 </Button>
                             </div>
                         </div>
-                         {activeTask?.name === 'syncFirebaseAuth' && <ProgressDisplay steps={progress} />}
+                         {activeTask?.name === 'syncFirebaseAuth' && <ProgressDisplay steps={taskProgress} />}
                     </div>
 
                     {/* Sample Data */}
@@ -318,7 +332,7 @@ export default function SeedPage() {
                                 </Button>
                             </div>
                         </div>
-                        {activeTask?.name === 'sampleData' && <ProgressDisplay steps={progress} />}
+                        {activeTask?.name === 'sampleData' && <ProgressDisplay steps={taskProgress} />}
                         
                         <Accordion type="single" collapsible>
                             <AccordionItem value="item-1">

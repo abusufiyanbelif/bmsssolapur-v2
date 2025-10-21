@@ -1,5 +1,4 @@
-
-import { seedSampleData } from '@/services/seed-service';
+import { seedSampleData as doSeed } from '@/services/seed-service';
 import dotenv from 'dotenv';
 import { performance } from 'perf_hooks';
 
@@ -9,8 +8,7 @@ async function run() {
   const startTime = performance.now();
   console.log('Seeding Sample Data (Campaigns, Leads, Donations)...');
   try {
-    // Corrected to call the exported seedSampleData function
-    const result = await seedSampleData();
+    const result = await doSeed();
     console.log(`\n✅ SUCCESS: ${result.message}`);
     if (result.details) {
         result.details.forEach(detail => console.log(`- ${detail}`));

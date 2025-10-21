@@ -5,7 +5,7 @@
 import { getFirestore, Timestamp, FieldValue } from 'firebase-admin/firestore';
 import type { User, UserRole, Lead, Verifier, LeadDonationAllocation, Donation, Campaign, FundTransfer, LeadAction, AppSettings, OrganizationFooter, Organization } from './types';
 import { seedInitialQuotes } from '@/services/quotes-service';
-import { getAdminDb, getAdminAuth, ensureCollectionExists, CORE_COLLECTIONS } from './firebase-admin';
+import { getAdminDb, getAdminAuth, ensureCollectionExists } from './firebase-admin';
 import { updatePublicCampaign, enrichCampaignWithPublicStats } from './public-data-service';
 import { format } from 'date-fns';
 import { revalidatePath } from 'next/cache';
@@ -14,7 +14,7 @@ import * as admin from 'firebase-admin';
 // Re-export type for backward compatibility
 export type { User, UserRole };
 // Re-export constants for use in client components
-export { CORE_COLLECTIONS };
+export { CORE_COLLECTIONS } from '@/services/firebase-admin';
 
 const USERS_COLLECTION = 'users';
 

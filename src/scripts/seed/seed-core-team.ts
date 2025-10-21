@@ -9,7 +9,7 @@ dotenv.config();
 
 // This list now EXCLUDES the main System Admin, as that user is created automatically
 // on server startup in firebase-admin.ts to ensure system stability.
-const coreTeamUsersToSeed: Omit<User, 'id' | 'createdAt' | 'userKey'>[] = [
+const coreTeamUsersToSeed: Omit<User, 'id' | 'createdAt' | 'updatedAt' | 'userKey'>[] = [
     { 
         name: "Abusufiyan Belif", 
         userId: "abusufiyan.belif", 
