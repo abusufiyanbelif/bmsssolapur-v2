@@ -1,3 +1,4 @@
+// src/app/admin/organization/edit-organization-form.tsx
 
 "use client";
 
@@ -133,28 +134,28 @@ export function EditOrganizationForm({ organization, isCreating }: EditOrganizat
       qrCodeFile: null,
       "hero.title": organization.hero?.title || "Empowering Our Community, One Act of Kindness at a Time.",
       "hero.description": organization.hero?.description || "Join BaitulMal Samajik Sanstha (Solapur) to make a lasting impact. Your contribution brings hope, changes lives, and empowers our community.",
-      "footer.organizationInfo.titleLine1": defaultFooter.organizationInfo?.titleLine1 || '',
-      "footer.organizationInfo.titleLine2": defaultFooter.organizationInfo?.titleLine2 || '',
-      "footer.organizationInfo.titleLine3": defaultFooter.organizationInfo?.titleLine3 || '',
-      "footer.organizationInfo.description": defaultFooter.organizationInfo?.description || '',
-      "footer.organizationInfo.registrationInfo": defaultFooter.organizationInfo?.registrationInfo || '',
-      "footer.organizationInfo.taxInfo": defaultFooter.organizationInfo?.taxInfo || '',
-      "footer.contactUs.title": defaultFooter.contactUs?.title || '',
-      "footer.contactUs.address": defaultFooter.contactUs?.address || '',
-      "footer.contactUs.email": defaultFooter.contactUs?.email || '',
-      "footer.keyContacts.title": defaultFooter.keyContacts?.title || '',
-      keyContacts: defaultFooter.keyContacts?.contacts || [],
-      "footer.connectWithUs.title": defaultFooter.connectWithUs?.title || '',
-      socialLinks: defaultFooter.connectWithUs?.socialLinks || [],
-      "footer.ourCommitment.title": defaultFooter.ourCommitment?.title || '',
-      "footer.ourCommitment.text": defaultFooter.ourCommitment?.text || '',
-      "footer.ourCommitment.linkText": defaultFooter.ourCommitment?.linkText || '',
-      "footer.ourCommitment.linkUrl": defaultFooter.ourCommitment?.linkUrl || '',
-      "footer.copyright.text": defaultFooter.copyright?.text || '',
+      "footer.organizationInfo.titleLine1": defaultFooter.organizationInfo.titleLine1 || '',
+      "footer.organizationInfo.titleLine2": defaultFooter.organizationInfo.titleLine2 || '',
+      "footer.organizationInfo.titleLine3": defaultFooter.organizationInfo.titleLine3 || '',
+      "footer.organizationInfo.description": defaultFooter.organizationInfo.description || '',
+      "footer.organizationInfo.registrationInfo": defaultFooter.organizationInfo.registrationInfo || '',
+      "footer.organizationInfo.taxInfo": defaultFooter.organizationInfo.taxInfo || '',
+      "footer.contactUs.title": defaultFooter.contactUs.title || '',
+      "footer.contactUs.address": defaultFooter.contactUs.address || '',
+      "footer.contactUs.email": defaultFooter.contactUs.email || '',
+      "footer.keyContacts.title": defaultFooter.keyContacts.title || '',
+      keyContacts: defaultFooter.keyContacts.contacts || [],
+      "footer.connectWithUs.title": defaultFooter.connectWithUs.title || '',
+      socialLinks: defaultFooter.connectWithUs.socialLinks || [],
+      "footer.ourCommitment.title": defaultFooter.ourCommitment.title || '',
+      "footer.ourCommitment.text": defaultFooter.ourCommitment.text || '',
+      "footer.ourCommitment.linkText": defaultFooter.ourCommitment.linkText || '',
+      "footer.ourCommitment.linkUrl": defaultFooter.ourCommitment.linkUrl || '',
+      "footer.copyright.text": defaultFooter.copyright.text || '',
     },
   });
 
-  const { formState: { isDirty }, reset, watch, control, handleSubmit } = form;
+  const { formState: { isDirty }, reset, control, handleSubmit } = form;
   const { fields: keyContactFields, append: appendKeyContact, remove: removeKeyContact } = useFieldArray({ control, name: "keyContacts" });
   const { fields: socialLinkFields, append: appendSocialLink, remove: removeSocialLink } = useFieldArray({ control, name: "socialLinks" });
   
@@ -269,7 +270,7 @@ export function EditOrganizationForm({ organization, isCreating }: EditOrganizat
                                     <div className="md:col-span-1 space-y-4">
                                         <Label>Logo Preview</Label>
                                         <div className="relative flex flex-col items-center justify-center gap-4 p-4 border rounded-lg bg-muted/50 h-full">
-                                            {(logoPreviewUrl || watch('logoUrl')) && (<div className="relative w-48 h-48"><Image src={logoPreviewUrl || watch('logoUrl')} alt="Logo Preview" fill className="object-contain rounded-md" data-ai-hint="logo" /></div>)}
+                                            {(logoPreviewUrl || form.watch('logoUrl')) && (<div className="relative w-48 h-48"><Image src={logoPreviewUrl || form.watch('logoUrl')} alt="Logo Preview" fill className="object-contain rounded-md" data-ai-hint="logo" /></div>)}
                                         </div>
                                     </div>
                                 </div>
@@ -292,7 +293,7 @@ export function EditOrganizationForm({ organization, isCreating }: EditOrganizat
                                     <div className="space-y-4">
                                         <Label>QR Code Preview</Label>
                                         <div className="relative flex flex-col items-center justify-center gap-4 p-4 border rounded-lg bg-muted/50 h-full">
-                                            {(qrCodePreviewUrl || watch('qrCodeUrl')) ? (<div className="relative w-48 h-48"><Image src={qrCodePreviewUrl || watch('qrCodeUrl')} alt="UPI QR Code Preview" fill className="object-contain rounded-md" data-ai-hint="qr code" /></div>) : (<p className="text-sm text-muted-foreground text-center p-8">Upload a QR code image to see a preview.</p>)}
+                                            {(qrCodePreviewUrl || form.watch('qrCodeUrl')) ? (<div className="relative w-48 h-48"><Image src={qrCodePreviewUrl || form.watch('qrCodeUrl')} alt="UPI QR Code Preview" fill className="object-contain rounded-md" data-ai-hint="qr code" /></div>) : (<p className="text-sm text-muted-foreground text-center p-8">Upload a QR code image to see a preview.</p>)}
                                         </div>
                                     </div>
                                 </div>
