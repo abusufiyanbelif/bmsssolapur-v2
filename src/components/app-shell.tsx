@@ -121,15 +121,17 @@ const LoadingState = () => {
         { label: "Authenticating Session...", status: "pending", time: 0 },
         { label: "Fetching Core Data...", status: "pending", time: 0 },
     ]);
-    const { isDataLoading } = useLoading();
+    const { isDataLoading, setIsDataLoading } = useLoading();
     const startTimeRef = useRef(Date.now());
     const [totalTime, setTotalTime] = useState(0);
     const [isComplete, setIsComplete] = useState(false);
     const stepRef = useRef(0);
 
-    const updateStep = useCallback((index: number, status: "loading" | "done", time?: number) => {
+    const updateStep = useCallback((index: number, status: "loading" | "done" | "pending", time?: number) => {
         setSteps(prev => prev.map((step, i) => i === index ? { ...step, status, time: time || step.time } : step));
-        stepRef.current = index;
+        if(status === 'loading') {
+            stepRef.current = index;
+        }
     }, []);
 
     useEffect(() => {
@@ -143,33 +145,31 @@ const LoadingState = () => {
             }
         }, 150));
         
-        const checkDataLoading = () => {
-             if (!isDataLoading && (stepRef.current === 2 || stepRef.current === 3)) {
-                if (steps[2].status !== "done") updateStep(2, "done", steps[2].time || Date.now() - startTimeRef.current);
-                updateStep(3, "done", Date.now() - startTimeRef.current);
-                setTotalTime(Date.now() - startTimeRef.current);
-                setIsComplete(true);
-            }
-        };
-        
-        checkDataLoading();
+        // This effect runs when isDataLoading becomes false (i.e., data fetch is complete)
         if (!isDataLoading) {
-            checkDataLoading();
+            // Mark step 3 as done if it wasn't already
+            if (steps[2].status !== 'done') {
+                updateStep(2, "done", steps[2].time || Date.now() - startTimeRef.current);
+            }
+            // Mark step 4 as done
+            updateStep(3, "done", Date.now() - startTimeRef.current);
+            setTotalTime(Date.now() - startTimeRef.current);
+            setIsComplete(true);
         }
         
         return () => timers.forEach(clearTimeout);
     }, [isDataLoading, updateStep, steps]);
     
      useEffect(() => {
+        // This effect handles the transition from DB check to session authentication
         checkDatabaseConnection().then(result => {
-             if (stepRef.current === 1) {
+             if (stepRef.current === 1) { // Only proceed if we are at the DB check step
                 updateStep(1, "done", Date.now() - startTimeRef.current);
                 if (result.success) {
-                    updateStep(2, "loading");
+                    updateStep(2, "loading"); // Immediately set the next step to loading
                 }
             }
         });
-     // eslint-disable-next-line react-hooks/exhaustive-deps
      }, [updateStep]);
     
     const Step = ({ label, status, time }: { label: string, status: string, time: number }) => (
@@ -396,7 +396,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     };
     
     const HeaderTitle = () => {
-        const orgData = organization || { name: 'Baitul Mal Samajik Sanstha', footer: defaultFooter };
+        const orgData = organization || defaultOrganization;
         const orgInfo = orgData.footer?.organizationInfo;
         
         return (
