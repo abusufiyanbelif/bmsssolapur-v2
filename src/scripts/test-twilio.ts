@@ -1,10 +1,12 @@
 
 import { testTwilioConnection } from '../app/services/actions';
 import dotenv from 'dotenv';
+import { performance } from 'perf_hooks';
 
 dotenv.config();
 
 async function runTest() {
+  const startTime = performance.now();
   console.log('Attempting to connect to Twilio using the TWILIO_* credentials from your environment...');
   try {
     const result = await testTwilioConnection();
@@ -25,7 +27,8 @@ async function runTest() {
   } catch (e: any) {
     console.error('\n❌ UNEXPECTED SCRIPT ERROR:', e.message);
   } finally {
-    // A small delay to ensure all logs are flushed before exiting
+    const endTime = performance.now();
+    console.log(`\n✨ Done in ${((endTime - startTime) / 1000).toFixed(2)} seconds.`);
     setTimeout(() => process.exit(), 100);
   }
 }

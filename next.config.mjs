@@ -1,15 +1,40 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  images: {
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'firebasestorage.googleapis.com',
+        port: '',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'picsum.photos',
+        port: '',
+        pathname: '/**',
+      },
+       {
+        protocol: 'https',
+        hostname: 'placehold.co',
+        port: '',
+        pathname: '/**',
+      }
+    ],
+  },
   webpack: (config, { isServer }) => {
-    // This is the correct way to handle server-only packages in Next.js.
-    // It tells webpack to not bundle 'firebase-admin' for the client-side.
-    if (!isServer) {
-      config.externals.push('firebase-admin');
-    }
-
-    // This part handles the .wasm module issue if it ever arises again.
     config.experiments = { ...config.experiments, asyncWebAssembly: true };
     
+    // This is the correct way to mark server-only modules
+    if (!isServer) {
+        config.resolve.fallback = {
+            ...config.resolve.fallback,
+            'firebase-admin': false,
+        };
+    }
+    
+    config.externals.push('firebase-admin');
+
     return config;
   },
 };

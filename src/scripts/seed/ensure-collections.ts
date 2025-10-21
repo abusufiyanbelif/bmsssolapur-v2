@@ -1,13 +1,14 @@
 import { getAdminDb } from '@/services/firebase-admin';
 import dotenv from 'dotenv';
 import { ensureCollectionsExist as ensureCollections } from '@/services/firebase-admin';
+import { performance } from 'perf_hooks';
 
 dotenv.config();
 
 async function run() {
+  const startTime = performance.now();
   console.log('Ensuring all essential Firestore collections exist...');
   try {
-    // This now correctly awaits the promise from ensureCollections
     const result = await ensureCollections();
     
     if(result.success) {
@@ -20,12 +21,13 @@ async function run() {
         if(result.errors) {
             result.errors.forEach(err => console.error(`- ${err}`));
         }
-        process.exit(1);
     }
   } catch (e: any) {
     console.error('\n❌ FATAL ERROR: Failed to run collection check.');
     console.error(e.message);
   } finally {
+    const endTime = performance.now();
+    console.log(`\n✨ Done in ${((endTime - startTime) / 1000).toFixed(2)} seconds.`);
     process.exit();
   }
 }

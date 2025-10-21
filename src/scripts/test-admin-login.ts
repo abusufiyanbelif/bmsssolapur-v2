@@ -3,6 +3,7 @@ import { handleLogin } from '@/app/login/actions';
 import dotenv from 'dotenv';
 import { getUser } from '@/services/user-service';
 import { checkDatabaseConnection } from '@/app/services/actions';
+import { performance } from 'perf_hooks';
 
 dotenv.config();
 
@@ -18,6 +19,7 @@ class MockFormData {
 }
 
 async function testAdminLogin() {
+  const startTime = performance.now();
   console.log('🧪 Running Test: Default Admin Login');
   console.log('------------------------------------------');
   console.log('This test verifies that the default "admin" user exists and is accessible.');
@@ -86,7 +88,8 @@ async function testAdminLogin() {
     console.error('\n❌ UNEXPECTED SCRIPT ERROR during admin login test.');
     console.error(e.message);
   } finally {
-    // Allow time for all logs to flush before exiting
+    const endTime = performance.now();
+    console.log(`\n✨ Done in ${((endTime - startTime) / 1000).toFixed(2)} seconds.`);
     setTimeout(() => process.exit(), 100);
   }
 }

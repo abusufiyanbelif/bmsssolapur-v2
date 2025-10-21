@@ -1,10 +1,12 @@
 
 import { getAdminDb } from '../services/firebase-admin';
 import dotenv from 'dotenv';
+import { performance } from 'perf_hooks';
 
 dotenv.config();
 
 async function testDatabaseConnection() {
+  const startTime = performance.now();
   console.log('Attempting to connect to Firestore using Application Default Credentials...');
   try {
     const adminDb = await getAdminDb();
@@ -34,7 +36,8 @@ async function testDatabaseConnection() {
     }
 
   } finally {
-      // Allow time for all logs to flush before exiting
+      const endTime = performance.now();
+      console.log(`\n✨ Done in ${((endTime - startTime) / 1000).toFixed(2)} seconds.`);
       setTimeout(() => process.exit(), 100);
   }
 }
