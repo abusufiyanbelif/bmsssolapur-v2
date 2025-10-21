@@ -4,7 +4,8 @@
 "use server";
 
 import { createDonation, getDonationByTransactionId, updateDonation } from "@/services/donation-service";
-import { getUser, getUserByUpiId, getUserByBankAccountNumber, getUserByPhone, createUser, updateUser } from "@/services/user-service";
+import { getUserByUpiId, getUserByBankAccountNumber, getUserByPhone, createUser, updateUser, getUser as getUserService } from "@/services/user-service";
+import { checkAvailability as checkUserAvailability } from "@/app/admin/user-management/add/actions";
 import { revalidatePath } from "next/cache";
 import type { Donation, DonationPurpose, DonationType, PaymentMethod, UserRole, User, ExtractDonationDetailsOutput } from "@/services/types";
 import { Timestamp, arrayUnion, collection } from "firebase/firestore";
@@ -20,6 +21,10 @@ interface FormState {
     donationId?: string;
 }
 
+export async function getUserAction(userId: string) {
+    return getUserService(userId);
+}
+
 export async function handleAddDonation(
   formData: FormData
 ): Promise<FormState> {
@@ -30,7 +35,7 @@ export async function handleAddDonation(
   }
 
   try {
-    const adminUser = await getUser(adminUserId); // Fetch admin user details for logging
+    const adminUser = await getUserService(adminUserId); // Fetch admin user details for logging
     if (!adminUser) {
         return { success: false, error: "Admin user not found for logging." };
     }
@@ -80,7 +85,7 @@ export async function handleAddDonation(
         if (!donorId) {
             return { success: false, error: "An existing donor must be selected." };
         }
-        donor = await getUser(donorId);
+        donor = await getUserService(donorId);
     }
     
     if (!donor || !donor.userKey) {

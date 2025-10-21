@@ -1,13 +1,16 @@
+
 // src/app/admin/user-management/add/actions.ts
 
 "use server";
 
-import { createUser } from "@/services/user-service";
+import { createUser, checkAvailability as checkUserAvailabilityService } from "@/services/user-service";
 import { revalidatePath } from "next/cache";
 import type { User, UserRole, ExtractBeneficiaryDetailsOutput } from "@/services/types";
 import { Timestamp, collection } from "firebase/firestore";
 import { uploadFile } from "@/services/storage-service";
 import { extractBeneficiaryDetails } from "@/ai/flows/extract-beneficiary-details-flow";
+import { db } from "@/services/firebase";
+import { doc } from "firebase/firestore";
 
 interface FormState {
     success: boolean;
@@ -134,4 +137,14 @@ export async function handleExtractUserDetailsFromText(
         console.error("Error extracting beneficiary details from text:", error);
         return { success: false, error };
     }
+}
+
+interface AvailabilityResult {
+    isAvailable: boolean;
+    suggestions?: string[];
+    existingUserName?: string;
+}
+
+export async function checkAvailability(field: string, value: string): Promise<AvailabilityResult> {
+    return checkUserAvailabilityService(field, value);
 }

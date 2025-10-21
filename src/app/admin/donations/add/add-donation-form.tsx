@@ -29,7 +29,6 @@ import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect, Suspense, useRef, useCallback } from "react";
 import { Loader2, Info, CalendarIcon, ChevronsUpDown, Check, X, ScanEye, TextSelect, XCircle, AlertTriangle, Bot, Text, ZoomIn, ZoomOut, FileIcon, UserPlus, UserSearch, ScanSearch, UserRoundPlus, Trash2, RotateCw, RefreshCw as RefreshIcon, BookOpen, Sparkles, CreditCard, Fingerprint, MapPin, User as UserIcon, Save, Edit } from "lucide-react";
 import type { User, Donation, DonationType, DonationPurpose, PaymentMethod, Lead, Campaign, ExtractDonationDetailsOutput, ExtractBeneficiaryDetailsOutput, AppSettings } from "@/services/types";
-import { getUser, checkAvailability } from "@/services/user-service";
 import { useSearchParams, useRouter } from "next/navigation";
 import { Textarea } from "@/components/ui/textarea";
 import Image from "next/image";
@@ -38,7 +37,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
-import { handleAddDonation, checkTransactionId, handleExtractDonationDetails } from "./actions";
+import { handleAddDonation, checkTransactionId, handleExtractDonationDetails, getUserAction } from "./actions";
 import { findDonorByDetails } from "./find-donor-action";
 import { getRawTextFromImage } from '@/app/actions';
 import { handleUpdateDonation } from '../[id]/edit/actions';
@@ -371,11 +370,10 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation, set
       }
     }
     
-    // Handle file
-    const proofFile = getValues('paymentScreenshot');
-    if (proofFile instanceof File) {
-        formData.append('paymentScreenshot', proofFile);
+    if (values.paymentScreenshot) {
+      formData.append('paymentScreenshot', values.paymentScreenshot);
     }
+    formData.append('adminUserId', adminUserId);
 
     const result = isEditing 
         ? await handleUpdateDonation(existingDonation.id!, formData, adminUserId)
@@ -721,7 +719,7 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation, set
                                         key={user.id}
                                         onSelect={async () => {
                                             field.onChange(user.id!);
-                                            const donor = await getUser(user.id!);
+                                            const donor = await getUserAction(user.id!);
                                             setSelectedDonor(donor);
                                             setDonorPopoverOpen(false);
                                         }}
@@ -977,18 +975,6 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation, set
                )}
           </form>
         </Form>
-        <AlertDialog open={!!extractedDetails} onOpenChange={() => setExtractedDetails(null)}>
-            <AlertDialogContent>
-                <AlertDialogHeader>
-                    <AlertDialogTitle className="flex items-center gap-2"><Bot className="h-6 w-6 text-primary" /> Confirm Auto-fill Details</AlertDialogTitle>
-                    <AlertDialogDescription>The AI has extracted the following details from the document. Please review them before applying to the form.</AlertDialogDescription>
-                </AlertDialogHeader>
-                 <AlertDialogFooter>
-                    <Button variant="outline" onClick={() => handleFetchUserData(true)} disabled={isRefreshingDetails}>{isRefreshingDetails ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <RefreshIcon className="mr-2 h-4 w-4" />} Refresh</Button>
-                    <div className='flex gap-2'><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={applyExtractedDetails}>Apply & Fill Form</AlertDialogAction></div>
-                </AlertDialogFooter>
-            </AlertDialogContent>
-        </AlertDialog>
     </>
   );
 }

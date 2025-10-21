@@ -1,3 +1,4 @@
+
 // src/app/admin/user-management/add/add-user-form.tsx
 "use client";
 
@@ -40,11 +41,10 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { getRawTextFromImage } from '@/app/actions';
 import Image from "next/image";
-import { getUser, checkAvailability } from "@/services/user-service";
 import { useDebounce } from "@/hooks/use-debounce";
 import { useRouter } from 'next/navigation';
 import { Separator } from "@/components/ui/separator";
-import { handleAddUser, handleExtractUserDetailsFromText } from "./actions";
+import { handleAddUser, handleExtractUserDetailsFromText, checkAvailability } from "./actions";
 import { Textarea } from "@/components/ui/textarea";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
@@ -258,7 +258,7 @@ function FormContent({ settings, isSubForm, prefilledData, onUserCreate }: AddUs
   useEffect(() => {
     const storedUserId = localStorage.getItem('userId');
     if (storedUserId) {
-        getUser(storedUserId).then(setAdminUser);
+        getUserAction(storedUserId).then(user => setAdminUser(user));
     }
   }, []);
   
@@ -564,7 +564,7 @@ function FormContent({ settings, isSubForm, prefilledData, onUserCreate }: AddUs
                                         <div className="absolute top-1 right-1 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity bg-background/80 rounded-md">
                                             <Button type="button" size="icon" variant="ghost" className="h-6 w-6" onClick={() => setZoom(z => z * 1.2)}><ZoomIn className="h-4 w-4"/></Button>
                                             <Button type="button" size="icon" variant="ghost" className="h-6 w-6" onClick={() => setZoom(z => Math.max(0.5, z / 1.2))}><ZoomOut className="h-4 w-4"/></Button>
-                                            <Button type="button" size="icon" variant="ghost" className="h-6 w-6" onClick={() => setRotation(r => r + 90)}><RotateCw className="h-4 w-4"/></Button>
+                                            <Button type="button" size="icon" variant="ghost" className="h-6 w-6" onClick={() => setRotation(r => r + 90)}><RotateCw className="h-4 w-4" /></Button>
                                             <Button type="button" size="icon" variant="ghost" className="h-6 w-6 text-destructive hover:bg-destructive/10" onClick={() => { setFile(null); setFilePreview(null); setRawText(null); setExtractedDetails(null); setZoom(1); setRotation(0); }}><XCircle className="h-4 w-4"/></Button>
                                         </div>
                                     </div>
@@ -667,7 +667,7 @@ function FormContent({ settings, isSubForm, prefilledData, onUserCreate }: AddUs
                      <div className="space-y-4">
                         <FormLabel>UPI Phone Numbers (Optional)</FormLabel>
                         {upiPhoneFields.map((field, index) => (<FormField control={control} key={field.id} name={`upiPhoneNumbers.${index}.value`} render={({ field }) => (<FormItem><div className="flex items-center gap-2"><FormControl><Input {...field} placeholder="e.g., 9876543210" type="tel" maxLength={10} /></FormControl><Button type="button" variant="ghost" size="icon" onClick={() => removeUpiPhone(index)}><Trash2 className="h-4 w-4 text-destructive" /></Button></div><FormMessage /></FormItem>)}/>))}
-                        <Button type="button" variant="outline" size="sm" onClick={() => appendUpiPhone({ value: "" })}><PlusCircle className="mr-2" />Add Phone</Button>
+                        <Button type="button" variant="outline" size="sm" onClick={() => appendUpiPhone({ value: "" })}><PlusCircle className="mr-2" />Add Phone Number</Button>
                      </div>
                      <div className="space-y-4">
                         <FormLabel>UPI IDs (Optional)</FormLabel>
