@@ -26,7 +26,7 @@ import {
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
-import { useState, useEffect, Suspense, useRef, useCallback } from "react";
+import { useState, useEffect, Suspense, useRef, useCallback, useMemo } from "react";
 import { Loader2, Info, CalendarIcon, ChevronsUpDown, Check, X, ScanEye, TextSelect, XCircle, AlertTriangle, Bot, Text, ZoomIn, ZoomOut, FileIcon, UserPlus, UserSearch, ScanSearch, UserRoundPlus, Trash2, RotateCw, RefreshCw as RefreshIcon, BookOpen, Sparkles, CreditCard, Fingerprint, MapPin, User as UserIcon, Save, Edit } from "lucide-react";
 import type { User, Donation, DonationType, DonationPurpose, PaymentMethod, Lead, Campaign, ExtractDonationDetailsOutput, ExtractBeneficiaryDetailsOutput, AppSettings } from "@/services/types";
 import { useSearchParams, useRouter } from "next/navigation";
@@ -541,25 +541,6 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation, set
     setIsExtracting(false);
   };
   
-  const handleAnonymousDonation = () => {
-    const anonymousUser = users.find(u => u.userId === 'anonymous_donor');
-    if (anonymousUser) {
-        setValue('donorId', anonymousUser.id!, { shouldValidate: true });
-        setSelectedDonor(anonymousUser);
-        setValue('isAnonymous', true);
-        toast({
-            title: "Anonymous Donor Selected",
-            description: "You can now enter the donation details for an unknown donor.",
-        });
-    } else {
-        toast({
-            variant: "destructive",
-            title: "System User Not Found",
-            description: "The 'Anonymous Donor' system user has not been seeded. Please seed it from the settings page.",
-        });
-    }
-  }
-  
   const isFormInvalid = transactionIdState.isAvailable === false;
   
    const handleWheel = (e: React.WheelEvent<HTMLDivElement>) => {
@@ -986,3 +967,5 @@ export function AddDonationForm(props: AddDonationFormProps) {
         </Suspense>
     )
 }
+
+    
