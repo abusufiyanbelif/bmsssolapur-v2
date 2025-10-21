@@ -10,6 +10,7 @@ import { getAdminDb, getAdminAuth, ensureCollectionsExist as ensureCollectionsEx
 import { updatePublicCampaign, enrichCampaignWithPublicStats } from './public-data-service';
 import { format } from 'date-fns';
 import { revalidatePath } from 'next/cache';
+import * as admin from 'firebase-admin';
 
 // Re-export type for backward compatibility
 export type { User, UserRole };
