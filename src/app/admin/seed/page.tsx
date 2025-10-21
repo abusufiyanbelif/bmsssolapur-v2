@@ -14,7 +14,7 @@ import { useToast } from "@/hooks/use-toast";
 
 
 type SeedStatus = 'idle' | 'loading';
-type SeedTask = 'initial' | 'coreTeam' | 'organization' | 'paymentGateways' | 'sampleData' | 'appSettings' | 'syncFirebaseAuth';
+type SeedTask = 'initial' | 'coreTeam' | 'organization' | 'appSettings' | 'paymentGateways' | 'sampleData' | 'syncFirebaseAuth';
 
 type CollectionCheckStatus = {
     name: string;
@@ -44,11 +44,15 @@ export default function SeedPage() {
         syncFirebaseAuth: 'idle',
     });
     
+    // Unified loading state to prevent concurrent operations
+    const [isTaskActive, setIsTaskActive] = useState(false);
+    
     // New state for collection check progress
     const [isCheckingCollections, setIsCheckingCollections] = useState(false);
     const [collectionCheckProgress, setCollectionCheckProgress] = useState<CollectionCheckStatus[]>([]);
 
     const handleSeed = async (task: SeedTask) => {
+        setIsTaskActive(true);
         setStatuses(prev => ({ ...prev, [task]: 'loading' }));
         setEraseStatuses(prev => ({ ...prev, [task]: 'idle' })); 
 
@@ -81,10 +85,12 @@ export default function SeedPage() {
             });
         } finally {
             setStatuses(prev => ({...prev, [task]: 'idle' }));
+            setIsTaskActive(false);
         }
     };
     
     const handleErase = async (task: SeedTask) => {
+        setIsTaskActive(true);
         setEraseStatuses(prev => ({ ...prev, [task]: 'loading' }));
         setStatuses(prev => ({ ...prev, [task]: 'idle' }));
 
@@ -117,10 +123,12 @@ export default function SeedPage() {
             });
         } finally {
             setEraseStatuses(prev => ({ ...prev, [task]: 'idle' }));
+            setIsTaskActive(false);
         }
     };
 
     const handleCollectionCheck = async () => {
+        setIsTaskActive(true);
         setIsCheckingCollections(true);
         const collections = await getCoreCollectionsList();
         const initialProgress = collections.map(name => ({ name, status: 'pending' as const }));
@@ -132,7 +140,6 @@ export default function SeedPage() {
         for (let i = 0; i < collections.length; i++) {
             const collectionName = collections[i];
             
-            // Set current to 'checking'
             setCollectionCheckProgress(prev => prev.map((item, idx) => i === idx ? { ...item, status: 'checking' } : item));
             
             const result = await handleEnsureSingleCollection(collectionName);
@@ -152,6 +159,7 @@ export default function SeedPage() {
         }
 
         setIsCheckingCollections(false);
+        setIsTaskActive(false);
         toast({
             variant: errorCount > 0 ? 'destructive' : 'success',
             title: "Collection Check Complete",
@@ -179,7 +187,7 @@ export default function SeedPage() {
                                 <p className="text-sm text-muted-foreground mt-1">Checks if essential collections exist and creates them if they don't. This is run automatically on server start but can be triggered manually.</p>
                              </div>
                              <div className="flex items-center gap-2">
-                                <Button onClick={handleCollectionCheck} disabled={isCheckingCollections}>
+                                <Button onClick={handleCollectionCheck} disabled={isTaskActive}>
                                     {isCheckingCollections && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}
                                     Run Check & Create
                                 </Button>
@@ -212,11 +220,11 @@ export default function SeedPage() {
                                 <p className="text-sm text-muted-foreground mt-1">Seeds the Inspirational Quotes. Note: The 'admin' and 'anonymous_donor' users are automatically created on startup.</p>
                              </div>
                              <div className="flex items-center gap-2">
-                                <Button variant="destructive" onClick={() => handleErase('initial')} disabled={eraseStatuses.initial === 'loading'}>
+                                <Button variant="destructive" onClick={() => handleErase('initial')} disabled={isTaskActive}>
                                     {eraseStatuses.initial === 'loading' ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Trash2 className="mr-2 h-4 w-4"/>}
                                     Erase Quotes
                                 </Button>
-                                <Button onClick={() => handleSeed('initial')} disabled={statuses.initial === 'loading'}>
+                                <Button onClick={() => handleSeed('initial')} disabled={isTaskActive}>
                                     {statuses.initial === 'loading' && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}
                                     Seed Quotes
                                 </Button>
@@ -232,11 +240,11 @@ export default function SeedPage() {
                                 <p className="text-sm text-muted-foreground mt-1">Seeds the main profile for the organization, including contact info, bank details, and footer text.</p>
                              </div>
                              <div className="flex items-center gap-2">
-                                <Button variant="destructive" onClick={() => handleErase('organization')} disabled={eraseStatuses.organization === 'loading'}>
+                                <Button variant="destructive" onClick={() => handleErase('organization')} disabled={isTaskActive}>
                                     {eraseStatuses.organization === 'loading' ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Trash2 className="mr-2 h-4 w-4"/>}
                                     Erase Organization Profile
                                 </Button>
-                                <Button onClick={() => handleSeed('organization')} disabled={statuses.organization === 'loading'}>
+                                <Button onClick={() => handleSeed('organization')} disabled={isTaskActive}>
                                     {statuses.organization === 'loading' && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}
                                     Seed Organization Profile
                                 </Button>
@@ -252,11 +260,11 @@ export default function SeedPage() {
                                 <p className="text-sm text-muted-foreground mt-1">Seeds default configurations for lead purposes, user fields, and dashboard visibility. **Run this before creating leads.**</p>
                              </div>
                              <div className="flex items-center gap-2">
-                                <Button variant="destructive" onClick={() => handleErase('appSettings')} disabled={eraseStatuses.appSettings === 'loading'}>
+                                <Button variant="destructive" onClick={() => handleErase('appSettings')} disabled={isTaskActive}>
                                     {eraseStatuses.appSettings === 'loading' ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Trash2 className="mr-2 h-4 w-4"/>}
                                     Erase & Reset
                                 </Button>
-                                <Button onClick={() => handleSeed('appSettings')} disabled={statuses.appSettings === 'loading'}>
+                                <Button onClick={() => handleSeed('appSettings')} disabled={isTaskActive}>
                                     {statuses.appSettings === 'loading' && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}
                                     Seed App Settings
                                 </Button>
@@ -272,11 +280,11 @@ export default function SeedPage() {
                                 <p className="text-sm text-muted-foreground mt-1">Seeds the user accounts for the organization's Founders, Co-Founders, and other Admins.</p>
                              </div>
                              <div className="flex items-center gap-2">
-                                 <Button variant="destructive" onClick={() => handleErase('coreTeam')} disabled={eraseStatuses.coreTeam === 'loading'}>
+                                 <Button variant="destructive" onClick={() => handleErase('coreTeam')} disabled={isTaskActive}>
                                     {eraseStatuses.coreTeam === 'loading' ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Trash2 className="mr-2 h-4 w-4"/>}
                                     Erase Core Team
                                 </Button>
-                                <Button onClick={() => handleSeed('coreTeam')} disabled={statuses.coreTeam === 'loading'}>
+                                <Button onClick={() => handleSeed('coreTeam')} disabled={isTaskActive}>
                                     {statuses.coreTeam === 'loading' && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}
                                     Seed Core Team
                                 </Button>
@@ -292,11 +300,11 @@ export default function SeedPage() {
                                 <p className="text-sm text-muted-foreground mt-1">Seeds placeholder credentials for the Razorpay payment gateway to enable online donations in test mode.</p>
                              </div>
                              <div className="flex items-center gap-2">
-                                 <Button variant="destructive" onClick={() => handleErase('paymentGateways')} disabled={eraseStatuses.paymentGateways === 'loading'}>
+                                 <Button variant="destructive" onClick={() => handleErase('paymentGateways')} disabled={isTaskActive}>
                                     {eraseStatuses.paymentGateways === 'loading' ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Trash2 className="mr-2 h-4 w-4"/>}
                                     Erase Gateways
                                 </Button>
-                                <Button onClick={() => handleSeed('paymentGateways')} disabled={statuses.paymentGateways === 'loading'}>
+                                <Button onClick={() => handleSeed('paymentGateways')} disabled={isTaskActive}>
                                     {statuses.paymentGateways === 'loading' && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}
                                     Seed Gateways
                                 </Button>
@@ -312,11 +320,11 @@ export default function SeedPage() {
                                 <p className="text-sm text-muted-foreground mt-1">Creates records in Firebase Authentication for users in your database, enabling them for OTP login. This can be run at any time.</p>
                              </div>
                              <div className="flex items-center gap-2">
-                                 <Button variant="destructive" onClick={() => handleErase('syncFirebaseAuth')} disabled={eraseStatuses.syncFirebaseAuth === 'loading'}>
+                                 <Button variant="destructive" onClick={() => handleErase('syncFirebaseAuth')} disabled={isTaskActive}>
                                     {eraseStatuses.syncFirebaseAuth === 'loading' ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Trash2 className="mr-2 h-4 w-4"/>}
                                     Erase All Auth Users
                                 </Button>
-                                <Button onClick={() => handleSeed('syncFirebaseAuth')} disabled={statuses.syncFirebaseAuth === 'loading'}>
+                                <Button onClick={() => handleSeed('syncFirebaseAuth')} disabled={isTaskActive}>
                                     {statuses.syncFirebaseAuth === 'loading' && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}
                                     Sync Users
                                 </Button>
@@ -332,11 +340,11 @@ export default function SeedPage() {
                                 <p className="text-sm text-muted-foreground mt-1">Creates sample campaigns, beneficiaries, leads, and donations for demonstration purposes.</p>
                              </div>
                              <div className="flex items-center gap-2">
-                                 <Button variant="destructive" onClick={() => handleErase('sampleData')} disabled={eraseStatuses.sampleData === 'loading'}>
+                                 <Button variant="destructive" onClick={() => handleErase('sampleData')} disabled={isTaskActive}>
                                     {eraseStatuses.sampleData === 'loading' ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Trash2 className="mr-2 h-4 w-4"/>}
                                     Erase Sample Data
                                 </Button>
-                                <Button onClick={() => handleSeed('sampleData')} disabled={statuses.sampleData === 'loading'}>
+                                <Button onClick={() => handleSeed('sampleData')} disabled={isTaskActive}>
                                     {statuses.sampleData === 'loading' && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}
                                     Seed Sample Data
                                 </Button>
