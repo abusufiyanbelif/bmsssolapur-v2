@@ -25,7 +25,13 @@ import Image from "next/image";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useRouter } from "next/navigation";
 
 
@@ -61,12 +67,12 @@ const formSchema = z.object({
   "footer.contactUs.address": z.string().min(1, "Address is required."),
   "footer.contactUs.email": z.string().email(),
   "footer.keyContacts.title": z.string().min(1, "This field is required."),
-  "footer.keyContacts.contacts": z.array(z.object({
+  keyContacts: z.array(z.object({
       name: z.string().min(1, "Name is required."),
       phone: z.string().min(10, "Phone number must be at least 10 digits."),
   })),
   "footer.connectWithUs.title": z.string().min(1, "This field is required."),
-  "footer.connectWithUs.socialLinks": z.array(z.object({
+  socialLinks: z.array(z.object({
       platform: socialPlatformSchema,
       url: z.string().url("Must be a valid URL."),
   })),
@@ -127,30 +133,30 @@ export function EditOrganizationForm({ organization, isCreating }: EditOrganizat
       qrCodeFile: null,
       "hero.title": organization.hero?.title || "Empowering Our Community, One Act of Kindness at a Time.",
       "hero.description": organization.hero?.description || "Join BaitulMal Samajik Sanstha (Solapur) to make a lasting impact. Your contribution brings hope, changes lives, and empowers our community.",
-      "footer.organizationInfo.titleLine1": defaultFooter.organizationInfo.titleLine1 || '',
-      "footer.organizationInfo.titleLine2": defaultFooter.organizationInfo.titleLine2 || '',
-      "footer.organizationInfo.titleLine3": defaultFooter.organizationInfo.titleLine3 || '',
-      "footer.organizationInfo.description": defaultFooter.organizationInfo.description || '',
-      "footer.organizationInfo.registrationInfo": defaultFooter.organizationInfo.registrationInfo || '',
-      "footer.organizationInfo.taxInfo": defaultFooter.organizationInfo.taxInfo || '',
-      "footer.contactUs.title": defaultFooter.contactUs.title || '',
-      "footer.contactUs.address": defaultFooter.contactUs.address || '',
-      "footer.contactUs.email": defaultFooter.contactUs.email || '',
-      "footer.keyContacts.title": defaultFooter.keyContacts.title || '',
-      "footer.keyContacts.contacts": defaultFooter.keyContacts.contacts || [],
-      "footer.connectWithUs.title": defaultFooter.connectWithUs.title || '',
-      "footer.connectWithUs.socialLinks": defaultFooter.connectWithUs.socialLinks || [],
-      "footer.ourCommitment.title": defaultFooter.ourCommitment.title || '',
-      "footer.ourCommitment.text": defaultFooter.ourCommitment.text || '',
-      "footer.ourCommitment.linkText": defaultFooter.ourCommitment.linkText || '',
-      "footer.ourCommitment.linkUrl": defaultFooter.ourCommitment.linkUrl || '',
-      "footer.copyright.text": defaultFooter.copyright.text || '',
+      "footer.organizationInfo.titleLine1": defaultFooter.organizationInfo?.titleLine1 || '',
+      "footer.organizationInfo.titleLine2": defaultFooter.organizationInfo?.titleLine2 || '',
+      "footer.organizationInfo.titleLine3": defaultFooter.organizationInfo?.titleLine3 || '',
+      "footer.organizationInfo.description": defaultFooter.organizationInfo?.description || '',
+      "footer.organizationInfo.registrationInfo": defaultFooter.organizationInfo?.registrationInfo || '',
+      "footer.organizationInfo.taxInfo": defaultFooter.organizationInfo?.taxInfo || '',
+      "footer.contactUs.title": defaultFooter.contactUs?.title || '',
+      "footer.contactUs.address": defaultFooter.contactUs?.address || '',
+      "footer.contactUs.email": defaultFooter.contactUs?.email || '',
+      "footer.keyContacts.title": defaultFooter.keyContacts?.title || '',
+      keyContacts: defaultFooter.keyContacts?.contacts || [],
+      "footer.connectWithUs.title": defaultFooter.connectWithUs?.title || '',
+      socialLinks: defaultFooter.connectWithUs?.socialLinks || [],
+      "footer.ourCommitment.title": defaultFooter.ourCommitment?.title || '',
+      "footer.ourCommitment.text": defaultFooter.ourCommitment?.text || '',
+      "footer.ourCommitment.linkText": defaultFooter.ourCommitment?.linkText || '',
+      "footer.ourCommitment.linkUrl": defaultFooter.ourCommitment?.linkUrl || '',
+      "footer.copyright.text": defaultFooter.copyright?.text || '',
     },
   });
 
   const { formState: { isDirty }, reset, watch, control, handleSubmit } = form;
-  const { fields: keyContactFields, append: appendKeyContact, remove: removeKeyContact } = useFieldArray({ control, name: "footer.keyContacts.contacts" });
-  const { fields: socialLinkFields, append: appendSocialLink, remove: removeSocialLink } = useFieldArray({ control, name: "footer.connectWithUs.socialLinks" });
+  const { fields: keyContactFields, append: appendKeyContact, remove: removeKeyContact } = useFieldArray({ control, name: "keyContacts" });
+  const { fields: socialLinkFields, append: appendSocialLink, remove: removeSocialLink } = useFieldArray({ control, name: "socialLinks" });
   
   const handleCancel = () => {
     reset(); // Reset to the original default values
@@ -171,17 +177,17 @@ export function EditOrganizationForm({ organization, isCreating }: EditOrganizat
     const formData = new FormData();
     formData.append("adminUserId", adminUserId);
     
-    // Helper to flatten the nested form values into the FormData object
+    // This helper now correctly handles nested and array data for FormData
     const appendObjectToForm = (obj: any, prefix = '') => {
         Object.entries(obj).forEach(([key, value]) => {
             const newPrefix = prefix ? `${prefix}.${key}` : key;
             if (value instanceof File) {
-                 formData.append(newPrefix, value);
-            } else if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
+                 formData.append(key, value); // Use original key for files
+            } else if (key === 'keyContacts' || key === 'socialLinks') {
+                formData.append(key, JSON.stringify(value));
+            }
+            else if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
                 appendObjectToForm(value, newPrefix);
-            } else if (Array.isArray(value)) {
-                // Stringify arrays of objects for the server action to parse
-                formData.append(newPrefix, JSON.stringify(value));
             }
             else if (value !== null && value !== undefined) {
                 formData.append(newPrefix, String(value));
@@ -331,7 +337,7 @@ export function EditOrganizationForm({ organization, isCreating }: EditOrganizat
                                         <AccordionContent className="space-y-4 pt-4">
                                             <FormField control={form.control} name="footer.keyContacts.title" render={({ field }) => (<FormItem><FormLabel>Section Title</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
                                             {keyContactFields.map((field, index) => (
-                                                <div key={field.id} className="flex items-end gap-2 p-3 border rounded-md bg-background"><FormField control={form.control} name={`footer.keyContacts.contacts.${index}.name`} render={({ field }) => (<FormItem className="flex-grow"><FormLabel>Name</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} /><FormField control={form.control} name={`footer.keyContacts.contacts.${index}.phone`} render={({ field }) => (<FormItem className="flex-grow"><FormLabel>Phone</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} /><Button type="button" variant="destructive" size="icon" onClick={() => removeKeyContact(index)}><Trash2 className="h-4 w-4" /></Button></div>
+                                                <div key={field.id} className="flex items-end gap-2 p-3 border rounded-md bg-background"><FormField control={form.control} name={`keyContacts.${index}.name`} render={({ field }) => (<FormItem className="flex-grow"><FormLabel>Name</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} /><FormField control={form.control} name={`keyContacts.${index}.phone`} render={({ field }) => (<FormItem className="flex-grow"><FormLabel>Phone</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} /><Button type="button" variant="destructive" size="icon" onClick={() => removeKeyContact(index)}><Trash2 className="h-4 w-4" /></Button></div>
                                             ))}
                                             <Button type="button" variant="outline" size="sm" onClick={() => appendKeyContact({ name: '', phone: '' })}><PlusCircle className="mr-2 h-4 w-4" /> Add Key Contact</Button>
                                         </AccordionContent>
@@ -341,7 +347,7 @@ export function EditOrganizationForm({ organization, isCreating }: EditOrganizat
                                          <AccordionContent className="space-y-4 pt-4">
                                              <FormField control={form.control} name="footer.connectWithUs.title" render={({ field }) => (<FormItem><FormLabel>Section Title</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
                                              {socialLinkFields.map((field, index) => (
-                                                 <div key={field.id} className="flex items-end gap-2 p-3 border rounded-md bg-background"><FormField control={form.control} name={`footer.connectWithUs.socialLinks.${index}.platform`} render={({ field }) => (<FormItem className="w-1/3"><FormLabel>Platform</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue/></SelectTrigger></FormControl><SelectContent><SelectItem value="Facebook">Facebook</SelectItem><SelectItem value="Instagram">Instagram</SelectItem><SelectItem value="Twitter">Twitter</SelectItem></SelectContent></Select><FormMessage /></FormItem>)} /><FormField control={form.control} name={`footer.connectWithUs.socialLinks.${index}.url`} render={({ field }) => (<FormItem className="flex-grow"><FormLabel>URL</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} /><Button type="button" variant="destructive" size="icon" onClick={() => removeSocialLink(index)}><Trash2 className="h-4 w-4" /></Button></div>
+                                                 <div key={field.id} className="flex items-end gap-2 p-3 border rounded-md bg-background"><FormField control={form.control} name={`socialLinks.${index}.platform`} render={({ field }) => (<FormItem className="w-1/3"><FormLabel>Platform</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue/></SelectTrigger></FormControl><SelectContent><SelectItem value="Facebook">Facebook</SelectItem><SelectItem value="Instagram">Instagram</SelectItem><SelectItem value="Twitter">Twitter</SelectItem></SelectContent></Select><FormMessage /></FormItem>)} /><FormField control={form.control} name={`socialLinks.${index}.url`} render={({ field }) => (<FormItem className="flex-grow"><FormLabel>URL</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} /><Button type="button" variant="destructive" size="icon" onClick={() => removeSocialLink(index)}><Trash2 className="h-4 w-4" /></Button></div>
                                              ))}
                                              <Button type="button" variant="outline" size="sm" onClick={() => appendSocialLink({ platform: 'Facebook', url: '' })}><PlusCircle className="mr-2 h-4 w-4" /> Add Social Link</Button>
                                          </AccordionContent>
@@ -349,18 +355,19 @@ export function EditOrganizationForm({ organization, isCreating }: EditOrganizat
                                      <AccordionItem value="commitment-footer" className="border rounded-lg px-4 bg-muted/20">
                                          <AccordionTrigger>Our Commitment Section</AccordionTrigger>
                                          <AccordionContent className="space-y-4 pt-4">
-                                            <FormField control={form.control} name="footer.ourCommitment.title" render={({ field }) => (<FormItem><FormLabel>Section Title</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
-                                            <FormField control={form.control} name="footer.ourCommitment.text" render={({ field }) => (<FormItem><FormLabel>Text</FormLabel><FormControl><Textarea {...field} /></FormControl><FormMessage /></FormItem>)} />
-                                            <FormField control={form.control} name="footer.ourCommitment.linkText" render={({ field }) => (<FormItem><FormLabel>Link Text</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
-                                            <FormField control={form.control} name="footer.ourCommitment.linkUrl" render={({ field }) => (<FormItem><FormLabel>Link URL</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
+                                            <FormField control={form.control} name="ourCommitment.title" render={({ field }) => (<FormItem><FormLabel>Section Title</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
+                                            <FormField control={form.control} name="ourCommitment.text" render={({ field }) => (<FormItem><FormLabel>Text</FormLabel><FormControl><Textarea {...field} /></FormControl><FormMessage /></FormItem>)} />
+                                            <FormField control={form.control} name="ourCommitment.linkText" render={({ field }) => (<FormItem><FormLabel>Link Text</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
+                                            <FormField control={form.control} name="ourCommitment.linkUrl" render={({ field }) => (<FormItem><FormLabel>Link URL</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
                                          </AccordionContent>
                                      </AccordionItem>
                                      <AccordionItem value="copyright-footer" className="border rounded-lg px-4 bg-muted/20">
                                          <AccordionTrigger>Copyright Notice</AccordionTrigger>
                                          <AccordionContent className="space-y-4 pt-4">
-                                             <FormField control={form.control} name="footer.copyright.text" render={({ field }) => (<FormItem><FormLabel>Copyright Text</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
+                                             <FormField control={form.control} name="copyright.text" render={({ field }) => (<FormItem><FormLabel>Copyright Text</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
                                          </AccordionContent>
                                      </AccordionItem>
+
                                 </Accordion>
                             </AccordionContent>
                         </AccordionItem>

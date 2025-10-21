@@ -48,8 +48,8 @@ export async function handleUpdateOrganization(
     }
     
     // Correctly parse the JSON strings for arrays of objects
-    const keyContacts = JSON.parse(formData.get("footer.keyContacts") as string || '[]');
-    const socialLinks = JSON.parse(formData.get("footer.socialLinks") as string || '[]');
+    const keyContacts = JSON.parse(formData.get("keyContacts") as string || '[]');
+    const socialLinks = JSON.parse(formData.get("socialLinks") as string || '[]');
 
     const orgData: Partial<Organization> = {
         name: formData.get('name') as string,
