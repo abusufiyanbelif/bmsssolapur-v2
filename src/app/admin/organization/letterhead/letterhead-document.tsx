@@ -101,8 +101,8 @@ Thank you for your time and consideration. We look forward to establishing a ban
       // --- Header ---
       let textX = margin;
       if (logoDataUri) {
-          const watermarkProps = pdf.getImageProperties(logoDataUri);
-          const logoHeight = (watermarkProps.height * logoWidth) / watermarkProps.width;
+          const logoProps = pdf.getImageProperties(logoDataUri);
+          const logoHeight = (logoProps.height * logoWidth) / logoProps.width;
           pdf.addImage(logoDataUri, 'PNG', margin, 40, logoWidth, logoHeight);
           textX = margin + logoWidth + 20;
       }
@@ -112,7 +112,7 @@ Thank you for your time and consideration. We look forward to establishing a ban
       pdf.setFont('Helvetica', 'bold');
       pdf.setTextColor('#16a34a'); // Primary Green
       pdf.setFontSize(28);
-      pdf.text(orgInfo?.titleLine1.toUpperCase() || organization.name.toUpperCase(), textX, 70);
+      pdf.text(orgInfo?.titleLine1?.toUpperCase() || organization.name.toUpperCase(), textX, 70);
       
       if(orgInfo?.titleLine2) {
         pdf.setTextColor('#FFC107'); // Accent Gold
