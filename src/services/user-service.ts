@@ -1,3 +1,4 @@
+
 /**
  * @fileOverview User service for interacting with Firestore.
  * This service should only be called from server-side components or server actions.
@@ -25,6 +26,7 @@ import {
 import { getAdminDb, getAdminAuth } from './firebase-admin';
 import type { User, UserRole } from './types';
 import { logActivity } from './activity-log-service';
+import * as admin from 'firebase-admin';
 
 // Re-export types for backward compatibility
 export type { User, UserRole };
@@ -542,7 +544,8 @@ export const getAllUsers = async (): Promise<User[]> => {
             if (error.message.includes('Could not refresh access token') || error.message.includes('permission-denied') || error.message.includes('UNAUTHENTICATED')) {
                 const helpfulError = new Error("Could not authenticate with Google Cloud. Ensure your server environment is configured correctly (e.g., via `gcloud auth application-default login` or IAM roles). Refer to TROUBLESHOOTING.md.");
                 console.error(helpfulError.message);
-                throw helpfulError;
+                // Return an empty array to prevent crashing the calling page
+                return [];
             }
             if (error.message.includes('index') || error.message.includes('Could not find a valid index') || error.message.includes('NOT_FOUND')) {
                 console.warn("Firestore index missing for 'users' on 'createdAt' (desc). Please create it. Falling back to an unsorted query.");

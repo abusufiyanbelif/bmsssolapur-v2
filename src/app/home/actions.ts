@@ -36,8 +36,10 @@ export async function getPublicDashboardData(): Promise<PublicDashboardData> {
             campaigns: JSON.parse(JSON.stringify(campaigns)),
         };
     } catch (error) {
-        console.error("Error fetching public dashboard data:", error);
-        return { donations: [], users: [], leads: [], campaigns: [], error: "Failed to load dashboard data." };
+        const errorMessage = error instanceof Error ? error.message : "An unknown error occurred.";
+        console.error("Error fetching public dashboard data:", errorMessage);
+        // Pass the error message to the client for display
+        return { donations: [], users: [], leads: [], campaigns: [], error: errorMessage };
     }
 }
 

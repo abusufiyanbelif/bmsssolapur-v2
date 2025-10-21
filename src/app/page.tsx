@@ -2,10 +2,11 @@
 // src/app/page.tsx
 import { Suspense } from "react";
 import { PublicHomePage } from "./home/public-home-page";
-import { Loader2 } from "lucide-react";
+import { Loader2, AlertCircle } from "lucide-react";
 import { getOpenGeneralLeads, getPublicCampaigns, getPublicDashboardData, getQuotes } from "@/app/home/actions";
 import type { Quote } from "@/services/types";
 import { getCurrentOrganization } from "@/app/admin/settings/actions";
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 
 // This is now a true Server Component that fetches all data for the public page.
 async function PublicHomePageLoader() {
@@ -22,6 +23,22 @@ async function PublicHomePageLoader() {
     getPublicDashboardData(),
     getCurrentOrganization(),
   ]);
+
+  // Handle the error from getPublicDashboardData gracefully
+  if (dashboardData.error) {
+    return (
+      <div className="container max-w-4xl py-8">
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Application Error: Could Not Connect to Database</AlertTitle>
+          <AlertDescription>
+            <p>The application server failed to authenticate with the database. This is typically an environment configuration issue.</p>
+            <p className="font-bold mt-2">To fix this, please follow the steps in the <a href="/docs/TROUBLESHOOTING.md" target="_blank" className="underline">Troubleshooting Guide</a> under the &quot;UNAUTHENTICATED / PERMISSION_DENIED&quot; section.</p>
+          </AlertDescription>
+        </Alert>
+      </div>
+    );
+  }
 
   try {
       // Isolate the potentially failing call
