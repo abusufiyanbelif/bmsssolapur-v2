@@ -118,8 +118,9 @@ const LoadingState = () => {
     const [steps, setSteps] = useState([
         { label: "Initializing App...", status: "loading", time: 0 },
         { label: "Checking Database Connection...", status: "pending", time: 0 },
-        { label: "Authenticating Session...", status: "pending", time: 0 },
-        { label: "Fetching Core Data...", status: "pending", time: 0 },
+        { label: "Validating Session...", status: "pending", time: 0 },
+        { label: "Fetching User Profile...", status: "pending", time: 0 },
+        { label: "Loading Core Data...", status: "pending", time: 0 },
     ]);
     const { isDataLoading, setIsDataLoading } = useLoading();
     const startTimeRef = useRef(Date.now());
@@ -129,7 +130,7 @@ const LoadingState = () => {
 
     const updateStep = useCallback((index: number, status: "loading" | "done" | "pending", time?: number) => {
         setSteps(prev => prev.map((step, i) => i === index ? { ...step, status, time: time || step.time } : step));
-        if(status === 'loading') {
+        if (status === 'loading') {
             stepRef.current = index;
         }
     }, []);
@@ -145,32 +146,58 @@ const LoadingState = () => {
             }
         }, 150));
         
-        // This effect runs when isDataLoading becomes false (i.e., data fetch is complete)
-        if (!isDataLoading) {
-            // Mark step 3 as done if it wasn't already
-            if (steps[2].status !== 'done') {
-                updateStep(2, "done", steps[2].time || Date.now() - startTimeRef.current);
-            }
-            // Mark step 4 as done
-            updateStep(3, "done", Date.now() - startTimeRef.current);
-            setTotalTime(Date.now() - startTimeRef.current);
-            setIsComplete(true);
-        }
-        
         return () => timers.forEach(clearTimeout);
-    }, [isDataLoading, updateStep, steps]);
-    
-     useEffect(() => {
-        // This effect handles the transition from DB check to session authentication
+    }, [updateStep]);
+
+    useEffect(() => {
+        // Step 2 -> 3
         checkDatabaseConnection().then(result => {
-             if (stepRef.current === 1) { // Only proceed if we are at the DB check step
+            if (stepRef.current === 1) { 
                 updateStep(1, "done", Date.now() - startTimeRef.current);
                 if (result.success) {
-                    updateStep(2, "loading"); // Immediately set the next step to loading
+                    updateStep(2, "loading");
                 }
             }
         });
-     }, [updateStep]);
+    }, [updateStep]);
+    
+    useEffect(() => {
+        // This effect waits for the 'isDataLoading' flag to become false,
+        // which signals that all client-side data fetching is complete.
+        if (!isDataLoading) {
+            // Mark the final "Core Data" step as done.
+            if (steps[4].status !== 'done') {
+                updateStep(4, "done", Date.now() - startTimeRef.current);
+            }
+            setTotalTime(Date.now() - startTimeRef.current);
+            setIsComplete(true);
+        }
+    }, [isDataLoading, updateStep, steps]);
+    
+    // This hook is called from the main AppShell when the user profile is fetched.
+    const onProfileFetched = useCallback(() => {
+        if (stepRef.current === 3) {
+            updateStep(3, "done", Date.now() - startTimeRef.current);
+            updateStep(4, "loading");
+        }
+    }, [updateStep]);
+    
+    const onSessionValidated = useCallback(() => {
+        if (stepRef.current === 2) {
+             updateStep(2, "done", Date.now() - startTimeRef.current);
+             updateStep(3, "loading");
+        }
+    }, [updateStep]);
+
+    // Attach these functions to the window so AppShell can call them.
+    useEffect(() => {
+        (window as any).onProfileFetched = onProfileFetched;
+        (window as any).onSessionValidated = onSessionValidated;
+        return () => {
+            delete (window as any).onProfileFetched;
+            delete (window as any).onSessionValidated;
+        }
+    }, [onProfileFetched, onSessionValidated]);
     
     const Step = ({ label, status, time }: { label: string, status: string, time: number }) => (
         <div className="flex items-center gap-4">
@@ -266,9 +293,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 return;
             } 
             
+            // Tell the loading screen we are validating the session
+            if ((window as any).onSessionValidated) (window as any).onSessionValidated();
+
             let fetchedUser: UserType | null = null;
             try {
                 fetchedUser = await getCurrentUser(storedUserId);
+                if ((window as any).onProfileFetched) (window as any).onProfileFetched();
+
             } catch (e) {
                  const err = e as Error;
                  if (err.message.includes('permission-denied') || err.message.includes('UNAUTHENTICATED')) {
@@ -396,7 +428,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     };
     
     const HeaderTitle = () => {
-        const orgData = organization || defaultOrganization;
+        const orgData = organization || defaultFooter;
         const orgInfo = orgData.footer?.organizationInfo;
         
         return (
