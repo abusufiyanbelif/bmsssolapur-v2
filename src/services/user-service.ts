@@ -1,4 +1,3 @@
-
 /**
  * @fileOverview User service for interacting with Firestore.
  * This service should only be called from server-side components or server actions.
@@ -542,8 +541,8 @@ export const getAllUsers = async (): Promise<User[]> => {
     } catch (error) {
         if (error instanceof Error) {
             if (error.message.includes('Could not refresh access token') || error.message.includes('permission-denied') || error.message.includes('UNAUTHENTICATED')) {
-                const helpfulError = new Error("Could not authenticate with Google Cloud. Ensure your server environment is configured correctly (e.g., via `gcloud auth application-default login` or IAM roles). Refer to TROUBLESHOOTING.md.");
-                console.error(helpfulError.message);
+                // This is the key change: use console.warn to avoid Next.js error overlay
+                console.warn("Could not authenticate with Google Cloud. Ensure your server environment is configured correctly (e.g., via `gcloud auth application-default login` or IAM roles). Refer to TROUBLESHOOTING.md.");
                 // Return an empty array to prevent crashing the calling page
                 return [];
             }
