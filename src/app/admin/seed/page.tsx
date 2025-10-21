@@ -5,16 +5,22 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { CheckCircle, AlertCircle, Database, UserCheck, Quote, Users, HandCoins, RefreshCcw, Building, FileText, Trash2, CreditCard, Settings, Fingerprint, UserX as AnonymousUserIcon, ListChecks } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Loader2 } from "lucide-react";
-import { handleSeedAction, handleEraseAction } from "./actions";
+import { handleSeedAction, handleEraseAction, getCoreCollectionsList, handleEnsureSingleCollection } from "./actions";
 import { useRouter } from "next/navigation";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { useToast } from "@/hooks/use-toast";
 
 
 type SeedStatus = 'idle' | 'loading';
-type SeedTask = 'initial' | 'coreTeam' | 'organization' | 'paymentGateways' | 'sampleData' | 'appSettings' | 'syncFirebaseAuth' | 'ensureCollections';
+type SeedTask = 'initial' | 'coreTeam' | 'organization' | 'paymentGateways' | 'sampleData' | 'appSettings' | 'syncFirebaseAuth';
+
+type CollectionCheckStatus = {
+    name: string;
+    status: 'pending' | 'checking' | 'created' | 'exists' | 'error';
+    error?: string;
+};
 
 export default function SeedPage() {
     const router = useRouter();
@@ -27,7 +33,6 @@ export default function SeedPage() {
         paymentGateways: 'idle',
         sampleData: 'idle',
         syncFirebaseAuth: 'idle',
-        ensureCollections: 'idle',
     });
     const [eraseStatuses, setEraseStatuses] = useState<Record<SeedTask, SeedStatus>>({
         initial: 'idle',
@@ -37,8 +42,11 @@ export default function SeedPage() {
         paymentGateways: 'idle',
         sampleData: 'idle',
         syncFirebaseAuth: 'idle',
-        ensureCollections: 'idle',
     });
+    
+    // New state for collection check progress
+    const [isCheckingCollections, setIsCheckingCollections] = useState(false);
+    const [collectionCheckProgress, setCollectionCheckProgress] = useState<CollectionCheckStatus[]>([]);
 
     const handleSeed = async (task: SeedTask) => {
         setStatuses(prev => ({ ...prev, [task]: 'loading' }));
@@ -111,6 +119,45 @@ export default function SeedPage() {
             setEraseStatuses(prev => ({ ...prev, [task]: 'idle' }));
         }
     };
+
+    const handleCollectionCheck = async () => {
+        setIsCheckingCollections(true);
+        const collections = await getCoreCollectionsList();
+        const initialProgress = collections.map(name => ({ name, status: 'pending' as const }));
+        setCollectionCheckProgress(initialProgress);
+
+        let createdCount = 0;
+        let errorCount = 0;
+
+        for (let i = 0; i < collections.length; i++) {
+            const collectionName = collections[i];
+            
+            // Set current to 'checking'
+            setCollectionCheckProgress(prev => prev.map((item, idx) => i === idx ? { ...item, status: 'checking' } : item));
+            
+            const result = await handleEnsureSingleCollection(collectionName);
+            
+            setCollectionCheckProgress(prev => prev.map((item, idx) => {
+                if (i === idx) {
+                    if (result.success) {
+                        if (result.created) createdCount++;
+                        return { ...item, status: result.created ? 'created' : 'exists' };
+                    } else {
+                        errorCount++;
+                        return { ...item, status: 'error', error: result.error };
+                    }
+                }
+                return item;
+            }));
+        }
+
+        setIsCheckingCollections(false);
+        toast({
+            variant: errorCount > 0 ? 'destructive' : 'success',
+            title: "Collection Check Complete",
+            description: `${createdCount} collections created, ${collections.length - createdCount - errorCount} already existed, ${errorCount} failed.`
+        });
+    };
     
 
     return (
@@ -132,12 +179,29 @@ export default function SeedPage() {
                                 <p className="text-sm text-muted-foreground mt-1">Checks if essential collections exist and creates them if they don't. This is run automatically on server start but can be triggered manually.</p>
                              </div>
                              <div className="flex items-center gap-2">
-                                <Button onClick={() => handleSeed('ensureCollections')} disabled={statuses.ensureCollections === 'loading'}>
-                                    {statuses.ensureCollections === 'loading' && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}
+                                <Button onClick={handleCollectionCheck} disabled={isCheckingCollections}>
+                                    {isCheckingCollections && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}
                                     Run Check & Create
                                 </Button>
                              </div>
                         </div>
+                         {isCheckingCollections && (
+                            <div className="pt-4 border-t">
+                                <h4 className="text-sm font-semibold mb-2">Checking collections...</h4>
+                                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-4 gap-y-2">
+                                    {collectionCheckProgress.map(item => (
+                                        <div key={item.name} className="flex items-center gap-2 text-sm">
+                                            {item.status === 'pending' && <div className="h-4 w-4" />}
+                                            {item.status === 'checking' && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
+                                            {item.status === 'exists' && <CheckCircle className="h-4 w-4 text-green-500" />}
+                                            {item.status === 'created' && <PlusCircle className="h-4 w-4 text-blue-500" />}
+                                            {item.status === 'error' && <AlertCircle className="h-4 w-4 text-destructive" />}
+                                            <span className={item.status === 'pending' ? 'text-muted-foreground' : ''}>{item.name}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
                     </div>
 
                     {/* Initial Seed */}

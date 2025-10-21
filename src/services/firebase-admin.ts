@@ -47,60 +47,43 @@ const ensureSystemUserExists = async (db: AdminFirestore, userData: Partial<User
     }
 };
 
+export const CORE_COLLECTIONS = [
+    'users', 'leads', 'donations', 'campaigns', 'activityLog',
+    'settings', 'organizations', 'publicLeads', 'publicCampaigns',
+    'publicData', 'inspirationalQuotes'
+];
 
 /**
- * Checks if essential Firestore collections exist, and creates them with a placeholder
- * document if they don't. This prevents errors on fresh deployments.
- * @returns An object with a list of created collections and any errors.
+ * Checks if a single Firestore collection exists, and creates it if it doesn't.
+ * @param collectionName The name of the collection to check.
+ * @returns An object indicating if the collection was created.
  */
-export const ensureCollectionsExist = async (): Promise<{ success: boolean; message: string; details: string[]; errors: string[] }> => {
+export const ensureCollectionExists = async (collectionName: string): Promise<{ created: boolean }> => {
     const db = await getAdminDb();
-    const coreCollections = [
-        'users', 'leads', 'donations', 'campaigns', 'activityLog',
-        'settings', 'organizations', 'publicLeads', 'publicCampaigns',
-        'publicData', 'inspirationalQuotes'
-    ];
-
-    console.log("Checking for essential Firestore collections...");
-    
-    const created: string[] = [];
-    const errors: string[] = [];
-    const details: string[] = [];
-
-    for (const collectionName of coreCollections) {
-        try {
-            const collectionRef = db.collection(collectionName);
-            const snapshot = await collectionRef.limit(1).get();
-            if (snapshot.empty) {
-                console.log(`Collection "${collectionName}" not found. Creating it...`);
-                await collectionRef.doc('_init_').set({
-                    initializedAt: Timestamp.now(),
-                    description: `This document was automatically created to initialize the ${collectionName} collection.`
-                });
-                created.push(collectionName);
-            } else {
-                details.push(`Collection '${collectionName}' already exists.`);
-            }
-        } catch (e) {
-            const errorMsg = `CRITICAL ERROR: Failed to ensure collection "${collectionName}" exists.`;
-            console.error(errorMsg, e);
-            errors.push(errorMsg);
-        }
+    const collectionRef = db.collection(collectionName);
+    const snapshot = await collectionRef.limit(1).get();
+    if (snapshot.empty) {
+        console.log(`Collection "${collectionName}" not found. Creating it...`);
+        await collectionRef.doc('_init_').set({
+            initializedAt: Timestamp.now(),
+            description: `This document was automatically created to initialize the ${collectionName} collection.`
+        });
+        return { created: true };
     }
-    
-    return { 
-        success: errors.length === 0, 
-        message: errors.length > 0 ? "Some collections could not be verified." : created.length > 0 ? "Successfully created missing collections." : "All essential collections already exist.",
-        details: created, 
-        errors 
-    };
+    return { created: false };
 };
+
 
 const runPostInitTasks = async () => {
     if (!adminDbInstance) return;
     try {
+        // Check all collections sequentially.
+        for (const collectionName of CORE_COLLECTIONS) {
+            await ensureCollectionExists(collectionName);
+        }
+        console.log("All essential collections verified.");
+        
         await Promise.all([
-            ensureCollectionsExist(),
              ensureSystemUserExists(adminDbInstance, {
                 name: "admin",
                 userId: "admin",

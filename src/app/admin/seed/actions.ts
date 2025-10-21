@@ -17,10 +17,11 @@ import {
     syncUsersToFirebaseAuth,
     eraseFirebaseAuthUsers,
     type SeedResult,
-    ensureCollectionsExist
+    ensureCollectionExists,
+    CORE_COLLECTIONS
 } from '@/services/seed-service';
 
-type SeedTask = 'initial' | 'coreTeam' | 'organization' | 'paymentGateways' | 'sampleData' | 'appSettings' | 'syncFirebaseAuth' | 'ensureCollections';
+type SeedTask = 'initial' | 'coreTeam' | 'organization' | 'paymentGateways' | 'sampleData' | 'appSettings' | 'syncFirebaseAuth';
 
 export async function handleSeedAction(task: SeedTask): Promise<{success: boolean; data?: SeedResult; error?: string}> {
     try {
@@ -46,9 +47,6 @@ export async function handleSeedAction(task: SeedTask): Promise<{success: boolea
                 break;
             case 'syncFirebaseAuth':
                 result = await syncUsersToFirebaseAuth();
-                break;
-            case 'ensureCollections':
-                result = await ensureCollectionsExist();
                 break;
             default:
                 throw new Error("Invalid seed task provided.");
@@ -95,6 +93,26 @@ export async function handleEraseAction(task: SeedTask): Promise<{success: boole
         const error = e instanceof Error ? e.message : "An unknown error occurred during erasing.";
         console.error(`Erasing task '${task}' failed:`, error);
         return { success: false, error };
+    }
+}
+
+/**
+ * Exposes the list of core collections to the client for progress display.
+ */
+export async function getCoreCollectionsList(): Promise<string[]> {
+    return CORE_COLLECTIONS;
+}
+
+/**
+ * A new server action that checks a single collection.
+ */
+export async function handleEnsureSingleCollection(collectionName: string): Promise<{ success: boolean; created: boolean; error?: string }> {
+    try {
+        const result = await ensureCollectionExists(collectionName);
+        return { success: true, created: result.created };
+    } catch (e) {
+        const error = e instanceof Error ? e.message : `An unknown error occurred for collection ${collectionName}.`;
+        return { success: false, created: false, error };
     }
 }
 

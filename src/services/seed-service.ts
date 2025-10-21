@@ -1,4 +1,3 @@
-
 /**
  * @fileOverview A service to seed the database with initial data.
  */
@@ -6,7 +5,7 @@
 import { getFirestore, Timestamp, FieldValue } from 'firebase-admin/firestore';
 import type { User, UserRole, Lead, Verifier, LeadDonationAllocation, Donation, Campaign, FundTransfer, LeadAction, AppSettings, OrganizationFooter, Organization } from './types';
 import { seedInitialQuotes } from '@/services/quotes-service';
-import { getAdminDb, getAdminAuth, ensureCollectionsExist as ensureCollectionsExistService } from '@/services/firebase-admin';
+import { getAdminDb, getAdminAuth, ensureCollectionExists, CORE_COLLECTIONS } from './firebase-admin';
 import { updatePublicCampaign, enrichCampaignWithPublicStats } from './public-data-service';
 import { format } from 'date-fns';
 import { revalidatePath } from 'next/cache';
@@ -14,6 +13,8 @@ import * as admin from 'firebase-admin';
 
 // Re-export type for backward compatibility
 export type { User, UserRole };
+// Re-export constants for use in client components
+export { CORE_COLLECTIONS };
 
 const USERS_COLLECTION = 'users';
 
@@ -183,7 +184,7 @@ const deleteCollection = async (collectionPath: string): Promise<string> => {
 
 
 // --- EXPORTED SEEDING FUNCTIONS ---
-export { ensureCollectionsExist } from '@/services/firebase-admin';
+export { ensureCollectionExists } from '@/services/firebase-admin';
 
 export const seedInitialUsersAndQuotes = async (): Promise<SeedResult> => {
     const quotesStatus = await seedInitialQuotes();
@@ -487,5 +488,3 @@ const organizationToSeed: Omit<Organization, 'id' | 'createdAt' | 'updatedAt'> =
       }
     }
 };
-
-    
