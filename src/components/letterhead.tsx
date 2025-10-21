@@ -91,6 +91,19 @@ export const Letterhead = forwardRef<HTMLDivElement, LetterheadProps>(
                         <table className="w-full">
                             <tbody>
                                 <tr>
+                                    {logoDataUri && (
+                                        <td className="w-32 align-top">
+                                             <div className="relative w-32 h-32">
+                                                <Image
+                                                    src={logoDataUri}
+                                                    alt="Organization Logo"
+                                                    fill
+                                                    sizes="128px"
+                                                    className="object-contain"
+                                                />
+                                            </div>
+                                        </td>
+                                    )}
                                     <td className="pl-4 align-top">
                                         <h1 className="text-4xl font-bold font-headline text-primary" style={{...textStyle}}>
                                             {organizationDetails.titleLine1.toUpperCase()}

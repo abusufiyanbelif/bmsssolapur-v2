@@ -1,4 +1,3 @@
-
 // src/app/admin/organization/letterhead/letterhead-document.tsx
 
 "use client";
@@ -70,7 +69,6 @@ Thank you for your time and consideration. We look forward to establishing a ban
   const templateContentRef = useRef<HTMLDivElement>(null);
 
   const generatePdf = async (isTemplate: boolean = false) => {
-    // We no longer block if the logo isn't ready. It will just be excluded.
     const setLoading = isTemplate ? setIsTemplateGenerating : setIsGenerating;
     setLoading(true);
 
@@ -260,6 +258,15 @@ Thank you for your time and consideration. We look forward to establishing a ban
                 </Button>
             </div>
         </div>
+        {!logoDataUri && (
+            <Alert variant="warning">
+                <AlertCircle className="h-4 w-4" />
+                <AlertTitle>Logo Not Available</AlertTitle>
+                <AlertDescription>
+                    The organization logo could not be loaded. This might be due to an invalid URL. PDFs will be generated without the logo. Please update the logo URL in the <a href="/admin/organization" className="font-semibold underline">Organization Profile</a> settings.
+                </AlertDescription>
+            </Alert>
+        )}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <Card className="lg:col-span-1">
                  <CardHeader>
