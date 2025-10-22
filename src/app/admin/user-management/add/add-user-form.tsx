@@ -1,4 +1,3 @@
-
 // src/app/admin/user-management/add/add-user-form.tsx
 "use client";
 
@@ -44,10 +43,7 @@ import Image from "next/image";
 import { useDebounce } from "@/hooks/use-debounce";
 import { useRouter } from 'next/navigation';
 import { Separator } from "@/components/ui/separator";
-import { handleAddUser, handleExtractUserDetailsFromText, checkAvailability } from "./actions";
-import { Textarea } from "@/components/ui/textarea";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-
+import { handleAddUser, handleExtractUserDetailsFromText, checkAvailability, getUserAction } from "./actions";
 
 const allRoles: Exclude<UserRole, 'Guest'>[] = [
     "Donor",
@@ -197,45 +193,6 @@ const initialFormValues: Partial<AddUserFormValues> = {
     upiIds: [{ value: "" }],
     aadhaarCard: null,
 };
-
-
-function AvailabilityFeedback({ state, fieldName, onSuggestionClick }: { state: AvailabilityState, fieldName: string, onSuggestionClick?: (suggestion: string) => void }) {
-    if (state.isChecking) {
-        return <p className="text-sm text-muted-foreground flex items-center mt-2"><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Checking...</p>;
-    }
-    if (state.isAvailable === true) {
-        return <p className="text-sm text-green-600 flex items-center mt-2"><CheckCircle className="mr-2 h-4 w-4" /> Available</p>;
-    }
-    if (state.isAvailable === false) {
-        return (
-            <div className="mt-2">
-                <p className="text-sm text-destructive flex items-center">
-                    <XCircle className="mr-2 h-4 w-4" /> 
-                    This {fieldName} is already in use
-                    {state.existingUserName && ` by ${state.existingUserName}`}.
-                </p>
-                {state.suggestions && state.suggestions.length > 0 && onSuggestionClick && (
-                    <div className="flex gap-2 items-center mt-1">
-                        <p className="text-xs text-muted-foreground">Suggestions:</p>
-                        {state.suggestions.map(suggestion => (
-                            <Button 
-                                key={suggestion}
-                                type="button"
-                                variant="outline"
-                                size="sm"
-                                className="text-xs h-6 px-2"
-                                onClick={() => onSuggestionClick(suggestion)}
-                            >
-                                {suggestion}
-                            </Button>
-                        ))}
-                    </div>
-                )}
-            </div>
-        );
-    }
-    return null;
-}
 
 
 function FormContent({ settings, isSubForm, prefilledData, onUserCreate }: AddUserFormProps) {
@@ -666,7 +623,7 @@ function FormContent({ settings, isSubForm, prefilledData, onUserCreate }: AddUs
                     <Separator />
                      <div className="space-y-4">
                         <FormLabel>UPI Phone Numbers (Optional)</FormLabel>
-                        {upiPhoneFields.map((field, index) => (<FormField control={control} key={field.id} name={`upiPhoneNumbers.${index}.value`} render={({ field }) => (<FormItem><div className="flex items-center gap-2"><FormControl><Input {...field} placeholder="e.g., 9876543210" type="tel" maxLength={10} /></FormControl><Button type="button" variant="ghost" size="icon" onClick={() => removeUpiPhone(index)}><Trash2 className="h-4 w-4 text-destructive" /></Button></div><FormMessage /></FormItem>)}/>))}
+                        {upiPhoneFields.map((field, index) => (<FormField control={control} key={field.id} name={`upiPhoneNumbers.${index}.value`} render={({ field }) => ( <FormItem><div className="flex items-center gap-2"><FormControl><Input {...field} placeholder="e.g., 9876543210" type="tel" maxLength={10} /></FormControl><Button type="button" variant="ghost" size="icon" onClick={() => removeUpiPhone(index)}><Trash2 className="h-4 w-4 text-destructive" /></Button></div><FormMessage /></FormItem>)}/>))}
                         <Button type="button" variant="outline" size="sm" onClick={() => appendUpiPhone({ value: "" })}><PlusCircle className="mr-2" />Add Phone Number</Button>
                      </div>
                      <div className="space-y-4">
@@ -736,7 +693,7 @@ function FormContent({ settings, isSubForm, prefilledData, onUserCreate }: AddUs
 
 
 export function AddUserForm(props: AddUserFormProps) {
-    const { settings, prefilledData } = props;
+    const { settings } = props;
     const formSchema = useMemo(() => createFormSchema(settings), [settings]);
     const form = useForm<AddUserFormValues>({
         resolver: zodResolver(formSchema),
@@ -744,19 +701,6 @@ export function AddUserForm(props: AddUserFormProps) {
         mode: "onBlur",
         defaultValues: {
             ...initialFormValues,
-            // Apply prefilled data if it exists
-            firstName: prefilledData?.beneficiaryFirstName || "",
-            middleName: prefilledData?.beneficiaryMiddleName || "",
-            lastName: prefilledData?.beneficiaryLastName || "",
-            fatherName: (prefilledData?.beneficiaryMiddleName && prefilledData?.fatherName) ? prefilledData.fatherName : "",
-            phone: prefilledData?.beneficiaryPhone?.replace(/\D/g, '').slice(-10) || "",
-            aadhaarNumber: prefilledData?.aadhaarNumber?.replace(/\D/g,'') || "",
-            addressLine1: prefilledData?.address || "",
-            city: prefilledData?.city || "Solapur",
-            state: prefilledData?.state || "Maharashtra",
-            country: prefilledData?.country || "India",
-            pincode: prefilledData?.pincode || "",
-            gender: prefilledData?.gender,
         },
     });
 
