@@ -5,24 +5,15 @@ import Link from 'next/link';
 import { Facebook, Instagram, Twitter, Mail, Phone, MapPin } from 'lucide-react';
 import { Logo } from './logo';
 import type { Organization, OrganizationFooter } from '@/services/types';
+import { defaultOrganization } from '@/services/organization-service-client';
 
 interface FooterProps {
   organization: Organization | null;
 }
 
-const defaultFooter: OrganizationFooter = {
-    organizationInfo: { titleLine1: 'Baitul Mal', titleLine2: 'Samajik Sanstha', titleLine3: '(Solapur)', description: 'A registered charitable organization dedicated to providing financial assistance for education, healthcare, and relief to the underprivileged, adhering to Islamic principles of charity.', registrationInfo: 'Reg. No. Not Available', taxInfo: 'PAN: Not Available' },
-    contactUs: { title: 'Contact Us', address: 'Solapur, Maharashtra, India', email: 'contact@example.com' },
-    keyContacts: { title: 'Key Contacts', contacts: [{name: 'Admin', phone: '0000000000'}] },
-    connectWithUs: { title: 'Connect With Us', socialLinks: [] },
-    ourCommitment: { title: 'Our Commitment', text: 'We are committed to transparency and accountability in all our operations, ensuring that your contributions make a real impact.', linkText: 'Learn More', linkUrl: '/organization' },
-    copyright: { text: `© ${new Date().getFullYear()} Baitul Mal Samajik Sanstha (Solapur). All Rights Reserved.` }
-};
-
-
 export function Footer({ organization }: FooterProps) {
   // Use the passed organization data, or fall back to the single source of truth for default data.
-  const footerData = organization?.footer || defaultFooter;
+  const footerData = organization?.footer || defaultOrganization.footer;
 
   return (
     <footer className="border-t bg-card text-card-foreground">
