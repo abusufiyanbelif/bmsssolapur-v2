@@ -1,3 +1,4 @@
+
 /**
  * @fileOverview A service to seed the database with initial data.
  */
@@ -10,6 +11,7 @@ import { updatePublicCampaign, enrichCampaignWithPublicStats } from './public-da
 import { format } from 'date-fns';
 import { revalidatePath } from 'next/cache';
 import * as admin from 'firebase-admin';
+import { DEFAULT_LOGO } from '@/components/logo';
 
 // Re-export type for backward compatibility
 export type { User, UserRole };
@@ -429,7 +431,7 @@ export const syncUsersToFirebaseAuth = async (): Promise<SeedResult> => {
 
 const organizationToSeed: Omit<Organization, 'id' | 'createdAt' | 'updatedAt'> = {
     name: "Baitul Mal Samajik Sanstha (Solapur)",
-    logoUrl: "https://firebasestorage.googleapis.com/v0/b/baitul-mal-connect.appspot.com/o/app-assets%2Flogo-new.png?alt=media&token=e5079a49-2723-4d22-b91c-297c357662c2",
+    logoUrl: DEFAULT_LOGO,
     address: "123 Muslim Peth",
     city: "Solapur",
     registrationNumber: "MAHA/123/2024/SOLAPUR",
@@ -486,3 +488,5 @@ const organizationToSeed: Omit<Organization, 'id' | 'createdAt' | 'updatedAt'> =
       }
     }
 };
+
+    

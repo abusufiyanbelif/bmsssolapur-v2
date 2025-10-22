@@ -1,3 +1,4 @@
+
 /**
  * @fileOverview Service for managing organization data in Firestore.
  * THIS IS A SERVER-ONLY FILE. It must not be imported into any client components.
@@ -126,3 +127,5 @@ export const getCurrentOrganization = async (): Promise<Organization> => {
          return defaultOrganization;
     }
 }
+
+    

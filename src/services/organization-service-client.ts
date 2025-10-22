@@ -1,15 +1,17 @@
+
 /**
  * @fileOverview Client-safe default data for the organization.
  * This file can be safely imported into client components.
  */
 
 import type { Organization } from './types';
+import { DEFAULT_LOGO } from '@/components/logo';
 
 // Single source of truth for default organization data for the CLIENT.
 export const defaultOrganization: Organization = {
     id: "main_org",
     name: "Baitul Mal Samajik Sanstha",
-    logoUrl: "https://firebasestorage.googleapis.com/v0/b/baitul-mal-connect.appspot.com/o/app-assets%2Flogo-new.png?alt=media&token=e5079a49-2723-4d22-b91c-297c357662c2",
+    logoUrl: DEFAULT_LOGO,
     address: "Solapur, Maharashtra",
     city: "Solapur",
     registrationNumber: "Not Available",
@@ -26,3 +28,5 @@ export const defaultOrganization: Organization = {
       copyright: { text: `© ${new Date().getFullYear()} Baitul Mal Samajik Sanstha (Solapur). All Rights Reserved.` }
     }
 };
+
+    
