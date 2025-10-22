@@ -357,16 +357,16 @@ export function EditOrganizationForm({ organization, isCreating }: EditOrganizat
                                      <AccordionItem value="commitment-footer" className="border rounded-lg px-4 bg-muted/20">
                                          <AccordionTrigger>Our Commitment Section</AccordionTrigger>
                                          <AccordionContent className="space-y-4 pt-4">
-                                            <FormField control={form.control} name="ourCommitment.title" render={({ field }) => (<FormItem><FormLabel>Section Title</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
-                                            <FormField control={form.control} name="ourCommitment.text" render={({ field }) => (<FormItem><FormLabel>Text</FormLabel><FormControl><Textarea {...field} /></FormControl><FormMessage /></FormItem>)} />
-                                            <FormField control={form.control} name="ourCommitment.linkText" render={({ field }) => (<FormItem><FormLabel>Link Text</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
-                                            <FormField control={form.control} name="ourCommitment.linkUrl" render={({ field }) => (<FormItem><FormLabel>Link URL</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
+                                            <FormField control={form.control} name="footer.ourCommitment.title" render={({ field }) => (<FormItem><FormLabel>Section Title</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
+                                            <FormField control={form.control} name="footer.ourCommitment.text" render={({ field }) => (<FormItem><FormLabel>Text</FormLabel><FormControl><Textarea {...field} /></FormControl><FormMessage /></FormItem>)} />
+                                            <FormField control={form.control} name="footer.ourCommitment.linkText" render={({ field }) => (<FormItem><FormLabel>Link Text</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
+                                            <FormField control={form.control} name="footer.ourCommitment.linkUrl" render={({ field }) => (<FormItem><FormLabel>Link URL</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
                                          </AccordionContent>
                                      </AccordionItem>
                                      <AccordionItem value="copyright-footer" className="border rounded-lg px-4 bg-muted/20">
                                          <AccordionTrigger>Copyright Notice</AccordionTrigger>
                                          <AccordionContent className="space-y-4 pt-4">
-                                             <FormField control={form.control} name="copyright.text" render={({ field }) => (<FormItem><FormLabel>Copyright Text</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
+                                             <FormField control={form.control} name="footer.copyright.text" render={({ field }) => (<FormItem><FormLabel>Copyright Text</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
                                          </AccordionContent>
                                      </AccordionItem>
 
