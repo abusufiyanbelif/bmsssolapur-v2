@@ -20,7 +20,7 @@ import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect, useRef, useMemo, Suspense, useCallback } from "react";
-import { Loader2, UserPlus, Users, Info, CalendarIcon, AlertTriangle, ChevronsUpDown, Check, Banknote, X, Lock, Clipboard, Text, Bot, FileUp, ZoomIn, ZoomOut, FileIcon, ScanSearch, UserSearch, UserRoundPlus, XCircle, PlusCircle, Paperclip, RotateCw, RefreshCw as RefreshIcon, BookOpen, Sparkles, CreditCard, Fingerprint, MapPin, Trash2, CheckCircle } from "lucide-react";
+import { Loader2, UserPlus, Users, Info, CalendarIcon, AlertTriangle, ChevronsUpDown, Check, Banknote, X, Lock, Clipboard, Text, Bot, FileUp, ZoomIn, ZoomOut, FileIcon, ScanSearch, UserSearch, UserRoundPlus, XCircle, PlusCircle, Paperclip, RotateCw, RefreshCw as RefreshIcon, BookOpen, Sparkles, CreditCard, Fingerprint, MapPin, Trash2, CheckCircle, User as UserIcon } from "lucide-react";
 import type { User, LeadPurpose, Campaign, Lead, DonationType, LeadPriority, AppSettings, ExtractBeneficiaryDetailsOutput, GenerateSummariesOutput, UserRole } from "@/services/types";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
@@ -196,12 +196,6 @@ const initialFormValues: Partial<AddUserFormValues> = {
     aadhaarCard: null,
 };
 
-interface AvailabilityFeedbackProps {
-    state: AvailabilityState;
-    fieldName: string;
-    onSuggestionClick?: (suggestion: string) => void;
-}
-
 function AvailabilityFeedback({ state, fieldName, onSuggestionClick }: AvailabilityFeedbackProps) {
     if (state.isChecking) {
         return <p className="text-xs text-muted-foreground flex items-center mt-2"><Loader2 className="mr-2 h-3 w-3 animate-spin" />Checking availability...</p>;
@@ -232,7 +226,7 @@ function AvailabilityFeedback({ state, fieldName, onSuggestionClick }: Availabil
 
 
 function FormContent({ settings, isSubForm, prefilledData, onUserCreate }: AddUserFormProps) {
-  const { control, formState, watch, setValue, trigger, reset, handleSubmit } = useFormContext<AddUserFormValues>();
+  const { control, formState, watch, setValue, trigger, reset, handleSubmit: originalHandleSubmit } = useFormContext<AddUserFormValues>();
   const { toast } = useToast();
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -370,7 +364,6 @@ function FormContent({ settings, isSubForm, prefilledData, onUserCreate }: AddUs
 
   async function onSubmit(values: AddUserFormValues) {
       setIsSubmitting(true);
-      const { handleSubmit } = useFormContext<AddUserFormValues>(); // Destructure handleSubmit here
       const formData = new FormData();
       Object.entries(values).forEach(([key, value]) => {
           if (key === 'roles' && Array.isArray(value)) {
@@ -507,7 +500,7 @@ function FormContent({ settings, isSubForm, prefilledData, onUserCreate }: AddUs
 
   return (
     <>
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+    <form onSubmit={originalHandleSubmit(onSubmit)} className="space-y-6">
         <div className="space-y-6 pt-4">
           <Accordion type="multiple" defaultValue={['basic', 'roles']} className="w-full space-y-4">
               <AccordionItem value="basic" className="border rounded-lg">
@@ -527,7 +520,7 @@ function FormContent({ settings, isSubForm, prefilledData, onUserCreate }: AddUs
                                     name="aadhaarCard"
                                     render={({ field }) => (
                                         <FormItem>
-                                            <FormLabel>ID Card File</FormLabel>
+                                            <FormLabel>ID Card File (Aadhaar recommended)</FormLabel>
                                             <FormControl>
                                                 <Input type="file" accept="image/*,application/pdf" onChange={handleFileChange} />
                                             </FormControl>
@@ -607,40 +600,10 @@ function FormContent({ settings, isSubForm, prefilledData, onUserCreate }: AddUs
                 <AccordionTrigger className="p-4 font-semibold text-primary"><h4 className="flex items-center gap-2">Account Roles &amp; Settings</h4></AccordionTrigger>
                 <AccordionContent className="p-6 pt-2 space-y-6">
                     <FormField control={control} name="roles" render={() => ( <FormItem><div className="mb-4"><FormLabel className="text-base">User Roles</FormLabel><FormDescription>Select all roles that apply to this user.</FormDescription></div><div className="grid grid-cols-2 md:grid-cols-3 gap-4">{allRoles.map((role) => (<FormField key={role} control={control} name="roles" render={({ field }) => { return (<FormItem key={role} className="flex flex-row items-start space-x-3 space-y-0"><FormControl><Checkbox checked={field.value?.includes(role)} onCheckedChange={(checked) => { trigger('roles'); return checked ? field.onChange([...(field.value || []), role]) : field.onChange( field.value?.filter( (value) => value !== role))}}/></FormControl><FormLabel className="font-normal">{role}</FormLabel></FormItem> )}}/>))}</div><FormMessage /></FormItem>)}/>
-                    {selectedRoles.includes("Beneficiary") && <FormField control={control} name="isAnonymousAsBeneficiary" render={({ field }) => ( <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4"><FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} /></FormControl><div className="space-y-1 leading-none"><FormLabel>Mark as Anonymous Beneficiary</FormLabel><FormDescription>If checked, their name will be hidden from public view.</FormDescription></div></FormItem>)} />}
+                    {selectedRoles.includes("Beneficiary") && <FormField control={control} name="isAnonymousAsBeneficiary" render={({ field }) => ( <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4"><FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} /></FormControl><div className="space-y-1 leading-none"><FormLabel>Mark as Anonymous Beneficiary</FormLabel><FormDescription>If checked, their name will be hidden from public view and their Anonymous ID will be used instead.</FormDescription></div></FormItem>)} />}
                     {selectedRoles.includes("Donor") && <FormField control={control} name="isAnonymousAsDonor" render={({ field }) => ( <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4"><FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} /></FormControl><div className="space-y-1 leading-none"><FormLabel>Mark as Anonymous Donor</FormLabel><FormDescription>If checked, their name will be hidden on the public donations list.</FormDescription></div></FormItem>)} />}
                 </AccordionContent>
             </AccordionItem>
-            
-            {isBeneficiary && (
-                 <AccordionItem value="beneficiary-details" className="border rounded-lg">
-                    <AccordionTrigger className="p-4 font-semibold text-primary"><h4 className="flex items-center gap-2"><UserIcon className="h-5 w-5"/>Family &amp; Occupation Details</h4></AccordionTrigger>
-                    <AccordionContent className="p-6 pt-2 space-y-6">
-                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <FormField control={control} name="occupation" render={({ field }) => (<FormItem><FormLabel>Occupation</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)}/>
-                            <FormField control={control} name="fatherOccupation" render={({ field }) => (<FormItem><FormLabel>Father&apos;s Occupation</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)}/>
-                            <FormField control={control} name="motherOccupation" render={({ field }) => (<FormItem><FormLabel>Mother&apos;s Occupation</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)}/>
-                            <FormField control={control} name="familyMembers" render={({ field }) => (<FormItem><FormLabel>Number of Family Members</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>)}/>
-                            <FormField control={control} name="earningMembers" render={({ field }) => (<FormItem><FormLabel>Earning Members</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>)}/>
-                            <FormField control={control} name="totalFamilyIncome" render={({ field }) => (<FormItem><FormLabel>Total Family Income (Monthly)</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>)}/>
-                        </div>
-                         <FormField control={control} name="beneficiaryType" render={({ field }) => (
-                             <FormItem>
-                                 <FormLabel>Beneficiary Type</FormLabel>
-                                 <FormControl>
-                                     <RadioGroup onValueChange={field.onChange} value={field.value} className="flex flex-row space-x-4 pt-2">
-                                        <FormItem className="flex items-center space-x-3 space-y-0"><RadioGroupItem value="Adult" id="type-adult"/><FormLabel className="font-normal" htmlFor="type-adult">Adult</FormLabel></FormItem>
-                                        <FormItem className="flex items-center space-x-3 space-y-0"><RadioGroupItem value="Old Age" id="type-old"/><FormLabel className="font-normal" htmlFor="type-old">Old Age</FormLabel></FormItem>
-                                        <FormItem className="flex items-center space-x-3 space-y-0"><RadioGroupItem value="Kid" id="type-kid"/><FormLabel className="font-normal" htmlFor="type-kid">Kid</FormLabel></FormItem>
-                                        <FormItem className="flex items-center space-x-3 space-y-0"><RadioGroupItem value="Family" id="type-family"/><FormLabel className="font-normal" htmlFor="type-family">Family</FormLabel></FormItem>
-                                     </RadioGroup>
-                                 </FormControl>
-                                 <FormMessage />
-                             </FormItem>
-                         )}/>
-                    </AccordionContent>
-                </AccordionItem>
-            )}
           </Accordion>
         </div>
         
@@ -701,7 +664,7 @@ function FormContent({ settings, isSubForm, prefilledData, onUserCreate }: AddUs
 
 
 export function AddUserForm(props: AddUserFormProps) {
-    const { settings } = props;
+    const { settings, prefilledData } = props;
     const formSchema = useMemo(() => createFormSchema(settings), [settings]);
     const form = useForm<AddUserFormValues>({
         resolver: zodResolver(formSchema),
@@ -718,5 +681,3 @@ export function AddUserForm(props: AddUserFormProps) {
         </FormProvider>
     )
 }
-
-    
