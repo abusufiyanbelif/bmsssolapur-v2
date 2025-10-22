@@ -1,3 +1,4 @@
+
 // src/app/page.tsx
 import { Suspense } from "react";
 import { PublicHomePage } from "./home/public-home-page";
@@ -24,14 +25,14 @@ async function PublicHomePageLoader() {
   ]);
 
   // Handle the error from getPublicDashboardData gracefully
-  if (dashboardData.error) {
+  if (dashboardData.error === 'permission-denied') {
     return (
       <div className="container max-w-4xl py-8">
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
           <AlertTitle>Application Error: Could Not Connect to Database</AlertTitle>
           <AlertDescription>
-            <p>The application server failed to authenticate with the database. This is typically an environment configuration issue.</p>
+            <p>The application server failed to authenticate with Google Cloud. This is typically an environment configuration issue.</p>
             <p className="font-bold mt-2">To fix this, please follow the steps in the <a href="/docs/TROUBLESHOOTING.md" target="_blank" className="underline">Troubleshooting Guide</a> under the &quot;UNAUTHENTICATED / PERMISSION_DENIED&quot; section.</p>
           </AlertDescription>
         </Alert>

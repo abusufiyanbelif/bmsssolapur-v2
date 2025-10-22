@@ -32,10 +32,10 @@ export async function getPublicDashboardData(): Promise<PublicDashboardData> {
         
         // The getAllUsers function now gracefully handles auth errors by returning an empty array.
         // We can check for this case here to propagate a user-friendly error message.
-        if (users.length === 0 && (await getAllUsers()).length === 0) { // Double-check in case there are just no users
+        if (users.length === 0) { // A simple check; if there are truly no users, this will still trigger.
             const dbCheck = await (await import('@/app/services/actions')).checkDatabaseConnection();
-            if (!dbCheck.success) {
-                 return { donations: [], users: [], leads: [], campaigns: [], error: "Could not authenticate with Google Cloud. Ensure your server environment is configured correctly (e.g., via `gcloud auth application-default login` or IAM roles). Refer to TROUBLESHOOTING.md." };
+            if (dbCheck.error === 'permission-denied') {
+                 return { donations: [], users: [], leads: [], campaigns: [], error: "permission-denied" };
             }
         }
         

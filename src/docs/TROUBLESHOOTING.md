@@ -35,21 +35,21 @@ If you see this error while running the app on your local computer (e.g., when s
 
 ### Solution for Deployed App (Firebase App Hosting)
 
-If you see this error in your deployed application, it means the App Hosting service account needs to be granted permission to access the database and other services.
+If you see this error in your deployed application, it means the App Hosting service account is missing permission to access the database and other services.
 
-1.  **Run the Verification Script**: The easiest way to diagnose and fix this is to use the built-in script. Run the following command in your terminal:
-    ```bash
-    npm run verify:iam
-    ```
-    This will check for missing roles.
+#### The Easy Fix (Recommended)
 
-2.  **Run the Fix Script**: If the verification script reports missing roles, run the auto-fix command:
+1.  **Run the Auto-Fix Script**: Open your terminal and run the following command:
     ```bash
     npm run fix:iam
     ```
-    This script will automatically grant all the necessary roles to your App Hosting service account.
+    This script will automatically detect and grant all the necessary roles to your App Hosting service account.
 
-3.  **Manual Steps (If Needed)**: If the script fails, you can perform the steps manually:
+2.  **Wait for Redeployment**: App Hosting will automatically redeploy your backend with the new permissions. This usually takes a minute or two. The error should then be resolved.
+
+#### Manual Steps (If the Script Fails)
+
+If the script fails, you can perform the steps manually:
     -   Go to the **[IAM & Admin page](https://console.cloud.google.com/iam-admin/iam)** in your Google Cloud Console.
     -   Make sure you have selected the correct project (`baitul-mal-connect`).
     -   Find the service account with the name **"Firebase App Hosting compute engine default service account"**. Its email will look like `[PROJECT_NUMBER]-compute@developer.gserviceaccount.com`.
