@@ -1,3 +1,4 @@
+
 // src/app/admin/user-management/add/add-user-form.tsx
 "use client";
 
@@ -44,6 +45,7 @@ import { useDebounce } from "@/hooks/use-debounce";
 import { useRouter } from 'next/navigation';
 import { Separator } from "@/components/ui/separator";
 import { handleAddUser, handleExtractUserDetailsFromText, checkAvailability, getUserAction } from "./actions";
+
 
 const allRoles: Exclude<UserRole, 'Guest'>[] = [
     "Donor",
@@ -194,9 +196,43 @@ const initialFormValues: Partial<AddUserFormValues> = {
     aadhaarCard: null,
 };
 
+interface AvailabilityFeedbackProps {
+    state: AvailabilityState;
+    fieldName: string;
+    onSuggestionClick?: (suggestion: string) => void;
+}
+
+function AvailabilityFeedback({ state, fieldName, onSuggestionClick }: AvailabilityFeedbackProps) {
+    if (state.isChecking) {
+        return <p className="text-xs text-muted-foreground flex items-center mt-2"><Loader2 className="mr-2 h-3 w-3 animate-spin" />Checking availability...</p>;
+    }
+    if (state.isAvailable === false) {
+        return (
+            <div className="text-xs text-destructive flex flex-col items-start mt-2 gap-1">
+                 <div className="flex items-center">
+                    <AlertTriangle className="mr-2 h-3 w-3" />
+                    <span>This {fieldName} is already taken by {state.existingUserName || 'another user'}.</span>
+                 </div>
+                {state.suggestions && state.suggestions.length > 0 && onSuggestionClick && (
+                    <div className="flex items-center gap-2">
+                        <span className="text-muted-foreground">Suggestions:</span>
+                        {state.suggestions.map(s => (
+                            <Button key={s} type="button" size="sm" variant="outline" className="h-6 px-2 text-xs" onClick={() => onSuggestionClick(s)}>{s}</Button>
+                        ))}
+                    </div>
+                )}
+            </div>
+        );
+    }
+    if (state.isAvailable === true) {
+        return <p className="text-xs text-green-600 flex items-center mt-2"><CheckCircle className="mr-2 h-3 w-3" />{fieldName} is available.</p>;
+    }
+    return null;
+}
+
 
 function FormContent({ settings, isSubForm, prefilledData, onUserCreate }: AddUserFormProps) {
-  const { control, formState, watch, setValue, trigger, reset, handleSubmit } = useFormContext<AddUserFormValues>();
+  const { control, formState, watch, setValue, trigger, reset, handleSubmit: originalHandleSubmit } = useFormContext<AddUserFormValues>();
   const { toast } = useToast();
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -619,7 +655,7 @@ function FormContent({ settings, isSubForm, prefilledData, onUserCreate }: AddUs
                         <FormField control={control} name="bankAccountNumber" render={({ field }) => (<FormItem><FormLabel>Bank Account Number</FormLabel><FormControl><Input {...field} /></FormControl><AvailabilityFeedback state={bankAccountState} fieldName="Bank Account Number" /><FormMessage /></FormItem>)}/>
                         <FormField control={control} name="bankIfscCode" render={({ field }) => (<FormItem><FormLabel>IFSC Code</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)}/>
                     </div>
-                    <FormField control={control} name="bankName" render={({ field }) => (<FormItem><FormLabel>Bank Name</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)}/>
+                    <FormField control={control} name="bankName" render={({ field }) => ( <FormItem><FormLabel>Bank Name</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem> )}/>
                     <Separator />
                      <div className="space-y-4">
                         <FormLabel>UPI Phone Numbers (Optional)</FormLabel>
