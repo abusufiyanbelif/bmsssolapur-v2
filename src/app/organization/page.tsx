@@ -1,3 +1,4 @@
+
 // src/app/organization/page.tsx
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Building, Mail, Phone, Globe, Hash, ShieldCheck, CreditCard, Award, Users, Banknote, MapPin, AlertCircle, Edit } from "lucide-react";

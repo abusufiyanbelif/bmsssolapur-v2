@@ -38,7 +38,7 @@ export default async function OrganizationSettingsPage() {
 
     return (
         <div className="flex-1 space-y-4">
-            <h2 className="text-3xl font-bold tracking-tight font-headline text-primary">Organization Profile & Layout</h2>
+            <h2 className="text-3xl font-bold tracking-tight font-headline text-primary">Organization Profile</h2>
             {isCreating && (
                  <Alert>
                     <AlertCircle className="h-4 w-4" />
@@ -52,4 +52,3 @@ export default async function OrganizationSettingsPage() {
         </div>
     );
 }
-
