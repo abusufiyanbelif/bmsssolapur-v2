@@ -56,6 +56,29 @@ export default function ProfileSettingsPage() {
 
     const form = useForm<ProfileFormValues>({
         resolver: zodResolver(profileFormSchema),
+        defaultValues: {
+            firstName: '',
+            middleName: '',
+            lastName: '',
+            phone: '',
+            address: {
+                addressLine1: '',
+                city: '',
+                state: '',
+                country: '',
+                pincode: '',
+            },
+            gender: undefined,
+            beneficiaryType: undefined,
+            occupation: '',
+            panNumber: '',
+            aadhaarNumber: '',
+            bankAccountName: '',
+            bankName: '',
+            bankAccountNumber: '',
+            bankIfscCode: '',
+            upiIds: [],
+        }
     });
 
     const { formState: { isDirty }, control, reset, handleSubmit } = form;
@@ -203,7 +226,7 @@ export default function ProfileSettingsPage() {
                                              <FormItem>
                                                  <FormLabel>Beneficiary Type</FormLabel>
                                                  <FormControl>
-                                                     <RadioGroup onValueChange={field.onChange} value={field.value} className="flex flex-row space-x-4 pt-2" disabled={!isEditing}>
+                                                     <RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="flex flex-row space-x-4 pt-2" disabled={!isEditing}>
                                                         <FormItem className="flex items-center space-x-3 space-y-0"><RadioGroupItem value="Adult" id="type-adult"/><FormLabel className="font-normal" htmlFor="type-adult">Adult</FormLabel></FormItem>
                                                         <FormItem className="flex items-center space-x-3 space-y-0"><RadioGroupItem value="Old Age" id="type-old"/><FormLabel className="font-normal" htmlFor="type-old">Old Age</FormLabel></FormItem>
                                                         <FormItem className="flex items-center space-x-3 space-y-0"><RadioGroupItem value="Kid" id="type-kid"/><FormLabel className="font-normal" htmlFor="type-kid">Kid</FormLabel></FormItem>
