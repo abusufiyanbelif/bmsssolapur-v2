@@ -11,7 +11,7 @@ import { updatePublicCampaign, enrichCampaignWithPublicStats } from './public-da
 import { format } from 'date-fns';
 import { revalidatePath } from 'next/cache';
 import * as admin from 'firebase-admin';
-import { DEFAULT_LOGO } from '@/components/logo';
+import { DEFAULT_LOGO } from '@/services/organization-service-client';
 
 // Re-export type for backward compatibility
 export type { User, UserRole };

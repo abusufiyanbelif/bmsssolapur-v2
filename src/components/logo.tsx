@@ -5,6 +5,7 @@ import Image from 'next/image';
 import { cn } from '@/lib/utils';
 import { useEffect, useState } from 'react';
 import { getCurrentOrganization } from '@/app/admin/settings/actions';
+import { DEFAULT_LOGO } from '@/services/organization-service-client';
 
 interface LogoProps {
     className?: string;
@@ -21,9 +22,6 @@ const isValidHttpUrl = (string?: string | null): boolean => {
         return false;
     }
 };
-
-// This is now the single source of truth for the default logo.
-export const DEFAULT_LOGO = "https://firebasestorage.googleapis.com/v0/b/baitul-mal-connect.firebasestorage.app/o/organization%2Fassets%2Flogo%2FIMG-20250816-WA0000.jpg?alt=media&token=49c54b33-286c-481d-bd33-1a16e8db22c5";
 
 export function Logo({ className, logoUrl: propLogoUrl }: LogoProps) {
   const [logoUrl, setLogoUrl] = useState(() => 

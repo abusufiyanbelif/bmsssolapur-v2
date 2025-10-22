@@ -5,7 +5,9 @@
  */
 
 import type { Organization } from './types';
-import { DEFAULT_LOGO } from '@/components/logo';
+
+// This is now the single source of truth for the default logo.
+export const DEFAULT_LOGO = "https://firebasestorage.googleapis.com/v0/b/baitul-mal-connect.firebasestorage.app/o/organization%2Fassets%2Flogo%2FIMG-20250816-WA0000.jpg?alt=media&token=49c54b33-286c-481d-bd33-1a16e8db22c5";
 
 // Single source of truth for default organization data for the CLIENT.
 export const defaultOrganization: Organization = {
@@ -28,7 +30,5 @@ export const defaultOrganization: Organization = {
       copyright: { text: `© ${new Date().getFullYear()} Baitul Mal Samajik Sanstha (Solapur). All Rights Reserved.` }
     }
 };
-
-    
 
     
