@@ -189,7 +189,7 @@ const LoadingState = () => {
         }
     }, [onProfileFetched, onSessionValidated]);
     
-    const Step = ({ label, status, time }: { label: string, status: string, time: number }) => (
+    const Step = ({ label, status, time }: { label: string; status: string; time: number }) => (
         <div className="flex items-center gap-4">
             {status === "loading" && <Loader2 className="h-5 w-5 animate-spin text-primary" />}
             {status === "done" && <CheckCircle className="h-5 w-5 text-green-500" />}
