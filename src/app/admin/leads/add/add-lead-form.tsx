@@ -1,3 +1,4 @@
+
 // src/app/admin/leads/add/add-lead-form.tsx
 "use client";
 
@@ -30,7 +31,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { handleAddLead, handleExtractLeadDetailsFromText, handleExtractLeadBeneficiaryDetailsFromText, handleGenerateSummaries } from "./actions";
 import { useState, useEffect, useRef, useMemo, Suspense, useCallback } from "react";
-import { Loader2, UserPlus, Users, Info, CalendarIcon, AlertTriangle, ChevronsUpDown, Check, Banknote, X, Lock, Clipboard, Text, Bot, FileUp, ZoomIn, ZoomOut, FileIcon, ScanSearch, UserSearch, UserRoundPlus, XCircle, PlusCircle, Paperclip, RotateCw, RefreshCw as RefreshIcon, BookOpen, Sparkles, CreditCard, Fingerprint, MapPin, Trash2, CheckCircle } from "lucide-react";
+import { Loader2, UserPlus, Users, Info, CalendarIcon, AlertTriangle, ChevronsUpDown, Check, Banknote, X, Lock, Clipboard, Text, Bot, FileUp, ZoomIn, ZoomOut, FileIcon, ScanSearch, UserSearch, UserRoundPlus, XCircle, PlusCircle, Paperclip, RotateCw, RefreshCw as RefreshIcon, BookOpen, Sparkles, CreditCard, Fingerprint, MapPin, Trash2, CheckCircle, User as UserIcon } from "lucide-react";
 import type { User, LeadPurpose, Campaign, Lead, DonationType, LeadPriority, AppSettings, ExtractLeadDetailsOutput, ExtractBeneficiaryDetailsOutput, GenerateSummariesOutput } from "@/services/types";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
@@ -145,7 +146,64 @@ interface AddLeadFormProps {
   prefilledRawText?: string;
 }
 
-function AddLeadFormContent({ users, campaigns, settings, prefilledRawText }: AddLeadFormProps) {
+type AvailabilityState = {
+    isChecking: boolean;
+    isAvailable: boolean | null;
+    suggestions?: string[];
+    existingUserName?: string;
+};
+
+const initialAvailabilityState: AvailabilityState = {
+    isChecking: false,
+    isAvailable: null,
+};
+
+interface AvailabilityFeedbackProps {
+    state: AvailabilityState;
+    fieldName: string;
+    onSuggestionClick?: (suggestion: string) => void;
+}
+
+const AvailabilityFeedback = ({ state, fieldName, onSuggestionClick }: AvailabilityFeedbackProps) => {
+    if (state.isChecking) {
+        return <p className="text-xs text-muted-foreground flex items-center mt-2"><Loader2 className="mr-2 h-3 w-3 animate-spin" />Checking availability...</p>;
+    }
+    if (state.isAvailable === false) {
+        return (
+            <div className="text-xs text-destructive flex flex-col items-start mt-2 gap-1">
+                 <div className="flex items-center">
+                    <AlertTriangle className="mr-2 h-3 w-3" />
+                    <span>This {fieldName} is already taken by {state.existingUserName || 'another user'}.</span>
+                 </div>
+                {state.suggestions && state.suggestions.length > 0 && onSuggestionClick && (
+                    <div className="flex items-center gap-2">
+                        <span className="text-muted-foreground">Suggestions:</span>
+                        {state.suggestions.map(s => (
+                            <Button key={s} type="button" size="sm" variant="outline" className="h-6 px-2 text-xs" onClick={() => onSuggestionClick(s)}>{s}</Button>
+                        ))}
+                    </div>
+                )}
+            </div>
+        );
+    }
+    if (state.isAvailable === true) {
+        return <p className="text-xs text-green-600 flex items-center mt-2"><CheckCircle className="mr-2 h-3 w-3" />{fieldName} is available.</p>;
+    }
+    return null;
+}
+
+
+const initialFormValues: Partial<AddLeadFormValues> = {
+    beneficiaryId: '',
+    hasReferral: false,
+    campaignId: 'none',
+    priority: 'Medium',
+    acceptableDonationTypes: [],
+    isHistoricalRecord: false,
+    isLoan: false,
+};
+
+function FormContent({ users, campaigns, settings, prefilledRawText }: AddLeadFormProps) {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [adminUser, setAdminUser] = useState<User | null>(null);
@@ -179,17 +237,14 @@ function AddLeadFormContent({ users, campaigns, settings, prefilledRawText }: Ad
   useEffect(() => {
     const storedUserId = localStorage.getItem('userId');
     if (storedUserId) {
-        const admin = users.find(u => u.id === storedUserId);
-        setAdminUser(admin || null);
+        getUserAction(storedUserId).then(user => setAdminUser(user));
     }
-  }, [users]);
+  }, []);
   
   const userHasOverridePermission = adminUser?.roles.includes('Super Admin');
   const isFormDisabled = approvalProcessDisabled && !userHasOverridePermission;
   
-  const { formState, setValue, watch, getValues, control, trigger, reset, handleSubmit: originalHandleSubmit } = form;
-
-  const handleSubmit = originalHandleSubmit;
+  const { formState, setValue, watch, getValues, control, trigger, reset, handleSubmit } = form;
   
   const leadPurposes = useMemo(() => 
     (leadConfiguration.purposes || []).filter(p => p.enabled)
@@ -1076,29 +1131,20 @@ function AddLeadFormContent({ users, campaigns, settings, prefilledRawText }: Ad
 }
 
 export function AddLeadForm(props: AddLeadFormProps) {
-    const { settings, prefilledData } = props;
+    const { settings } = props;
     const formSchema = useMemo(() => createFormSchema(settings), [settings]);
     const form = useForm<AddLeadFormValues>({
         resolver: zodResolver(formSchema),
         reValidateMode: "onBlur",
         mode: "onBlur",
         defaultValues: {
-            // Set initial defaults here
-            beneficiaryType: 'existing',
-            hasReferral: false,
-            campaignId: 'none',
-            priority: 'Medium',
-            acceptableDonationTypes: [],
-            isHistoricalRecord: false,
-            isLoan: false,
-            // upiPhoneNumbers: [{value: ''}],
-            // upiIds: [{value: ''}],
-        }
+            ...initialFormValues,
+        },
     });
 
     return (
         <FormProvider {...form}>
-            <AddLeadFormContent {...props} />
+            <FormContent {...props} />
         </FormProvider>
     )
 }

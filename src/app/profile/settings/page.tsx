@@ -48,6 +48,24 @@ const profileFormSchema = z.object({
 
 type ProfileFormValues = z.infer<typeof profileFormSchema>;
 
+const initialFormValues: ProfileFormValues = {
+    firstName: '',
+    middleName: '',
+    lastName: '',
+    phone: '',
+    address: { addressLine1: '', city: '', state: '', country: '', pincode: '' },
+    gender: 'Other',
+    occupation: '',
+    panNumber: '',
+    aadhaarNumber: '',
+    bankAccountName: '',
+    bankName: '',
+    bankAccountNumber: '',
+    bankIfscCode: '',
+    upiIds: [],
+};
+
+
 export default function ProfileSettingsPage() {
     const user = useProfileUser(); // Get user from context
     const { toast } = useToast();
@@ -56,29 +74,7 @@ export default function ProfileSettingsPage() {
 
     const form = useForm<ProfileFormValues>({
         resolver: zodResolver(profileFormSchema),
-        defaultValues: {
-            firstName: '',
-            middleName: '',
-            lastName: '',
-            phone: '',
-            address: {
-                addressLine1: '',
-                city: '',
-                state: '',
-                country: '',
-                pincode: '',
-            },
-            gender: undefined,
-            beneficiaryType: undefined,
-            occupation: '',
-            panNumber: '',
-            aadhaarNumber: '',
-            bankAccountName: '',
-            bankName: '',
-            bankAccountNumber: '',
-            bankIfscCode: '',
-            upiIds: [],
-        }
+        defaultValues: initialFormValues,
     });
 
     const { formState: { isDirty }, control, reset, handleSubmit } = form;
