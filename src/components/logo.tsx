@@ -23,7 +23,7 @@ const isValidHttpUrl = (string?: string | null): boolean => {
 };
 
 // This is now the single source of truth for the default logo.
-export const DEFAULT_LOGO = "https://firebasestorage.googleapis.com/v0/b/baitul-mal-connect.appspot.com/o/app-assets%2Flogo-new.png?alt=media&token=e5079a49-2723-4d22-b91c-297c357662c2";
+export const DEFAULT_LOGO = "https://firebasestorage.googleapis.com/v0/b/baitul-mal-connect.firebasestorage.app/o/organization%2Fassets%2Flogo%2FIMG-20250816-WA0000.jpg?alt=media&token=49c54b33-286c-481d-bd33-1a16e8db22c5";
 
 export function Logo({ className, logoUrl: propLogoUrl }: LogoProps) {
   const [logoUrl, setLogoUrl] = useState(() => 
