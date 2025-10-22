@@ -1,4 +1,4 @@
-
+// src/components/app-shell.tsx
 "use client";
 
 import { Button } from "@/components/ui/button";
@@ -56,16 +56,6 @@ export const AdminEditButton = ({ editPath }: { editPath: string }) => {
         </Button>
     )
 }
-
-const defaultFooter: OrganizationFooter = {
-    organizationInfo: { titleLine1: 'Baitul Mal', titleLine2: 'Samajik Sanstha', titleLine3: '(Solapur)', description: 'A registered charitable organization dedicated to providing financial assistance for education, healthcare, and relief to the underprivileged, adhering to Islamic principles of charity.', registrationInfo: 'Reg. No. Not Available', taxInfo: 'PAN: Not Available' },
-    contactUs: { title: 'Contact Us', address: 'Solapur, Maharashtra, India', email: 'contact@example.com' },
-    keyContacts: { title: 'Key Contacts', contacts: [{name: 'Admin', phone: '0000000000'}] },
-    connectWithUs: { title: 'Connect With Us', socialLinks: [] },
-    ourCommitment: { title: 'Our Commitment', text: 'We are committed to transparency and accountability in all our operations.', linkText: 'Learn More', linkUrl: '/organization' },
-    copyright: { text: `© ${new Date().getFullYear()} Baitul Mal Samajik Sanstha (Solapur). All Rights Reserved.` }
-};
-
 
 const PermissionErrorState = ({ error }: { error: string }) => {
     const isPermissionDenied = error === 'permission-denied';
@@ -355,7 +345,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
         initializeSession();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [pathname, fetchOrganizationData]); // Add fetchOrganizationData to dependency array
+    }, [pathname]);
 
     useEffect(() => {
         if (sessionUser?.isLoggedIn && sessionUser.roles.some(r => ['Admin', 'Super Admin', 'Finance Admin'].includes(r))) {
@@ -428,14 +418,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     };
     
     const HeaderTitle = () => {
-        const orgData = organization || defaultFooter;
-        const orgInfo = orgData.footer?.organizationInfo;
+        const orgInfo = organization?.footer?.organizationInfo;
         
         return (
-            <Link href="/" className="flex items-center gap-3" title={orgData.name}>
+            <Link href="/" className="flex items-center gap-3" title={organization?.name}>
                 <Logo className="h-10 w-10" logoUrl={organization?.logoUrl} />
                  <div className="flex flex-col leading-tight">
-                    <span className="font-bold font-headline text-primary text-sm">{orgInfo?.titleLine1 || orgData.name}</span>
+                    <span className="font-bold font-headline text-primary text-sm">{orgInfo?.titleLine1 || organization?.name}</span>
                     {orgInfo?.titleLine2 && <span className="font-bold font-headline text-accent text-sm">{orgInfo.titleLine2}</span>}
                     {orgInfo?.titleLine3 && <span className="font-bold font-headline text-primary text-xs">{orgInfo.titleLine3}</span>}
                 </div>

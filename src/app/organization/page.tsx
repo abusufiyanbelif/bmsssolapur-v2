@@ -7,7 +7,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import type { User, Organization } from "@/services/types";
 import { OrganizationQrCodeDialog } from "@/components/organization-qr-code-dialog";
 import { getAllUsers } from "@/services/user-service";
-import { getPublicOrganization } from "@/services/public-data-service";
+import { getCurrentOrganization } from "@/services/organization-service";
 import { AdminEditButton } from "@/components/app-shell";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
@@ -28,7 +28,7 @@ export default async function OrganizationPage() {
     try {
         // Fetch public-facing organization data and all users
         const [org, allUsers] = await Promise.all([
-            getPublicOrganization(),
+            getCurrentOrganization(),
             getAllUsers(),
         ]);
         organization = org;

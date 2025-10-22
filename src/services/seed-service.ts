@@ -1,4 +1,3 @@
-
 /**
  * @fileOverview A service to seed the database with initial data.
  */
@@ -130,8 +129,6 @@ const seedOrganization = async (): Promise<string> => {
     revalidatePath("/", "layout");
     revalidatePath("/organization");
     revalidatePath("/admin/organization");
-    revalidatePath("/admin/organization/layout");
-    revalidatePath("/admin/organization/letterhead");
 
 
     return "Organization profile seeded/updated successfully.";
