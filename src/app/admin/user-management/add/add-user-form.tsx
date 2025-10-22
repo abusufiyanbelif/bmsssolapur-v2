@@ -20,7 +20,7 @@ import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect, useRef, useMemo, Suspense, useCallback } from "react";
-import { Loader2, UserPlus, Users, Info, CalendarIcon, AlertTriangle, ChevronsUpDown, Check, Banknote, X, Lock, Clipboard, Text, Bot, FileUp, ZoomIn, ZoomOut, FileIcon, ScanSearch, UserSearch, UserRoundPlus, XCircle, PlusCircle, Paperclip, RotateCw, RefreshCw as RefreshIcon, BookOpen, Sparkles, CreditCard, Fingerprint, MapPin, Trash2, CheckCircle, User as UserIcon } from "lucide-react";
+import { Loader2, UserPlus, Users, Info, CalendarIcon, AlertTriangle, ChevronsUpDown, Check, Banknote, X, Lock, Clipboard, Text, Bot, FileUp, ZoomIn, ZoomOut, FileIcon, ScanSearch, UserSearch, UserRoundPlus, XCircle, PlusCircle, Paperclip, RotateCw, RefreshCw as RefreshIcon, BookOpen, Sparkles, CreditCard, Fingerprint, MapPin, Trash2, CheckCircle } from "lucide-react";
 import type { User, LeadPurpose, Campaign, Lead, DonationType, LeadPriority, AppSettings, ExtractBeneficiaryDetailsOutput, GenerateSummariesOutput, UserRole } from "@/services/types";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
@@ -232,7 +232,7 @@ function AvailabilityFeedback({ state, fieldName, onSuggestionClick }: Availabil
 
 
 function FormContent({ settings, isSubForm, prefilledData, onUserCreate }: AddUserFormProps) {
-  const { control, formState, watch, setValue, trigger, reset, handleSubmit: originalHandleSubmit } = useFormContext<AddUserFormValues>();
+  const { control, formState, watch, setValue, trigger, reset, handleSubmit } = useFormContext<AddUserFormValues>();
   const { toast } = useToast();
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -370,6 +370,7 @@ function FormContent({ settings, isSubForm, prefilledData, onUserCreate }: AddUs
 
   async function onSubmit(values: AddUserFormValues) {
       setIsSubmitting(true);
+      const { handleSubmit } = useFormContext<AddUserFormValues>(); // Destructure handleSubmit here
       const formData = new FormData();
       Object.entries(values).forEach(([key, value]) => {
           if (key === 'roles' && Array.isArray(value)) {
@@ -508,7 +509,7 @@ function FormContent({ settings, isSubForm, prefilledData, onUserCreate }: AddUs
     <>
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         <div className="space-y-6 pt-4">
-          <Accordion type="multiple" defaultValue={["basic", "roles"]} className="w-full space-y-4">
+          <Accordion type="multiple" defaultValue={['basic', 'roles']} className="w-full space-y-4">
               <AccordionItem value="basic" className="border rounded-lg">
                 <AccordionTrigger className="p-4 font-semibold text-primary"><h4 className="flex items-center gap-2"><UserIcon className="h-5 w-5"/>Basic Information</h4></AccordionTrigger>
                 <AccordionContent className="p-6 pt-2 space-y-6">
@@ -640,35 +641,6 @@ function FormContent({ settings, isSubForm, prefilledData, onUserCreate }: AddUs
                     </AccordionContent>
                 </AccordionItem>
             )}
-
-            <AccordionItem value="payment" className="border rounded-lg">
-                <AccordionTrigger className="p-4 font-semibold text-primary"><h4 className="flex items-center gap-2"><CreditCard className="h-5 w-5"/>Verification &amp; Payment Details</h4></AccordionTrigger>
-                <AccordionContent className="p-6 pt-2 space-y-6">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <FormField control={control} name="panNumber" render={({ field }) => (<FormItem><FormLabel>PAN Number</FormLabel><FormControl><Input {...field} /></FormControl><AvailabilityFeedback state={panState} fieldName="PAN Number" /><FormMessage /></FormItem>)}/>
-                        <FormField control={control} name="aadhaarNumber" render={({ field }) => (<FormItem><FormLabel>Aadhaar Number</FormLabel><FormControl><Input {...field} /></FormControl><AvailabilityFeedback state={aadhaarState} fieldName="Aadhaar Number" /><FormMessage /></FormItem>)}/>
-                    </div>
-                    <Separator />
-                    <h3 className="text-lg font-semibold">Bank Details</h3>
-                    <FormField control={control} name="bankAccountName" render={({ field }) => (<FormItem><FormLabel>Full Name as per Bank Account</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)}/>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <FormField control={control} name="bankAccountNumber" render={({ field }) => (<FormItem><FormLabel>Bank Account Number</FormLabel><FormControl><Input {...field} /></FormControl><AvailabilityFeedback state={bankAccountState} fieldName="Bank Account Number" /><FormMessage /></FormItem>)}/>
-                        <FormField control={control} name="bankIfscCode" render={({ field }) => (<FormItem><FormLabel>IFSC Code</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)}/>
-                    </div>
-                    <FormField control={control} name="bankName" render={({ field }) => ( <FormItem><FormLabel>Bank Name</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem> )}/>
-                    <Separator />
-                     <div className="space-y-4">
-                        <FormLabel>UPI Phone Numbers (Optional)</FormLabel>
-                        {upiPhoneFields.map((field, index) => (<FormField control={control} key={field.id} name={`upiPhoneNumbers.${index}.value`} render={({ field }) => ( <FormItem><div className="flex items-center gap-2"><FormControl><Input {...field} placeholder="e.g., 9876543210" type="tel" maxLength={10} /></FormControl><Button type="button" variant="ghost" size="icon" onClick={() => removeUpiPhone(index)}><Trash2 className="h-4 w-4 text-destructive" /></Button></div><FormMessage /></FormItem>)}/>))}
-                        <Button type="button" variant="outline" size="sm" onClick={() => appendUpiPhone({ value: "" })}><PlusCircle className="mr-2" />Add Phone Number</Button>
-                     </div>
-                     <div className="space-y-4">
-                        <FormLabel>UPI IDs (Optional)</FormLabel>
-                         {upiIdFields.map((field, index) => (<FormField control={control} key={field.id} name={`upiIds.${index}.value`} render={({ field }) => (<FormItem><div className="flex items-center gap-2"><FormControl><Input {...field} placeholder="e.g., username@okhdfc" /></FormControl><Button type="button" variant="ghost" size="icon" onClick={() => removeUpiId(index)}><Trash2 className="h-4 w-4 text-destructive" /></Button></div><FormMessage /></FormItem>)}/>))}
-                        <Button type="button" variant="outline" size="sm" onClick={() => appendUpiId({ value: "" })}><PlusCircle className="mr-2" />Add UPI ID</Button>
-                     </div>
-                </AccordionContent>
-            </AccordionItem>
           </Accordion>
         </div>
         
@@ -746,3 +718,5 @@ export function AddUserForm(props: AddUserFormProps) {
         </FormProvider>
     )
 }
+
+    
