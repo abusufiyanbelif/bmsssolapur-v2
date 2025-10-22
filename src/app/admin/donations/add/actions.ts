@@ -1,4 +1,3 @@
-
 // src/app/admin/donations/add/actions.ts
 
 "use server";
@@ -19,10 +18,6 @@ interface FormState {
     success: boolean;
     error?: string;
     donationId?: string;
-}
-
-export async function getUserAction(userId: string) {
-    return getUserService(userId);
 }
 
 export async function handleAddDonation(

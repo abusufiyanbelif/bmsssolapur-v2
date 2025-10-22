@@ -1,9 +1,8 @@
-
 // src/app/admin/user-management/add/actions.ts
 
 "use server";
 
-import { createUser, checkAvailability as checkUserAvailabilityService } from "@/services/user-service";
+import { createUser, checkAvailability as checkUserAvailabilityService, getUser } from "@/services/user-service";
 import { revalidatePath } from "next/cache";
 import type { User, UserRole, ExtractBeneficiaryDetailsOutput } from "@/services/types";
 import { Timestamp, collection } from "firebase/firestore";
@@ -16,6 +15,11 @@ interface FormState {
     success: boolean;
     error?: string;
     user?: User;
+}
+
+export async function getUserAction(userId: string) {
+    const user = await getUser(userId);
+    return JSON.parse(JSON.stringify(user));
 }
 
 export async function handleAddUser(

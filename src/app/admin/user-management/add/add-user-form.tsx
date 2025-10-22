@@ -1,4 +1,3 @@
-
 // src/app/admin/user-management/add/add-user-form.tsx
 "use client";
 
@@ -152,6 +151,13 @@ type AvailabilityState = {
     existingUserName?: string;
 };
 
+interface AvailabilityFeedbackProps {
+    state: AvailabilityState;
+    fieldName: string;
+    onSuggestionClick?: (suggestion: string) => void;
+}
+
+
 const initialAvailabilityState: AvailabilityState = {
     isChecking: false,
     isAvailable: null,
@@ -226,7 +232,7 @@ function AvailabilityFeedback({ state, fieldName, onSuggestionClick }: Availabil
 
 
 function FormContent({ settings, isSubForm, prefilledData, onUserCreate }: AddUserFormProps) {
-  const { control, formState, watch, setValue, trigger, reset, handleSubmit: originalHandleSubmit } = useFormContext<AddUserFormValues>();
+  const { control, formState, watch, setValue, trigger, reset, handleSubmit } = useFormContext<AddUserFormValues>();
   const { toast } = useToast();
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -460,7 +466,7 @@ function FormContent({ settings, isSubForm, prefilledData, onUserCreate }: AddUs
                     case 'beneficiaryFullName': setValue('fullName', value, { shouldDirty: true }); break;
                     case 'beneficiaryFirstName': setValue('firstName', value, { shouldDirty: true }); break;
                     case 'beneficiaryMiddleName': setValue('middleName', value, { shouldDirty: true }); break;
-                    case 'beneficiaryLastName': setValue('lastName', value, { shouldDirty: true }); break;
+                    case 'beneficiaryLastName': setValue('lastName', value, { shouldDirty: true });
                     case 'fatherName': if (details.beneficiaryMiddleName) { setValue('fatherName', value, { shouldDirty: true }); } break;
                     case 'beneficiaryPhone': setValue('phone', value.replace(/\D/g, '').slice(-10), { shouldDirty: true, shouldValidate: true }); break;
                     case 'aadhaarNumber': setValue('aadhaarNumber', value.replace(/\D/g,''), { shouldDirty: true, shouldValidate: true }); break;
@@ -500,7 +506,7 @@ function FormContent({ settings, isSubForm, prefilledData, onUserCreate }: AddUs
 
   return (
     <>
-    <form onSubmit={originalHandleSubmit(onSubmit)} className="space-y-6">
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         <div className="space-y-6 pt-4">
           <Accordion type="multiple" defaultValue={['basic', 'roles']} className="w-full space-y-4">
               <AccordionItem value="basic" className="border rounded-lg">
