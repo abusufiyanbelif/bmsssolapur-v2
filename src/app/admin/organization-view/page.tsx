@@ -5,7 +5,6 @@ import { AlertCircle } from "lucide-react";
 import type { User, Organization } from "@/services/types";
 import { getAllUsers } from "@/services/user-service";
 import { getCurrentOrganization } from "@/services/organization-service";
-import { AdminEditButton } from "@/components/app-shell";
 import { OrganizationView } from "@/app/organization/organization-view";
 
 export default async function OrganizationViewPage() {
@@ -45,7 +44,6 @@ export default async function OrganizationViewPage() {
              <div className="flex-1 space-y-4">
                 <div className="flex justify-between items-center">
                     <h2 className="text-3xl font-bold tracking-tight font-headline text-primary">Organization View</h2>
-                     <AdminEditButton editPath="/admin/organization" />
                 </div>
                 <Alert>
                     <AlertCircle className="h-4 w-4" />
@@ -66,7 +64,6 @@ export default async function OrganizationViewPage() {
         <div className="flex-1 space-y-6">
             <div className="flex justify-between items-center">
                 <h2 className="text-3xl font-bold tracking-tight font-headline text-primary">Organization View</h2>
-                <AdminEditButton editPath="/admin/organization" />
             </div>
             <OrganizationView organization={safeOrganization} allUsers={safeUsers} />
         </div>
