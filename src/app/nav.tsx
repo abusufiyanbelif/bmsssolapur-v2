@@ -70,7 +70,7 @@ const allNavItems: NavItem[] = [
         icon: Building,
         allowedRoles: ["Admin", "Super Admin", "Finance Admin"],
         subItems: [
-            { href: "/admin/organization-profile", label: "Organization Profile", icon: Info, allowedRoles: ["Admin", "Super Admin", "Finance Admin"] },
+            { href: "/admin/organization-profile", label: "Profile & Layout", icon: Info, allowedRoles: ["Admin", "Super Admin", "Finance Admin"] },
             { href: "/admin/board-management", label: "Board Members", icon: Users, allowedRoles: ["Admin", "Super Admin", "Finance Admin"] },
             { href: "/admin/organization-profile/letterhead", label: "Letterhead", icon: Newspaper, allowedRoles: ["Admin", "Super Admin", "Finance Admin"] },
         ]
@@ -135,9 +135,9 @@ const allNavItems: NavItem[] = [
         subItems: [
             { href: "/admin/user-management/add", label: "Create User", icon: UserPlus, allowedRoles: ["Admin", "Super Admin", "Finance Admin"] },
             { href: "/admin/user-management", label: "All Users", icon: Users, allowedRoles: ["Super Admin"] },
-            { href: "/admin/donors", label: "All Donors", icon: HandHeart, allowedRoles: ["Admin", "Super Admin", "Finance Admin"] },
-            { href: "/admin/beneficiaries", label: "All Beneficiaries", icon: Users, allowedRoles: ["Admin", "Super Admin", "Finance Admin"] },
-            { href: "/admin/referrals", label: "All Referrals", icon: UserSearch, allowedRoles: ["Admin", "Super Admin", "Finance Admin"] },
+            { href: "/admin/user-management/donors", label: "All Donors", icon: HandHeart, allowedRoles: ["Admin", "Super Admin", "Finance Admin"] },
+            { href: "/admin/user-management/beneficiaries", label: "All Beneficiaries", icon: Users, allowedRoles: ["Admin", "Super Admin", "Finance Admin"] },
+            { href: "/admin/user-management/referrals", label: "All Referrals", icon: UserSearch, allowedRoles: ["Admin", "Super Admin", "Finance Admin"] },
             { href: "/admin/user-management/configuration", label: "User Page Configuration", icon: UserCog, allowedRoles: ["Super Admin"] },
             { 
                 label: "Access Management", 

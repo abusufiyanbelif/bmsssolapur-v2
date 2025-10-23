@@ -1,8 +1,8 @@
-
-// src/app/admin/referrals/referrals-client.tsx
+// src/app/admin/beneficiaries/beneficiaries-client.tsx
 "use client";
 
 import { useState, useEffect, useMemo, Suspense } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 import {
   Table,
   TableBody,
@@ -15,7 +15,7 @@ import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
 import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
-import { Loader2, AlertCircle, PlusCircle, UserCog, ChevronLeft, ChevronRight, FilterX, Search, MoreHorizontal, UserCheck, UserX, Trash2, EyeOff, ArrowUpDown, ChevronsUpDown, Check, Edit } from "lucide-react";
+import { Loader2, AlertCircle, PlusCircle, UserCog, ChevronLeft, ChevronRight, FilterX, Search, PersonStanding, Baby, HeartHandshake, Home, MoreHorizontal, UserCheck, UserX, Trash2, EyeOff, ArrowUpDown, ChevronsUpDown, Check, Edit, AlertTriangle } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
 import Link from "next/link";
@@ -25,40 +25,65 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import type { User, UserRole } from "@/services/types";
-import { handleDeleteUser, handleToggleUserStatus, handleBulkDeleteUsers } from "../user-management/actions";
+import { handleDeleteUser, handleToggleUserStatus, handleBulkDeleteUsers } from "../actions";
 import { DeleteConfirmationDialog } from "@/components/delete-confirmation-dialog";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Checkbox } from "@/components/ui/checkbox";
-import { useRouter } from 'next/navigation';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 
 type StatusFilter = 'all' | 'active' | 'inactive';
 const statusOptions: StatusFilter[] = ["all", "active", "inactive"];
 
+type AnonymityFilter = 'all' | 'anonymous' | 'not-anonymous';
+const anonymityOptions: AnonymityFilter[] = ["all", "anonymous", "not-anonymous"];
+
+type TypeFilter = 'all' | 'Adult' | 'Kid' | 'Old Age' | 'Widow' | 'Family';
+const typeOptions: { value: TypeFilter, label: string, icon?: React.ElementType }[] = [
+    { value: 'all', label: 'All Types' },
+    { value: 'Adult', label: 'Adults', icon: PersonStanding },
+    { value: 'Kid', label: 'Kids', icon: Baby },
+    { value: 'Family', label: 'Families', icon: Home },
+    { value: 'Widow', label: 'Widows', icon: HeartHandshake },
+];
+
+
 type SortableColumn = 'name' | 'createdAt';
 type SortDirection = 'asc' | 'desc';
 
-export function ReferralsPageClient({ initialReferrals, error: initialError }: { initialReferrals: User[], error?: string }) {
-    const [referrals, setReferrals] = useState<User[]>(initialReferrals);
+export function BeneficiariesPageClient({ initialBeneficiaries, error: initialError }: { initialBeneficiaries: User[], error?: string }) {
+    const searchParams = useSearchParams();
+    const router = useRouter();
+    const typeFromUrl = searchParams.get('type');
+    const widowFromUrl = searchParams.get('isWidow');
+    
+    const [beneficiaries, setBeneficiaries] = useState<User[]>(initialBeneficiaries);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(initialError || null);
     const { toast } = useToast();
     const [currentUserId, setCurrentUserId] = useState<string | null>(null);
-    const [adminUserId, setAdminUserId] = useState<string | null>(null);
-    const [popoverOpen, setPopoverOpen] = useState(false);
     const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
-    const router = useRouter();
 
+    
+    // Determine initial type filter from URL
+    let initialTypeFilter: TypeFilter = 'all';
+    if(widowFromUrl === 'true') {
+        initialTypeFilter = 'Widow';
+    } else if (typeFromUrl && ['Adult', 'Kid', 'Old Age', 'Family'].includes(typeFromUrl)) {
+        initialTypeFilter = typeFromUrl as TypeFilter;
+    }
 
     // Input states
     const [nameInput, setNameInput] = useState('');
     const [statusInput, setStatusInput] = useState<StatusFilter>('all');
+    const [typeInput, setTypeInput] = useState<TypeFilter>(initialTypeFilter);
+    const [anonymityInput, setAnonymityInput] = useState<AnonymityFilter>('all');
     
     // Applied filter states
     const [appliedFilters, setAppliedFilters] = useState({
         name: '',
         status: 'all' as StatusFilter,
+        type: initialTypeFilter,
+        anonymity: 'all' as AnonymityFilter,
     });
     
     // Sorting state
@@ -74,6 +99,8 @@ export function ReferralsPageClient({ initialReferrals, error: initialError }: {
         setAppliedFilters({
             name: nameInput,
             status: statusInput,
+            type: typeInput,
+            anonymity: anonymityInput,
         });
     };
     
@@ -85,7 +112,6 @@ export function ReferralsPageClient({ initialReferrals, error: initialError }: {
     useEffect(() => {
         const storedUserId = localStorage.getItem('userId');
         setCurrentUserId(storedUserId);
-        setAdminUserId(storedUserId);
     }, []);
     
     const onUserDeleted = (userId: string) => {
@@ -93,15 +119,15 @@ export function ReferralsPageClient({ initialReferrals, error: initialError }: {
             title: "User Deleted",
             description: "The user has been successfully removed.",
         });
-        setReferrals(prev => prev.filter(u => u.id !== userId));
+        setBeneficiaries(prev => prev.filter(u => u.id !== userId));
     }
-    
-    const onBulkUsersDeleted = () => {
+
+     const onBulkUsersDeleted = () => {
         toast({
             title: "Users Deleted",
             description: `${selectedUsers.length} user(s) have been successfully removed.`,
         });
-        setReferrals(prev => prev.filter(u => !selectedUsers.includes(u.id!)));
+        setBeneficiaries(prev => prev.filter(u => !selectedUsers.includes(u.id!)));
         setSelectedUsers([]);
     }
     
@@ -111,9 +137,9 @@ export function ReferralsPageClient({ initialReferrals, error: initialError }: {
             title: "Status Updated",
             description: `User has been successfully ${newStatus ? 'activated' : 'deactivated'}.`,
         });
-        setReferrals(prev => prev.map(u => u.id === userId ? {...u, isActive: newStatus} : u));
+        setBeneficiaries(prev => prev.map(u => u.id === userId ? {...u, isActive: newStatus} : u));
     };
-    
+
     const handleSort = (column: SortableColumn) => {
         if (sortColumn === column) {
             setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc');
@@ -123,15 +149,25 @@ export function ReferralsPageClient({ initialReferrals, error: initialError }: {
         }
     }
 
-    const filteredReferrals = useMemo(() => {
-        let filtered = referrals.filter(user => {
+    const filteredBeneficiaries = useMemo(() => {
+        let filtered = beneficiaries.filter(user => {
             const searchTerm = appliedFilters.name.toLowerCase();
-            const nameMatch = appliedFilters.name === '' ||
+            const searchMatch = appliedFilters.name === '' ||
                 user.name.toLowerCase().includes(searchTerm) ||
-                (user.phone && user.phone.includes(searchTerm));
+                (user.fatherName && user.fatherName.toLowerCase().includes(searchTerm)) ||
+                (user.phone && user.phone.includes(searchTerm)) ||
+                (user.aadhaarNumber && user.aadhaarNumber.includes(searchTerm)) ||
+                (user.panNumber && user.panNumber.toLowerCase().includes(searchTerm)) ||
+                (user.upiIds && user.upiIds.some(id => id.toLowerCase().includes(searchTerm)));
 
             const statusMatch = appliedFilters.status === 'all' || (appliedFilters.status === 'active' && user.isActive) || (appliedFilters.status === 'inactive' && !user.isActive);
-            return nameMatch && statusMatch;
+            const typeMatch = appliedFilters.type === 'all' || 
+                              (appliedFilters.type === 'Widow' && user.isWidow) || 
+                              user.beneficiaryType === appliedFilters.type;
+            const anonymityMatch = appliedFilters.anonymity === 'all' ||
+                (appliedFilters.anonymity === 'anonymous' && user.isAnonymousAsBeneficiary) ||
+                (appliedFilters.anonymity === 'not-anonymous' && !user.isAnonymousAsBeneficiary);
+            return searchMatch && statusMatch && typeMatch && anonymityMatch;
         });
 
         return filtered.sort((a, b) => {
@@ -140,7 +176,7 @@ export function ReferralsPageClient({ initialReferrals, error: initialError }: {
 
             let comparison = 0;
             if (aValue instanceof Date && bValue instanceof Date) {
-                comparison = aValue.getTime() - bValue.getTime();
+                 comparison = aValue.getTime() - bValue.getTime();
             } else if (typeof aValue === 'string' && typeof bValue === 'string') {
                 comparison = aValue.localeCompare(bValue);
             }
@@ -148,19 +184,21 @@ export function ReferralsPageClient({ initialReferrals, error: initialError }: {
             return sortDirection === 'asc' ? comparison : -comparison;
         });
 
-    }, [referrals, appliedFilters, sortColumn, sortDirection]);
+    }, [beneficiaries, appliedFilters, sortColumn, sortDirection]);
 
-    const paginatedReferrals = useMemo(() => {
+    const paginatedBeneficiaries = useMemo(() => {
         const startIndex = (currentPage - 1) * itemsPerPage;
-        return filteredReferrals.slice(startIndex, startIndex + itemsPerPage);
-    }, [filteredReferrals, currentPage, itemsPerPage]);
+        return filteredBeneficiaries.slice(startIndex, startIndex + itemsPerPage);
+    }, [filteredBeneficiaries, currentPage, itemsPerPage]);
 
-    const totalPages = Math.ceil(filteredReferrals.length / itemsPerPage);
+    const totalPages = Math.ceil(filteredBeneficiaries.length / itemsPerPage);
     
     const resetFilters = () => {
         setNameInput('');
         setStatusInput('all');
-        setAppliedFilters({ name: '', status: 'all' });
+        setTypeInput('all');
+        setAnonymityInput('all');
+        setAppliedFilters({ name: '', status: 'all', type: 'all', anonymity: 'all' });
         setCurrentPage(1);
     };
     
@@ -208,8 +246,8 @@ export function ReferralsPageClient({ initialReferrals, error: initialError }: {
                         itemType="user"
                         itemName={user.name}
                         onDelete={async () => {
-                            if (!adminUserId) return { success: false, error: 'Admin user ID not found.' };
-                            return await handleDeleteUser(user.id!, adminUserId);
+                            if (!currentUserId) return { success: false, error: 'Admin user ID not found.' };
+                            return await handleDeleteUser(user.id!, currentUserId);
                         }}
                         onSuccess={() => onUserDeleted(user.id!)}
                     >
@@ -222,21 +260,20 @@ export function ReferralsPageClient({ initialReferrals, error: initialError }: {
         );
     }
     
-    const renderSortIcon = (column: SortableColumn) => {
+     const renderSortIcon = (column: SortableColumn) => {
         if (sortColumn !== column) return <ArrowUpDown className="ml-2 h-4 w-4 opacity-30" />;
         return sortDirection === 'asc' ? <ArrowUpDown className="ml-2 h-4 w-4" /> : <ArrowUpDown className="ml-2 h-4 w-4" />;
     };
-
 
     const renderTable = () => (
         <Table>
             <TableHeader>
                 <TableRow>
-                    <TableHead>
+                    <TableCell>
                         <Checkbox
-                            checked={paginatedReferrals.length > 0 && selectedUsers.length === paginatedReferrals.filter(u => !u.roles.includes('Super Admin') && u.id !== currentUserId).length}
+                            checked={paginatedBeneficiaries.length > 0 && selectedUsers.length === paginatedBeneficiaries.filter(u => !u.roles.includes('Super Admin') && u.id !== currentUserId).length}
                             onCheckedChange={(checked) => {
-                                const pageUserIds = paginatedReferrals.filter(u => !u.roles.includes('Super Admin') && u.id !== currentUserId).map(u => u.id!);
+                                const pageUserIds = paginatedBeneficiaries.filter(u => !u.roles.includes('Super Admin') && u.id !== currentUserId).map(u => u.id!);
                                 if (checked) {
                                      setSelectedUsers(prev => [...new Set([...prev, ...pageUserIds])]);
                                 } else {
@@ -245,7 +282,7 @@ export function ReferralsPageClient({ initialReferrals, error: initialError }: {
                             }}
                             aria-label="Select all on current page"
                         />
-                    </TableHead>
+                    </TableCell>
                     <TableHead>User Key</TableHead>
                     <TableHead>
                         <Button variant="ghost" onClick={() => handleSort('name')}>
@@ -256,9 +293,10 @@ export function ReferralsPageClient({ initialReferrals, error: initialError }: {
                     <TableHead>User ID</TableHead>
                     <TableHead>Contact</TableHead>
                     <TableHead>Roles</TableHead>
+                    <TableHead>Type</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead>
-                        <Button variant="ghost" onClick={() => handleSort('createdAt')}>
+                         <Button variant="ghost" onClick={() => handleSort('createdAt')}>
                             Joined On
                             {renderSortIcon('createdAt')}
                         </Button>
@@ -267,11 +305,12 @@ export function ReferralsPageClient({ initialReferrals, error: initialError }: {
                 </TableRow>
             </TableHeader>
             <TableBody>
-                {paginatedReferrals.map((user, index) => {
-                    const isProtectedUser = user.roles.includes('Super Admin') || user.id === currentUserId;
-                    return (
+                {paginatedBeneficiaries.map((user, index) => {
+                     const isProtectedUser = user.roles.includes('Super Admin') || user.id === currentUserId;
+                     const isMissingDocs = !user.aadhaarNumber && !user.panNumber;
+                     return (
                     <TableRow key={user.id} data-state={selectedUsers.includes(user.id!) && 'selected'}>
-                        <TableCell>
+                         <TableCell>
                             <Checkbox
                                 checked={selectedUsers.includes(user.id!)}
                                 onCheckedChange={(checked) => {
@@ -285,12 +324,42 @@ export function ReferralsPageClient({ initialReferrals, error: initialError }: {
                         </TableCell>
                         <TableCell><Badge variant="outline">{user.userKey || 'N/A'}</Badge></TableCell>
                         <TableCell className="font-medium">
-                            <Link href={`/admin/user-management/${user.id}/edit`} className="hover:underline hover:text-primary">
-                                {user.name}
-                            </Link>
+                             <div className="flex items-center gap-2">
+                                <Link href={`/admin/user-management/${user.id}/edit`} className="hover:underline hover:text-primary">
+                                    {user.name}
+                                </Link>
+                                {isMissingDocs && (
+                                     <TooltipProvider>
+                                        <Tooltip>
+                                            <TooltipTrigger>
+                                                <AlertTriangle className="h-4 w-4 text-amber-500" />
+                                            </TooltipTrigger>
+                                            <TooltipContent>
+                                                <p>Missing Aadhaar/PAN number.</p>
+                                            </TooltipContent>
+                                        </Tooltip>
+                                    </TooltipProvider>
+                                )}
+                                {user.isAnonymousAsBeneficiary && (
+                                    <TooltipProvider>
+                                        <Tooltip>
+                                            <TooltipTrigger>
+                                                <EyeOff className="ml-2 h-4 w-4 inline-block text-muted-foreground" />
+                                            </TooltipTrigger>
+                                            <TooltipContent>
+                                                <p>This user is anonymous</p>
+                                            </TooltipContent>
+                                        </Tooltip>
+                                    </TooltipProvider>
+                                )}
+                             </div>
+                             {user.fatherName && <p className="text-xs text-muted-foreground">s/o {user.fatherName}</p>}
                         </TableCell>
                         <TableCell>
                             <div className="font-mono text-xs">{user.userId}</div>
+                            {user.isAnonymousAsBeneficiary && user.anonymousBeneficiaryId && (
+                                <div className="font-mono text-xs text-muted-foreground" title="Anonymous Beneficiary ID">{user.anonymousBeneficiaryId}</div>
+                            )}
                         </TableCell>
                         <TableCell>
                             <div className="flex flex-col">
@@ -298,9 +367,15 @@ export function ReferralsPageClient({ initialReferrals, error: initialError }: {
                                 <span className="text-xs text-muted-foreground">{user.email}</span>
                             </div>
                         </TableCell>
-                        <TableCell>
+                         <TableCell>
                             <div className="flex flex-wrap gap-1">
                                 {user.roles?.map(role => <Badge key={role} variant="secondary">{role}</Badge>)}
+                            </div>
+                        </TableCell>
+                        <TableCell>
+                            <div className="flex flex-wrap gap-2">
+                               {user.beneficiaryType && <Badge variant="outline">{user.beneficiaryType}</Badge>}
+                               {user.isWidow && <Badge variant="outline" className="bg-pink-100 text-pink-800"><HeartHandshake className="mr-1 h-3 w-3" />Widow</Badge>}
                             </div>
                         </TableCell>
                         <TableCell>
@@ -310,21 +385,22 @@ export function ReferralsPageClient({ initialReferrals, error: initialError }: {
                         </TableCell>
                         <TableCell>{format(new Date(user.createdAt), "dd MMM yyyy")}</TableCell>
                         <TableCell className="text-right">
-                           {renderActions(user)}
+                             {renderActions(user)}
                         </TableCell>
                     </TableRow>
-                )})}
+                     )
+                })}
             </TableBody>
         </Table>
     );
 
     const renderPaginationControls = () => (
         <div className="flex items-center justify-between pt-4">
-            <div className="text-sm text-muted-foreground">
+             <div className="text-sm text-muted-foreground">
                  {selectedUsers.length > 0 ? (
-                    `${selectedUsers.length} of ${filteredReferrals.length} row(s) selected.`
+                    `${selectedUsers.length} of ${filteredBeneficiaries.length} row(s) selected.`
                 ) : (
-                    `Showing ${paginatedReferrals.length} of ${filteredReferrals.length} referrals.`
+                    `Showing ${paginatedBeneficiaries.length} of ${filteredBeneficiaries.length} beneficiaries.`
                 )}
             </div>
             <div className="flex items-center gap-4">
@@ -380,7 +456,7 @@ export function ReferralsPageClient({ initialReferrals, error: initialError }: {
             return (
                 <div className="flex items-center justify-center py-10">
                     <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                    <p className="ml-2">Loading referrals...</p>
+                    <p className="ml-2">Loading beneficiaries...</p>
                 </div>
             );
         }
@@ -395,24 +471,24 @@ export function ReferralsPageClient({ initialReferrals, error: initialError }: {
             );
         }
 
-        if (referrals.length === 0) {
+        if (beneficiaries.length === 0) {
             return (
                 <div className="text-center py-10">
-                    <p className="text-muted-foreground">No referrals found.</p>
+                    <p className="text-muted-foreground">No beneficiaries found.</p>
                      <Button asChild className="mt-4">
                         <Link href="/admin/user-management/add">
                            <PlusCircle className="mr-2" />
-                           Add First Referral
+                           Add First Beneficiary
                         </Link>
                     </Button>
                 </div>
             )
         }
         
-         if (filteredReferrals.length === 0) {
+         if (filteredBeneficiaries.length === 0) {
              return (
                 <div className="text-center py-10">
-                    <p className="text-muted-foreground">No referrals match your current filters.</p>
+                    <p className="text-muted-foreground">No beneficiaries match your current filters.</p>
                      <Button variant="outline" onClick={resetFilters} className="mt-4">
                         <FilterX className="mr-2 h-4 w-4" />
                         Clear Filters
@@ -424,7 +500,7 @@ export function ReferralsPageClient({ initialReferrals, error: initialError }: {
 
         return (
             <>
-                 {selectedUsers.length > 0 && adminUserId && (
+                {selectedUsers.length > 0 && currentUserId && (
                     <div className="flex items-center gap-4 mb-4 p-4 border rounded-lg bg-muted/50">
                         <p className="text-sm font-medium">
                             {selectedUsers.length} item(s) selected.
@@ -432,7 +508,10 @@ export function ReferralsPageClient({ initialReferrals, error: initialError }: {
                          <DeleteConfirmationDialog
                             itemType={`${selectedUsers.length} user(s)`}
                             itemName="the selected items"
-                            onDelete={() => handleBulkDeleteUsers(selectedUsers, adminUserId)}
+                            onDelete={async () => {
+                                if (!currentUserId) return {success: false, error: 'Admin user ID not found.'}
+                                return await handleBulkDeleteUsers(selectedUsers, currentUserId);
+                            }}
                             onSuccess={onBulkUsersDeleted}
                         >
                             <Button variant="destructive">
@@ -451,32 +530,43 @@ export function ReferralsPageClient({ initialReferrals, error: initialError }: {
   return (
     <div className="flex-1 space-y-4">
         <div className="flex items-center justify-between">
-            <h2 className="text-3xl font-bold tracking-tight font-headline text-primary">Referral Management</h2>
+            <h2 className="text-3xl font-bold tracking-tight font-headline text-primary">Beneficiary Management</h2>
             <Button asChild>
                 <Link href="/admin/user-management/add">
-                    <PlusCircle className="mr-2" />
-                    Add Referral
+                    <PlusCircle className="mr-2 h-4 w-4" />
+                    Add Beneficiary
                 </Link>
             </Button>
         </div>
         
          <Card>
             <CardHeader>
-                <CardTitle className="text-primary">All Referrals</CardTitle>
+                <CardTitle className="text-primary">All Beneficiaries</CardTitle>
                 <CardDescription className="text-muted-foreground">
-                    A list of all users in the system with the Referral role.
+                    A list of all users in the system with the Beneficiary role.
                 </CardDescription>
             </CardHeader>
             <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6 p-4 border rounded-lg bg-muted/50">
-                    <div className="space-y-2">
-                        <Label htmlFor="nameFilter">Search by Name or Phone</Label>
-                        <Input 
-                            id="nameFilter" 
-                            placeholder="Enter search term..." 
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6 p-4 border rounded-lg bg-muted/50">
+                    <div className="space-y-2 lg:col-span-1">
+                        <Label htmlFor="nameFilter">Search by Name, Phone, Aadhaar, etc.</Label>
+                         <Input
+                            id="nameFilter"
+                            placeholder="Enter search term..."
                             value={nameInput}
-                            onChange={e => setNameInput(e.target.value)}
+                            onChange={(e) => setNameInput(e.target.value)}
                         />
+                    </div>
+                     <div className="space-y-2">
+                        <Label htmlFor="typeFilter">Beneficiary Type</Label>
+                        <Select value={typeInput} onValueChange={(v) => setTypeInput(v as TypeFilter)}>
+                            <SelectTrigger id="typeFilter">
+                                <SelectValue placeholder="Filter by type" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {typeOptions.map(opt => <SelectItem key={opt.value} value={opt.value} className="capitalize">{opt.label}</SelectItem>)}
+                            </SelectContent>
+                        </Select>
                     </div>
                     <div className="space-y-2">
                         <Label htmlFor="statusFilter">Status</Label>
@@ -489,14 +579,25 @@ export function ReferralsPageClient({ initialReferrals, error: initialError }: {
                             </SelectContent>
                         </Select>
                     </div>
-                    <div className="flex items-end gap-4 md:col-span-2">
+                     <div className="space-y-2">
+                        <Label htmlFor="anonymityFilter">Anonymity</Label>
+                        <Select value={anonymityInput} onValueChange={(v) => setAnonymityInput(v as AnonymityFilter)}>
+                            <SelectTrigger id="anonymityFilter">
+                                <SelectValue placeholder="Filter by anonymity" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {anonymityOptions.map(s => <SelectItem key={s} value={s} className="capitalize">{s.replace('-', ' ')}</SelectItem>)}
+                            </SelectContent>
+                        </Select>
+                    </div>
+                    <div className="flex items-end gap-4 xl:col-span-full">
                         <Button onClick={handleSearch} className="w-full">
                             <Search className="mr-2 h-4 w-4" />
                             Apply Filters
                         </Button>
                         <Button variant="outline" onClick={resetFilters} className="w-full">
                             <FilterX className="mr-2 h-4 w-4" />
-                            Clear Filters
+                            Clear
                         </Button>
                     </div>
                 </div>
