@@ -456,7 +456,7 @@ const organizationToSeed: Omit<Organization, 'id' | 'createdAt' | 'updatedAt'> =
       },
       contactUs: {
         title: "Contact Us",
-        address: "123 Muslim Peth, Solapur, Maharashtra 413001, India",
+        address: "123 Muslim Peth, Solapur, Maharashtra, India",
         email: "contact@baitulmalsolapur.org"
       },
       keyContacts: {
