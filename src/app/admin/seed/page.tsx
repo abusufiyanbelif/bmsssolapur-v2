@@ -7,10 +7,11 @@ import { CheckCircle, AlertCircle, Database, UserCheck, Quote, Users, HandCoins,
 import { Button } from "@/components/ui/button";
 import { useState, useEffect, useCallback } from "react";
 import { Loader2 } from "lucide-react";
-import { handleSeedAction, handleEraseAction, getCoreCollectionsList, handleEnsureSingleCollection } from "./actions";
+import { handleSeedAction, handleEraseAction, handleEnsureSingleCollection } from "./actions";
 import { useRouter } from "next/navigation";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { useToast } from "@/hooks/use-toast";
+import { CORE_COLLECTIONS } from "@/services/firebase-admin";
 
 type SeedTask = 'initial' | 'coreTeam' | 'organization' | 'appSettings' | 'paymentGateways' | 'sampleData' | 'syncFirebaseAuth';
 type TaskType = 'seed' | 'erase';
@@ -88,7 +89,7 @@ export default function SeedPage() {
 
     const handleCollectionCheck = async () => {
         setIsCheckingCollections(true);
-        const collections = await getCoreCollectionsList();
+        const collections = CORE_COLLECTIONS;
         const initialProgress = collections.map(name => ({ name, status: 'pending' as const }));
         setCollectionCheckProgress(initialProgress);
 

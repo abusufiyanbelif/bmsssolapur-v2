@@ -18,10 +18,10 @@ import {
     eraseFirebaseAuthUsers,
     type SeedResult,
     ensureCollectionExists,
-    CORE_COLLECTIONS
 } from '@/services/seed-service';
 
 type SeedTask = 'initial' | 'coreTeam' | 'organization' | 'paymentGateways' | 'sampleData' | 'appSettings' | 'syncFirebaseAuth';
+type TaskType = 'seed' | 'erase';
 
 export async function handleSeedAction(task: SeedTask): Promise<{success: boolean; data?: SeedResult; error?: string}> {
     try {
@@ -97,13 +97,6 @@ export async function handleEraseAction(task: SeedTask): Promise<{success: boole
 }
 
 /**
- * Exposes the list of core collections to the client for progress display.
- */
-export async function getCoreCollectionsList(): Promise<string[]> {
-    return CORE_COLLECTIONS;
-}
-
-/**
  * A new server action that checks a single collection.
  */
 export async function handleEnsureSingleCollection(collectionName: string): Promise<{ success: boolean; created: boolean; error?: string }> {
@@ -115,4 +108,3 @@ export async function handleEnsureSingleCollection(collectionName: string): Prom
         return { success: false, created: false, error };
     }
 }
-
