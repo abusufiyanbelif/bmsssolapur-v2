@@ -7,6 +7,8 @@ dotenv.config();
 
 async function runTest() {
   const startTime = performance.now();
+  console.log('🧪 Running Test: Nodemailer Email Service');
+  console.log('------------------------------------------');
   console.log('Attempting to connect to SMTP server via Nodemailer using SMTP_* credentials...');
   try {
     const result = await testNodemailerConnection();

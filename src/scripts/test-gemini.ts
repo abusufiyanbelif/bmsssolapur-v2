@@ -7,6 +7,8 @@ dotenv.config();
 
 async function runTest() {
   const startTime = performance.now();
+  console.log('🧪 Running Test: Google Gemini AI API');
+  console.log('------------------------------------------');
   console.log('Attempting to connect to Google AI (Gemini) using the GEMINI_API_KEY from your environment...');
   try {
     const result = await testGeminiConnection();

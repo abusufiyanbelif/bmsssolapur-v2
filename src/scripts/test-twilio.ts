@@ -7,6 +7,8 @@ dotenv.config();
 
 async function runTest() {
   const startTime = performance.now();
+  console.log('🧪 Running Test: Twilio SMS Service');
+  console.log('------------------------------------------');
   console.log('Attempting to connect to Twilio using the TWILIO_* credentials from your environment...');
   try {
     const result = await testTwilioConnection();
