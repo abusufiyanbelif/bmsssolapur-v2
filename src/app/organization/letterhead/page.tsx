@@ -7,30 +7,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
 import { getImageAsBase64 } from "./actions";
 import type { Organization, OrganizationFooter } from "@/services/types";
-
-const defaultFooter: OrganizationFooter = {
-    organizationInfo: { titleLine1: '', titleLine2: '', titleLine3: '', description: '', registrationInfo: '', taxInfo: '' },
-    contactUs: { title: '', address: '', email: '' },
-    keyContacts: { title: '', contacts: [] },
-    connectWithUs: { title: '', socialLinks: [] },
-    ourCommitment: { title: '', text: '', linkText: '', linkUrl: '#' },
-    copyright: { text: '' }
-};
-
-const defaultOrganization: Organization = {
-    id: "new_org_placeholder",
-    name: "New Organization",
-    logoUrl: "https://firebasestorage.googleapis.com/v0/b/baitul-mal-connect.appspot.com/o/test_brand.jpeg?alt=media&token=9d2fea30-88e1-4fd5-9429-a7f19f38d1a5",
-    address: "",
-    city: "",
-    registrationNumber: "",
-    contactEmail: "",
-    contactPhone: "",
-    createdAt: new Date(),
-    updatedAt: new Date(),
-    footer: defaultFooter,
-};
-
+import { DEFAULT_LOGO, defaultOrganization } from "@/services/organization-service-client";
 
 export default async function LetterheadPage() {
     let organization = await getCurrentOrganization();

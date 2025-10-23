@@ -181,6 +181,7 @@ const deleteCollection = async (collectionPath: string): Promise<string> => {
 
 
 // --- EXPORTED SEEDING FUNCTIONS ---
+export { ensureCollectionExists } from '@/services/firebase-admin';
 
 export const seedInitialUsersAndQuotes = async (): Promise<SeedResult> => {
     const quotesStatus = await seedInitialQuotes();
@@ -484,6 +485,7 @@ const organizationToSeed: Omit<Organization, 'id' | 'createdAt' | 'updatedAt'> =
       },
       ourCommitment: {
         title: "Our Commitment",
+        commitmentDescription: "To ensure our operations are transparent, fair, and impactful, we adhere to a clear set of guiding principles. These rules govern how we identify beneficiaries, allocate funds, and manage our resources to best serve the community.",
         text: "We are committed to transparency and accountability in all our operations, ensuring that your contributions make a real impact.",
         linkText: "Learn More",
         linkUrl: "/organization"
@@ -493,6 +495,5 @@ const organizationToSeed: Omit<Organization, 'id' | 'createdAt' | 'updatedAt'> =
       }
     }
 };
-
 
     
