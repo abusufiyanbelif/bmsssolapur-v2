@@ -98,6 +98,7 @@ export async function handleUpdateOrganization(
             },
             ourCommitment: {
                 title: formData.get("footer.ourCommitment.title") as string,
+                commitmentDescription: formData.get("footer.ourCommitment.commitmentDescription") as string,
                 text: formData.get("footer.ourCommitment.text") as string,
                 linkText: formData.get("footer.ourCommitment.linkText") as string,
                 linkUrl: formData.get("footer.ourCommitment.linkUrl") as string,

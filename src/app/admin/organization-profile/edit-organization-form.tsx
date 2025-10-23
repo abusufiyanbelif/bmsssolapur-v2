@@ -79,6 +79,7 @@ const formSchema = z.object({
       url: z.string().url("Must be a valid URL."),
   })),
   "footer.ourCommitment.title": z.string().min(1, "This field is required."),
+  "footer.ourCommitment.commitmentDescription": z.string().min(1, "This field is required."),
   "footer.ourCommitment.text": z.string().min(1, "This field is required."),
   "footer.ourCommitment.linkText": z.string().min(1, "This field is required."),
   "footer.ourCommitment.linkUrl": z.string().min(1, "This field is required."),
@@ -110,7 +111,7 @@ export function EditOrganizationForm({ organization, isCreating }: EditOrganizat
       contactUs: { title: '', address: '', email: '' },
       keyContacts: { title: '', contacts: [] },
       connectWithUs: { title: '', socialLinks: [] },
-      ourCommitment: { title: '', text: '', linkText: '', linkUrl: '' },
+      ourCommitment: { title: '', commitmentDescription: '', text: '', linkText: '', linkUrl: '' },
       copyright: { text: '' }
   };
   
@@ -150,6 +151,7 @@ export function EditOrganizationForm({ organization, isCreating }: EditOrganizat
       "footer.connectWithUs.title": defaultFooter.connectWithUs.title || '',
       socialLinks: defaultFooter.connectWithUs.socialLinks || [],
       "footer.ourCommitment.title": defaultFooter.ourCommitment.title || '',
+      "footer.ourCommitment.commitmentDescription": defaultFooter.ourCommitment.commitmentDescription || '',
       "footer.ourCommitment.text": defaultFooter.ourCommitment.text || '',
       "footer.ourCommitment.linkText": defaultFooter.ourCommitment.linkText || '',
       "footer.ourCommitment.linkUrl": defaultFooter.ourCommitment.linkUrl || '',
@@ -316,6 +318,8 @@ export function EditOrganizationForm({ organization, isCreating }: EditOrganizat
                         <AccordionItem value="principles" className="border rounded-lg">
                            <AccordionTrigger className="p-4 font-semibold text-primary"><h4 className="flex items-center gap-2"><Award /> Guiding Principles</h4></AccordionTrigger>
                             <AccordionContent className="p-6 pt-2 space-y-4">
+                                <FormField control={form.control} name="footer.ourCommitment.commitmentDescription" render={({ field }) => (<FormItem><FormLabel>Commitment Section Description</FormLabel><FormControl><Textarea {...field} /></FormControl><FormMessage /></FormItem>)} />
+                                 <Separator />
                                  {guidingPrincipleFields.map((field, index) => (
                                     <FormField
                                         key={field.id}

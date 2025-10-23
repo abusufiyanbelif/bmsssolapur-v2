@@ -183,7 +183,7 @@ export function OrganizationView({ organization, allUsers }: OrganizationViewPro
                         Our Guiding Principles
                     </CardTitle>
                     <CardDescription className="text-muted-foreground">
-                        To ensure our operations are transparent, fair, and impactful, we adhere to a clear set of guiding principles. These rules govern how we identify beneficiaries, allocate funds, and manage our resources to best serve the community.
+                        {organization.footer?.ourCommitment?.commitmentDescription || 'To ensure our operations are transparent, fair, and impactful, we adhere to a clear set of guiding principles. These rules govern how we identify beneficiaries, allocate funds, and manage our resources to best serve the community.'}
                     </CardDescription>
                 </CardHeader>
                 <CardContent>

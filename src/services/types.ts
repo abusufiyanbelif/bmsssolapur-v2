@@ -329,6 +329,7 @@ export interface OrganizationFooter {
     };
     ourCommitment: {
         title: string;
+        commitmentDescription?: string;
         text: string;
         linkText: string;
         linkUrl: string;
