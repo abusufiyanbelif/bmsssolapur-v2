@@ -1,4 +1,3 @@
-
 // src/components/footer.tsx
 "use client";
 
@@ -7,14 +6,25 @@ import { Facebook, Instagram, Twitter, Mail, Phone, MapPin } from 'lucide-react'
 import { Logo } from './logo';
 import type { Organization, OrganizationFooter } from '@/services/types';
 import { defaultOrganization } from '@/services/organization-service-client';
+import { Button } from './ui/button';
+import { useRouter } from 'next/navigation';
 
 interface FooterProps {
   organization: Organization | null;
 }
 
 export function Footer({ organization }: FooterProps) {
-  // Use the passed organization data, or fall back to the single source of truth for default data.
+  const router = useRouter();
   const footerData = organization?.footer || defaultOrganization.footer;
+
+  const handleLearnMoreClick = () => {
+    const activeRole = localStorage.getItem('activeRole');
+    if (activeRole === 'Admin' || activeRole === 'Super Admin') {
+      router.push('/admin/organization/layout');
+    } else {
+      router.push('/organization#our-commitment');
+    }
+  };
 
   return (
     <footer className="border-t bg-card text-card-foreground">
@@ -91,9 +101,9 @@ export function Footer({ organization }: FooterProps) {
             <p className="text-sm text-muted-foreground">
                 {footerData.ourCommitment.text}
             </p>
-            <Link href={footerData.ourCommitment.linkUrl} className="text-sm font-semibold text-primary hover:underline">
+            <Button variant="link" className="p-0 text-sm font-semibold text-primary hover:underline" onClick={handleLearnMoreClick}>
                 {footerData.ourCommitment.linkText}
-            </Link>
+            </Button>
           </div>
 
         </div>

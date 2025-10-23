@@ -1,4 +1,3 @@
-
 // src/app/organization/page.tsx
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Building, Mail, Phone, Globe, Hash, ShieldCheck, CreditCard, Award, Users, Banknote, MapPin, AlertCircle, Edit } from "lucide-react";
@@ -231,7 +230,7 @@ export default async function OrganizationPage() {
                 </CardContent>
             </Card>
 
-            <Card id="principles">
+            <Card id="our-commitment">
                 <CardHeader>
                     <CardTitle className="flex items-center gap-3 text-primary">
                         <Award className="h-6 w-6" />
