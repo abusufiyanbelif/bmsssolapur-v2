@@ -1,17 +1,18 @@
-// src/app/admin/referrals/page.tsx
+
+// src/app/admin/user-management/referrals/page.tsx
 import { Suspense } from "react";
 import { Loader2 } from "lucide-react";
 import { ReferralsPageClient } from "./referrals-client";
-import { getAllUsersAction } from "@/app/admin/user-management/actions";
+import { getAllUsers } from "@/services/user-service";
 
 // This is now a pure Server Component for fetching data.
 async function ReferralsPageDataLoader() {
   try {
-    const allUsers = await getAllUsersAction();
+    const allUsers = await getAllUsers();
     const initialReferrals = allUsers.filter(u => u.roles.includes('Referral'));
     
     // The data is now properly serialized by the server action.
-    return <ReferralsPageClient initialReferrals={initialReferrals} />;
+    return <ReferralsPageClient initialReferrals={JSON.parse(JSON.stringify(initialReferrals))} />;
   } catch (e) {
     const error = e instanceof Error ? e.message : "An unknown error occurred.";
     return <ReferralsPageClient initialReferrals={[]} error={error} />;

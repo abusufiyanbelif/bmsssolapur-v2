@@ -1,17 +1,17 @@
-// src/app/admin/donors/page.tsx
+
+// src/app/admin/user-management/donors/page.tsx
 import { Suspense } from "react";
 import { Loader2 } from "lucide-react";
 import { DonorsPageClient } from "./donors-client";
-import { getAllUsersAction } from "@/app/admin/user-management/actions";
+import { getAllUsers } from "@/services/user-service";
 
 // This is now a pure Server Component for fetching data.
 async function DonorsPageDataLoader() {
   try {
-    const allUsers = await getAllUsersAction();
+    const allUsers = await getAllUsers();
+    // The getAllUsers function now correctly converts timestamps.
     const initialDonors = allUsers.filter(u => u.roles.includes('Donor'));
-    
-    // The data is properly serialized before passing to the client component.
-    return <DonorsPageClient initialDonors={initialDonors} />;
+    return <DonorsPageClient initialDonors={JSON.parse(JSON.stringify(initialDonors))} />;
   } catch (e) {
     const error = e instanceof Error ? e.message : "An unknown error occurred.";
     return <DonorsPageClient initialDonors={[]} error={error} />;

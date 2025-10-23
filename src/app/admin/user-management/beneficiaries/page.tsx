@@ -1,17 +1,18 @@
-// src/app/admin/beneficiaries/page.tsx
+
+// src/app/admin/user-management/beneficiaries/page.tsx
 import { Suspense } from "react";
 import { Loader2 } from "lucide-react";
 import { BeneficiariesPageClient } from "./beneficiaries-client";
-import { getAllUsersAction } from "@/app/admin/user-management/actions";
+import { getAllUsers } from "@/services/user-service";
 
 // This is now a pure Server Component for fetching data.
 async function BeneficiariesPageDataLoader() {
   try {
-    const allUsers = await getAllUsersAction();
+    const allUsers = await getAllUsers();
+    // The getAllUsers function now correctly converts timestamps.
     const initialBeneficiaries = allUsers.filter(u => u.roles.includes('Beneficiary'));
     
-    // The data is now properly serialized by the server action.
-    return <BeneficiariesPageClient initialBeneficiaries={initialBeneficiaries} />;
+    return <BeneficiariesPageClient initialBeneficiaries={JSON.parse(JSON.stringify(initialBeneficiaries))} />;
   } catch (e) {
     const error = e instanceof Error ? e.message : "An unknown error occurred.";
     return <BeneficiariesPageClient initialBeneficiaries={[]} error={error} />;
