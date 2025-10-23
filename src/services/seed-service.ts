@@ -6,7 +6,7 @@
 import { getFirestore, Timestamp, FieldValue } from 'firebase-admin/firestore';
 import type { User, UserRole, Lead, Verifier, LeadDonationAllocation, Donation, Campaign, FundTransfer, LeadAction, AppSettings, OrganizationFooter, Organization } from './types';
 import { seedInitialQuotes } from '@/services/quotes-service';
-import { getAdminDb, getAdminAuth, ensureCollectionExists, CORE_COLLECTIONS } from '@/services/firebase-admin';
+import { getAdminDb, getAdminAuth, ensureCollectionExists } from '@/services/firebase-admin';
 import { updatePublicCampaign, enrichCampaignWithPublicStats } from './public-data-service';
 import { format } from 'date-fns';
 import { revalidatePath } from 'next/cache';
@@ -182,7 +182,6 @@ const deleteCollection = async (collectionPath: string): Promise<string> => {
 
 
 // --- EXPORTED SEEDING FUNCTIONS ---
-export { ensureCollectionExists } from '@/services/firebase-admin';
 
 export const seedInitialUsersAndQuotes = async (): Promise<SeedResult> => {
     const quotesStatus = await seedInitialQuotes();
@@ -486,5 +485,3 @@ const organizationToSeed: Omit<Organization, 'id' | 'createdAt' | 'updatedAt'> =
       }
     }
 };
-
-    

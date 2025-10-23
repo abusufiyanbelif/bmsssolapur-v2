@@ -17,8 +17,9 @@ import {
     syncUsersToFirebaseAuth,
     eraseFirebaseAuthUsers,
     type SeedResult,
-    ensureCollectionExists,
 } from '@/services/seed-service';
+import { handleEnsureSingleCollection as handleEnsureSingleCollectionService } from '@/services/firebase-admin';
+
 
 type SeedTask = 'initial' | 'coreTeam' | 'organization' | 'paymentGateways' | 'sampleData' | 'appSettings' | 'syncFirebaseAuth';
 type TaskType = 'seed' | 'erase';
@@ -100,11 +101,5 @@ export async function handleEraseAction(task: SeedTask): Promise<{success: boole
  * A new server action that checks a single collection.
  */
 export async function handleEnsureSingleCollection(collectionName: string): Promise<{ success: boolean; created: boolean; error?: string }> {
-    try {
-        const result = await ensureCollectionExists(collectionName);
-        return { success: true, created: result.created };
-    } catch (e) {
-        const error = e instanceof Error ? e.message : `An unknown error occurred for collection ${collectionName}.`;
-        return { success: false, created: false, error };
-    }
+    return handleEnsureSingleCollectionService(collectionName);
 }

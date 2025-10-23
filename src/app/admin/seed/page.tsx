@@ -11,7 +11,7 @@ import { handleSeedAction, handleEraseAction, handleEnsureSingleCollection } fro
 import { useRouter } from "next/navigation";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { useToast } from "@/hooks/use-toast";
-import { CORE_COLLECTIONS } from "@/services/firebase-admin";
+import { CORE_COLLECTIONS } from "@/services/constants";
 
 type SeedTask = 'initial' | 'coreTeam' | 'organization' | 'appSettings' | 'paymentGateways' | 'sampleData' | 'syncFirebaseAuth';
 type TaskType = 'seed' | 'erase';

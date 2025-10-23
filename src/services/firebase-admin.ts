@@ -8,6 +8,7 @@
 import admin from 'firebase-admin';
 import { getFirestore as getAdminFirestore, Firestore as AdminFirestore, Timestamp } from 'firebase-admin/firestore';
 import type { User } from './types'; // We can safely import types
+import { CORE_COLLECTIONS } from './constants';
 
 let adminDbInstance: AdminFirestore | null = null;
 let adminAuthInstance: admin.auth.Auth | null = null;
@@ -48,11 +49,6 @@ const ensureSystemUserExists = async (db: AdminFirestore, userData: Partial<User
     }
 };
 
-export const CORE_COLLECTIONS = [
-    'users', 'leads', 'donations', 'campaigns', 'activityLog',
-    'settings', 'organizations', 'publicLeads', 'publicCampaigns',
-    'publicData', 'inspirationalQuotes'
-];
 
 /**
  * Checks if a single Firestore collection exists, and creates it with a placeholder
@@ -172,6 +168,19 @@ export const getAdminAuth = async (): Promise<admin.auth.Auth> => {
   }
   return adminAuthInstance;
 };
+
+/**
+ * A server action that checks a single collection.
+ */
+export async function handleEnsureSingleCollection(collectionName: string): Promise<{ success: boolean; created: boolean; error?: string }> {
+    try {
+        const result = await ensureCollectionExists(collectionName);
+        return { success: true, created: result.created };
+    } catch (e) {
+        const error = e instanceof Error ? e.message : `An unknown error occurred for collection ${collectionName}.`;
+        return { success: false, created: false, error };
+    }
+}
 
 // Immediately start the initialization process when the server starts.
 getInitializationPromise();

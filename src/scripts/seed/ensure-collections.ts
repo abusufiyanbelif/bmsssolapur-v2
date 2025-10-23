@@ -1,6 +1,7 @@
 import { getAdminDb } from '@/services/firebase-admin';
 import dotenv from 'dotenv';
-import { CORE_COLLECTIONS, ensureCollectionExists } from '@/services/firebase-admin';
+import { ensureCollectionExists } from '@/services/firebase-admin';
+import { CORE_COLLECTIONS } from '@/services/constants';
 import { performance } from 'perf_hooks';
 
 dotenv.config();
