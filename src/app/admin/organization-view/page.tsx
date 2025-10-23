@@ -1,3 +1,4 @@
+
 // src/app/admin/organization-view/page.tsx
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
@@ -44,7 +45,7 @@ export default async function OrganizationViewPage() {
              <div className="flex-1 space-y-4">
                 <div className="flex justify-between items-center">
                     <h2 className="text-3xl font-bold tracking-tight font-headline text-primary">Organization View</h2>
-                     <AdminEditButton editPath="/admin/organization-profile" />
+                     <AdminEditButton editPath="/admin/organization" />
                 </div>
                 <Alert>
                     <AlertCircle className="h-4 w-4" />
@@ -65,7 +66,7 @@ export default async function OrganizationViewPage() {
         <div className="flex-1 space-y-6">
             <div className="flex justify-between items-center">
                 <h2 className="text-3xl font-bold tracking-tight font-headline text-primary">Organization View</h2>
-                <AdminEditButton editPath="/admin/organization-profile" />
+                <AdminEditButton editPath="/admin/organization" />
             </div>
             <OrganizationView organization={safeOrganization} allUsers={safeUsers} />
         </div>

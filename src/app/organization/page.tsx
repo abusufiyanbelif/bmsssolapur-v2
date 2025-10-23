@@ -1,3 +1,4 @@
+
 // src/app/organization/page.tsx
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Building, Mail, Phone, Globe, Hash, ShieldCheck, CreditCard, Award, Users, Banknote, MapPin, AlertCircle, Edit } from "lucide-react";
@@ -45,7 +46,7 @@ export default async function OrganizationPage() {
              <div className="flex-1 space-y-4">
                 <div className="flex justify-between items-center">
                     <h2 className="text-3xl font-bold tracking-tight font-headline text-primary">About Our Organization</h2>
-                     <AdminEditButton editPath="/admin/organization-profile" />
+                     <AdminEditButton editPath="/admin/organization" />
                 </div>
                 <Alert>
                     <AlertCircle className="h-4 w-4" />
@@ -66,7 +67,7 @@ export default async function OrganizationPage() {
         <div className="flex-1 space-y-6">
             <div className="flex justify-between items-center">
                 <h2 className="text-3xl font-bold tracking-tight font-headline text-primary">About Our Organization</h2>
-                <AdminEditButton editPath="/admin/organization-profile" />
+                <AdminEditButton editPath="/admin/organization" />
             </div>
             <OrganizationView organization={safeOrganization} allUsers={safeUsers} />
         </div>

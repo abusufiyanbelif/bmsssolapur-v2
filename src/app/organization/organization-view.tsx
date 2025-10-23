@@ -1,3 +1,4 @@
+
 // src/app/organization/organization-view.tsx
 "use client";
 
