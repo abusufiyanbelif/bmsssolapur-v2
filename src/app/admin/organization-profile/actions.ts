@@ -49,8 +49,10 @@ export async function handleUpdateOrganization(
     }
     
     // Correctly parse the JSON strings for arrays of objects
-    const keyContacts = JSON.parse(formData.get("keyContacts") as string || '[]');
-    const socialLinks = JSON.parse(formData.get("socialLinks") as string || '[]');
+    const keyContacts = JSON.parse(formData.get("keyContacts") as string || '[]').map((c: any) => c);
+    const socialLinks = JSON.parse(formData.get("socialLinks") as string || '[]').map((l: any) => l);
+    const guidingPrinciples = JSON.parse(formData.get("guidingPrinciples") as string || '[]').map((p: {value: string}) => p.value);
+
 
     const orgData: Partial<Organization> = {
         name: formData.get('name') as string,
@@ -67,6 +69,7 @@ export async function handleUpdateOrganization(
         bankIfscCode: formData.get('bankIfscCode') as string,
         upiId: formData.get('upiId') as string,
         qrCodeUrl: qrCodeUrl,
+        guidingPrinciples: guidingPrinciples,
         hero: {
             title: formData.get('hero.title') as string,
             description: formData.get('hero.description') as string,

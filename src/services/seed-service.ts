@@ -1,4 +1,3 @@
-
 /**
  * @fileOverview A service to seed the database with initial data.
  */
@@ -6,7 +5,7 @@
 import { getFirestore, Timestamp, FieldValue } from 'firebase-admin/firestore';
 import type { User, UserRole, Lead, Verifier, LeadDonationAllocation, Donation, Campaign, FundTransfer, LeadAction, AppSettings, OrganizationFooter, Organization } from './types';
 import { seedInitialQuotes } from '@/services/quotes-service';
-import { getAdminDb, getAdminAuth, ensureCollectionExists } from '@/services/firebase-admin';
+import { getAdminDb, getAdminAuth, ensureCollectionExists } from './firebase-admin';
 import { updatePublicCampaign, enrichCampaignWithPublicStats } from './public-data-service';
 import { format } from 'date-fns';
 import { revalidatePath } from 'next/cache';
@@ -445,6 +444,14 @@ const organizationToSeed: Omit<Organization, 'id' | 'createdAt' | 'updatedAt'> =
         title: "Empowering Our Community, One Act of Kindness at a Time.",
         description: "Join BaitulMal Samajik Sanstha (Solapur) to make a lasting impact. Your contribution brings hope, changes lives, and empowers our community."
     },
+    guidingPrinciples: [
+        "Trust is focused on assisting educational and health beneficiaries.",
+        "Priority will be given to males studying in their final year of a course.",
+        "Assisting orphan girls in all forms except marriage.",
+        "Providing ration to the most deserving (mustahik) in the last week of each month, depending on available funds.",
+        "A return agreement will be secured from educational beneficiaries if the amount exceeds ₹25,000.",
+        "The maximum capital credited will be ₹40,000, but this can be raised in exceptional cases."
+    ],
     footer: {
       organizationInfo: {
         titleLine1: "BAITUL MAL",

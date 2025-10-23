@@ -1,5 +1,3 @@
-
-
 // src/app/admin/organization/edit-organization-form.tsx
 
 "use client";
@@ -21,7 +19,7 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { handleUpdateOrganization } from "./actions";
 import { useState, useEffect } from "react";
-import { Loader2, Save, Edit, X, PlusCircle, Trash2, Layout } from "lucide-react";
+import { Loader2, Save, Edit, X, PlusCircle, Trash2, Layout, Award } from "lucide-react";
 import { Organization } from "@/services/organization-service";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import Image from "next/image";
@@ -57,6 +55,7 @@ const formSchema = z.object({
   upiId: z.string().min(1, "UPI ID is required."),
   qrCodeUrl: z.string().url("Please enter a valid URL.").optional().or(z.literal('')),
   qrCodeFile: z.any().optional(),
+  guidingPrinciples: z.array(z.object({ value: z.string().min(1, "Principle cannot be empty.") })),
   "hero.title": z.string().min(10, "Title is required."),
   "hero.description": z.string().min(10, "Description is required."),
    // Footer fields
@@ -134,6 +133,7 @@ export function EditOrganizationForm({ organization, isCreating }: EditOrganizat
       upiId: organization.upiId || '',
       qrCodeUrl: organization.qrCodeUrl || '',
       qrCodeFile: null,
+      guidingPrinciples: (organization.guidingPrinciples || []).map(p => ({ value: p })),
       "hero.title": organization.hero?.title || "Empowering Our Community, One Act of Kindness at a Time.",
       "hero.description": organization.hero?.description || "Join BaitulMal Samajik Sanstha (Solapur) to make a lasting impact. Your contribution brings hope, changes lives, and empowers our community.",
       "footer.organizationInfo.titleLine1": defaultFooter.organizationInfo.titleLine1 || '',
@@ -160,6 +160,7 @@ export function EditOrganizationForm({ organization, isCreating }: EditOrganizat
   const { formState: { isDirty }, reset, control, handleSubmit } = form;
   const { fields: keyContactFields, append: appendKeyContact, remove: removeKeyContact } = useFieldArray({ control, name: "keyContacts" });
   const { fields: socialLinkFields, append: appendSocialLink, remove: removeSocialLink } = useFieldArray({ control, name: "socialLinks" });
+  const { fields: guidingPrincipleFields, append: appendGuidingPrinciple, remove: removeGuidingPrinciple } = useFieldArray({ control, name: "guidingPrinciples" });
   
   const handleCancel = () => {
     reset(); // Reset to the original default values
@@ -186,7 +187,7 @@ export function EditOrganizationForm({ organization, isCreating }: EditOrganizat
             const newPrefix = prefix ? `${prefix}.${key}` : key;
             if (value instanceof File) {
                  formData.append(key, value); // Use original key for files
-            } else if (key === 'keyContacts' || key === 'socialLinks') {
+            } else if (key === 'keyContacts' || key === 'socialLinks' || key === 'guidingPrinciples') {
                 formData.append(key, JSON.stringify(value));
             }
             else if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
@@ -255,7 +256,7 @@ export function EditOrganizationForm({ organization, isCreating }: EditOrganizat
             <Form {...form}>
             <form className="space-y-8">
                 <fieldset disabled={!isEditing} className="space-y-8">
-                    <Accordion type="multiple" defaultValue={["profile", "homepage", "footer"]} className="w-full space-y-4">
+                    <Accordion type="multiple" defaultValue={["profile", "homepage", "footer", "principles"]} className="w-full space-y-4">
                         {/* Profile Section */}
                         <AccordionItem value="profile" className="border rounded-lg">
                             <AccordionTrigger className="p-4 font-semibold text-primary"><h4 className="flex items-center gap-2">Public Profile</h4></AccordionTrigger>
@@ -311,6 +312,34 @@ export function EditOrganizationForm({ organization, isCreating }: EditOrganizat
                             </AccordionContent>
                         </AccordionItem>
                         
+                        {/* Guiding Principles Section */}
+                        <AccordionItem value="principles" className="border rounded-lg">
+                           <AccordionTrigger className="p-4 font-semibold text-primary"><h4 className="flex items-center gap-2"><Award /> Guiding Principles</h4></AccordionTrigger>
+                            <AccordionContent className="p-6 pt-2 space-y-4">
+                                 {guidingPrincipleFields.map((field, index) => (
+                                    <FormField
+                                        key={field.id}
+                                        control={form.control}
+                                        name={`guidingPrinciples.${index}.value`}
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>Principle #{index + 1}</FormLabel>
+                                                <div className="flex items-center gap-2">
+                                                    <FormControl><Textarea {...field} /></FormControl>
+                                                    <Button type="button" variant="ghost" size="icon" onClick={() => removeGuidingPrinciple(index)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
+                                                </div>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                ))}
+                                <Button type="button" variant="outline" size="sm" onClick={() => appendGuidingPrinciple({ value: '' })}>
+                                    <PlusCircle className="mr-2 h-4 w-4" />
+                                    Add Principle
+                                </Button>
+                            </AccordionContent>
+                        </AccordionItem>
+
                          {/* Footer Section */}
                          <AccordionItem value="footer" className="border rounded-lg">
                              <AccordionTrigger className="p-4 font-semibold text-primary"><h4 className="flex items-center gap-2"><Layout className="h-5 w-5"/>Footer Content</h4></AccordionTrigger>

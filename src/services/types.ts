@@ -1,4 +1,3 @@
-
 /**
  * @fileOverview Centralized type definitions for the application's data models.
  */
@@ -360,6 +359,7 @@ export interface Organization {
         title: string;
         description: string;
     };
+    guidingPrinciples?: string[]; // New field
     createdAt: Date;
     updatedAt: Date;
     updatedBy?: { id: string; name: string };

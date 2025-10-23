@@ -1,4 +1,3 @@
-
 // src/app/organization/organization-view.tsx
 "use client";
 
@@ -177,7 +176,7 @@ export function OrganizationView({ organization, allUsers }: OrganizationViewPro
                     )}
                 </CardContent>
             </Card>
-             <Card id="our-commitment">
+            <Card id="our-commitment">
                 <CardHeader>
                     <CardTitle className="flex items-center gap-3 text-primary">
                         <Award className="h-6 w-6" />
@@ -189,12 +188,9 @@ export function OrganizationView({ organization, allUsers }: OrganizationViewPro
                 </CardHeader>
                 <CardContent>
                     <ul className="space-y-3 list-disc pl-5 text-muted-foreground">
-                        <li>Trust is focused on assisting educational and health beneficiaries.</li>
-                        <li>Priority will be given to males studying in their final year of a course.</li>
-                        <li>Assisting orphan girls in all forms except marriage.</li>
-                        <li>Providing ration to the most deserving (mustahik) in the last week of each month, depending on available funds.</li>
-                        <li>A return agreement will be secured from educational beneficiaries if the amount exceeds ₹25,000.</li>
-                        <li>The maximum capital credited will be ₹40,000, but this can be raised in exceptional cases.</li>
+                        {(organization.guidingPrinciples || []).map((principle, index) => (
+                            <li key={index}>{principle}</li>
+                        ))}
                     </ul>
                 </CardContent>
             </Card>
