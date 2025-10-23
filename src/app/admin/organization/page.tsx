@@ -14,25 +14,33 @@ async function OrganizationPageDataLoader() {
     try {
         organization = await getCurrentOrganization();
     } catch (e) {
+        // Catch the error but allow the page to render with a warning.
         error = e instanceof Error ? e.message : "An unknown error occurred.";
         console.error(e);
     }
     
     if (error) {
-        return (
-            <Alert variant="destructive">
-                <AlertCircle className="h-4 w-4" />
-                <AlertTitle>Error Loading Data</AlertTitle>
-                <AlertDescription>{error}</AlertDescription>
-            </Alert>
+         return (
+            <div className="flex-1 space-y-4">
+                <Alert variant="destructive">
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertTitle>Error Loading Data</AlertTitle>
+                    <AlertDescription>{error}</AlertDescription>
+                </Alert>
+            </div>
         )
     }
 
+    // Determine if we are creating a new org.
+    // This is true if the fetched organization is null.
     const isCreating = !organization;
+    
+    // The service now provides a reliable default, so we pass it if org is null
+    const orgData = organization;
 
     return (
         <OrganizationProfileClient 
-            organization={JSON.parse(JSON.stringify(organization))} 
+            organization={JSON.parse(JSON.stringify(orgData))} 
             isCreating={isCreating} 
         />
     )
