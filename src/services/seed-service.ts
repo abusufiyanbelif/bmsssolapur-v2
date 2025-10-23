@@ -1,3 +1,4 @@
+
 /**
  * @fileOverview A service to seed the database with initial data.
  */
@@ -127,8 +128,7 @@ const seedOrganization = async (): Promise<string> => {
     // Revalidate paths after seeding
     revalidatePath("/", "layout");
     revalidatePath("/organization");
-    revalidatePath("/admin/organization");
-
+    revalidatePath("/admin/organization-profile");
 
     return "Organization profile seeded/updated successfully.";
 };
@@ -492,3 +492,6 @@ const organizationToSeed: Omit<Organization, 'id' | 'createdAt' | 'updatedAt'> =
       }
     }
 };
+
+
+    
