@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import Link from "next/link"
@@ -69,9 +70,9 @@ const allNavItems: NavItem[] = [
         icon: Building,
         allowedRoles: ["Admin", "Super Admin", "Finance Admin"],
         subItems: [
-            { href: "/admin/organization", label: "Organization Profile", icon: Info, allowedRoles: ["Admin", "Super Admin", "Finance Admin"] },
+            { href: "/admin/organization-profile", label: "Organization Profile", icon: Info, allowedRoles: ["Admin", "Super Admin", "Finance Admin"] },
             { href: "/admin/board-management", label: "Board Members", icon: Users, allowedRoles: ["Admin", "Super Admin", "Finance Admin"] },
-            { href: "/admin/organization/letterhead", label: "Letterhead", icon: Newspaper, allowedRoles: ["Admin", "Super Admin", "Finance Admin"] },
+            { href: "/admin/organization-profile/letterhead", label: "Letterhead", icon: Newspaper, allowedRoles: ["Admin", "Super Admin", "Finance Admin"] },
         ]
     },
     
