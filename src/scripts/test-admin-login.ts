@@ -90,8 +90,7 @@ async function testAdminLogin() {
   } finally {
     const endTime = performance.now();
     console.log(`\n✨ Done in ${((endTime - startTime) / 1000).toFixed(2)} seconds.`);
-    setTimeout(() => process.exit(), 100);
   }
 }
 
-testAdminLogin();
+testAdminLogin().finally(() => process.exit());

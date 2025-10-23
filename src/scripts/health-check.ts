@@ -153,11 +153,13 @@ async function runHealthCheck() {
 
   if(failedCount > 0) {
       console.log("\n❌ One or more critical tests failed. Please review the detailed logs above.");
+      process.exit(1);
   } else if (warningCount > 0) {
       console.log("\n⚠️ Some tests passed with warnings. The application may function, but with limitations. Review logs.");
   } else {
       console.log("\n✅ All health checks passed successfully!");
   }
+  process.exit(0);
 }
 
 runHealthCheck();
