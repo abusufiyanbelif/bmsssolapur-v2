@@ -12,33 +12,21 @@ import type { Quote } from "@/services/types";
 
 async function DashboardData() {
     // Fetch all necessary data on the server
-    const [donations, users, leads, campaigns] = await Promise.all([
+    const [donations, users, leads, campaigns, quotes] = await Promise.all([
         getAllDonations(),
         getAllUsers(),
         getAllLeads(),
         getAllCampaigns(),
+        getQuotes(3)
     ]);
-
-    let quotes: Quote[];
-    try {
-      // Isolate the potentially failing call
-      quotes = await getQuotes(3);
-    } catch (error) {
-      const err = error instanceof Error ? error : new Error('Unknown error fetching quotes');
-      console.warn("Critical Error: getQuotes() failed in /admin/page.tsx. Using fallback.", err.message);
-      // Provide a hardcoded fallback to prevent the page from crashing.
-      quotes = [
-        { id: 'fb1', number: 1, text: "The believer's shade on the Day of Resurrection will be their charity.", source: "Tirmidhi", category: "Hadith", categoryTypeNumber: 2 },
-      ];
-    }
 
     return (
         <DashboardClient
-            allDonations={donations}
-            allUsers={users}
-            allLeads={leads}
-            allCampaigns={campaigns}
-            quotes={quotes}
+            allDonations={JSON.parse(JSON.stringify(donations))}
+            allUsers={JSON.parse(JSON.stringify(users))}
+            allLeads={JSON.parse(JSON.stringify(leads))}
+            allCampaigns={JSON.parse(JSON.stringify(campaigns))}
+            quotes={JSON.parse(JSON.stringify(quotes))}
         />
     );
 }

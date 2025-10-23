@@ -248,6 +248,7 @@ export const seedLeads = async (leads: Omit<Lead, 'id' | 'createdAt' | 'updatedA
         const leadId = `${userKey}_${leadCount + 1}_${format(new Date(), 'ddMMyyyy')}`;
 
         const docRef = db.collection('leads').doc(leadId);
+        // FIX: Ensure caseReportedDate is included
         batch.set(docRef, { ...leadData, dateCreated: Timestamp.now(), caseReportedDate: Timestamp.now(), createdAt: FieldValue.serverTimestamp(), updatedAt: FieldValue.serverTimestamp() }, { merge: true });
         count++;
     }
