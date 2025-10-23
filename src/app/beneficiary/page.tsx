@@ -1,3 +1,4 @@
+
 // src/app/beneficiary/page.tsx
 'use client';
 
