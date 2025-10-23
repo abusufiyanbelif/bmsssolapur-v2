@@ -9,6 +9,8 @@ import { ai } from "@/ai/genkit";
 import { googleAI } from "@genkit-ai/googleai";
 import { getSafeGeminiModel } from "@/services/gemini-service";
 import { generateMonthlyUpdate as generateMonthlyUpdateFlow } from '@/ai/flows/generate-monthly-update-flow';
+import { getQuotesAction } from '@/app/admin/user-management/donors/actions';
+
 
 interface ActionResult {
     success: boolean;
@@ -84,39 +86,11 @@ export async function generateAppealMessage(
         const ctaLink = `${appBaseUrl}/public-leads`;
 
         const modelName = await getSafeGeminiModel();
-        const { text: llmResponseText } = await ai.generate({
-            model: googleAI.model(modelName),
-            prompt: `
-                You are a helpful assistant for a charity organization. Your task is to craft a complete and compelling WhatsApp appeal message.
-                
-                Follow these instructions precisely:
-                1.  Start the message with an inspirational quote about charity from Islamic teachings. The quote should be formatted like this: _"The text of the quote"_\n- The Source (e.g., Quran 2:261 or Sahih al-Bukhari)
-                2.  After the quote, add two newlines.
-                3.  Insert the provided introduction message.
-                4.  After the introduction, add two newlines.
-                5.  Insert the provided list of leads.
-                6.  Calculate the total required amount from the leads and add a line: *Required target amt: ₹[TOTAL_AMOUNT]*
-                7.  After the total amount, add two newlines.
-                8.  Insert the call-to-action link to view details.
-                9.  After the link, add two newlines.
-                10. Insert the provided concluding message.
+        
+        const quotes = await getQuotesAction(1);
+        const quoteText = quotes.length > 0 ? `_"${quotes[0].text}"_\n- ${quotes[0].source}\n\n` : '';
 
-                ---
-                **Introduction Message:**
-                ${introMessage}
-                ---
-                **List of Leads:**
-                ${messageBody}
-                ---
-                **Call-to-Action Link:**
-                *View details and contribute here:*
-                ${ctaLink}
-                ---
-                **Concluding Message:**
-                ${outroMessage}
-                ---
-            `,
-        });
+        const llmResponseText = `${quoteText}${introMessage}\n\n${messageBody}\n\n*Required target amt: ₹${totalRequired.toLocaleString('en-IN')}*\n\n*View details and contribute here:*\n${ctaLink}\n\n${outroMessage}`;
         
         return { success: true, message: llmResponseText };
 
@@ -179,7 +153,7 @@ export async function generateMonthlyUpdate(): Promise<ActionResult> {
         const totalDistributed = recentClosedLeads.reduce((sum, l) => sum + l.helpGiven, 0);
         const uniqueBeneficiaries = new Set(recentClosedLeads.map(l => l.beneficiaryId));
         
-        const message = await generateMonthlyUpdateFlow({
+        const result = await generateMonthlyUpdateFlow({
             month: format(new Date(), 'MMMM yyyy'),
             totalDonated,
             casesClosed: recentClosedLeads.length,
@@ -187,7 +161,7 @@ export async function generateMonthlyUpdate(): Promise<ActionResult> {
             beneficiariesHelped: uniqueBeneficiaries.size
         });
 
-        return { success: true, message: message.text };
+        return { success: true, message: result.text };
 
     } catch(e) {
          const error = e instanceof Error ? e.message : "An unknown error occurred.";

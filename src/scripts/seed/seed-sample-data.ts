@@ -2,7 +2,8 @@
 import { seedSampleData as doSeed } from '@/services/seed-service';
 import dotenv from 'dotenv';
 import { performance } from 'perf_hooks';
-import { ensureCollectionsExist } from '@/services/firebase-admin';
+import { ensureCollectionExists } from '@/services/firebase-admin';
+import { CORE_COLLECTIONS } from '@/services/constants';
 
 dotenv.config();
 
@@ -12,7 +13,9 @@ async function run() {
   try {
     // Ensure all collections exist before trying to seed data into them.
     console.log('\n- Step 1: Ensuring all collections exist...');
-    await ensureCollectionsExist();
+    for (const collectionName of CORE_COLLECTIONS) {
+        await ensureCollectionExists(collectionName);
+    }
     console.log('- ✅ Step 1 Complete.\n');
 
     console.log('- Step 2: Seeding sample data...');
