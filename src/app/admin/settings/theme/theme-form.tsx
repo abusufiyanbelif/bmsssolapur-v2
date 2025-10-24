@@ -114,6 +114,7 @@ const colorToHsl = (color: string) => {
 
 const themeSuggestions = [
     { name: 'Forest Green (Default)', colors: { primary: '142.1 76.2% 36.3%', accent: '45 93.4% 47.5%', background: '0 0% 100%', foreground: '224 71.4% 4.1%', destructive: '0 84.2% 60.2%', success: '142.1 76.2% 36.3%', warning: '38.8 92.3% 50.2%', info: '217.2 91.2% 59.8%' } },
+    { name: 'Ocean Teal', colors: { primary: '180.8 69.5% 45.3%', accent: '215 13.8% 46.5%', background: '0 0% 100%', foreground: '224 71.4% 4.1%', destructive: '0 84.2% 60.2%', success: '148.8 61.6% 41.6%', warning: '45 93.4% 47.5%', info: '217.2 91.2% 59.8%' } },
     { name: 'Ramadan Green & Gold', colors: { primary: '142.1 76.2% 36.3%', accent: '47.9 95.8% 53.1%', background: '45 60% 98%', foreground: '142.1 25% 15%', destructive: '0 84.2% 60.2%', success: '142.1 76.2% 36.3%', warning: '38.8 92.3% 50.2%', info: '217.2 91.2% 59.8%' } },
     { name: 'Ocean Blue', colors: { primary: '217.2 91.2% 59.8%', accent: '210 40% 96.1%', background: '0 0% 100%', foreground: '224 71.4% 4.1%', destructive: '0 84.2% 60.2%', success: '148.8 61.6% 41.6%', warning: '45 93.4% 47.5%', info: '217.2 91.2% 59.8%' } },
     { name: 'Eid Mubarak', colors: { primary: '210 40% 96.1%', accent: '217.2 91.2% 59.8%', background: '0 0% 100%', foreground: '224 71.4% 4.1%', destructive: '0 84.2% 60.2%', success: '148.8 61.6% 41.6%', warning: '45 93.4% 47.5%', info: '217.2 91.2% 59.8%' } },
@@ -316,17 +317,17 @@ export function ThemeForm({ currentTheme }: ThemeFormProps) {
                                </CardContent>
                            </Card>
                            
-                           <Alert variant="success" style={{borderColor: `hsla(${watchedColors.success}, 0.5)`, backgroundColor: `hsla(${watchedColors.success}, 0.1)`, color: `hsl(${watchedColors.success})`}}>
+                           <Alert variant="success" style={{borderColor: `hsla(${watchedColors.success}, 0.5)`, backgroundColor: `hsla(${watchedColors.success}, 0.1)`}}>
                                <CheckCircle className="h-4 w-4" style={{color: `hsl(${watchedColors.success})`}} />
                                <AlertTitle style={{color: `hsl(${watchedColors.foreground})`}}>Success Message</AlertTitle>
-                               <AlertDescription style={{color: `hsl(var(--muted-foreground))`}}>This is a success alert.</AlertDescription>
+                               <AlertDescription style={{color: `hsl(${watchedColors.info})`}}>This is a success alert.</AlertDescription>
                            </Alert>
-                           <Alert variant="info" style={{borderColor: `hsla(${watchedColors.info}, 0.5)`, backgroundColor: `hsla(${watchedColors.info}, 0.1)`, color: `hsl(${watchedColors.info})`}}>
+                           <Alert variant="info" style={{borderColor: `hsla(${watchedColors.info}, 0.5)`, backgroundColor: `hsla(${watchedColors.info}, 0.1)`}}>
                                <InfoIcon className="h-4 w-4" style={{color: `hsl(${watchedColors.info})`}} />
                                <AlertTitle style={{color: `hsl(${watchedColors.foreground})`}}>Informational Message</AlertTitle>
                                <AlertDescription style={{color: `hsl(var(--muted-foreground))`}}>This is an info alert.</AlertDescription>
                            </Alert>
-                             <Alert variant="warning" style={{borderColor: `hsla(${watchedColors.warning}, 0.5)`, backgroundColor: `hsla(${watchedColors.warning}, 0.1)`, color: `hsl(${watchedColors.warning})`}}>
+                             <Alert variant="warning" style={{borderColor: `hsla(${watchedColors.warning}, 0.5)`, backgroundColor: `hsla(${watchedColors.warning}, 0.1)`}}>
                                <AlertTriangleIcon className="h-4 w-4" style={{color: `hsl(${watchedColors.warning})`}} />
                                <AlertTitle style={{color: `hsl(${watchedColors.foreground})`}}>Warning Message</AlertTitle>
                                <AlertDescription style={{color: `hsl(var(--muted-foreground))`}}>This is a warning alert.</AlertDescription>
