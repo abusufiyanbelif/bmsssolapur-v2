@@ -14,7 +14,7 @@ const nextConfig = {
         protocol: 'https',
         hostname: 'firebasestorage.googleapis.com',
         port: '',
-        pathname: '/v0/b/baitul-mal-connect.appspot.com/**',
+        pathname: '**', // Allow any path from this hostname
       },
        {
         protocol: 'https',

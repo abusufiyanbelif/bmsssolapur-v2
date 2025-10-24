@@ -1,3 +1,4 @@
+
 'use server';
 /**
  * @fileOverview A Genkit flow for generating multiple case summary options from raw text.
@@ -27,7 +28,8 @@ const generateSummariesFlow = ai.defineFlow(
   async (input) => {
     
     const modelName = await getSafeGeminiModel();
-    const llmResponse = await ai.generate({
+    
+    const {output} = await ai.generate({
         model: googleAI.model(modelName),
         prompt: `You are an expert copywriter for a charity organization. You specialize in creating short, compelling case summaries to encourage donations.
 
@@ -44,8 +46,6 @@ const generateSummariesFlow = ai.defineFlow(
             schema: GenerateSummariesOutputSchema
         }
     });
-    
-    const output = llmResponse.output;
 
     if (!output || !output.summaries || output.summaries.length === 0) {
       throw new Error("The AI model did not return any summary options.");

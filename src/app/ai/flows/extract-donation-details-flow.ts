@@ -1,3 +1,4 @@
+
 'use server';
 /**
  * @fileOverview A Genkit flow for extracting donation details from raw text.
@@ -30,7 +31,7 @@ const extractDetailsFromTextFlow = ai.defineFlow(
   async (input) => {
     
     const modelName = await getSafeGeminiModel();
-    const llmResponse = await ai.generate({
+    const {output} = await ai.generate({
         model: googleAI.model(modelName),
         prompt: `You are an expert financial assistant specializing in parsing text from payment receipts. Analyze the provided block of raw text, which was extracted via OCR from a payment screenshot. Your task is to carefully extract the following details. Be precise. If a field is not present in the text, omit it entirely from the output. The text might have OCR errors, so be robust in your parsing.
 
@@ -106,8 +107,6 @@ const extractDetailsFromTextFlow = ai.defineFlow(
             schema: ExtractDonationDetailsOutputSchema
         }
     });
-    
-    const output = llmResponse.output;
 
     if (!output) {
       throw new Error("The AI model did not return any output from the text.");

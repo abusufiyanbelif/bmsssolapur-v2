@@ -1,3 +1,4 @@
+
 'use server';
 /**
  * @fileOverview A Genkit flow for extracting structured lead details from a block of raw text.
@@ -30,7 +31,7 @@ const extractLeadDetailsFromTextFlow = ai.defineFlow(
     
     const modelName = await getSafeGeminiModel();
 
-    const llmResponse = await ai.generate({
+    const {output} = await ai.generate({
         model: googleAI.model(modelName),
         prompt: `You are an expert data entry assistant for a charity organization. Analyze the provided block of text, which may come from various documents like ID cards, medical bills, PDFs, or handwritten notes. Your task is to carefully extract structured details from the text. Be precise. If you cannot find a valid value for a field, you MUST omit the field entirely from your JSON output. Do not output fields with "null" or "N/A" as their value.
 
@@ -82,8 +83,6 @@ const extractLeadDetailsFromTextFlow = ai.defineFlow(
             schema: ExtractLeadDetailsOutputSchema
         }
     });
-    
-    const output = llmResponse.output;
 
     if (!output) {
       throw new Error("The AI model did not return any output from the text.");

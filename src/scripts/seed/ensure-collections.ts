@@ -10,11 +10,12 @@ async function run() {
   const startTime = performance.now();
   console.log('Ensuring all essential Firestore collections exist...');
   try {
+    const adminDb = await getAdminDb();
     const created: string[] = [];
     const errors: string[] = [];
     
     for (const collectionName of CORE_COLLECTIONS) {
-        const result = await ensureCollectionExists(collectionName);
+        const result = await ensureCollectionExists(adminDb, collectionName);
         if(result.created) created.push(collectionName);
     }
     

@@ -52,11 +52,11 @@ const ensureSystemUserExists = async (db: AdminFirestore, userData: Partial<User
 /**
  * Checks if a single Firestore collection exists, and creates it with a placeholder
  * document if it doesn't. This prevents errors on fresh deployments.
+ * @param db The Firestore admin instance.
  * @param collectionName The name of the collection to check.
  * @returns An object indicating if the collection was created.
  */
-export const ensureCollectionExists = async (collectionName: string): Promise<{ created: boolean }> => {
-    const db = await getAdminDb();
+export const ensureCollectionExists = async (db: AdminFirestore, collectionName: string): Promise<{ created: boolean }> => {
     const collectionRef = db.collection(collectionName);
     const snapshot = await collectionRef.limit(1).get();
     if (snapshot.empty) {
@@ -71,17 +71,16 @@ export const ensureCollectionExists = async (collectionName: string): Promise<{ 
 };
 
 
-const runPostInitTasks = async () => {
-    if (!adminDbInstance) return;
+const runPostInitTasks = async (db: AdminFirestore) => {
     try {
         // Check all collections sequentially.
         for (const collectionName of CORE_COLLECTIONS) {
-            await ensureCollectionExists(collectionName);
+            await ensureCollectionExists(db, collectionName);
         }
         console.log("All essential collections verified.");
         
         await Promise.all([
-             ensureSystemUserExists(adminDbInstance, {
+             ensureSystemUserExists(db, {
                 name: "admin",
                 userId: "admin",
                 firstName: "System",
@@ -96,7 +95,7 @@ const runPostInitTasks = async () => {
                 gender: 'Male', 
                 source: 'Seeded',
             }),
-            ensureSystemUserExists(adminDbInstance, {
+            ensureSystemUserExists(db, {
                 name: "Anonymous Donor",
                 userId: "anonymous_donor",
                 firstName: "Anonymous",
@@ -133,7 +132,7 @@ const initializeFirebaseAdmin = async () => {
       adminAuthInstance = admin.auth();
       
       // CRITICAL: Await the post-init tasks to ensure collections/users are created before any other code runs.
-      await runPostInitTasks();
+      await runPostInitTasks(adminDbInstance);
 
     } catch (e) {
       console.error("Firebase Admin SDK initialization error:", e);
@@ -173,7 +172,8 @@ export const getAdminAuth = async (): Promise<admin.auth.Auth> => {
  */
 export async function handleEnsureSingleCollection(collectionName: string): Promise<{ success: boolean; created: boolean; error?: string }> {
     try {
-        const result = await ensureCollectionExists(collectionName);
+        const adminDb = await getAdminDb();
+        const result = await ensureCollectionExists(adminDb, collectionName);
         return { success: true, created: result.created };
     } catch (e) {
         const error = e instanceof Error ? e.message : `An unknown error occurred for collection ${collectionName}.`;
