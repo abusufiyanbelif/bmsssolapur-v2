@@ -70,10 +70,11 @@ These pages are for administrative and management tasks. Access may vary slightl
 ### Organization
 | Page | Path | Description |
 | :--- | :--- | :--- |
-| **Organization Profile** | `/admin/organization` | Edit the organization's public details, contact info, and payment settings. |
+| **Edit Profile & Layout**| `/admin/organization-profile` | Edit the organization's public details, contact info, and site layout. |
+| **Organization View** | `/admin/organization-view` | A preview of how the organization's public profile page will look. |
 | **Board Members** | `/admin/board-management` | View and manage the list of official board members. |
-| **Letterhead** | `/admin/organization/letterhead` | Generate and download official organization letterhead. |
-| **Layout & Footer** | `/admin/organization/layout` | Customize the content of the main site header and footer. |
+| **Letterhead** | `/admin/organization-profile/letterhead` | Generate and download official organization letterhead. |
+
 
 ### Campaign Management
 | Page | Path | Description |
