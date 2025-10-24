@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
@@ -65,7 +66,7 @@ export const MainMetricsCard = ({ allDonations = [], allLeads = [] }: { allDonat
                     <Card className="h-full transition-all hover:shadow-md hover:border-primary/50">
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                         <CardTitle className="text-sm font-medium text-primary">{metric.title}</CardTitle>
-                        <metric.icon className="h-4 w-4 text-muted-foreground" />
+                        <metric.icon className="h-4 w-4 text-primary" />
                         </CardHeader>
                         <CardContent>
                         <div className="text-2xl font-bold">{metric.value}</div>
@@ -89,7 +90,7 @@ export const FundsInHandCard = ({ allDonations = [], allLeads = [] }: { allDonat
             <Card className="h-full transition-all hover:shadow-md hover:border-primary/50 bg-primary/10">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium text-primary">Funds in Hand</CardTitle>
-                <Banknote className="h-4 w-4 text-muted-foreground" />
+                <Banknote className="h-4 w-4 text-primary" />
                 </CardHeader>
                 <CardContent>
                 <div className="text-2xl font-bold">₹{stats.pendingToDisburse.toLocaleString()}</div>
@@ -112,7 +113,7 @@ export const OrganizationFundsCard = ({ allDonations = [] }: { allDonations: Don
             <Card className="h-full transition-all hover:shadow-md hover:border-accent/50 bg-accent/10">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium text-primary">Organization Support Funds</CardTitle>
-                    <Building className="h-4 w-4 text-muted-foreground" />
+                    <Building className="h-4 w-4 text-primary" />
                 </CardHeader>
                 <CardContent>
                     <div className="text-2xl font-bold">₹{orgFunds.toLocaleString()}</div>
@@ -138,7 +139,7 @@ export const MonthlyContributorsCard = ({ allUsers = [] }: { allUsers: User[] })
             <Card className="h-full transition-all hover:shadow-md hover:border-primary/50">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium text-primary">Monthly Contributors</CardTitle>
-                <Repeat className="h-4 w-4 text-muted-foreground" />
+                <Repeat className="h-4 w-4 text-primary" />
                 </CardHeader>
                 <CardContent>
                     <div className="text-2xl font-bold">{stats.contributedThisMonthCount} / {stats.monthlyContributorsCount}</div>
@@ -164,7 +165,7 @@ export const MonthlyPledgeCard = ({ allUsers = [] }: { allUsers: User[] }) => {
             <Card className="h-full transition-all hover:shadow-md hover:border-primary/50">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium text-primary">Total Monthly Pledge</CardTitle>
-                <DollarSign className="h-4 w-4 text-muted-foreground" />
+                <DollarSign className="h-4 w-4 text-primary" />
                 </CardHeader>
                 <CardContent>
                     <div className="text-2xl font-bold">₹{totalPledge.toLocaleString()}</div>
@@ -830,5 +831,9 @@ export const ReferralSummaryCard = ({ allUsers, allLeads, currentUser }: { allUs
         </Card>
     )
 }
+
+    
+
+    
 
     

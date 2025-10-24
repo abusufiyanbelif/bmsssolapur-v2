@@ -104,7 +104,7 @@ export function ReferralDashboardContent({ user, referredBeneficiaries, referred
                  <CardHeader>
                     <div className="flex justify-between items-center">
                          <div>
-                            <CardTitle className="text-primary">My Referred Beneficiaries</CardTitle>
+                            <CardTitle className="text-primary flex items-center gap-2"><Users />My Referred Beneficiaries</CardTitle>
                             <CardDescription className="text-muted-foreground">A quick view of your most recently added beneficiaries.</CardDescription>
                          </div>
                          <Button asChild>

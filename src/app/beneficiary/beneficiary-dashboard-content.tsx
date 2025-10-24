@@ -1,3 +1,5 @@
+
+
 // src/app/beneficiary/beneficiary-dashboard-content.tsx
 "use client";
 
@@ -316,3 +318,5 @@ function InspirationalQuotes({ quotes }: { quotes: Quote[] }) {
         </Card>
     );
 }
+
+    

@@ -15,9 +15,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { EnrichedLead } from "@/app/campaigns/actions";
-import { BeneficiaryBreakdownCard, CampaignBreakdownCard, DonationTypeCard } from "@/app/admin/dashboard-cards";
-import { MainMetricsCard, FundsInHandCard } from "@/app/admin/dashboard-cards";
+import { MainMetricsCard } from "@/app/admin/dashboard-cards";
 import { getAllLeads } from "@/services/lead-service";
 import { useRouter } from "next/navigation";
 import { getQuotes } from "@/app/home/actions";
@@ -143,7 +141,7 @@ export function DonorDashboardContent({ user, donations, allLeads, allDonations,
                     {impactMetrics.map((metric) => (
                         <Link href="/my-donations" key={metric.title}>
                             <div className="p-4 border rounded-lg h-full hover:bg-muted transition-colors">
-                                <metric.icon className="h-6 w-6 text-muted-foreground mb-2" />
+                                <metric.icon className="h-6 w-6 text-primary mb-2" />
                                 <p className="text-2xl font-bold">{metric.value}</p>
                                 <p className="text-sm font-medium text-foreground">{metric.title}</p>
                                 <p className="text-xs text-muted-foreground">{metric.description}</p>
@@ -216,8 +214,8 @@ function InspirationalQuotes({ quotes }: { quotes: Quote[] }) {
         return (
              <Card>
                 <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                        <QuoteIcon className="text-primary" />
+                    <CardTitle className="flex items-center gap-2 text-primary">
+                        <QuoteIcon />
                         Wisdom & Reflection
                     </CardTitle>
                 </CardHeader>
@@ -235,17 +233,17 @@ function InspirationalQuotes({ quotes }: { quotes: Quote[] }) {
     return (
         <Card>
             <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                    <QuoteIcon className="text-primary" />
+                <CardTitle className="flex items-center gap-2 text-primary">
+                    <QuoteIcon />
                     Wisdom & Reflection
                 </CardTitle>
             </CardHeader>
             <CardContent>
                 <div className="space-y-6">
                     {_quotes.map((quote, index) => (
-                        <blockquote key={index} className="border-l-2 pl-4 italic text-sm">
+                        <blockquote key={index} className="border-l-2 pl-4 italic text-sm text-muted-foreground">
                             <p>&quot;{quote.text}&quot;</p>
-                            <cite className="block text-right not-italic text-xs text-muted-foreground mt-1">— {quote.source}</cite>
+                            <cite className="block text-right not-italic text-xs mt-1">— {quote.source}</cite>
                         </blockquote>
                     ))}
                 </div>
@@ -253,3 +251,5 @@ function InspirationalQuotes({ quotes }: { quotes: Quote[] }) {
         </Card>
     );
 }
+
+    

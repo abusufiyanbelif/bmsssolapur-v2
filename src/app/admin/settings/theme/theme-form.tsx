@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -320,17 +321,17 @@ export function ThemeForm({ currentTheme }: ThemeFormProps) {
                            <Alert variant="success" style={{borderColor: `hsla(${watchedColors.success}, 0.5)`, backgroundColor: `hsla(${watchedColors.success}, 0.1)`}}>
                                <CheckCircle className="h-4 w-4" style={{color: `hsl(${watchedColors.success})`}} />
                                <AlertTitle style={{color: `hsl(${watchedColors.foreground})`}}>Success Message</AlertTitle>
-                               <AlertDescription style={{color: `hsl(${watchedColors.info})`}}>This is a success alert.</AlertDescription>
+                               <AlertDescription style={{color: `hsl(${watchedColors.success})`}}>This is a success alert.</AlertDescription>
                            </Alert>
                            <Alert variant="info" style={{borderColor: `hsla(${watchedColors.info}, 0.5)`, backgroundColor: `hsla(${watchedColors.info}, 0.1)`}}>
                                <InfoIcon className="h-4 w-4" style={{color: `hsl(${watchedColors.info})`}} />
                                <AlertTitle style={{color: `hsl(${watchedColors.foreground})`}}>Informational Message</AlertTitle>
-                               <AlertDescription style={{color: `hsl(var(--muted-foreground))`}}>This is an info alert.</AlertDescription>
+                               <AlertDescription style={{color: `hsl(${watchedColors.info})`}}>This is an info alert.</AlertDescription>
                            </Alert>
                              <Alert variant="warning" style={{borderColor: `hsla(${watchedColors.warning}, 0.5)`, backgroundColor: `hsla(${watchedColors.warning}, 0.1)`}}>
                                <AlertTriangleIcon className="h-4 w-4" style={{color: `hsl(${watchedColors.warning})`}} />
                                <AlertTitle style={{color: `hsl(${watchedColors.foreground})`}}>Warning Message</AlertTitle>
-                               <AlertDescription style={{color: `hsl(var(--muted-foreground))`}}>This is a warning alert.</AlertDescription>
+                               <AlertDescription style={{color: `hsl(${watchedColors.warning})`}}>This is a warning alert.</AlertDescription>
                            </Alert>
                            <Alert variant="destructive">
                                <AlertCircle className="h-4 w-4" />
