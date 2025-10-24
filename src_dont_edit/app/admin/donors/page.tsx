@@ -2,7 +2,7 @@
 // src/app/admin/donors/page.tsx
 import { Suspense } from "react";
 import { Loader2 } from "lucide-react";
-import { DonorsPageClient } from "./donors-client";
+import { DonorsPageClient } from "@/app/admin/user-management/donors/donors-client";
 import { getAllUsers, User } from "@/services/user-service";
 
 async function DonorsPageDataLoader() {
