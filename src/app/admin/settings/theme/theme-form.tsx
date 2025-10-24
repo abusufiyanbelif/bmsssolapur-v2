@@ -204,7 +204,7 @@ export function ThemeForm({ currentTheme }: ThemeFormProps) {
                     <FormLabel>{label}</FormLabel>
                     <div className="flex items-center gap-2">
                         <FormControl>
-                            <Input {...field} placeholder="e.g., 142.1 76.2% 36.3% / 0.9" disabled={!isEditing} />
+                            <Input {...field} placeholder="e.g., 142.1 76.2% 36.3%" disabled={!isEditing} />
                         </FormControl>
                         <Input
                             type="color"
@@ -316,25 +316,25 @@ export function ThemeForm({ currentTheme }: ThemeFormProps) {
                                </CardContent>
                            </Card>
                            
-                           <Alert variant="success" style={{borderColor: `hsl(${watchedColors.success})`, backgroundColor: `hsla(${watchedColors.success}, 0.1)`, color: colorToHsl(watchedColors.success)}}>
-                               <CheckCircle className="h-4 w-4" style={{color: colorToHsl(watchedColors.success)}} />
-                               <AlertTitle style={{color: colorToHsl(watchedColors.foreground)}}>Success Message</AlertTitle>
+                           <Alert variant="success" style={{borderColor: `hsla(${watchedColors.success}, 0.5)`, backgroundColor: `hsla(${watchedColors.success}, 0.1)`, color: `hsl(${watchedColors.success})`}}>
+                               <CheckCircle className="h-4 w-4" style={{color: `hsl(${watchedColors.success})`}} />
+                               <AlertTitle style={{color: `hsl(${watchedColors.foreground})`}}>Success Message</AlertTitle>
                                <AlertDescription style={{color: `hsl(var(--muted-foreground))`}}>This is a success alert.</AlertDescription>
                            </Alert>
-                           <Alert variant="info" style={{borderColor: `hsl(${watchedColors.info})`, backgroundColor: `hsla(${watchedColors.info}, 0.1)`, color: colorToHsl(watchedColors.info)}}>
-                               <InfoIcon className="h-4 w-4" style={{color: colorToHsl(watchedColors.info)}} />
-                               <AlertTitle style={{color: colorToHsl(watchedColors.foreground)}}>Informational Message</AlertTitle>
+                           <Alert variant="info" style={{borderColor: `hsla(${watchedColors.info}, 0.5)`, backgroundColor: `hsla(${watchedColors.info}, 0.1)`, color: `hsl(${watchedColors.info})`}}>
+                               <InfoIcon className="h-4 w-4" style={{color: `hsl(${watchedColors.info})`}} />
+                               <AlertTitle style={{color: `hsl(${watchedColors.foreground})`}}>Informational Message</AlertTitle>
                                <AlertDescription style={{color: `hsl(var(--muted-foreground))`}}>This is an info alert.</AlertDescription>
                            </Alert>
-                             <Alert variant="warning" style={{borderColor: `hsl(${watchedColors.warning})`, backgroundColor: `hsla(${watchedColors.warning}, 0.1)`, color: colorToHsl(watchedColors.warning)}}>
-                               <AlertTriangleIcon className="h-4 w-4" style={{color: colorToHsl(watchedColors.warning)}} />
-                               <AlertTitle style={{color: colorToHsl(watchedColors.foreground)}}>Warning Message</AlertTitle>
+                             <Alert variant="warning" style={{borderColor: `hsla(${watchedColors.warning}, 0.5)`, backgroundColor: `hsla(${watchedColors.warning}, 0.1)`, color: `hsl(${watchedColors.warning})`}}>
+                               <AlertTriangleIcon className="h-4 w-4" style={{color: `hsl(${watchedColors.warning})`}} />
+                               <AlertTitle style={{color: `hsl(${watchedColors.foreground})`}}>Warning Message</AlertTitle>
                                <AlertDescription style={{color: `hsl(var(--muted-foreground))`}}>This is a warning alert.</AlertDescription>
                            </Alert>
-                           <Alert variant="destructive" style={{borderColor: `hsl(${watchedColors.destructive})`, backgroundColor: `hsla(${watchedColors.destructive}, 0.1)`, color: `hsl(${watchedColors.destructive})` }}>
+                           <Alert variant="destructive">
                                <AlertCircle className="h-4 w-4" />
-                               <AlertTitle style={{color: `hsl(${watchedColors.destructive})`}}>Error Message</AlertTitle>
-                               <AlertDescription style={{color: `hsla(${watchedColors.destructive}, 0.8)`}}>This is a destructive alert.</AlertDescription>
+                               <AlertTitle>Error Message</AlertTitle>
+                               <AlertDescription>This is a destructive alert.</AlertDescription>
                            </Alert>
 
                            <div className="grid grid-cols-2 gap-4">
