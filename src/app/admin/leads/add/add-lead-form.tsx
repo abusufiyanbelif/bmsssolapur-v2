@@ -1,4 +1,3 @@
-
 // src/app/admin/leads/add/add-lead-form.tsx
 "use client";
 
@@ -29,7 +28,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
-import { handleAddLead, handleExtractLeadDetailsFromText, handleExtractLeadBeneficiaryDetailsFromText, handleGenerateSummaries } from "./actions";
+import { handleAddLead, handleExtractLeadDetailsFromText, handleExtractLeadBeneficiaryDetailsFromText, handleGenerateSummaries, getUserAction } from "./actions";
 import { useState, useEffect, useRef, useMemo, Suspense, useCallback } from "react";
 import { Loader2, UserPlus, Users, Info, CalendarIcon, AlertTriangle, ChevronsUpDown, Check, Banknote, X, Lock, Clipboard, Text, Bot, FileUp, ZoomIn, ZoomOut, FileIcon, ScanSearch, UserSearch, UserRoundPlus, XCircle, PlusCircle, Paperclip, RotateCw, RefreshCw as RefreshIcon, BookOpen, Sparkles, CreditCard, Fingerprint, MapPin, Trash2, CheckCircle, User as UserIcon } from "lucide-react";
 import type { User, LeadPurpose, Campaign, Lead, DonationType, LeadPriority, AppSettings, ExtractLeadDetailsOutput, ExtractBeneficiaryDetailsOutput, GenerateSummariesOutput } from "@/services/types";
@@ -52,11 +51,11 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { getRawTextFromImage } from '@/app/actions';
 import Image from "next/image";
-import { getUser, checkAvailability } from "@/services/user-service";
 import { useDebounce } from "@/hooks/use-debounce";
 import { useRouter } from 'next/navigation';
 import { Separator } from "@/components/ui/separator";
 import { AddUserForm } from "@/app/admin/user-management/add/add-user-form";
+import * as React from "react";
 
 
 const leadPriorities: LeadPriority[] = ['Urgent', 'High', 'Medium', 'Low'];
@@ -523,7 +522,7 @@ function FormContent({ users, campaigns, settings, prefilledRawText }: AddLeadFo
             missingFields = Object.keys(extractedDetails).filter(key => !extractedDetails[key as keyof ExtractBeneficiaryDetailsOutput]) as (keyof ExtractBeneficiaryDetailsOutput)[];
         }
 
-        const result = await handleExtractLeadBeneficiaryDetailsFromText(caseRawText, missingFields.length > 0 ? missingFields : undefined);
+        const result = await handleExtractUserDetailsFromText(caseRawText, missingFields.length > 0 ? missingFields : undefined);
 
         if (result.success && result.details) {
              if (isRefresh && extractedDetails) {
@@ -596,7 +595,7 @@ function FormContent({ users, campaigns, settings, prefilledRawText }: AddLeadFo
             </Alert>
         )}
 
-        <Form {...form}>
+        
         <form onSubmit={handleSubmit((values) => onSubmit(values, false))} className="space-y-6 max-w-2xl">
             <fieldset disabled={isFormDisabled} className="space-y-6">
                  <h3 className="text-lg font-semibold border-b pb-2 text-primary">Beneficiary Details</h3>
@@ -1056,7 +1055,7 @@ function FormContent({ users, campaigns, settings, prefilledRawText }: AddLeadFo
                 </div>
             </fieldset>
         </form>
-        </Form>
+        
         <AlertDialog open={!!duplicateWarning} onOpenChange={() => setDuplicateWarning(null)}>
             <AlertDialogContent>
                 <AlertDialogHeader>
@@ -1131,7 +1130,7 @@ function FormContent({ users, campaigns, settings, prefilledRawText }: AddLeadFo
 }
 
 export function AddLeadForm(props: AddLeadFormProps) {
-    const { settings } = props;
+    const { settings, prefilledData } = props;
     const formSchema = useMemo(() => createFormSchema(settings), [settings]);
     const form = useForm<AddLeadFormValues>({
         resolver: zodResolver(formSchema),

@@ -31,6 +31,11 @@ const purposeCategoryMap: Record<string, DonationType> = {
     'Other': 'Sadaqah',
 };
 
+export async function getUserAction(userId: string) {
+    const user = await getUser(userId);
+    return JSON.parse(JSON.stringify(user));
+}
+
 export async function handleAddLead(
   formData: FormData
 ): Promise<FormState> {
