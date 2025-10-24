@@ -81,9 +81,9 @@ export const getAllQuotes = async (): Promise<Quote[]> => {
         return quotes;
     } catch (error) {
         if (error instanceof Error) {
-            console.warn(`[Graceful Failure] Could not fetch quotes: ${error.message}. Returning empty array.`);
+            console.warn(`[Graceful Fallback] Could not fetch quotes: ${error.message}. Returning empty array.`);
         } else {
-            console.warn(`[Graceful Failure] An unknown error occurred while fetching quotes. Returning empty array.`);
+            console.warn(`[Graceful Fallback] An unknown error occurred while fetching quotes. Returning empty array.`);
         }
         // This is a critical change: always return a valid array to prevent downstream crashes.
         return []; 

@@ -20,7 +20,7 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { handleUpdateOrganization } from "./actions";
 import { useState, useEffect } from "react";
-import { Loader2, Save, Edit, X, PlusCircle, Trash2, Layout } from "lucide-react";
+import { Loader2, Save, Edit, X, PlusCircle, Trash2, Layout, Award } from "lucide-react";
 import { Organization } from "@/services/organization-service";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import Image from "next/image";

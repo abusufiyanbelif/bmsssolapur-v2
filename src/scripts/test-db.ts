@@ -1,4 +1,3 @@
-
 /**
  * @fileOverview A script to test the database connection and core data integrity.
  */

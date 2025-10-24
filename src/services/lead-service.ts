@@ -317,7 +317,7 @@ export const getAllLeads = async (): Promise<Lead[]> => {
         return leads;
     } catch (error) {
         if (error instanceof Error && (error.message.includes('index') || error.message.includes('Could not find a valid index'))) {
-             console.warn("Firestore index missing for 'leads' collection on 'dateCreated' (desc). Falling back to an unsorted query. Please create the index in your Firebase console for optimal performance.");
+             console.warn("Firestore index missing for 'leads' collection on 'dateCreated' (desc). Please create it. Falling back to an unsorted query. This may impact performance.");
              try {
                 const fallbackQuery = query(collection(db, LEADS_COLLECTION));
                 const fallbackSnapshot = await getDocs(fallbackQuery);
@@ -361,7 +361,7 @@ export const getLeadsByBeneficiaryId = async (beneficiaryId: string): Promise<Le
         return leads;
     } catch (error) {
         console.error("Error fetching beneficiary leads:", error);
-         if (error instanceof Error && error.message.includes('requires an index')) {
+         if (error instanceof Error && error.message.includes('index')) {
             const detailedError = `Firestore query error. This typically indicates a missing index. Try creating a single-field index on 'beneficiaryId' in the 'leads' collection. Full error: ${detailedError}`;
             console.error(detailedError);
             return []; // Return empty array to prevent crash

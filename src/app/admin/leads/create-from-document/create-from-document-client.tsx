@@ -101,7 +101,10 @@ export function CreateFromDocumentClient({ users, campaigns, settings }: CreateF
                                                     <Image src={URL.createObjectURL(file)} alt={`Preview ${index}`} fill className="object-contain transition-transform duration-300" style={{ transform: `scale(${zoomLevels[index] || 1}) rotate(${rotation}deg)` }} />
                                                 </div>
                                             ) : (
-                                                <FileIcon className="w-16 h-16 text-muted-foreground" />
+                                                <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
+                                                    <FileIcon className="h-12 w-12" />
+                                                    <span className="text-xs font-semibold mt-2">{file.name}</span>
+                                                </div>
                                             )}
                                         </div>
                                          <p className="text-xs text-muted-foreground truncate">{file.name}</p>

@@ -1,3 +1,4 @@
+
 // src/app/admin/donations/add/add-donation-form.tsx
 "use client";
 
@@ -5,7 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, useFieldArray, FormProvider } from "react-hook-form";
 import * as z from "zod";
 import Link from 'next/link';
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import {
   Form,
   FormControl,
@@ -345,7 +346,7 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation, set
 
   async function onSubmit(values: AddDonationFormValues) {
     if (!adminUserId) {
-        toast({ variant: "destructive", title: "Error", description: "Could not identify admin. Please log in again." });
+        toast({ variant: 'destructive', title: 'Error', description: 'Admin user not found. Please log in again.' });
         return;
     }
     setIsSubmitting(true);
@@ -377,7 +378,6 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation, set
     const result = isEditing 
         ? await handleUpdateDonation(existingDonation.id!, formData, adminUserId)
         : await handleAddDonation(formData);
-
     setIsSubmitting(false);
 
     if (result.success) {
@@ -404,15 +404,15 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation, set
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      setValue('paymentScreenshot', file, { shouldValidate: true });
-      const preview = URL.createObjectURL(file);
-      setFile(file);
-      setFilePreview(preview);
-      setRawText(null); // Clear old text on new file
-      setExtractedDetails(null);
-      setAutoFilledFields(new Set());
-      setZoom(1);
-      setRotation(0);
+        setValue('paymentScreenshot', file, { shouldValidate: true });
+        const preview = URL.createObjectURL(file);
+        setFile(file);
+        setFilePreview(preview);
+        setRawText(null); // Clear old text on new file
+        setExtractedDetails(null);
+        setAutoFilledFields(new Set());
+        setZoom(1);
+        setRotation(0);
     } else {
       clearFile();
     }
@@ -914,7 +914,7 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation, set
                         <SelectContent>
                           <SelectItem value="none">None</SelectItem>
                           {leads.map((lead) => (
-                            <SelectItem key={lead.id} value={lead.id}>
+                            <SelectItem key={lead.id} value={lead.id!}>
                               {lead.name} (Req: ₹{lead.helpRequested})
                             </SelectItem>
                           ))}
@@ -940,7 +940,7 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation, set
                         <SelectContent>
                           <SelectItem value="none">None</SelectItem>
                           {campaigns.map((campaign) => (
-                            <SelectItem key={campaign.id} value={campaign.id}>
+                            <SelectItem key={campaign.id} value={campaign.id!}>
                               {campaign.name}
                             </SelectItem>
                           ))}

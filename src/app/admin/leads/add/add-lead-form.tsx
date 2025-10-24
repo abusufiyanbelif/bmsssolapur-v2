@@ -1,3 +1,4 @@
+
 // src/app/admin/leads/add/add-lead-form.tsx
 "use client";
 
@@ -5,7 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, useFieldArray, FormProvider, useFormContext } from "react-hook-form";
 import * as z from "zod";
 import Link from 'next/link';
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import {
   Form,
   FormControl,
@@ -245,24 +246,22 @@ function FormContent({ users, campaigns, settings, prefilledRawText }: AddLeadFo
   
   const { formState, setValue, watch, getValues, control, trigger, reset, handleSubmit } = form;
   
-  const leadPurposes = useMemo(() => 
-    (leadConfiguration.purposes || []).filter(p => p.enabled)
-  , [leadConfiguration.purposes]);
-  
   const clearFile = () => {
     setOtherDocs([]);
     setCaseRawText('');
     setZoomLevels({});
     setRotation(0);
+    setExtractedDetails(null);
     if (otherDocsInputRef.current) {
         otherDocsInputRef.current.value = "";
     }
   };
 
   const handleCancel = () => {
-    reset();
+    reset(initialFormValues);
     clearFile();
     setSelectedReferralDetails(null);
+    setDuplicateWarning(null);
   };
   
   const selectedPurposeName = watch("purpose");
@@ -310,9 +309,9 @@ function FormContent({ users, campaigns, settings, prefilledRawText }: AddLeadFo
 
   const availableCategories = useMemo(() => {
       if (!selectedPurposeName) return [];
-      const purpose = leadPurposes.find(p => p.name === selectedPurposeName);
+      const purpose = leadConfiguration.purposes.find(p => p.name === selectedPurposeName);
       return (purpose?.categories || []).filter(c => c.enabled);
-  }, [selectedPurposeName, leadPurposes]);
+  }, [selectedPurposeName, leadConfiguration.purposes]);
 
 
   useEffect(() => {
@@ -347,7 +346,7 @@ function FormContent({ users, campaigns, settings, prefilledRawText }: AddLeadFo
       if (details.diseaseStage) setValue('diseaseStage', details.diseaseStage, { shouldDirty: true });
       if (details.diseaseSeriousness) setValue('diseaseSeriousness', details.diseaseSeriousness, { shouldDirty: true });
       if (details.purpose) {
-        const matchingPurpose = leadPurposes.find(p => p.name.toLowerCase() === details.purpose?.toLowerCase());
+        const matchingPurpose = leadConfiguration.purposes.find(p => p.name.toLowerCase() === details.purpose?.toLowerCase());
         if (matchingPurpose) setValue('purpose', matchingPurpose.name, { shouldDirty: true });
       }
       if (details.category) setValue('category', details.category, { shouldDirty: true });
@@ -522,7 +521,7 @@ function FormContent({ users, campaigns, settings, prefilledRawText }: AddLeadFo
             missingFields = Object.keys(extractedDetails).filter(key => !extractedDetails[key as keyof ExtractBeneficiaryDetailsOutput]) as (keyof ExtractBeneficiaryDetailsOutput)[];
         }
 
-        const result = await handleExtractUserDetailsFromText(caseRawText, missingFields.length > 0 ? missingFields : undefined);
+        const result = await handleExtractLeadBeneficiaryDetailsFromText(caseRawText, missingFields.length > 0 ? missingFields : undefined);
 
         if (result.success && result.details) {
              if (isRefresh && extractedDetails) {
@@ -548,7 +547,7 @@ function FormContent({ users, campaigns, settings, prefilledRawText }: AddLeadFo
                     case 'beneficiaryFullName': setValue('manualBeneficiaryName', value, { shouldDirty: true }); break;
                     case 'beneficiaryFirstName': setValue('newBeneficiary_firstName', value, { shouldDirty: true }); break;
                     case 'beneficiaryMiddleName': setValue('newBeneficiary_middleName', value, { shouldDirty: true }); break;
-                    case 'beneficiaryLastName': setValue('newBeneficiary_lastName', value, { shouldDirty: true }); break;
+                    case 'beneficiaryLastName': setValue('newBeneficiary_lastName', value, { shouldDirty: true });
                     case 'fatherName': setValue('newBeneficiary_fatherName', value, { shouldDirty: true }); break;
                     case 'beneficiaryPhone': setValue('newBeneficiary_phone', value.replace(/\D/g, '').slice(-10), { shouldDirty: true, shouldValidate: true }); break;
                     case 'aadhaarNumber': setValue('newBeneficiary_aadhaarNumber', value.replace(/\D/g,''), { shouldDirty: true, shouldValidate: true }); break;
@@ -733,7 +732,7 @@ function FormContent({ users, campaigns, settings, prefilledRawText }: AddLeadFo
                                 </SelectTrigger>
                                 </FormControl>
                                 <SelectContent>
-                                {leadPurposes.map(purpose => (
+                                {leadConfiguration.purposes.map(purpose => (
                                     <SelectItem key={purpose.id} value={purpose.name}>{purpose.name}</SelectItem>
                                 ))}
                                 </SelectContent>
@@ -872,8 +871,8 @@ function FormContent({ users, campaigns, settings, prefilledRawText }: AddLeadFo
                                                 const zoom = zoomLevels[index] || 1;
                                                 return (
                                                     <div key={index} className="relative group p-2 border rounded-lg bg-background space-y-2">
-                                                        <div className="w-full h-32 overflow-auto flex items-center justify-center">
-                                                                {isImage ? (
+                                                        <div className="w-full h-40 overflow-auto flex items-center justify-center">
+                                                            {isImage ? (
                                                                 <div className="relative w-full h-full" onWheel={(e) => handleWheel(e, index)}>
                                                                     <Image
                                                                         src={URL.createObjectURL(file)}
@@ -883,23 +882,19 @@ function FormContent({ users, campaigns, settings, prefilledRawText }: AddLeadFo
                                                                          style={{ transform: `scale(${zoom}) rotate(${rotation}deg)` }}
                                                                     />
                                                                 </div>
-                                                                ) : (
-                                                                    <FileIcon className="w-16 h-16 text-muted-foreground" />
-                                                                )}
+                                                            ) : (
+                                                                <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
+                                                                    <FileIcon className="h-12 w-12" />
+                                                                    <span className="text-xs font-semibold mt-2">{file.name}</span>
+                                                                </div>
+                                                            )}
                                                         </div>
-                                                        <p className="text-xs text-muted-foreground truncate">{file.name}</p>
-                                                        <div className="absolute top-1 right-1 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity bg-background/80 rounded-md">
+                                                         <p className="text-xs text-muted-foreground truncate">{file.name}</p>
+                                                         <div className="absolute top-1 right-1 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity bg-background/80 rounded-md">
                                                             <Button type="button" size="icon" variant="ghost" className="h-6 w-6" onClick={() => setZoomLevels(z => ({...z, [index]: (z[index] || 1) * 1.2}))}><ZoomIn className="h-4 w-4"/></Button>
                                                             <Button type="button" size="icon" variant="ghost" className="h-6 w-6" onClick={() => setZoomLevels(z => ({...z, [index]: Math.max(0.5, (z[index] || 1) / 1.2)}))}><ZoomOut className="h-4 w-4"/></Button>
                                                             <Button type="button" size="icon" variant="ghost" className="h-6 w-6" onClick={() => setRotation(r => r + 90)}><RotateCw className="h-4 w-4" /></Button>
-                                                            <Button type="button" size="icon" variant="ghost" className="h-6 w-6 text-destructive hover:bg-destructive/10" onClick={() => {
-                                                                setOtherDocs(docs => docs.filter((_, i) => i !== index));
-                                                                setZoomLevels(prev => {
-                                                                    const newLevels = {...prev};
-                                                                    delete newLevels[index];
-                                                                    return newLevels;
-                                                                });
-                                                            }}>
+                                                            <Button type="button" size="icon" variant="ghost" className="h-6 w-6 text-destructive hover:bg-destructive/10" onClick={() => handleRemoveFile(index)}>
                                                                 <XCircle className="h-4 w-4"/>
                                                             </Button>
                                                         </div>

@@ -96,6 +96,17 @@ export default function RequestHelpPage() {
     },
   });
 
+  const clearFile = () => {
+    setFile(null);
+    setFilePreview(null);
+    setZoom(1);
+    setRotation(0);
+    form.setValue('verificationDocument', null);
+    if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+    }
+  };
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0] || null;
     form.setValue('verificationDocument', selectedFile, { shouldValidate: true });
@@ -153,11 +164,7 @@ export default function RequestHelpPage() {
         category: undefined,
         verificationDocument: undefined,
     });
-    setFile(null);
-    setFilePreview(null);
-    if (fileInputRef.current) {
-        fileInputRef.current.value = "";
-    }
+    clearFile();
     setSubmittedLead(null);
   }
   
@@ -292,11 +299,7 @@ export default function RequestHelpPage() {
                                         variant="ghost" 
                                         size="icon" 
                                         className="absolute top-1/2 right-1 -translate-y-1/2 h-7 w-7"
-                                        onClick={() => {
-                                            form.setValue('verificationDocument', null);
-                                            setFile(null);
-                                            if (fileInputRef.current) fileInputRef.current.value = "";
-                                        }}
+                                        onClick={clearFile}
                                     >
                                         <XCircle className="h-4 w-4 text-muted-foreground" />
                                     </Button>

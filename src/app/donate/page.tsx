@@ -1,4 +1,3 @@
-
 // src/app/donate/page.tsx
 "use client";
 
@@ -27,7 +26,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect, Suspense, useRef, useMemo } from "react";
-import { Loader2, AlertCircle, CheckCircle, HandHeart, Info, UploadCloud, Link2, XCircle, CreditCard, Save, FileUp, ScanEye, Text, Bot, ZoomIn, ZoomOut, X, FileIcon } from "lucide-react";
+import { Loader2, AlertCircle, CheckCircle, HandHeart, Info, UploadCloud, Link2, XCircle, CreditCard, Save, FileUp, ScanEye, Text, Bot, ZoomIn, ZoomOut, X, FileIcon, RotateCw } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { Switch } from "@/components/ui/switch";
@@ -298,6 +297,7 @@ function RecordPastDonationForm({ user, targetLead, targetCampaignId, openLeads,
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [extractedDetails, setExtractedDetails] = useState<ExtractDonationDetailsOutput | null>(null);
     const [zoom, setZoom] = useState(1);
+    const [rotation, setRotation] = useState(0);
     const [isLinkDialogOpen, setIsLinkDialogOpen] = useState(false);
 
 
@@ -353,6 +353,8 @@ function RecordPastDonationForm({ user, targetLead, targetCampaignId, openLeads,
         if (fileInputRef.current) {
             fileInputRef.current.value = "";
         }
+        setRotation(0);
+        setZoom(1);
     };
     
     const handleGetText = async () => {
@@ -479,28 +481,30 @@ function RecordPastDonationForm({ user, targetLead, targetCampaignId, openLeads,
                             </FormItem>
                         )}/>
                         {previewUrl && (
-                            <div className="relative group p-2 border rounded-lg">
+                             <div className="relative group p-2 border rounded-lg">
                                  <div onWheel={handleWheel} className="relative w-full h-80 bg-gray-100 dark:bg-gray-800 rounded-md overflow-auto flex items-center justify-center">
                                     {file?.type.startsWith('image/') ? (
-                                        <Image 
-                                            src={previewUrl} 
-                                            alt="Screenshot Preview"
-                                            width={800 * zoom}
-                                            height={800 * zoom}
-                                            className="object-contain transition-transform duration-100"
-                                            style={{ transform: `scale(${zoom})` }}
-                                        />
+                                        <div className="relative w-full h-full cursor-zoom-in" onWheel={(e) => {e.preventDefault(); setZoom(prev => Math.max(0.5, Math.min(prev - e.deltaY * 0.001, 5)))}}>
+                                            <Image
+                                                src={previewUrl}
+                                                alt="Proof Preview"
+                                                fill
+                                                className="object-contain transition-transform duration-100"
+                                                style={{ transform: `scale(${zoom}) rotate(${rotation}deg)` }}
+                                            />
+                                        </div>
                                     ) : (
-                                        <div className="flex flex-col items-center gap-2 text-muted-foreground">
+                                        <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
                                             <FileIcon className="h-16 w-16" />
                                             <span className="text-sm font-semibold">{file?.name}</span>
                                         </div>
                                     )}
                                   </div>
-                                  <div className="absolute top-2 right-2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity bg-background/80 p-1 rounded-md">
-                                      <Button type="button" size="icon" variant="ghost" className="h-7 w-7" onClick={() => setZoom(z => z * 1.2)}><ZoomIn className="h-4 w-4"/></Button>
-                                      <Button type="button" size="icon" variant="ghost" className="h-7 w-7" onClick={() => setZoom(z => Math.max(0.5, z / 1.2))}><ZoomOut className="h-4 w-4"/></Button>
-                                      <Button type="button" variant="destructive" size="icon" className="h-7 w-7" onClick={clearFile}><X className="h-4 w-4"/></Button>
+                                  <div className="absolute top-1 right-1 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity bg-background/80 rounded-md">
+                                      <Button type="button" size="icon" variant="ghost" className="h-6 w-6" onClick={() => setZoom(z => z * 1.2)}><ZoomIn className="h-4 w-4"/></Button>
+                                      <Button type="button" size="icon" variant="ghost" className="h-6 w-6" onClick={() => setZoom(z => Math.max(0.5, z / 1.2))}><ZoomOut className="h-4 w-4"/></Button>
+                                      <Button type="button" size="icon" variant="ghost" className="h-6 w-6" onClick={() => setRotation(r => r + 90)}><RotateCw className="h-4 w-4" /></Button>
+                                      <Button type="button" variant="destructive" size="icon" className="h-6 w-6" onClick={clearFile}><X className="h-4 w-4"/></Button>
                                   </div>
                               </div>
                         )}
