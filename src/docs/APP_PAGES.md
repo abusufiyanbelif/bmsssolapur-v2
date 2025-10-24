@@ -68,11 +68,11 @@ These pages are for administrative and management tasks. Access may vary slightl
 | **Generate Messages** | `/admin/communications` | AI-powered tool to create formatted messages for WhatsApp and other platforms. |
 
 ### Organization
-| Page | Path | Description |
-| :--- | :--- | :--- |
-| **Organization Profile** | `/admin/organization-profile` | Edit the organization's public details, contact info, and payment settings. |
-| **Board Members** | `/admin/board-management` | View and manage the list of official board members. |
-| **Letterhead** | `/admin/organization-profile/letterhead` | Generate and download official organization letterhead. |
+| Page | Page | Path | Description |
+| :--- | :--- | :--- | :--- |
+| **Organization Profile** | **Organization Profile** | `/admin/organization-profile` | Edit the organization's public details, contact info, and payment settings. |
+| **Board Members** | **Board Members** | `/admin/board-management` | View and manage the list of official board members. |
+| **Letterhead** | **Letterhead** | `/admin/organization-profile/letterhead` | Generate and download official organization letterhead. |
 
 ### Campaign Management
 | Page | Path | Description |
