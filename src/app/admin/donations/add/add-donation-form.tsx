@@ -562,6 +562,18 @@ function AddDonationFormContent({ users, leads, campaigns, existingDonation, set
         }
     }, [paymentApp, paymentMethod]);
 
+    const handleAnonymousDonation = () => {
+        const anonymousUser = users.find(u => u.userId === 'anonymous_donor');
+        if (anonymousUser) {
+            setValue('donorId', anonymousUser.id!);
+            setSelectedDonor(anonymousUser);
+            setValue('isAnonymous', true);
+            toast({ title: 'Anonymous Donor Selected', description: 'This donation will be recorded anonymously.' });
+        } else {
+            toast({ variant: 'destructive', title: 'Error', description: 'Could not find the "Anonymous Donor" system user.' });
+        }
+    };
+
 
   return (
     <>
@@ -967,5 +979,3 @@ export function AddDonationForm(props: AddDonationFormProps) {
         </Suspense>
     )
 }
-
-    
