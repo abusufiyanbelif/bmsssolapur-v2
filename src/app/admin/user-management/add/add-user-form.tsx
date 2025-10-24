@@ -1,6 +1,8 @@
+
 // src/app/admin/user-management/add/add-user-form.tsx
 "use client";
 
+import * as React from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, useFieldArray, FormProvider, useFormContext } from "react-hook-form";
 import * as z from "zod";
@@ -504,169 +506,170 @@ function FormContent({ settings, isSubForm, prefilledData, onUserCreate }: AddUs
     const { fields: upiPhoneFields, append: appendUpiPhone, remove: removeUpiPhone } = useFieldArray({ control, name: "upiPhoneNumbers" });
 
     const FormWrapper = isSubForm ? React.Fragment : 'form';
+    
 
-    return (
-        <>
-        <FormWrapper {...(isSubForm ? {} : { onSubmit: handleSubmit(onSubmit), className: "space-y-6" })}>
-            <div className="space-y-6 pt-4">
-            <Accordion type="multiple" defaultValue={['basic', 'roles']} className="w-full space-y-4">
-                <AccordionItem value="basic" className="border rounded-lg">
-                    <AccordionTrigger className="p-4 font-semibold text-primary"><h4 className="flex items-center gap-2"><UserIcon className="h-5 w-5"/>Basic Information</h4></AccordionTrigger>
-                    <AccordionContent className="p-6 pt-2 space-y-6">
-                        <Accordion type="single" collapsible className="w-full">
-                            <AccordionItem value="scan-id">
-                                <AccordionTrigger>
-                                    <div className="flex items-center gap-2 text-primary">
-                                        <ScanSearch className="h-5 w-5" />
-                                        Scan ID Card (Optional)
-                                    </div>
-                                </AccordionTrigger>
-                                <AccordionContent className="pt-4 space-y-4">
-                                    <FormField
-                                        control={control}
-                                        name="aadhaarCard"
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel>ID Card File (Aadhaar recommended)</FormLabel>
-                                                <FormControl>
-                                                    <Input type="file" accept="image/*,application/pdf" onChange={handleFileChange} />
-                                                </FormControl>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
-                                    {filePreview && (
-                                        <div className="relative group p-2 border rounded-lg">
-                                            <div className="relative w-full h-80 bg-gray-100 dark:bg-gray-800 rounded-md overflow-auto flex items-center justify-center">
-                                                {file?.type.startsWith('image/') ? (
-                                                    <div className="relative w-full h-full cursor-zoom-in" onWheel={(e) => {e.preventDefault(); setZoom(prev => Math.max(0.5, Math.min(prev - e.deltaY * 0.001, 5)))}}>
-                                                        <Image 
-                                                        src={filePreview} 
-                                                        alt="ID Preview" 
-                                                        fill
-                                                        className="object-contain transition-transform duration-100"
-                                                        style={{ transform: `scale(${zoom}) rotate(${rotation}deg)` }}
-                                                        />
-                                                    </div>
-                                                ) : (
-                                                    <div className="flex flex-col items-center gap-2 text-muted-foreground p-4">
-                                                        <FileIcon className="h-16 w-16" />
-                                                        <span className="text-sm font-semibold">{file?.name}</span>
-                                                    </div>
-                                                )}
-                                            </div>
-                                            <div className="absolute top-1 right-1 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity bg-background/80 rounded-md">
-                                                <Button type="button" size="icon" variant="ghost" className="h-6 w-6" onClick={() => setZoom(z => z * 1.2)}><ZoomIn className="h-4 w-4"/></Button>
-                                                <Button type="button" size="icon" variant="ghost" className="h-6 w-6" onClick={() => setZoom(z => Math.max(0.5, z / 1.2))}><ZoomOut className="h-4 w-4"/></Button>
-                                                <Button type="button" size="icon" variant="ghost" className="h-6 w-6" onClick={() => setRotation(r => r + 90)}><RotateCw className="h-4 w-4" /></Button>
-                                                <Button type="button" size="icon" variant="ghost" className="h-6 w-6 text-destructive hover:bg-destructive/10" onClick={() => { setFile(null); setFilePreview(null); setRawText(null); setExtractedDetails(null); setZoom(1); setRotation(0); }}><XCircle className="h-4 w-4"/></Button>
-                                            </div>
-                                        </div>
+  return (
+    <>
+    <FormWrapper {...(isSubForm ? {} : { onSubmit: handleSubmit(onSubmit), className: "space-y-6" })}>
+        <div className="space-y-6 pt-4">
+        <Accordion type="multiple" defaultValue={['basic', 'roles']} className="w-full space-y-4">
+            <AccordionItem value="basic" className="border rounded-lg">
+                <AccordionTrigger className="p-4 font-semibold text-primary"><h4 className="flex items-center gap-2"><UserIcon className="h-5 w-5"/>Basic Information</h4></AccordionTrigger>
+                <AccordionContent className="p-6 pt-2 space-y-6">
+                    <Accordion type="single" collapsible className="w-full">
+                        <AccordionItem value="scan-id">
+                            <AccordionTrigger>
+                                <div className="flex items-center gap-2 text-primary">
+                                    <ScanSearch className="h-5 w-5" />
+                                    Scan ID Card (Optional)
+                                </div>
+                            </AccordionTrigger>
+                            <AccordionContent className="pt-4 space-y-4">
+                                <FormField
+                                    control={control}
+                                    name="aadhaarCard"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>ID Card File (Aadhaar recommended)</FormLabel>
+                                            <FormControl>
+                                                <Input type="file" accept="image/*,application/pdf" onChange={handleFileChange} />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
                                     )}
-                                    {file && (
-                                    <div className="flex flex-col sm:flex-row gap-2">
-                                            <Button type="button" variant="outline" className="w-full" onClick={handleGetText} disabled={isExtractingText}>
-                                                {isExtractingText ? <Loader2 className="h-4 w-4 animate-spin"/> : <Text className="mr-2 h-4 w-4" />}
-                                                Get Text
-                                            </Button>
-                                            {rawText && (
-                                                <Button type="button" className="w-full" onClick={() => handleFetchUserData(false)} disabled={isAnalyzing}>
-                                                    {isAnalyzing ? <Loader2 className="h-4 w-4 animate-spin"/> : <Bot className="mr-2 h-4 w-4" />}
-                                                    Analyze with AI
-                                                </Button>
+                                />
+                                {filePreview && (
+                                    <div className="relative group p-2 border rounded-lg">
+                                        <div className="relative w-full h-80 bg-gray-100 dark:bg-gray-800 rounded-md overflow-auto flex items-center justify-center">
+                                            {file?.type.startsWith('image/') ? (
+                                                <div className="relative w-full h-full cursor-zoom-in" onWheel={(e) => {e.preventDefault(); setZoom(prev => Math.max(0.5, Math.min(prev - e.deltaY * 0.001, 5)))}}>
+                                                    <Image 
+                                                    src={filePreview} 
+                                                    alt="ID Preview" 
+                                                    fill
+                                                    className="object-contain transition-transform duration-100"
+                                                    style={{ transform: `scale(${zoom}) rotate(${rotation}deg)` }}
+                                                    />
+                                                </div>
+                                            ) : (
+                                                <div className="flex flex-col items-center gap-2 text-muted-foreground p-4">
+                                                    <FileIcon className="h-16 w-16" />
+                                                    <span className="text-sm font-semibold">{file?.name}</span>
+                                                </div>
                                             )}
                                         </div>
-                                    )}
-                                    {rawText && (
-                                        <div className="space-y-2">
-                                            <Label htmlFor="rawTextOutput">Extracted Text</Label>
-                                            <Textarea id="rawTextOutput" readOnly value={rawText} rows={8} className="text-xs font-mono" />
+                                        <div className="absolute top-1 right-1 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity bg-background/80 rounded-md">
+                                            <Button type="button" size="icon" variant="ghost" className="h-6 w-6" onClick={() => setZoom(z => z * 1.2)}><ZoomIn className="h-4 w-4"/></Button>
+                                            <Button type="button" size="icon" variant="ghost" className="h-6 w-6" onClick={() => setZoom(z => Math.max(0.5, z / 1.2))}><ZoomOut className="h-4 w-4"/></Button>
+                                            <Button type="button" size="icon" variant="ghost" className="h-6 w-6" onClick={() => setRotation(r => r + 90)}><RotateCw className="h-4 w-4" /></Button>
+                                            <Button type="button" size="icon" variant="ghost" className="h-6 w-6 text-destructive hover:bg-destructive/10" onClick={() => { setFile(null); setFilePreview(null); setRawText(null); setExtractedDetails(null); setZoom(1); setRotation(0); }}><XCircle className="h-4 w-4"/></Button>
                                         </div>
-                                    )}
-                                </AccordionContent>
-                            </AccordionItem>
-                        </Accordion>
-                        <FormField control={control} name="fullName" render={({ field }) => ( <FormItem><FormLabel>Full Name</FormLabel><FormControl><Input placeholder="Enter user's full name" {...field} onChange={handleFullNameChange}/></FormControl><FormDescription>The fields below will be auto-populated from this.</FormDescription><FormMessage /></FormItem> )}/>
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                            <FormField control={control} name="firstName" render={({ field }) => ( <FormItem><FormLabel>First Name</FormLabel><FormControl><Input type="text" placeholder="Enter your first name" {...field} /></FormControl><FormMessage /></FormItem> )}/>
-                            <FormField control={control} name="middleName" render={({ field }) => ( <FormItem><FormLabel>Middle Name</FormLabel><FormControl><Input type="text" placeholder="Enter your middle name" {...field} /></FormControl><FormMessage /></FormItem> )}/>
-                            <FormField control={control} name="lastName" render={({ field }) => ( <FormItem><FormLabel>Last Name</FormLabel><FormControl><Input type="text" placeholder="Enter your last name" {...field} /></FormControl><FormMessage /></FormItem> )}/>
-                        </div>
-                        <FormField control={control} name="fatherName" render={({ field }) => ( <FormItem><FormLabel>Father&apos;s Name (Optional)</FormLabel><FormControl><Input placeholder="Enter father's name" {...field} /></FormControl><FormMessage /></FormItem> )}/>
-                        <FormField control={control} name="userId" render={({ field }) => ( <FormItem><FormLabel>User ID</FormLabel><FormControl><Input type="text" placeholder="Create a custom user ID" {...field} /></FormControl><AvailabilityFeedback state={userIdState} fieldName="User ID" onSuggestionClick={(s) => setValue('userId', s, { shouldValidate: true })} /><FormMessage /></FormItem> )}/>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <FormField control={control} name="email" render={({ field }) => ( <FormItem><FormLabel>Email Address (Optional)</FormLabel><FormControl><Input type="email" placeholder="you@example.com" {...field} /></FormControl><AvailabilityFeedback state={emailState} fieldName="email" /><FormMessage /></FormItem> )}/>
-                            <FormField control={control} name="phone" render={({ field }) => ( <FormItem><FormLabel>Phone Number</FormLabel><FormControl><Input type="tel" placeholder="10-digit number" maxLength={10} {...field} /></FormControl><AvailabilityFeedback state={phoneState} fieldName="phone number" /><FormMessage /></FormItem> )}/>
-                        </div>
-                        <FormField control={control} name="gender" render={({ field }) => ( <FormItem className="space-y-3"><FormLabel>Gender</FormLabel><FormControl><RadioGroup onValueChange={field.onChange} value={field.value} className="flex flex-row space-x-4 pt-2"><FormItem className="flex items-center space-x-2"><FormControl><RadioGroupItem value="Male" /></FormControl><FormLabel className="font-normal">Male</FormLabel></FormItem><FormItem className="flex items-center space-x-2"><FormControl><RadioGroupItem value="Female" /></FormControl><FormLabel className="font-normal">Female</FormLabel></FormItem></RadioGroup></FormControl><FormMessage /></FormItem> )}/>
-                        {!isSubForm && <FormField control={control} name="password" render={({ field }) => ( <FormItem><FormLabel>Password (Optional)</FormLabel><FormControl><Input type="password" placeholder="Min. 6 characters" {...field} /></FormControl><FormDescription>If not provided, user will only be able to log in via OTP.</FormDescription><FormMessage /></FormItem> )}/>}
-                    </AccordionContent>
-                </AccordionItem>
-
-                <AccordionItem value="roles" className="border rounded-lg">
-                    <AccordionTrigger className="p-4 font-semibold text-primary"><h4 className="flex items-center gap-2">Account Roles &amp; Settings</h4></AccordionTrigger>
-                    <AccordionContent className="p-6 pt-2 space-y-6">
-                        <FormField control={control} name="roles" render={() => ( <FormItem><div className="mb-4"><FormLabel className="text-base">User Roles</FormLabel><FormDescription>Select all roles that apply to this user.</FormDescription></div><div className="grid grid-cols-2 md:grid-cols-3 gap-4">{allRoles.map((role) => (<FormField key={role} control={control} name="roles" render={({ field }) => { return (<FormItem key={role} className="flex flex-row items-start space-x-3 space-y-0"><FormControl><Checkbox checked={field.value?.includes(role)} onCheckedChange={(checked) => { trigger('roles'); return checked ? field.onChange([...(field.value || []), role]) : field.onChange( field.value?.filter( (value) => value !== role))}}/></FormControl><FormLabel className="font-normal">{role}</FormLabel></FormItem> )}}/>))}</div><FormMessage /></FormItem>)}/>
-                        {selectedRoles.includes("Beneficiary") && <FormField control={control} name="isAnonymousAsBeneficiary" render={({ field }) => ( <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4"><FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} /></FormControl><div className="space-y-1 leading-none"><FormLabel>Mark as Anonymous Beneficiary</FormLabel><FormDescription>If checked, their name will be hidden from public view and their Anonymous ID will be used instead.</FormDescription></div></FormItem>)} />}
-                        {selectedRoles.includes("Donor") && <FormField control={control} name="isAnonymousAsDonor" render={({ field }) => ( <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4"><FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} /></FormControl><div className="space-y-1 leading-none"><FormLabel>Mark as Anonymous Donor</FormLabel><FormDescription>If checked, their name will be hidden on the public donations list.</FormDescription></div></FormItem>)} />}
-                    </AccordionContent>
-                </AccordionItem>
-            </Accordion>
-            </div>
-            
-            {!isSubForm && (
-                <div className="flex items-center gap-4 mt-8">
-                    <Button type="submit" disabled={isSubmitting}>
-                        {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <UserPlus className="mr-2 h-4 w-4" />}
-                        Create User
-                    </Button>
-                    <Button type="button" variant="outline" onClick={handleCancel} disabled={isSubmitting}>
-                        <XCircle className="mr-2 h-4 w-4" />
-                        Clear Form
-                    </Button>
-                </div>
-            )}
-        </FormWrapper>
-        <AlertDialog open={!!extractedDetails} onOpenChange={() => setExtractedDetails(null)}>
-            <AlertDialogContent>
-                <AlertDialogHeader>
-                    <AlertDialogTitle className="flex items-center gap-2">
-                    <Bot className="h-6 w-6 text-primary" />
-                        Confirm Auto-fill Details
-                    </AlertDialogTitle>
-                    <AlertDialogDescription>
-                        The AI has extracted the following details from the document. Please review them before applying to the form.
-                    </AlertDialogDescription>
-                </AlertDialogHeader>
-                <div className="max-h-80 overflow-y-auto p-4 bg-muted/50 rounded-lg space-y-2 text-sm">
-                    {dialogFields.map(({ key, label }) => {
-                        const value = extractedDetails?.[key as keyof ExtractBeneficiaryDetailsOutput] as string | undefined;
-                        return (
-                            <div key={key} className="flex justify-between border-b pb-1">
-                                <span className="text-muted-foreground capitalize">{label}</span>
-                                {value ? (
-                                    <span className="font-semibold text-right">{value}</span>
-                                ) : (
-                                    <span className="text-destructive font-normal text-right">Not Found</span>
+                                    </div>
                                 )}
-                            </div>
-                        )
-                    })}
-                </div>
-                <AlertDialogFooter>
-                    <Button variant="outline" onClick={() => handleFetchUserData(true)} disabled={isRefreshingDetails}>
-                        {isRefreshingDetails ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <RefreshIcon className="mr-2 h-4 w-4" />}
-                        Refresh
-                    </Button>
-                    <div className='flex gap-2'>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction onClick={applyExtractedDetails}>Apply & Fill Form</AlertDialogAction>
+                                {file && (
+                                <div className="flex flex-col sm:flex-row gap-2">
+                                        <Button type="button" variant="outline" className="w-full" onClick={handleGetText} disabled={isExtractingText}>
+                                            {isExtractingText ? <Loader2 className="h-4 w-4 animate-spin"/> : <Text className="mr-2 h-4 w-4" />}
+                                            Get Text
+                                        </Button>
+                                        {rawText && (
+                                            <Button type="button" className="w-full" onClick={() => handleFetchUserData(false)} disabled={isAnalyzing}>
+                                                {isAnalyzing ? <Loader2 className="h-4 w-4 animate-spin"/> : <Bot className="mr-2 h-4 w-4" />}
+                                                Analyze with AI
+                                            </Button>
+                                        )}
+                                    </div>
+                                )}
+                                {rawText && (
+                                    <div className="space-y-2">
+                                        <Label htmlFor="rawTextOutput">Extracted Text</Label>
+                                        <Textarea id="rawTextOutput" readOnly value={rawText} rows={8} className="text-xs font-mono" />
+                                    </div>
+                                )}
+                            </AccordionContent>
+                        </AccordionItem>
+                    </Accordion>
+                    <FormField control={control} name="fullName" render={({ field }) => ( <FormItem><FormLabel>Full Name</FormLabel><FormControl><Input placeholder="Enter user's full name" {...field} onChange={handleFullNameChange}/></FormControl><FormDescription>The fields below will be auto-populated from this.</FormDescription><FormMessage /></FormItem> )}/>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <FormField control={control} name="firstName" render={({ field }) => ( <FormItem><FormLabel>First Name</FormLabel><FormControl><Input type="text" placeholder="Enter your first name" {...field} /></FormControl><FormMessage /></FormItem> )}/>
+                        <FormField control={control} name="middleName" render={({ field }) => ( <FormItem><FormLabel>Middle Name</FormLabel><FormControl><Input type="text" placeholder="Enter your middle name" {...field} /></FormControl><FormMessage /></FormItem> )}/>
+                        <FormField control={control} name="lastName" render={({ field }) => ( <FormItem><FormLabel>Last Name</FormLabel><FormControl><Input type="text" placeholder="Enter your last name" {...field} /></FormControl><FormMessage /></FormItem> )}/>
                     </div>
-                </AlertDialogFooter>
-            </AlertDialogContent>
-        </AlertDialog>
-        </>
-    );
+                    <FormField control={control} name="fatherName" render={({ field }) => ( <FormItem><FormLabel>Father&apos;s Name (Optional)</FormLabel><FormControl><Input placeholder="Enter father's name" {...field} /></FormControl><FormMessage /></FormItem> )}/>
+                    <FormField control={control} name="userId" render={({ field }) => ( <FormItem><FormLabel>User ID</FormLabel><FormControl><Input type="text" placeholder="Create a custom user ID" {...field} /></FormControl><AvailabilityFeedback state={userIdState} fieldName="User ID" onSuggestionClick={(s) => setValue('userId', s, { shouldValidate: true })} /><FormMessage /></FormItem> )}/>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <FormField control={control} name="email" render={({ field }) => ( <FormItem><FormLabel>Email Address (Optional)</FormLabel><FormControl><Input type="email" placeholder="you@example.com" {...field} /></FormControl><AvailabilityFeedback state={emailState} fieldName="email" /><FormMessage /></FormItem> )}/>
+                        <FormField control={control} name="phone" render={({ field }) => ( <FormItem><FormLabel>Phone Number</FormLabel><FormControl><Input type="tel" placeholder="10-digit number" maxLength={10} {...field} /></FormControl><AvailabilityFeedback state={phoneState} fieldName="phone number" /><FormMessage /></FormItem> )}/>
+                    </div>
+                    <FormField control={control} name="gender" render={({ field }) => ( <FormItem className="space-y-3"><FormLabel>Gender</FormLabel><FormControl><RadioGroup onValueChange={field.onChange} value={field.value} className="flex flex-row space-x-4 pt-2"><FormItem className="flex items-center space-x-2"><FormControl><RadioGroupItem value="Male" /></FormControl><FormLabel className="font-normal">Male</FormLabel></FormItem><FormItem className="flex items-center space-x-2"><FormControl><RadioGroupItem value="Female" /></FormControl><FormLabel className="font-normal">Female</FormLabel></FormItem></RadioGroup></FormControl><FormMessage /></FormItem> )}/>
+                    {!isSubForm && <FormField control={control} name="password" render={({ field }) => ( <FormItem><FormLabel>Password (Optional)</FormLabel><FormControl><Input type="password" placeholder="Min. 6 characters" {...field} /></FormControl><FormDescription>If not provided, user will only be able to log in via OTP.</FormDescription><FormMessage /></FormItem> )}/>}
+                </AccordionContent>
+            </AccordionItem>
+
+            <AccordionItem value="roles" className="border rounded-lg">
+                <AccordionTrigger className="p-4 font-semibold text-primary"><h4 className="flex items-center gap-2">Account Roles &amp; Settings</h4></AccordionTrigger>
+                <AccordionContent className="p-6 pt-2 space-y-6">
+                    <FormField control={control} name="roles" render={() => ( <FormItem><div className="mb-4"><FormLabel className="text-base">User Roles</FormLabel><FormDescription>Select all roles that apply to this user.</FormDescription></div><div className="grid grid-cols-2 md:grid-cols-3 gap-4">{allRoles.map((role) => (<FormField key={role} control={control} name="roles" render={({ field }) => { return (<FormItem key={role} className="flex flex-row items-start space-x-3 space-y-0"><FormControl><Checkbox checked={field.value?.includes(role)} onCheckedChange={(checked) => { trigger('roles'); return checked ? field.onChange([...(field.value || []), role]) : field.onChange( field.value?.filter( (value) => value !== role))}}/></FormControl><FormLabel className="font-normal">{role}</FormLabel></FormItem> )}}/>))}</div><FormMessage /></FormItem>)}/>
+                    {selectedRoles.includes("Beneficiary") && <FormField control={control} name="isAnonymousAsBeneficiary" render={({ field }) => ( <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4"><FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} /></FormControl><div className="space-y-1 leading-none"><FormLabel>Mark as Anonymous Beneficiary</FormLabel><FormDescription>If checked, their name will be hidden from public view and their Anonymous ID will be used instead.</FormDescription></div></FormItem>)} />}
+                    {selectedRoles.includes("Donor") && <FormField control={control} name="isAnonymousAsDonor" render={({ field }) => ( <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4"><FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} /></FormControl><div className="space-y-1 leading-none"><FormLabel>Mark as Anonymous Donor</FormLabel><FormDescription>If checked, their name will be hidden on the public donations list.</FormDescription></div></FormItem>)} />}
+                </AccordionContent>
+            </AccordionItem>
+        </Accordion>
+        </div>
+        
+        {!isSubForm && (
+            <div className="flex items-center gap-4 mt-8">
+                <Button type="submit" disabled={isSubmitting}>
+                    {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <UserPlus className="mr-2 h-4 w-4" />}
+                    Create User
+                </Button>
+                <Button type="button" variant="outline" onClick={handleCancel} disabled={isSubmitting}>
+                    <XCircle className="mr-2 h-4 w-4" />
+                    Clear Form
+                </Button>
+            </div>
+        )}
+    </FormWrapper>
+    <AlertDialog open={!!extractedDetails} onOpenChange={() => setExtractedDetails(null)}>
+        <AlertDialogContent>
+            <AlertDialogHeader>
+                <AlertDialogTitle className="flex items-center gap-2">
+                <Bot className="h-6 w-6 text-primary" />
+                    Confirm Auto-fill Details
+                </AlertDialogTitle>
+                <AlertDialogDescription>
+                    The AI has extracted the following details from the document. Please review them before applying to the form.
+                </AlertDialogDescription>
+            </AlertDialogHeader>
+            <div className="max-h-80 overflow-y-auto p-4 bg-muted/50 rounded-lg space-y-2 text-sm">
+                {dialogFields.map(({ key, label }) => {
+                    const value = extractedDetails?.[key as keyof ExtractBeneficiaryDetailsOutput] as string | undefined;
+                    return (
+                        <div key={key} className="flex justify-between border-b pb-1">
+                            <span className="text-muted-foreground capitalize">{label}</span>
+                            {value ? (
+                                <span className="font-semibold text-right">{value}</span>
+                            ) : (
+                                <span className="text-destructive font-normal text-right">Not Found</span>
+                            )}
+                        </div>
+                    )
+                })}
+            </div>
+            <AlertDialogFooter>
+                <Button variant="outline" onClick={() => handleFetchUserData(true)} disabled={isRefreshingDetails}>
+                    {isRefreshingDetails ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <RefreshIcon className="mr-2 h-4 w-4" />}
+                    Refresh
+                </Button>
+                <div className='flex gap-2'>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={applyExtractedDetails}>Apply & Fill Form</AlertDialogAction>
+                </div>
+            </AlertDialogFooter>
+        </AlertDialogContent>
+    </AlertDialog>
+    </>
+  );
 }
 
 
