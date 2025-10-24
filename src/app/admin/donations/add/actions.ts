@@ -20,6 +20,12 @@ interface FormState {
     donationId?: string;
 }
 
+export async function getUserAction(userId: string) {
+    const user = await getUserService(userId);
+    return JSON.parse(JSON.stringify(user));
+}
+
+
 export async function handleAddDonation(
   formData: FormData
 ): Promise<FormState> {
