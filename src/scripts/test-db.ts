@@ -18,7 +18,8 @@ async function testDatabase() {
   try {
     // Step 1: Verify basic database connectivity by getting the DB instance.
     console.log('\n- Step 1: Checking for basic database connectivity...');
-    await getAdminDb();
+    const adminDb = await getAdminDb();
+    await adminDb.listCollections(); // A lightweight operation to confirm connection & permissions.
     console.log('  - ✅ OK: Database connection and permissions are valid.');
     
 
@@ -55,7 +56,9 @@ async function testDatabase() {
   } finally {
     const endTime = performance.now();
     console.log(`\n✨ Done in ${((endTime - startTime) / 1000).toFixed(2)} seconds.`);
+    // Force exit to ensure script terminates
+    process.exit(0);
   }
 }
 
-testDatabase().finally(() => process.exit());
+testDatabase();

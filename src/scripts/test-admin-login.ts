@@ -2,7 +2,7 @@
 import { handleLogin } from '@/app/login/actions';
 import dotenv from 'dotenv';
 import { getUser } from '@/services/user-service';
-import { checkDatabaseConnection } from '@/app/services/actions';
+import { getAdminDb } from '@/services/firebase-admin';
 import { performance } from 'perf_hooks';
 
 dotenv.config();
@@ -27,22 +27,8 @@ async function testAdminLogin() {
   try {
     // Step 1: Verify basic database connectivity first.
     console.log('\n- Step 1: Checking for basic database connectivity...');
-    const dbConnection = await checkDatabaseConnection();
-
-    if (!dbConnection.success) {
-      console.error('\n❌ ERROR: Could not connect to the database.');
-      console.error('------------------------------------------');
-      console.error('Error Details:', dbConnection.error);
-      console.error('------------------------------------------');
-      if (dbConnection.error === 'permission-denied') {
-        console.log('\n[DIAGNOSIS] The application server cannot authenticate with Google Cloud.');
-        console.log('This is the most likely reason the "admin" user was not created automatically.');
-        console.log('\n[SOLUTION] Run `npm run fix:iam` to grant the necessary permissions and then restart your application server.');
-      } else {
-        console.log('\n[DIAGNOSIS] An unexpected network or configuration error occurred. Please review the error details above.');
-      }
-      return; // Stop the test if we can't even connect.
-    }
+    const adminDb = await getAdminDb();
+    await adminDb.listCollections();
     console.log('  - ✅ OK: Database connection successful.');
     
 
@@ -90,7 +76,8 @@ async function testAdminLogin() {
   } finally {
     const endTime = performance.now();
     console.log(`\n✨ Done in ${((endTime - startTime) / 1000).toFixed(2)} seconds.`);
+    process.exit(0);
   }
 }
 
-testAdminLogin().finally(() => process.exit());
+testAdminLogin();
