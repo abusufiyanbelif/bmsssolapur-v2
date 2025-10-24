@@ -7,6 +7,7 @@ import { getAllUsers, updateUser as updateUserService, type User } from "@/servi
 import { getPublicCampaigns as getPublicCampaignsService, getPublicLeads } from "@/services/public-data-service";
 import type { Quote, Lead, Campaign, Donation } from '@/services/types';
 import { getInspirationalQuotes } from "@/ai/flows/get-inspirational-quotes-flow";
+import { checkDatabaseConnection } from "@/app/services/actions";
 
 export interface EnrichedLead extends Lead {
     beneficiary?: User;
@@ -33,7 +34,7 @@ export async function getPublicDashboardData(): Promise<PublicDashboardData> {
         // The getAllUsers function now gracefully handles auth errors by returning an empty array.
         // We can check for this case here to propagate a user-friendly error message.
         if (users.length === 0) { // A simple check; if there are truly no users, this will still trigger.
-            const dbCheck = await (await import('@/services/actions')).checkDatabaseConnection();
+            const dbCheck = await checkDatabaseConnection();
             if (dbCheck.error === 'permission-denied') {
                  return { donations: [], users: [], leads: [], campaigns: [], error: "permission-denied" };
             }
